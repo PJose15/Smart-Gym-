@@ -1,0 +1,28 @@
+{
+  "name": "smartgym",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web-admin dev",
+    "dev:mobile": "pnpm --filter mobile start",
+    "build:web": "pnpm --filter web-admin build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "mobile:dev": "pnpm --filter mobile start",
+    "mobile:build:android": "pnpm --filter mobile build:android",
+    "mobile:build:ios": "pnpm --filter mobile build:ios"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@10.29.1"
+}
