@@ -84,10 +84,13 @@ export interface MemberProgramAssignment {
 
 // ─── Logging ────────────────────────────────────────────
 
+export type WorkoutStatus = 'in_progress' | 'completed' | 'cancelled';
+
 export interface Workout {
   id: string;
   gym_id: string;
   profile_id: string;
+  status: WorkoutStatus;
   started_at: string;
   finished_at?: string;
 }
@@ -107,7 +110,14 @@ export interface WorkoutSet {
   reps: number;
   weight_kg: number;
   rpe?: number;
+  notes?: string;
   logged_at: string;
+}
+
+// Joined type for exercise with its sets (used in workout UI)
+export interface WorkoutExerciseWithSets extends WorkoutExercise {
+  sets: WorkoutSet[];
+  machine?: Machine;
 }
 
 // ─── Gamification ───────────────────────────────────────
@@ -134,4 +144,33 @@ export interface ApiResponse<T> {
 export interface MachineDetailResponse {
   machine: Machine;
   gym_name: string;
+}
+
+export interface WorkoutSummary {
+  workout_id: string;
+  total_exercises: number;
+  total_sets: number;
+  total_reps: number;
+  total_volume_kg: number;
+  duration_minutes: number;
+}
+
+// ─── Progress Types ─────────────────────────────────────
+
+export interface ExerciseHistoryEntry {
+  workout_id: string;
+  workout_started_at: string;
+  exercise_name: string;
+  sets: WorkoutSet[];
+  best_set_volume: number; // weight * reps for best set
+}
+
+export interface PersonalRecord {
+  exercise_name: string;
+  machine_id?: string;
+  best_weight_kg: number;
+  best_reps_at_weight: number;
+  best_volume_set: number; // weight * reps
+  estimated_1rm: number;
+  achieved_at: string;
 }

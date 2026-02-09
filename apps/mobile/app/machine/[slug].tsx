@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import type { Machine } from '@smartgym/types';
+import type { WorkoutStatus } from '@smartgym/types';
 
 interface MachineWithGym extends Machine {
   gym_name: string;
@@ -14,6 +15,40 @@ export default function MachineDetailScreen() {
   const [machine, setMachine] = useState<MachineWithGym | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startingWorkout, setStartingWorkout] = useState(false);
+
+  const handleStartWorkout = async () => {
+    if (!machine) return;
+    setStartingWorkout(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Sign In Required', 'Please sign in to start a workout.');
+        setStartingWorkout(false);
+        return;
+      }
+      const status: WorkoutStatus = 'in_progress';
+      const { data: workout, error: wErr } = await supabase
+        .from('workouts')
+        .insert({ gym_id: machine.gym_id, profile_id: user.id, status })
+        .select()
+        .single();
+      if (wErr || !workout) throw wErr || new Error('Failed to create workout');
+
+      await supabase.from('workout_exercises').insert({
+        workout_id: workout.id,
+        machine_id: machine.id,
+        exercise_name: machine.name,
+        order_index: 0,
+      });
+
+      router.push(`/workout/${workout.id}`);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not start workout');
+    } finally {
+      setStartingWorkout(false);
+    }
+  };
 
   const fetchMachine = async () => {
     if (!slug) {
@@ -125,6 +160,16 @@ export default function MachineDetailScreen() {
           ))}
         </View>
       )}
+
+      <TouchableOpacity
+        style={[styles.startWorkoutButton, startingWorkout && { opacity: 0.6 }]}
+        onPress={handleStartWorkout}
+        disabled={startingWorkout}
+      >
+        <Text style={styles.startWorkoutText}>
+          {startingWorkout ? 'Starting...' : 'Start Workout with This Machine'}
+        </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -153,4 +198,6 @@ const styles = StyleSheet.create({
   retryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   backButton: { paddingHorizontal: 24, paddingVertical: 12 },
   backButtonText: { color: '#4361ee', fontSize: 16, fontWeight: '600' },
+  startWorkoutButton: { backgroundColor: '#2a9d8f', paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
+  startWorkoutText: { color: '#fff', fontSize: 17, fontWeight: '700' },
 });

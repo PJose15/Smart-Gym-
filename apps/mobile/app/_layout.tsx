@@ -17,6 +17,14 @@ export default function RootLayout() {
           name="machine/[slug]"
           options={{ title: 'Machine Details' }}
         />
+        <Stack.Screen
+          name="workout/[id]"
+          options={{ title: 'Workout' }}
+        />
+        <Stack.Screen
+          name="workout/complete/[id]"
+          options={{ title: 'Workout Complete', headerShown: false }}
+        />
       </Stack>
     </>
   );
