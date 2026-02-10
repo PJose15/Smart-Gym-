@@ -39,6 +39,9 @@ export interface Machine {
   target_muscles: string[];
   setup_steps: string[];
   safety_cues: string[];
+  common_mistakes: string[];
+  cue_version: number;
+  cue_source: string;
   image_url?: string;
   created_at: string;
   updated_at: string;
@@ -133,6 +136,92 @@ export interface PointsLedgerEntry {
   reference_id?: string;
   created_at: string;
 }
+
+// ─── AI Assist Types ───────────────────────────────────
+
+export type ReasonCode =
+  | 'REPEAT_LAST_SET'
+  | 'INCREASE_SMALL'
+  | 'DECREASE_FATIGUE'
+  | 'REPS_ONLY'
+  | 'NEW_MACHINE_BASELINE'
+  | 'INSUFFICIENT_DATA';
+
+export type Confidence = number; // 0–1
+
+export interface NextSetSuggestion {
+  suggested_weight: number | null;
+  suggested_reps: number | null;
+  suggested_rpe: number | null;
+  confidence: Confidence;
+  reason_code: ReasonCode;
+  reason_text: string;
+  safety_note?: string;
+  should_suggest_increase: boolean;
+}
+
+export type PRType = 'PR_WEIGHT' | 'PR_REPS' | 'PR_EST_1RM';
+
+export interface PRDetection {
+  type: PRType;
+  exercise_name: string;
+  machine_id?: string;
+  value: number;
+  previous_value: number | null;
+}
+
+export interface WorkoutInsight {
+  total_sets: number;
+  total_reps: number;
+  total_volume_kg: number;
+  top_exercises_by_volume: Array<{ exercise_name: string; volume: number }>;
+  prs: PRDetection[];
+  volume_change: number | null;   // percentage vs previous session
+  reps_change: number | null;
+  weight_change: number | null;
+  insight_text: string;
+  next_time_suggestion: string;
+}
+
+export interface MachineCues {
+  setup_steps: string[];
+  safety_cues: string[];
+  common_mistakes: string[];
+  cue_version: number;
+  cue_source: string;
+}
+
+export interface FeatureFlag {
+  id: string;
+  gym_id: string | null;
+  profile_id: string | null;
+  key: string;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface AppEvent {
+  id?: string;
+  gym_id?: string | null;
+  profile_id?: string | null;
+  event_name: string;
+  event_props?: Record<string, unknown>;
+  created_at?: string;
+}
+
+export interface AiAuditLog {
+  id?: string;
+  gym_id?: string | null;
+  profile_id?: string | null;
+  context: 'next_set' | 'summary' | 'machine_mistakes';
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  created_at?: string;
+}
+
+export type UserGoal = 'hypertrophy' | 'strength' | 'general';
+
+export type WeightUnit = 'kg' | 'lbs';
 
 // ─── API Response Types ─────────────────────────────────
 

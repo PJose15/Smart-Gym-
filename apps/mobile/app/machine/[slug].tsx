@@ -4,9 +4,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import type { Machine } from '@smartgym/types';
 import type { WorkoutStatus } from '@smartgym/types';
+import { trackEvent } from '../../src/lib/events';
+import { isFeatureEnabled, refreshFeatureFlags, needsRefresh } from '../../src/lib/featureFlags';
+import { generateMachineMistakes } from '@smartgym/ai-assist';
 
 interface MachineWithGym extends Machine {
   gym_name: string;
+  common_mistakes: string[];
+  cue_version: number;
+  cue_source: string;
 }
 
 export default function MachineDetailScreen() {
@@ -16,6 +22,7 @@ export default function MachineDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startingWorkout, setStartingWorkout] = useState(false);
+  const [commonMistakes, setCommonMistakes] = useState<string[]>([]);
 
   const handleStartWorkout = async () => {
     if (!machine) return;
@@ -91,6 +98,39 @@ export default function MachineDetailScreen() {
     fetchMachine();
   }, [slug]);
 
+  // Refresh feature flags if stale, then track machine_viewed event
+  // and resolve common mistakes (from RPC data or generated defaults).
+  useEffect(() => {
+    if (!machine) return;
+
+    trackEvent('machine_viewed', { machine_id: machine.id, slug });
+
+    (async () => {
+      // Ensure feature flags are fresh
+      if (needsRefresh()) {
+        await refreshFeatureFlags();
+      }
+
+      // Resolve common mistakes: use RPC data if present, otherwise generate defaults
+      const rpcMistakes = machine.common_mistakes ?? [];
+      if (rpcMistakes.length > 0) {
+        setCommonMistakes(rpcMistakes);
+      } else {
+        const generated = await generateMachineMistakes({
+          machineName: machine.name,
+          targetMuscles: machine.target_muscles,
+          setupSteps: machine.setup_steps,
+        });
+        setCommonMistakes(generated);
+      }
+
+      // Track AI cues viewed if the feature is enabled
+      if (isFeatureEnabled('ai_assist')) {
+        trackEvent('ai_cues_viewed', { machine_id: machine.id });
+      }
+    })();
+  }, [machine]);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -161,6 +201,18 @@ export default function MachineDetailScreen() {
         </View>
       )}
 
+      {commonMistakes.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Common Mistakes</Text>
+          {commonMistakes.map((mistake, i) => (
+            <View key={i} style={styles.bulletRow}>
+              <Text style={styles.mistakeIcon}>!</Text>
+              <Text style={styles.bulletText}>{mistake}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       <TouchableOpacity
         style={[styles.startWorkoutButton, startingWorkout && { opacity: 0.6 }]}
         onPress={handleStartWorkout}
@@ -190,6 +242,7 @@ const styles = StyleSheet.create({
   bulletNumber: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#4361ee', color: '#fff', textAlign: 'center', lineHeight: 24, fontSize: 13, fontWeight: '600', marginRight: 10 },
   bulletText: { flex: 1, fontSize: 15, color: '#212529', lineHeight: 22 },
   warningIcon: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#e63946', color: '#fff', textAlign: 'center', lineHeight: 20, fontSize: 13, fontWeight: '700', marginRight: 10, marginTop: 1 },
+  mistakeIcon: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#f4a261', color: '#fff', textAlign: 'center', lineHeight: 20, fontSize: 13, fontWeight: '700', marginRight: 10, marginTop: 1 },
   loadingText: { fontSize: 16, color: '#6c757d', marginTop: 12 },
   errorIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#e63946', color: '#fff', textAlign: 'center', lineHeight: 48, fontSize: 24, fontWeight: '700', marginBottom: 12 },
   errorTitle: { fontSize: 22, fontWeight: '700', color: '#1a1a2e', marginBottom: 8 },

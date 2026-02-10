@@ -9,6 +9,7 @@ const navItems = [
   { href: '/machines', label: 'Machines' },
   { href: '/programs', label: 'Programs' },
   { href: '/members', label: 'Members' },
+  { href: '/settings', label: 'Settings' },
 ];
 
 const sidebarStyle: CSSProperties = {

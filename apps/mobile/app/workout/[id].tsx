@@ -21,11 +21,28 @@ import type {
   WorkoutSet,
   Machine,
 } from '@smartgym/types';
+import { getNextSetSuggestion } from '@smartgym/ai-assist';
+import type { NextSetSuggestion } from '@smartgym/types';
+import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlags';
+import { trackEvent } from '../../src/lib/events';
+import { logAiDecision } from '../../src/lib/aiAudit';
 
 // ─── Helpers ────────────────────────────────────────────
 
 function generateTempId(): string {
   return `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function getConfidenceLabel(confidence: number): string {
+  if (confidence >= 0.75) return 'High';
+  if (confidence >= 0.4) return 'Medium';
+  return 'Low';
+}
+
+function getConfidenceColor(confidence: number): string {
+  if (confidence >= 0.75) return '#2a9d8f';
+  if (confidence >= 0.4) return '#e9c46a';
+  return '#adb5bd';
 }
 
 // ─── Sub-components ─────────────────────────────────────
@@ -49,13 +66,71 @@ function SetRow({ set }: SetRowProps) {
   );
 }
 
+// ─── Suggestion Card ────────────────────────────────────
+
+interface SuggestionCardProps {
+  suggestion: NextSetSuggestion | null;
+  onApply: () => void;
+}
+
+function SuggestionCard({ suggestion, onApply }: SuggestionCardProps) {
+  if (!suggestion) return null;
+
+  const confidenceLabel = getConfidenceLabel(suggestion.confidence);
+  const confidenceColor = getConfidenceColor(suggestion.confidence);
+
+  return (
+    <View style={styles.suggestionCard}>
+      <View style={styles.suggestionHeader}>
+        <Text style={styles.suggestionTitle}>Suggested next set</Text>
+        <View
+          style={[
+            styles.confidenceBadge,
+            { backgroundColor: confidenceColor },
+          ]}
+        >
+          <Text style={styles.confidenceBadgeText}>{confidenceLabel}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.suggestionValues}>
+        {suggestion.suggested_weight} kg x {suggestion.suggested_reps} reps
+      </Text>
+
+      <Text style={styles.suggestionReason}>
+        Why: {suggestion.reason_text}
+      </Text>
+
+      {suggestion.safety_note ? (
+        <Text style={styles.suggestionSafetyNote}>
+          {suggestion.safety_note}
+        </Text>
+      ) : null}
+
+      <TouchableOpacity style={styles.suggestionApplyButton} onPress={onApply}>
+        <Text style={styles.suggestionApplyButtonText}>Apply</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Add Set Form ───────────────────────────────────────
+
 interface AddSetFormProps {
   lastWeight: number;
   onLogSet: (weight: number, reps: number, rpe: number | undefined) => void;
   isLogging: boolean;
+  prefillWeight?: number | null;
+  prefillReps?: number | null;
 }
 
-function AddSetForm({ lastWeight, onLogSet, isLogging }: AddSetFormProps) {
+function AddSetForm({
+  lastWeight,
+  onLogSet,
+  isLogging,
+  prefillWeight,
+  prefillReps,
+}: AddSetFormProps) {
   const [weight, setWeight] = useState(lastWeight.toString());
   const [reps, setReps] = useState('');
   const [rpe, setRpe] = useState('');
@@ -64,6 +139,19 @@ function AddSetForm({ lastWeight, onLogSet, isLogging }: AddSetFormProps) {
   useEffect(() => {
     setWeight(lastWeight.toString());
   }, [lastWeight]);
+
+  // Apply prefilled values from AI suggestion
+  useEffect(() => {
+    if (prefillWeight != null) {
+      setWeight(prefillWeight.toString());
+    }
+  }, [prefillWeight]);
+
+  useEffect(() => {
+    if (prefillReps != null) {
+      setReps(prefillReps.toString());
+    }
+  }, [prefillReps]);
 
   const handleLog = () => {
     const weightNum = weight === '' ? 0 : parseFloat(weight);
@@ -139,6 +227,8 @@ function AddSetForm({ lastWeight, onLogSet, isLogging }: AddSetFormProps) {
   );
 }
 
+// ─── Exercise Card ──────────────────────────────────────
+
 interface ExerciseCardProps {
   exercise: WorkoutExerciseWithSets;
   onLogSet: (
@@ -148,12 +238,33 @@ interface ExerciseCardProps {
     rpe: number | undefined,
   ) => void;
   loggingExerciseId: string | null;
+  suggestion: NextSetSuggestion | null;
+  onApplySuggestion: (exerciseId: string) => void;
+  aiEnabled: boolean;
 }
 
-function ExerciseCard({ exercise, onLogSet, loggingExerciseId }: ExerciseCardProps) {
+function ExerciseCard({
+  exercise,
+  onLogSet,
+  loggingExerciseId,
+  suggestion,
+  onApplySuggestion,
+  aiEnabled,
+}: ExerciseCardProps) {
   const sortedSets = [...exercise.sets].sort((a, b) => a.set_number - b.set_number);
   const lastSet = sortedSets[sortedSets.length - 1];
   const lastWeight = lastSet ? lastSet.weight_kg : 0;
+
+  const [prefillWeight, setPrefillWeight] = useState<number | null>(null);
+  const [prefillReps, setPrefillReps] = useState<number | null>(null);
+
+  const handleApply = () => {
+    if (suggestion) {
+      setPrefillWeight(suggestion.suggested_weight);
+      setPrefillReps(suggestion.suggested_reps);
+    }
+    onApplySuggestion(exercise.id);
+  };
 
   return (
     <View style={styles.exerciseCard}>
@@ -182,12 +293,18 @@ function ExerciseCard({ exercise, onLogSet, loggingExerciseId }: ExerciseCardPro
         <Text style={styles.noSetsText}>No sets logged yet</Text>
       )}
 
+      {aiEnabled && (
+        <SuggestionCard suggestion={suggestion} onApply={handleApply} />
+      )}
+
       <View style={styles.addSetSection}>
         <Text style={styles.addSetLabel}>Add Set</Text>
         <AddSetForm
           lastWeight={lastWeight}
           onLogSet={(weight, reps, rpe) => onLogSet(exercise.id, weight, reps, rpe)}
           isLogging={loggingExerciseId === exercise.id}
+          prefillWeight={prefillWeight}
+          prefillReps={prefillReps}
         />
       </View>
     </View>
@@ -328,7 +445,74 @@ export default function ActiveWorkoutScreen() {
   const [machines, setMachines] = useState<Array<{ id: string; name: string }>>([]);
   const [addingExercise, setAddingExercise] = useState(false);
 
+  // AI Assist state
+  const [suggestions, setSuggestions] = useState<Record<string, NextSetSuggestion>>({});
+  const [aiEnabled, setAiEnabled] = useState(false);
+
   const abortRef = useRef<AbortController | null>(null);
+
+  // ─── Initialize feature flags ─────────────────────────
+  useEffect(() => {
+    const initFlags = async () => {
+      try {
+        await refreshFeatureFlags();
+        setAiEnabled(isFeatureEnabled('ai_assist_enabled'));
+      } catch {
+        // Feature flags failed to load; AI assist stays disabled
+        setAiEnabled(false);
+      }
+    };
+    initFlags();
+  }, []);
+
+  // ─── Compute AI suggestion ────────────────────────────
+  const computeSuggestion = useCallback(
+    async (exerciseId: string) => {
+      if (!aiEnabled || !workout) return;
+
+      try {
+        // Get the exercise's current sets from state
+        const exercise = exercises.find((e) => e.id === exerciseId);
+        if (!exercise) return;
+
+        const currentSets = exercise.sets;
+
+        // Fetch previous session sets for the same profile + machine
+        let previousSets: WorkoutSet[] = [];
+        if (exercise.machine_id) {
+          const { data: prevWorkoutExercises } = await supabase
+            .from('workout_exercises')
+            .select('id, workout_id, sets(*), workouts!inner(profile_id, status, finished_at)')
+            .eq('machine_id', exercise.machine_id)
+            .neq('workout_id', workout.id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (prevWorkoutExercises && prevWorkoutExercises.length > 0) {
+            previousSets = (prevWorkoutExercises[0].sets ?? []) as WorkoutSet[];
+          }
+        }
+
+        // Call the AI suggestion engine
+        const result = await getNextSetSuggestion({ currentSets, previousSets });
+
+        // Update suggestions state
+        setSuggestions((prev) => ({
+          ...prev,
+          [exerciseId]: result,
+        }));
+
+        // Track the event
+        trackEvent('ai_next_set_shown', { exercise_id: exerciseId });
+
+        // Audit log
+        logAiDecision('next_set', { exerciseId, currentSets }, { ...result });
+      } catch {
+        // Don't block UX if AI suggestion fails
+      }
+    },
+    [aiEnabled, exercises, workout],
+  );
 
   // ─── Fetch data ─────────────────────────────────────
   const fetchWorkoutData = useCallback(async () => {
@@ -491,6 +675,20 @@ export default function ActiveWorkoutScreen() {
             : ex,
         ),
       );
+
+      // Track set logged event
+      trackEvent('set_logged', {
+        exercise_id: exerciseId,
+        set_number: nextSetNumber,
+        weight_kg: weight,
+        reps,
+        rpe,
+      });
+
+      // Compute AI suggestion async (don't block the UI)
+      if (aiEnabled) {
+        computeSuggestion(exerciseId);
+      }
     } catch (err: unknown) {
       // Rollback optimistic update
       setExercises((prev) =>
@@ -507,6 +705,11 @@ export default function ActiveWorkoutScreen() {
     } finally {
       setLoggingExerciseId(null);
     }
+  };
+
+  // ─── Handle apply suggestion ──────────────────────
+  const handleApplySuggestion = (exerciseId: string) => {
+    trackEvent('ai_next_set_applied', { exercise_id: exerciseId });
   };
 
   // ─── Add exercise ───────────────────────────────────
@@ -593,6 +796,13 @@ export default function ActiveWorkoutScreen() {
 
       if (updateError) throw updateError;
 
+      // Track workout finished event
+      trackEvent('workout_finished', {
+        workout_id: workoutId,
+        exercise_count: exercises.length,
+        total_sets: exercises.reduce((sum, ex) => sum + ex.sets.length, 0),
+      });
+
       router.replace(`/workout/complete/${workoutId}`);
     } catch (err: unknown) {
       Alert.alert(
@@ -663,6 +873,9 @@ export default function ActiveWorkoutScreen() {
             exercise={exercise}
             onLogSet={handleLogSet}
             loggingExerciseId={loggingExerciseId}
+            suggestion={suggestions[exercise.id] ?? null}
+            onApplySuggestion={handleApplySuggestion}
+            aiEnabled={aiEnabled}
           />
         ))}
 
@@ -866,6 +1079,66 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     fontStyle: 'italic',
     marginBottom: 12,
+  },
+
+  // Suggestion Card
+  suggestionCard: {
+    backgroundColor: '#f0f0ff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#d0d0ff',
+    padding: 14,
+    marginBottom: 12,
+  },
+  suggestionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  suggestionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1a1a2e',
+  },
+  confidenceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  confidenceBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  suggestionValues: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#212529',
+    marginBottom: 6,
+  },
+  suggestionReason: {
+    fontSize: 13,
+    color: '#6c757d',
+    marginBottom: 4,
+  },
+  suggestionSafetyNote: {
+    fontSize: 13,
+    color: '#e63946',
+    fontStyle: 'italic',
+    marginBottom: 8,
+  },
+  suggestionApplyButton: {
+    backgroundColor: '#4361ee',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  suggestionApplyButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 
   // Add Set
