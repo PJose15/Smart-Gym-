@@ -1,22 +1,23 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../src/theme/colors';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#4361ee',
-        tabBarInactiveTintColor: '#6c757d',
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#ffffff',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        headerStyle: { backgroundColor: colors.dark },
+        headerTintColor: colors.white,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>{'\u{1F3E0}'}</Text>
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
@@ -24,8 +25,8 @@ export default function TabLayout() {
         name="scan"
         options={{
           title: 'Scan',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>{'\u{1F4F7}'}</Text>
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="qr-code-outline" size={size} color={color} />
           ),
         }}
       />
@@ -33,8 +34,8 @@ export default function TabLayout() {
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>{'\u{1F4CA}'}</Text>
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bar-chart-outline" size={size} color={color} />
           ),
         }}
       />
@@ -42,8 +43,8 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>{'\u{1F464}'}</Text>
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />

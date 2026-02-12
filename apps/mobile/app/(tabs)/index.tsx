@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
+import { colors } from '../../src/theme/colors';
 import { getTodaysProgramDay } from '@smartgym/utils';
 import type {
   Workout,
@@ -38,6 +40,7 @@ interface AssignmentWithProgram extends MemberProgramAssignment {
 export default function HomeScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
   const [assignment, setAssignment] = useState<AssignmentWithProgram | null>(
@@ -131,6 +134,12 @@ export default function HomeScreen() {
       loadData();
     }, [loadData]),
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   // ─── Start Workout from Program ─────────────────────
 
@@ -237,7 +246,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4361ee" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
@@ -258,6 +267,12 @@ export default function HomeScreen() {
         >
           <Text style={styles.primaryButtonText}>Scan Machine QR</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.secondaryButton, styles.fullWidth, { marginTop: 14 }]}
+          onPress={() => router.push('/auth')}
+        >
+          <Text style={styles.secondaryButtonText}>Sign In / Sign Up</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -268,6 +283,13 @@ export default function HomeScreen() {
     <ScrollView
       style={styles.scrollContainer}
       contentContainerStyle={styles.scrollContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+        />
+      }
     >
       {error && (
         <View style={styles.errorBanner}>
@@ -330,7 +352,7 @@ export default function HomeScreen() {
             disabled={startingWorkout}
           >
             {startingWorkout ? (
-              <ActivityIndicator color="#ffffff" size="small" />
+              <ActivityIndicator color={colors.white} size="small" />
             ) : (
               <Text style={styles.primaryButtonText}>Start Workout</Text>
             )}
@@ -390,7 +412,7 @@ export default function HomeScreen() {
           disabled={startingWorkout}
         >
           {startingWorkout ? (
-            <ActivityIndicator color="#4361ee" size="small" />
+            <ActivityIndicator color={colors.primary} size="small" />
           ) : (
             <Text style={styles.secondaryButtonText}>
               Start Empty Workout
@@ -410,11 +432,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   scrollContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
@@ -423,27 +445,27 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.dark,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6c757d',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
   },
   // ─── Resume Workout Card ────────────────────────────────
   resumeCard: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#4361ee',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -457,7 +479,7 @@ const styles = StyleSheet.create({
   resumeLabel: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.white,
   },
   resumeSubtext: {
     fontSize: 14,
@@ -465,19 +487,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   resumeButtonContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
   },
   resumeButtonText: {
-    color: '#4361ee',
+    color: colors.primary,
     fontWeight: '700',
     fontSize: 14,
   },
   // ─── Card ───────────────────────────────────────────────
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
@@ -490,24 +512,24 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 15,
-    color: '#6c757d',
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 20,
   },
   dayName: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#4361ee',
+    color: colors.primary,
     marginTop: 4,
   },
   programName: {
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginTop: 2,
     marginBottom: 16,
   },
@@ -521,22 +543,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: colors.border,
   },
   exerciseName: {
     fontSize: 15,
-    color: '#212529',
+    color: colors.text,
     flex: 1,
   },
   exerciseMeta: {
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.textSecondary,
     fontWeight: '500',
     marginLeft: 12,
   },
   // ─── Buttons ────────────────────────────────────────────
   primaryButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
@@ -545,23 +567,23 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   primaryButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 17,
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4361ee',
+    borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 52,
   },
   secondaryButtonText: {
-    color: '#4361ee',
+    color: colors.primary,
     fontSize: 17,
     fontWeight: '600',
   },
@@ -579,7 +601,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   errorText: {
-    color: '#e63946',
+    color: colors.error,
     fontSize: 14,
     textAlign: 'center',
   },

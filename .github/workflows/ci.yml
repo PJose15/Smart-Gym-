@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   lint-and-typecheck:
@@ -43,3 +43,6 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Test
+        run: pnpm --filter @smartgym/ai-assist test

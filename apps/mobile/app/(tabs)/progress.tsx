@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
@@ -52,6 +53,7 @@ export default function ProgressScreen() {
   const [userId, setUserId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<ExerciseSummary[]>([]);
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -211,6 +213,12 @@ export default function ProgressScreen() {
       loadData();
     }, [loadData]),
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   const toggleExpand = (exerciseName: string) => {
     setExpandedExercise((prev) =>
@@ -376,6 +384,13 @@ export default function ProgressScreen() {
         renderItem={renderExerciseCard}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#4361ee"
+          />
+        }
       />
     </View>
   );

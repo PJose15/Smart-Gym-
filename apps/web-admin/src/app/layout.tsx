@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Sidebar } from './sidebar';
+import { AuthGate } from '@/components/AuthGate';
 
 export const metadata: Metadata = {
   title: 'SmartGym Admin',
@@ -14,12 +15,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
-          <Sidebar />
-          <main style={{ flex: 1, padding: '32px', backgroundColor: '#f5f5f5' }}>
-            {children}
-          </main>
-        </div>
+        <AuthGate>
+          <div style={{ display: 'flex', minHeight: '100vh' }}>
+            <Sidebar />
+            <main style={{ flex: 1, padding: '32px', backgroundColor: '#f5f5f5' }}>
+              {children}
+            </main>
+          </div>
+        </AuthGate>
       </body>
     </html>
   );

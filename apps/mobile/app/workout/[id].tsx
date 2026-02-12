@@ -12,6 +12,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Vibration,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -427,6 +428,55 @@ function AddExerciseModal({
   );
 }
 
+// ─── Rest Timer ──────────────────────────────────────────
+
+const REST_DURATIONS = [60, 90, 120, 180]; // seconds
+
+interface RestTimerProps {
+  secondsLeft: number;
+  isRunning: boolean;
+  onDismiss: () => void;
+  onSetDuration: (seconds: number) => void;
+}
+
+function RestTimer({ secondsLeft, isRunning, onDismiss, onSetDuration }: RestTimerProps) {
+  if (!isRunning) return null;
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+  const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
+  const isFinished = secondsLeft <= 0;
+
+  return (
+    <View style={styles.restTimerOverlay}>
+      <View style={[styles.restTimerCard, isFinished && styles.restTimerCardDone]}>
+        <Text style={styles.restTimerLabel}>
+          {isFinished ? 'Rest Complete!' : 'Rest Timer'}
+        </Text>
+        <Text style={[styles.restTimerDisplay, isFinished && styles.restTimerDisplayDone]}>
+          {isFinished ? '0:00' : display}
+        </Text>
+        <View style={styles.restTimerDurations}>
+          {REST_DURATIONS.map((d) => (
+            <TouchableOpacity
+              key={d}
+              style={styles.restDurationChip}
+              onPress={() => onSetDuration(d)}
+            >
+              <Text style={styles.restDurationChipText}>
+                {d >= 60 ? `${d / 60}m` : `${d}s`}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity style={styles.restTimerDismiss} onPress={onDismiss}>
+          <Text style={styles.restTimerDismissText}>Dismiss</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 // ─── Main Screen ────────────────────────────────────────
 
 export default function ActiveWorkoutScreen() {
@@ -449,6 +499,12 @@ export default function ActiveWorkoutScreen() {
   const [suggestions, setSuggestions] = useState<Record<string, NextSetSuggestion>>({});
   const [aiEnabled, setAiEnabled] = useState(false);
 
+  // Rest timer state
+  const [restTimerRunning, setRestTimerRunning] = useState(false);
+  const [restSecondsLeft, setRestSecondsLeft] = useState(0);
+  const [restDuration, setRestDuration] = useState(90); // default 90s
+  const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const abortRef = useRef<AbortController | null>(null);
 
   // ─── Initialize feature flags ─────────────────────────
@@ -463,6 +519,47 @@ export default function ActiveWorkoutScreen() {
       }
     };
     initFlags();
+  }, []);
+
+  // ─── Rest timer logic ─────────────────────────────────
+  useEffect(() => {
+    if (restTimerRunning && restSecondsLeft > 0) {
+      restIntervalRef.current = setInterval(() => {
+        setRestSecondsLeft((prev) => {
+          if (prev <= 1) {
+            Vibration.vibrate(500);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (restIntervalRef.current) {
+        clearInterval(restIntervalRef.current);
+        restIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (restIntervalRef.current) {
+        clearInterval(restIntervalRef.current);
+      }
+    };
+  }, [restTimerRunning, restSecondsLeft]);
+
+  const startRestTimer = useCallback(() => {
+    setRestSecondsLeft(restDuration);
+    setRestTimerRunning(true);
+  }, [restDuration]);
+
+  const dismissRestTimer = useCallback(() => {
+    setRestTimerRunning(false);
+    setRestSecondsLeft(0);
+  }, []);
+
+  const changeRestDuration = useCallback((seconds: number) => {
+    setRestDuration(seconds);
+    setRestSecondsLeft(seconds);
+    setRestTimerRunning(true);
   }, []);
 
   // ─── Compute AI suggestion ────────────────────────────
@@ -685,6 +782,9 @@ export default function ActiveWorkoutScreen() {
         rpe,
       });
 
+      // Start rest timer
+      startRestTimer();
+
       // Compute AI suggestion async (don't block the UI)
       if (aiEnabled) {
         computeSuggestion(exerciseId);
@@ -891,6 +991,14 @@ export default function ActiveWorkoutScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Rest Timer */}
+      <RestTimer
+        secondsLeft={restSecondsLeft}
+        isRunning={restTimerRunning}
+        onDismiss={dismissRestTimer}
+        onSetDuration={changeRestDuration}
+      />
 
       {/* Floating Add Exercise Button */}
       <TouchableOpacity style={styles.fab} onPress={handleOpenAddExercise}>
@@ -1205,6 +1313,71 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
+  },
+
+  // Rest Timer
+  restTimerOverlay: {
+    position: 'absolute',
+    bottom: 96,
+    left: 16,
+    right: 16,
+  },
+  restTimerCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  restTimerCardDone: {
+    backgroundColor: '#2a9d8f',
+  },
+  restTimerLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  restTimerDisplay: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#ffffff',
+    fontVariant: ['tabular-nums'],
+    marginBottom: 8,
+  },
+  restTimerDisplayDone: {
+    color: '#ffffff',
+  },
+  restTimerDurations: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  restDurationChip: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  restDurationChipText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  restTimerDismiss: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  restTimerDismissText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    fontWeight: '500',
   },
 
   // FAB
