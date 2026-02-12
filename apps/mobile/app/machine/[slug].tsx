@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import type { Machine } from '@smartgym/types';
+import { Button, Text, Card } from '../../src/components';
+import { colors } from '../../src/theme/colors';
+import { spacing } from '../../src/theme/spacing';
 
 interface MachineWithGym extends Machine {
   gym_name: string;
@@ -59,8 +62,10 @@ export default function MachineDetailScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4361ee" />
-        <Text style={styles.loadingText}>Loading machine...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text variant="body" color="textSecondary" style={styles.loadingText}>
+          Loading machine...
+        </Text>
       </View>
     );
   }
@@ -68,15 +73,14 @@ export default function MachineDetailScreen() {
   if (error || !machine) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorIcon}>!</Text>
-        <Text style={styles.errorTitle}>Machine Not Found</Text>
-        <Text style={styles.errorText}>{error || 'This QR code does not match any machine.'}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchMachine}>
-          <Text style={styles.retryButtonText}>Try Again</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </TouchableOpacity>
+        <Text variant="heading" style={styles.errorTitle}>
+          Machine Not Found
+        </Text>
+        <Text variant="body" color="textSecondary" style={styles.errorText}>
+          {error || 'This QR code does not match any machine.'}
+        </Text>
+        <Button title="Try Again" onPress={fetchMachine} style={styles.button} />
+        <Button title="Go Back" onPress={() => router.back()} variant="outline" />
       </View>
     );
   }
@@ -87,70 +91,149 @@ export default function MachineDetailScreen() {
         <Image source={{ uri: machine.image_url }} style={styles.image} resizeMode="cover" />
       )}
 
-      <Text style={styles.name}>{machine.name}</Text>
+      <Text variant="heading">{machine.name}</Text>
       {machine.gym_name && (
-        <Text style={styles.gymName}>{machine.gym_name}</Text>
+        <Text variant="caption" style={styles.gymName}>
+          {machine.gym_name}
+        </Text>
       )}
 
       {machine.target_muscles.length > 0 && (
         <View style={styles.chipsContainer}>
-          {machine.target_muscles.map((muscle, i) => (
+          {machine.target_muscles.map((muscle, i: number) => (
             <View key={i} style={styles.chip}>
-              <Text style={styles.chipText}>{muscle}</Text>
+              <Text variant="caption" color="white">
+                {muscle}
+              </Text>
             </View>
           ))}
         </View>
       )}
 
       {machine.setup_steps.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Setup Instructions</Text>
-          {machine.setup_steps.map((step, i) => (
+        <Card style={styles.section}>
+          <Text variant="subheading" style={styles.sectionTitle}>
+            Setup Instructions
+          </Text>
+          {machine.setup_steps.map((step, i: number) => (
             <View key={i} style={styles.bulletRow}>
-              <Text style={styles.bulletNumber}>{i + 1}</Text>
-              <Text style={styles.bulletText}>{step}</Text>
+              <View style={styles.bulletNumber}>
+                <Text variant="caption" color="white">
+                  {i + 1}
+                </Text>
+              </View>
+              <Text variant="body" style={styles.bulletText}>
+                {step}
+              </Text>
             </View>
           ))}
-        </View>
+        </Card>
       )}
 
       {machine.safety_cues.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Safety Cues</Text>
-          {machine.safety_cues.map((cue, i) => (
+        <Card style={styles.section}>
+          <Text variant="subheading" style={styles.sectionTitle}>
+            Safety Cues
+          </Text>
+          {machine.safety_cues.map((cue, i: number) => (
             <View key={i} style={styles.bulletRow}>
-              <Text style={styles.warningIcon}>!</Text>
-              <Text style={styles.bulletText}>{cue}</Text>
+              <View style={styles.warningIcon}>
+                <Text variant="caption" color="white">
+                  !
+                </Text>
+              </View>
+              <Text variant="body" style={styles.bulletText}>
+                {cue}
+              </Text>
             </View>
           ))}
-        </View>
+        </Card>
       )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  content: { padding: 16, paddingBottom: 40 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#f8f9fa' },
-  image: { width: '100%', height: 200, borderRadius: 12, marginBottom: 16 },
-  name: { fontSize: 28, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
-  gymName: { fontSize: 14, color: '#6c757d', marginBottom: 12 },
-  chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
-  chip: { backgroundColor: '#4361ee', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  chipText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e', marginBottom: 12 },
-  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, paddingRight: 16 },
-  bulletNumber: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#4361ee', color: '#fff', textAlign: 'center', lineHeight: 24, fontSize: 13, fontWeight: '600', marginRight: 10 },
-  bulletText: { flex: 1, fontSize: 15, color: '#212529', lineHeight: 22 },
-  warningIcon: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#e63946', color: '#fff', textAlign: 'center', lineHeight: 20, fontSize: 13, fontWeight: '700', marginRight: 10, marginTop: 1 },
-  loadingText: { fontSize: 16, color: '#6c757d', marginTop: 12 },
-  errorIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#e63946', color: '#fff', textAlign: 'center', lineHeight: 48, fontSize: 24, fontWeight: '700', marginBottom: 12 },
-  errorTitle: { fontSize: 22, fontWeight: '700', color: '#1a1a2e', marginBottom: 8 },
-  errorText: { fontSize: 16, color: '#6c757d', textAlign: 'center', marginBottom: 20 },
-  retryButton: { backgroundColor: '#4361ee', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginBottom: 12 },
-  retryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  backButton: { paddingHorizontal: 24, paddingVertical: 12 },
-  backButtonText: { color: '#4361ee', fontSize: 16, fontWeight: '600' },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    padding: spacing.md,
+    paddingBottom: spacing.xxl,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+    backgroundColor: colors.background,
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+  },
+  gymName: {
+    marginBottom: spacing.md,
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  chip: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 16,
+  },
+  section: {
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    marginBottom: spacing.md,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  bulletNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  bulletText: {
+    flex: 1,
+  },
+  warningIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+    marginTop: 2,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+  },
+  errorTitle: {
+    marginBottom: spacing.sm,
+  },
+  errorText: {
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  button: {
+    marginBottom: spacing.md,
+  },
 });

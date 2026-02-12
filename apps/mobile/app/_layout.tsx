@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { colors } from '../src/theme/colors';
 
 export default function RootLayout() {
   return (
@@ -7,8 +8,8 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#1a1a2e' },
-          headerTintColor: '#ffffff',
+          headerStyle: { backgroundColor: colors.dark },
+          headerTintColor: colors.white,
           headerTitleStyle: { fontWeight: '600' },
         }}
       >

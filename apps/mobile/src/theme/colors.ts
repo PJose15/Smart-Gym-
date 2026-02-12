@@ -11,4 +11,6 @@ export const colors = {
   warning: '#e9c46a',
   white: '#ffffff',
   dark: '#1a1a2e',
+  black: '#000000',
+  transparent: 'transparent',
 } as const;

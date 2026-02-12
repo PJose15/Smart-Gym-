@@ -1,9 +1,12 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { parseQrCode } from '@smartgym/utils';
+import { Button, Text } from '../../src/components';
+import { colors } from '../../src/theme/colors';
+import { spacing } from '../../src/theme/spacing';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -34,7 +37,9 @@ export default function ScanScreen() {
   if (!permission) {
     return (
       <View style={styles.container}>
-        <Text style={styles.message}>Requesting camera permission...</Text>
+        <Text variant="body" color="textSecondary">
+          Requesting camera permission...
+        </Text>
       </View>
     );
   }
@@ -42,17 +47,19 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.permissionContainer}>
-        <Text style={styles.permissionTitle}>Camera Access Required</Text>
-        <Text style={styles.message}>SmartGym needs your camera to scan QR codes on gym machines.</Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
+        <Text variant="heading" style={styles.permissionTitle}>
+          Camera Access Required
+        </Text>
+        <Text variant="body" color="textSecondary" style={styles.message}>
+          SmartGym needs your camera to scan QR codes on gym machines.
+        </Text>
+        <Button title="Grant Permission" onPress={requestPermission} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.cameraContainer}>
       <CameraView
         style={styles.camera}
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
@@ -60,19 +67,21 @@ export default function ScanScreen() {
       >
         <View style={styles.overlay}>
           <View style={styles.scanArea} />
-          <Text style={styles.hint}>Point at a machine QR code</Text>
+          <Text variant="body" color="white" style={styles.hint}>
+            Point at a machine QR code
+          </Text>
         </View>
       </CameraView>
 
       {error && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.button}
+          <Text variant="body" color="error" style={styles.errorText}>
+            {error}
+          </Text>
+          <Button
+            title="Scan Again"
             onPress={() => { setScanned(false); setError(null); }}
-          >
-            <Text style={styles.buttonText}>Scan Again</Text>
-          </TouchableOpacity>
+          />
         </View>
       )}
     </View>
@@ -80,16 +89,64 @@ export default function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  permissionContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#f8f9fa' },
-  permissionTitle: { fontSize: 22, fontWeight: '700', color: '#1a1a2e', marginBottom: 12 },
-  camera: { flex: 1 },
-  overlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scanArea: { width: 250, height: 250, borderWidth: 2, borderColor: '#4361ee', borderRadius: 16, backgroundColor: 'transparent' },
-  hint: { color: '#fff', fontSize: 16, marginTop: 24, textAlign: 'center' },
-  message: { fontSize: 16, color: '#6c757d', textAlign: 'center', marginBottom: 16, paddingHorizontal: 32 },
-  button: { backgroundColor: '#4361ee', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 12 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  errorContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', padding: 24, alignItems: 'center', borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  errorText: { color: '#e63946', fontSize: 16, marginBottom: 12, textAlign: 'center' },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+    backgroundColor: colors.background,
+  },
+  permissionTitle: {
+    marginBottom: spacing.md,
+  },
+  message: {
+    textAlign: 'center',
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xl,
+  },
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scanArea: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+  },
+  hint: {
+    marginTop: spacing.lg,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.white,
+    padding: spacing.lg,
+    alignItems: 'center',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  errorText: {
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
 });

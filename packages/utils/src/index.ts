@@ -1,69 +1,41 @@
 /**
- * Generate a URL-safe slug from a string.
+ * Formats a number with comma separators
+ * @param value - The number to format
+ * @returns Formatted string (e.g., "1,000")
  */
-export function generateSlug(input: string): string {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat('en-US').format(value);
 }
 
 /**
- * Generate a QR slug for a machine: gym-slug + machine name + random suffix.
+ * Formats a number with comma separators and optional "+" suffix
+ * @param value - The number to format
+ * @param showPlus - Whether to add "+" for large numbers
+ * @returns Formatted string (e.g., "1,000+")
  */
-export function generateQrSlug(gymSlug: string, machineName: string): string {
-  const base = generateSlug(`${gymSlug}-${machineName}`);
-  const suffix = Math.random().toString(36).substring(2, 6);
-  return `${base}-${suffix}`;
+export function formatStatValue(value: number, showPlus = false): string {
+  const formatted = formatNumber(value);
+  return showPlus && value >= 1000 ? `${formatted}+` : formatted;
 }
 
 /**
- * Parse a SmartGym QR code value.
- * Accepts:
- *   - smartgym://machine/<slug>
- *   - https://<domain>/m/<slug>
- *   - plain slug string
- * Returns the slug or null if invalid.
+ * Parses a QR code string to extract machine slug
+ * @param data - Raw QR code data
+ * @returns Machine slug or null if invalid
  */
-export function parseQrCode(raw: string): string | null {
-  const trimmed = raw.trim();
-
-  // Deep link: smartgym://machine/<slug>
-  const deepLinkMatch = trimmed.match(/^smartgym:\/\/machine\/([a-z0-9-]+)$/i);
-  if (deepLinkMatch) return deepLinkMatch[1];
-
-  // Universal link: https://*/m/<slug>
-  const universalLinkMatch = trimmed.match(/^https?:\/\/[^/]+\/m\/([a-z0-9-]+)$/i);
-  if (universalLinkMatch) return universalLinkMatch[1];
-
-  // Plain slug (alphanumeric + hyphens, min 3 chars)
-  const plainSlugMatch = trimmed.match(/^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/i);
-  if (plainSlugMatch) return trimmed.toLowerCase();
-
-  return null;
-}
-
-/**
- * Build the QR code value to encode for a machine.
- */
-export function buildQrValue(qrSlug: string): string {
-  return `smartgym://machine/${qrSlug}`;
-}
-
-/**
- * Format weight with unit.
- */
-export function formatWeight(kg: number, unit: 'kg' | 'lbs' = 'kg'): string {
-  if (unit === 'lbs') {
-    return `${Math.round(kg * 2.20462)} lbs`;
+export function parseQrCode(data: string): string | null {
+  // Expected format: "smartgym://machine/{slug}" or just the slug
+  try {
+    if (data.startsWith('smartgym://machine/')) {
+      return data.replace('smartgym://machine/', '');
+    }
+    // Assume it's just a slug if it doesn't match the URL format
+    // Validate it's alphanumeric with hyphens/underscores
+    if (/^[a-zA-Z0-9_-]+$/.test(data)) {
+      return data;
+    }
+    return null;
+  } catch {
+    return null;
   }
-  return `${kg} kg`;
-}
-
-/**
- * Validate an email address (basic check).
- */
-export function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
