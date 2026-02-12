@@ -107,6 +107,7 @@ export function getTodaysProgramDay(
 ): number {
   if (totalDays <= 0) return 1;
   const assigned = new Date(assignedAt);
+  if (isNaN(assigned.getTime())) return 1; // Fallback for invalid dates
   const now = new Date();
   const daysDiff = Math.floor(
     (now.getTime() - assigned.getTime()) / (1000 * 60 * 60 * 24),

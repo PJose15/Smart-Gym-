@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import { CSSProperties } from 'react';
@@ -25,10 +25,19 @@ const spinnerStyle: CSSProperties = {
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
 
+  // Skip auth check for /auth routes to prevent redirect loop
+  const isAuthRoute = pathname?.startsWith('/auth');
+
   useEffect(() => {
+    if (isAuthRoute) {
+      setChecking(false);
+      return;
+    }
+
     async function checkAuth() {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
@@ -51,7 +60,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, isAuthRoute]);
+
+  // Auth routes bypass the gate entirely
+  if (isAuthRoute) {
+    return <>{children}</>;
+  }
 
   if (checking) {
     return (

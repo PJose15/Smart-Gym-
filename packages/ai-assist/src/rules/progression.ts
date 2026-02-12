@@ -4,6 +4,7 @@ import type {
   UserGoal,
   WeightUnit,
 } from '@smartgym/types';
+import { formatWeight } from '@smartgym/utils';
 
 // ─── Constants ──────────────────────────────────────────
 
@@ -87,7 +88,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
     if (firstSetAtWeight) {
       const repDrop = (firstSetAtWeight.reps - lastReps) / firstSetAtWeight.reps;
       if (repDrop > FATIGUE_DROP_THRESHOLD || (lastRpe !== null && lastRpe >= HIGH_RPE_THRESHOLD)) {
-        const decrease = clampWeightDecrease(lastWeight, inc.small, inc.large, unit);
+        const decrease = clampWeightDecrease(lastWeight, inc.small);
         return {
           suggested_weight: roundWeight(lastWeight - decrease, unit),
           suggested_reps: lastReps,
@@ -138,7 +139,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
         suggested_rpe: null,
         confidence: computeConfidence(currentSets, previousSets, 'strong'),
         reason_code: 'INCREASE_SMALL',
-        reason_text: `Hit ${range.max} reps on ${setsHittingTopRange.length} sets at ${formatW(lastWeight, unit)} — time to go up!`,
+        reason_text: `Hit ${range.max} reps on ${setsHittingTopRange.length} sets at ${formatWeight(lastWeight, unit)} — time to go up!`,
         should_suggest_increase: true,
       };
     }
@@ -152,7 +153,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       suggested_rpe: null,
       confidence: computeConfidence(currentSets, previousSets, 'baseline'),
       reason_code: 'NEW_MACHINE_BASELINE',
-      reason_text: `Based on your last session: ${formatW(lastWeight, unit)} x ${lastReps}.`,
+      reason_text: `Based on your last session: ${formatWeight(lastWeight, unit)} x ${lastReps}.`,
       should_suggest_increase: false,
     };
   }
@@ -164,7 +165,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
     suggested_rpe: null,
     confidence: computeConfidence(currentSets, previousSets, 'moderate'),
     reason_code: 'REPEAT_LAST_SET',
-    reason_text: `Repeat ${formatW(lastWeight, unit)} x ${lastReps} for consistency.`,
+    reason_text: `Repeat ${formatWeight(lastWeight, unit)} x ${lastReps} for consistency.`,
     should_suggest_increase: false,
   };
 }
@@ -204,25 +205,13 @@ function isWithinMaxJump(currentWeight: number, newWeight: number): boolean {
   return (newWeight - currentWeight) / currentWeight <= MAX_SAME_SESSION_JUMP_PERCENT;
 }
 
-function clampWeightDecrease(
-  weight: number,
-  small: number,
-  large: number,
-  _unit: WeightUnit,
-): number {
-  // Decrease by the small increment, but cap at the large increment
-  if (weight <= small) return 0;
-  return Math.min(small, large);
+function clampWeightDecrease(weight: number, smallIncrement: number): number {
+  // If current weight is too low, don't decrease further
+  if (weight <= smallIncrement) return 0;
+  return smallIncrement;
 }
 
 function roundWeight(weight: number, unit: WeightUnit): number {
-  const precision = unit === 'kg' ? 1.25 : 2.5;
+  const precision = WEIGHT_INCREMENTS[unit].small;
   return Math.round(weight / precision) * precision;
-}
-
-function formatW(kg: number, unit: WeightUnit): string {
-  if (unit === 'lbs') {
-    return `${Math.round(kg * 2.20462)} lbs`;
-  }
-  return `${kg} kg`;
 }

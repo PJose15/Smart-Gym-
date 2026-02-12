@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { parseQrCode } from '@smartgym/utils';
+import { colors } from '../../src/theme/colors';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -81,15 +82,15 @@ export default function ScanScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  permissionContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#f8f9fa' },
-  permissionTitle: { fontSize: 22, fontWeight: '700', color: '#1a1a2e', marginBottom: 12 },
+  permissionContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: colors.background },
+  permissionTitle: { fontSize: 22, fontWeight: '700', color: colors.dark, marginBottom: 12 },
   camera: { flex: 1 },
   overlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scanArea: { width: 250, height: 250, borderWidth: 2, borderColor: '#4361ee', borderRadius: 16, backgroundColor: 'transparent' },
-  hint: { color: '#fff', fontSize: 16, marginTop: 24, textAlign: 'center' },
-  message: { fontSize: 16, color: '#6c757d', textAlign: 'center', marginBottom: 16, paddingHorizontal: 32 },
-  button: { backgroundColor: '#4361ee', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 12 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  errorContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', padding: 24, alignItems: 'center', borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  errorText: { color: '#e63946', fontSize: 16, marginBottom: 12, textAlign: 'center' },
+  scanArea: { width: 250, height: 250, borderWidth: 2, borderColor: colors.primary, borderRadius: 16, backgroundColor: 'transparent' },
+  hint: { color: colors.white, fontSize: 16, marginTop: 24, textAlign: 'center' },
+  message: { fontSize: 16, color: colors.textSecondary, textAlign: 'center', marginBottom: 16, paddingHorizontal: 32 },
+  button: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 12 },
+  buttonText: { color: colors.white, fontSize: 16, fontWeight: '600' },
+  errorContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.surface, padding: 24, alignItems: 'center', borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  errorText: { color: colors.error, fontSize: 16, marginBottom: 12, textAlign: 'center' },
 });

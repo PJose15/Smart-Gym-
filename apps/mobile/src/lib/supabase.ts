@@ -13,7 +13,9 @@ const LargeSecureStoreAdapter = {
 
     // Check if it's a chunked value
     if (value.startsWith('__chunked__:')) {
-      const count = parseInt(value.split(':')[1], 10);
+      const parts = value.split(':');
+      const count = parseInt(parts[1] ?? '0', 10);
+      if (!count || isNaN(count)) return null;
       const chunks: string[] = [];
       for (let i = 0; i < count; i++) {
         const chunk = await SecureStore.getItemAsync(`${key}_chunk_${i}`);
@@ -50,17 +52,26 @@ const LargeSecureStoreAdapter = {
   async removeItem(key: string): Promise<void> {
     const existing = await SecureStore.getItemAsync(key);
     if (existing?.startsWith('__chunked__:')) {
-      const count = parseInt(existing.split(':')[1], 10);
-      for (let i = 0; i < count; i++) {
-        await SecureStore.deleteItemAsync(`${key}_chunk_${i}`);
+      const parts = existing.split(':');
+      const count = parseInt(parts[1] ?? '0', 10);
+      if (count && !isNaN(count)) {
+        for (let i = 0; i < count; i++) {
+          await SecureStore.deleteItemAsync(`${key}_chunk_${i}`);
+        }
       }
     }
     await SecureStore.deleteItemAsync(key);
   },
 };
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing Supabase env vars. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in .env',
+  );
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
