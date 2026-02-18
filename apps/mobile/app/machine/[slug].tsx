@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import type { Machine } from '@smartgym/types';
+import type { Machine, WorkoutStatus } from '@smartgym/types';
 import { Button, Text, Card } from '../../src/components';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { trackEvent } from '../../src/lib/events';
+import { isFeatureEnabled, refreshFeatureFlags, needsRefresh } from '../../src/lib/featureFlags';
+import { generateMachineMistakes } from '@smartgym/ai-assist';
 
 interface MachineWithGym extends Machine {
   gym_name: string;
+  common_mistakes: string[];
+  cue_version: number;
+  cue_source: string;
 }
 
 export default function MachineDetailScreen() {
@@ -17,6 +23,41 @@ export default function MachineDetailScreen() {
   const [machine, setMachine] = useState<MachineWithGym | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startingWorkout, setStartingWorkout] = useState(false);
+  const [commonMistakes, setCommonMistakes] = useState<string[]>([]);
+
+  const handleStartWorkout = async () => {
+    if (!machine) return;
+    setStartingWorkout(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Sign In Required', 'Please sign in to start a workout.');
+        setStartingWorkout(false);
+        return;
+      }
+      const status: WorkoutStatus = 'in_progress';
+      const { data: workout, error: wErr } = await supabase
+        .from('workouts')
+        .insert({ gym_id: machine.gym_id, profile_id: user.id, status })
+        .select()
+        .single();
+      if (wErr || !workout) throw wErr || new Error('Failed to create workout');
+
+      await supabase.from('workout_exercises').insert({
+        workout_id: workout.id,
+        machine_id: machine.id,
+        exercise_name: machine.name,
+        order_index: 0,
+      });
+
+      router.push(`/workout/${workout.id}`);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not start workout');
+    } finally {
+      setStartingWorkout(false);
+    }
+  };
 
   const fetchMachine = async () => {
     if (!slug) {
@@ -58,6 +99,39 @@ export default function MachineDetailScreen() {
   useEffect(() => {
     fetchMachine();
   }, [slug]);
+
+  // Refresh feature flags if stale, then track machine_viewed event
+  // and resolve common mistakes (from RPC data or generated defaults).
+  useEffect(() => {
+    if (!machine) return;
+
+    trackEvent('machine_viewed', { machine_id: machine.id, slug });
+
+    (async () => {
+      // Ensure feature flags are fresh
+      if (needsRefresh()) {
+        await refreshFeatureFlags();
+      }
+
+      // Resolve common mistakes: use RPC data if present, otherwise generate defaults
+      const rpcMistakes = machine.common_mistakes ?? [];
+      if (rpcMistakes.length > 0) {
+        setCommonMistakes(rpcMistakes);
+      } else {
+        const generated = await generateMachineMistakes({
+          machineName: machine.name,
+          targetMuscles: machine.target_muscles,
+          setupSteps: machine.setup_steps,
+        });
+        setCommonMistakes(generated);
+      }
+
+      // Track AI cues viewed if the feature is enabled
+      if (isFeatureEnabled('ai_assist')) {
+        trackEvent('ai_cues_viewed', { machine_id: machine.id });
+      }
+    })();
+  }, [machine]);
 
   if (loading) {
     return (
@@ -149,6 +223,28 @@ export default function MachineDetailScreen() {
           ))}
         </Card>
       )}
+
+      {commonMistakes.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Common Mistakes</Text>
+          {commonMistakes.map((mistake, i) => (
+            <View key={i} style={styles.bulletRow}>
+              <Text style={styles.mistakeIcon}>!</Text>
+              <Text style={styles.bulletText}>{mistake}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={[styles.startWorkoutButton, startingWorkout && { opacity: 0.6 }]}
+        onPress={handleStartWorkout}
+        disabled={startingWorkout}
+      >
+        <Text style={styles.startWorkoutText}>
+          {startingWorkout ? 'Starting...' : 'Start Workout with This Machine'}
+        </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -223,6 +319,16 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     marginTop: 2,
   },
+  mistakeIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.warning,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+    marginTop: 2,
+  },
   loadingText: {
     marginTop: spacing.md,
   },
@@ -235,5 +341,17 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: spacing.md,
+  },
+  startWorkoutButton: {
+    backgroundColor: colors.success,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  startWorkoutText: {
+    color: colors.white,
+    fontSize: 17,
+    fontWeight: '700',
   },
 });

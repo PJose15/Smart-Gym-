@@ -1,4 +1,4 @@
-import { Text as RNText, TextStyle } from 'react-native';
+import { Text as RNText, TextStyle, StyleProp } from 'react-native';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 
@@ -6,7 +6,7 @@ interface TextProps {
     children: React.ReactNode;
     variant?: 'heading' | 'subheading' | 'body' | 'caption';
     color?: keyof typeof colors;
-    style?: TextStyle;
+    style?: StyleProp<TextStyle>;
 }
 
 export function Text({ children, variant = 'body', color, style }: TextProps) {

@@ -1,0 +1,767 @@
+'use client';
+
+import { useEffect, useState, useCallback, CSSProperties, FormEvent } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+import type {
+  Program,
+  ProgramDay,
+  ProgramExercise,
+  Machine,
+  MemberProgramAssignment,
+  Profile,
+  GymMember,
+} from '@smartgym/types';
+
+/* ── Joined types ──────────────────────────────────────── */
+
+type ProgramDayWithExercises = ProgramDay & {
+  program_exercises: ProgramExercise[];
+};
+
+type ProgramFull = Program & {
+  program_days: ProgramDayWithExercises[];
+};
+
+type AssignmentWithProfile = MemberProgramAssignment & {
+  profiles: Pick<Profile, 'id' | 'email' | 'full_name'>;
+};
+
+type GymMemberWithProfile = GymMember & {
+  profiles: Pick<Profile, 'id' | 'email' | 'full_name'>;
+};
+
+/* ── Component ─────────────────────────────────────────── */
+
+export default function ProgramDetailPage() {
+  const params = useParams<{ id: string }>();
+  const programId = params.id;
+
+  // Core data
+  const [program, setProgram] = useState<ProgramFull | null>(null);
+  const [machines, setMachines] = useState<Pick<Machine, 'id' | 'name'>[]>([]);
+  const [members, setMembers] = useState<GymMemberWithProfile[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentWithProfile[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // UI state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+
+  // Inline editing
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState('');
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState('');
+
+  // Add day form
+  const [newDayName, setNewDayName] = useState('');
+  const [addingDay, setAddingDay] = useState(false);
+
+  // Add exercise form state (keyed by day id)
+  const [exerciseForms, setExerciseForms] = useState<
+    Record<string, { name: string; machineId: string; sets: number; reps: number }>
+  >({});
+
+  // Assignment
+  const [assignMemberId, setAssignMemberId] = useState('');
+
+  /* ── Fetching ──────────────────────────────────────── */
+
+  const fetchProgram = useCallback(async () => {
+    const { data, error: err } = await supabase
+      .from('programs')
+      .select('*, program_days(*, program_exercises(*))')
+      .eq('id', programId)
+      .single();
+    if (err) {
+      setError(err.message);
+      return null;
+    }
+    const prog = data as ProgramFull;
+    // Sort days by day_number, exercises by order_index
+    prog.program_days.sort((a, b) => a.day_number - b.day_number);
+    prog.program_days.forEach((d) =>
+      d.program_exercises.sort((a, b) => a.order_index - b.order_index)
+    );
+    setProgram(prog);
+    setNameValue(prog.name);
+    setDescValue(prog.description ?? '');
+    return prog;
+  }, [programId]);
+
+  const fetchMachines = useCallback(
+    async (gymId: string) => {
+      const { data } = await supabase
+        .from('machines')
+        .select('id, name')
+        .eq('gym_id', gymId);
+      setMachines((data as Pick<Machine, 'id' | 'name'>[]) ?? []);
+    },
+    []
+  );
+
+  const fetchMembers = useCallback(
+    async (gymId: string) => {
+      const { data } = await supabase
+        .from('gym_members')
+        .select('*, profiles:profile_id(id, email, full_name)')
+        .eq('gym_id', gymId)
+        .eq('role', 'member');
+      setMembers((data as GymMemberWithProfile[]) ?? []);
+    },
+    []
+  );
+
+  const fetchAssignments = useCallback(async () => {
+    const { data } = await supabase
+      .from('member_program_assignments')
+      .select('*, profiles:profile_id(id, email, full_name)')
+      .eq('program_id', programId);
+    setAssignments((data as AssignmentWithProfile[]) ?? []);
+  }, [programId]);
+
+  useEffect(() => {
+    async function init() {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id ?? null);
+
+      const prog = await fetchProgram();
+      if (prog) {
+        await Promise.all([
+          fetchMachines(prog.gym_id),
+          fetchMembers(prog.gym_id),
+          fetchAssignments(),
+        ]);
+      }
+      setLoading(false);
+    }
+    init();
+  }, [fetchProgram, fetchMachines, fetchMembers, fetchAssignments]);
+
+  /* ── Mutations ─────────────────────────────────────── */
+
+  async function saveName() {
+    if (!program || !nameValue.trim()) return;
+    await supabase.from('programs').update({ name: nameValue.trim() }).eq('id', program.id);
+    setProgram({ ...program, name: nameValue.trim() });
+    setEditingName(false);
+  }
+
+  async function saveDescription() {
+    if (!program) return;
+    const val = descValue.trim() || null;
+    await supabase.from('programs').update({ description: val }).eq('id', program.id);
+    setProgram({ ...program, description: val });
+    setEditingDesc(false);
+  }
+
+  async function addDay(e: FormEvent) {
+    e.preventDefault();
+    if (!program || !newDayName.trim()) return;
+    setAddingDay(true);
+    const dayNumber = program.program_days.length + 1;
+    const { data, error: err } = await supabase
+      .from('program_days')
+      .insert({ program_id: program.id, day_number: dayNumber, name: newDayName.trim() })
+      .select()
+      .single();
+    if (!err && data) {
+      const newDay: ProgramDayWithExercises = {
+        ...(data as ProgramDay),
+        program_exercises: [],
+      };
+      setProgram({
+        ...program,
+        program_days: [...program.program_days, newDay],
+      });
+      setExpandedDays((prev) => new Set(prev).add(newDay.id));
+      setNewDayName('');
+    }
+    setAddingDay(false);
+  }
+
+  async function addExercise(dayId: string) {
+    if (!program) return;
+    const form = exerciseForms[dayId];
+    if (!form || !form.name.trim()) return;
+
+    const day = program.program_days.find((d) => d.id === dayId);
+    const orderIndex = day ? day.program_exercises.length : 0;
+
+    const { data, error: err } = await supabase
+      .from('program_exercises')
+      .insert({
+        program_day_id: dayId,
+        exercise_name: form.name.trim(),
+        machine_id: form.machineId || null,
+        default_sets: form.sets,
+        default_reps: form.reps,
+        order_index: orderIndex,
+      })
+      .select()
+      .single();
+
+    if (!err && data) {
+      const exercise = data as ProgramExercise;
+      setProgram({
+        ...program,
+        program_days: program.program_days.map((d) =>
+          d.id === dayId
+            ? { ...d, program_exercises: [...d.program_exercises, exercise] }
+            : d
+        ),
+      });
+      setExerciseForms((prev) => ({
+        ...prev,
+        [dayId]: { name: '', machineId: '', sets: 3, reps: 10 },
+      }));
+    }
+  }
+
+  async function assignMember() {
+    if (!program || !assignMemberId || !currentUserId) return;
+    const { data, error: err } = await supabase
+      .from('member_program_assignments')
+      .insert({
+        gym_id: program.gym_id,
+        profile_id: assignMemberId,
+        program_id: program.id,
+        assigned_by: currentUserId,
+      })
+      .select('*, profiles:profile_id(id, email, full_name)')
+      .single();
+    if (!err && data) {
+      setAssignments([...assignments, data as AssignmentWithProfile]);
+      setAssignMemberId('');
+    }
+  }
+
+  async function removeAssignment(assignmentId: string) {
+    const { error: err } = await supabase
+      .from('member_program_assignments')
+      .delete()
+      .eq('id', assignmentId);
+    if (!err) {
+      setAssignments(assignments.filter((a) => a.id !== assignmentId));
+    }
+  }
+
+  /* ── Helpers ───────────────────────────────────────── */
+
+  function toggleDay(dayId: string) {
+    setExpandedDays((prev) => {
+      const next = new Set(prev);
+      if (next.has(dayId)) next.delete(dayId);
+      else next.add(dayId);
+      return next;
+    });
+  }
+
+  function getExerciseForm(dayId: string) {
+    return exerciseForms[dayId] ?? { name: '', machineId: '', sets: 3, reps: 10 };
+  }
+
+  function updateExerciseForm(dayId: string, patch: Partial<{ name: string; machineId: string; sets: number; reps: number }>) {
+    setExerciseForms((prev) => ({
+      ...prev,
+      [dayId]: { ...getExerciseForm(dayId), ...patch },
+    }));
+  }
+
+  function machineName(machineId?: string | null): string | null {
+    if (!machineId) return null;
+    return machines.find((m) => m.id === machineId)?.name ?? null;
+  }
+
+  // Members not yet assigned
+  const unassignedMembers = members.filter(
+    (m) => !assignments.some((a) => a.profile_id === m.profiles.id)
+  );
+
+  /* ── Render ────────────────────────────────────────── */
+
+  if (loading) {
+    return (
+      <div style={centeredStyle}>
+        <div style={spinnerStyle} />
+        <p style={{ color: '#999', marginTop: 16, fontSize: 15 }}>Loading program...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (error || !program) {
+    return (
+      <div style={centeredStyle}>
+        <p style={{ color: '#e53935', fontSize: 15 }}>
+          {error ?? 'Program not found.'}
+        </p>
+        <Link href="/programs" style={{ color: '#4fc3f7', marginTop: 12, fontSize: 14 }}>
+          Back to Programs
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Back link */}
+      <Link href="/programs" style={backLinkStyle}>
+        &larr; Back to Programs
+      </Link>
+
+      {/* ── Program Header ─────────────────────────────── */}
+      <div style={sectionCardStyle}>
+        {/* Name */}
+        {editingName ? (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+            <input
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              style={{ ...inputStyle, fontSize: 22, fontWeight: 700, flex: 1 }}
+              autoFocus
+            />
+            <button onClick={saveName} style={smallBtnPrimary}>Save</button>
+            <button onClick={() => { setEditingName(false); setNameValue(program.name); }} style={smallBtnSecondary}>Cancel</button>
+          </div>
+        ) : (
+          <h1
+            style={{ fontSize: 24, fontWeight: 700, margin: '0 0 4px', color: '#1a1a2e', cursor: 'pointer' }}
+            onClick={() => setEditingName(true)}
+            title="Click to edit"
+          >
+            {program.name}
+          </h1>
+        )}
+
+        {/* Description */}
+        {editingDesc ? (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <textarea
+              value={descValue}
+              onChange={(e) => setDescValue(e.target.value)}
+              style={{ ...inputStyle, flex: 1, minHeight: 60, resize: 'vertical' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <button onClick={saveDescription} style={smallBtnPrimary}>Save</button>
+              <button onClick={() => { setEditingDesc(false); setDescValue(program.description ?? ''); }} style={smallBtnSecondary}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <p
+            style={{ color: '#666', margin: 0, cursor: 'pointer', fontSize: 14, lineHeight: 1.5 }}
+            onClick={() => setEditingDesc(true)}
+            title="Click to edit"
+          >
+            {program.description || 'No description. Click to add one.'}
+          </p>
+        )}
+      </div>
+
+      {/* ── Days Section ───────────────────────────────── */}
+      <div style={{ marginTop: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 style={sectionTitleStyle}>Days</h2>
+        </div>
+
+        {program.program_days.length === 0 && (
+          <p style={{ color: '#999', fontSize: 14, marginBottom: 16 }}>
+            No days added yet. Add your first training day below.
+          </p>
+        )}
+
+        {program.program_days.map((day) => {
+          const isExpanded = expandedDays.has(day.id);
+          const form = getExerciseForm(day.id);
+
+          return (
+            <div key={day.id} style={dayCardStyle}>
+              {/* Day header */}
+              <div
+                style={dayHeaderStyle}
+                onClick={() => toggleDay(day.id)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 12, color: '#999', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
+                    &#9654;
+                  </span>
+                  <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 15 }}>
+                    Day {day.day_number}: {day.name}
+                  </span>
+                </div>
+                <span style={{ fontSize: 13, color: '#888' }}>
+                  {day.program_exercises.length}{' '}
+                  {day.program_exercises.length === 1 ? 'exercise' : 'exercises'}
+                </span>
+              </div>
+
+              {/* Exercises list */}
+              {isExpanded && (
+                <div style={{ padding: '0 16px 16px' }}>
+                  {day.program_exercises.length === 0 ? (
+                    <p style={{ color: '#999', fontSize: 13, margin: '12px 0' }}>
+                      No exercises yet for this day.
+                    </p>
+                  ) : (
+                    <div style={{ marginTop: 8 }}>
+                      {day.program_exercises.map((ex, idx) => (
+                        <div key={ex.id} style={exerciseRowStyle}>
+                          <span style={{ color: '#aaa', fontSize: 13, minWidth: 24 }}>
+                            {idx + 1}.
+                          </span>
+                          <span style={{ fontWeight: 500, color: '#1a1a2e', fontSize: 14, flex: 1 }}>
+                            {ex.exercise_name}
+                          </span>
+                          {machineName(ex.machine_id) && (
+                            <span style={machineTagStyle}>
+                              {machineName(ex.machine_id)}
+                            </span>
+                          )}
+                          <span style={{ fontSize: 13, color: '#666', whiteSpace: 'nowrap' }}>
+                            {ex.default_sets} x {ex.default_reps}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add exercise form */}
+                  <div style={addExerciseFormStyle}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', margin: '0 0 10px' }}>
+                      Add Exercise
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}>
+                      <div style={{ flex: '2 1 180px' }}>
+                        <label style={labelStyle}>Exercise Name</label>
+                        <input
+                          value={form.name}
+                          onChange={(e) => updateExerciseForm(day.id, { name: e.target.value })}
+                          placeholder="e.g. Bench Press"
+                          style={inputStyle}
+                        />
+                      </div>
+                      <div style={{ flex: '1 1 140px' }}>
+                        <label style={labelStyle}>Machine (optional)</label>
+                        <select
+                          value={form.machineId}
+                          onChange={(e) => updateExerciseForm(day.id, { machineId: e.target.value })}
+                          style={inputStyle}
+                        >
+                          <option value="">None</option>
+                          {machines.map((m) => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ flex: '0 0 70px' }}>
+                        <label style={labelStyle}>Sets</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={form.sets}
+                          onChange={(e) => updateExerciseForm(day.id, { sets: parseInt(e.target.value) || 1 })}
+                          style={inputStyle}
+                        />
+                      </div>
+                      <div style={{ flex: '0 0 70px' }}>
+                        <label style={labelStyle}>Reps</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={form.reps}
+                          onChange={(e) => updateExerciseForm(day.id, { reps: parseInt(e.target.value) || 1 })}
+                          style={inputStyle}
+                        />
+                      </div>
+                      <button
+                        onClick={() => addExercise(day.id)}
+                        disabled={!form.name.trim()}
+                        style={{
+                          ...smallBtnPrimary,
+                          alignSelf: 'flex-end',
+                          opacity: form.name.trim() ? 1 : 0.5,
+                          cursor: form.name.trim() ? 'pointer' : 'not-allowed',
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Add day form */}
+        <form onSubmit={addDay} style={addDayFormStyle}>
+          <input
+            value={newDayName}
+            onChange={(e) => setNewDayName(e.target.value)}
+            placeholder="New day name (e.g. Upper Body)"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            type="submit"
+            disabled={!newDayName.trim() || addingDay}
+            style={{
+              ...smallBtnPrimary,
+              opacity: newDayName.trim() && !addingDay ? 1 : 0.5,
+              cursor: newDayName.trim() && !addingDay ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {addingDay ? 'Adding...' : '+ Add Day'}
+          </button>
+        </form>
+      </div>
+
+      {/* ── Assignments Section ────────────────────────── */}
+      <div style={{ marginTop: 32 }}>
+        <h2 style={sectionTitleStyle}>Assigned Members</h2>
+
+        {assignments.length === 0 ? (
+          <p style={{ color: '#999', fontSize: 14, marginBottom: 16 }}>
+            No members assigned to this program yet.
+          </p>
+        ) : (
+          <div style={sectionCardStyle}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Email</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((a) => (
+                  <tr key={a.id}>
+                    <td style={tdStyle}>{a.profiles.full_name}</td>
+                    <td style={tdStyle}>{a.profiles.email}</td>
+                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                      <button
+                        onClick={() => removeAssignment(a.id)}
+                        style={removeBtnStyle}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Assign member */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+          <select
+            value={assignMemberId}
+            onChange={(e) => setAssignMemberId(e.target.value)}
+            style={{ ...inputStyle, flex: 1, maxWidth: 320 }}
+          >
+            <option value="">Select a member to assign...</option>
+            {unassignedMembers.map((m) => (
+              <option key={m.profiles.id} value={m.profiles.id}>
+                {m.profiles.full_name} ({m.profiles.email})
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={assignMember}
+            disabled={!assignMemberId}
+            style={{
+              ...smallBtnPrimary,
+              opacity: assignMemberId ? 1 : 0.5,
+              cursor: assignMemberId ? 'pointer' : 'not-allowed',
+            }}
+          >
+            Assign
+          </button>
+        </div>
+        {unassignedMembers.length === 0 && members.length > 0 && (
+          <p style={{ color: '#999', fontSize: 13, marginTop: 8 }}>
+            All members are already assigned to this program.
+          </p>
+        )}
+      </div>
+
+      {/* Spinner animation */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+/* ── Styles ─────────────────────────────────────────────── */
+
+const centeredStyle: CSSProperties = {
+  backgroundColor: '#ffffff',
+  borderRadius: 8,
+  padding: 40,
+  textAlign: 'center',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+};
+
+const spinnerStyle: CSSProperties = {
+  width: 32,
+  height: 32,
+  border: '3px solid #e0e0e0',
+  borderTopColor: '#4fc3f7',
+  borderRadius: '50%',
+  animation: 'spin 0.8s linear infinite',
+};
+
+const backLinkStyle: CSSProperties = {
+  display: 'inline-block',
+  marginBottom: 20,
+  color: '#4fc3f7',
+  textDecoration: 'none',
+  fontSize: 14,
+  fontWeight: 500,
+};
+
+const sectionCardStyle: CSSProperties = {
+  backgroundColor: '#ffffff',
+  borderRadius: 8,
+  padding: 24,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+};
+
+const sectionTitleStyle: CSSProperties = {
+  fontSize: 18,
+  fontWeight: 600,
+  color: '#1a1a2e',
+  margin: '0 0 12px',
+};
+
+const inputStyle: CSSProperties = {
+  width: '100%',
+  padding: '8px 12px',
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  fontSize: 14,
+  outline: 'none',
+  boxSizing: 'border-box',
+  fontFamily: 'inherit',
+};
+
+const labelStyle: CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 500,
+  color: '#666',
+  marginBottom: 4,
+};
+
+const smallBtnPrimary: CSSProperties = {
+  padding: '8px 16px',
+  backgroundColor: '#4fc3f7',
+  color: '#ffffff',
+  border: 'none',
+  borderRadius: 6,
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+};
+
+const smallBtnSecondary: CSSProperties = {
+  padding: '8px 16px',
+  backgroundColor: '#f0f0f0',
+  color: '#333',
+  border: 'none',
+  borderRadius: 6,
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+};
+
+const dayCardStyle: CSSProperties = {
+  backgroundColor: '#ffffff',
+  border: '1px solid #e8e8e8',
+  borderRadius: 8,
+  marginBottom: 12,
+  overflow: 'hidden',
+};
+
+const dayHeaderStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '14px 16px',
+  cursor: 'pointer',
+  userSelect: 'none',
+  backgroundColor: '#fafafa',
+};
+
+const exerciseRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '10px 0',
+  borderBottom: '1px solid #f0f0f0',
+};
+
+const machineTagStyle: CSSProperties = {
+  fontSize: 12,
+  color: '#4fc3f7',
+  backgroundColor: 'rgba(79,195,247,0.1)',
+  padding: '2px 8px',
+  borderRadius: 4,
+  fontWeight: 500,
+};
+
+const addExerciseFormStyle: CSSProperties = {
+  marginTop: 16,
+  paddingTop: 16,
+  borderTop: '1px dashed #e0e0e0',
+};
+
+const addDayFormStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  marginTop: 8,
+};
+
+const tableStyle: CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+};
+
+const thStyle: CSSProperties = {
+  textAlign: 'left',
+  padding: '10px 12px',
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#888',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  borderBottom: '1px solid #eee',
+};
+
+const tdStyle: CSSProperties = {
+  padding: '12px',
+  fontSize: 14,
+  color: '#333',
+  borderBottom: '1px solid #f5f5f5',
+};
+
+const removeBtnStyle: CSSProperties = {
+  padding: '4px 12px',
+  backgroundColor: 'transparent',
+  color: '#e53935',
+  border: '1px solid #e53935',
+  borderRadius: 4,
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+};

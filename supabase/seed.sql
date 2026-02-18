@@ -32,7 +32,7 @@ INSERT INTO gym_members (gym_id, profile_id, role) VALUES
 
 -- ─── MACHINES ───────────────────────────────────────────────
 
-INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety_cues) VALUES
+INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety_cues, common_mistakes, cue_version, cue_source) VALUES
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'Chest Press Machine',
@@ -49,7 +49,16 @@ INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety
       'Keep your back pressed against the pad throughout the movement',
       'Start with a lighter weight to warm up',
       'Stop immediately if you feel sharp pain in your shoulders'
-    ]
+    ],
+    ARRAY[
+      'Flaring elbows too wide — keep elbows at ~45 degrees to protect shoulders.',
+      'Arching lower back excessively — maintain contact with the pad.',
+      'Using momentum instead of controlled movement.',
+      'Locking out joints at the top — keep a slight bend.',
+      'Gripping the handles too tightly — relax your grip.'
+    ],
+    1,
+    'manual'
   ),
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
@@ -67,5 +76,19 @@ INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety
       'Avoid using momentum or swinging your body',
       'Control the weight on the way up — do not let it slam',
       'Keep your core engaged throughout the movement'
-    ]
+    ],
+    ARRAY[
+      'Using momentum or swinging the body — initiate the pull with your back.',
+      'Shrugging shoulders up — depress shoulder blades before pulling.',
+      'Pulling with biceps only — focus on squeezing the back.',
+      'Not achieving full range of motion.',
+      'Leaning too far back on the pulldown — maintain a slight lean only.'
+    ],
+    1,
+    'manual'
   );
+
+-- ─── FEATURE FLAGS (Phase 2.5) ─────────────────────────────
+
+INSERT INTO feature_flags (gym_id, profile_id, key, enabled) VALUES
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', NULL, 'ai_assist_enabled', true);

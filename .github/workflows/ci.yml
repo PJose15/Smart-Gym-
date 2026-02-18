@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   lint-and-typecheck:
@@ -44,6 +44,7 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+<<<<<<< HEAD
   test-and-build:
     runs-on: ubuntu-latest
     needs: lint-and-typecheck
@@ -80,3 +81,7 @@ jobs:
 
       - name: Build Web Application
         run: pnpm build:web
+=======
+      - name: Test
+        run: pnpm --filter @smartgym/ai-assist test
+>>>>>>> e46100ab0614c092d8f0c28a3a13aa75b7113f78

@@ -11,6 +11,9 @@ export interface Machine {
   setup_steps: string[];
   safety_cues: string[];
   image_url: string | null;
+  common_mistakes: string[];
+  cue_version: number;
+  cue_source: string;
   created_at: string;
 }
 
@@ -27,6 +30,14 @@ export interface Gym {
   created_at: string;
 }
 
+export interface GymMember {
+  id: string;
+  gym_id: string;
+  profile_id: string;
+  role: UserRole;
+  joined_at: string;
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -36,14 +47,6 @@ export interface Profile {
 }
 
 export type UserRole = 'owner' | 'trainer' | 'member';
-
-export interface GymMember {
-  id: string;
-  gym_id: string;
-  profile_id: string;
-  role: UserRole;
-  joined_at: string;
-}
 
 // ============================================================================
 // Training / Program Types
@@ -79,10 +82,22 @@ export interface ProgramExercise {
 // Logging Types
 // ============================================================================
 
+export type WorkoutStatus = 'in_progress' | 'completed' | 'cancelled';
+
+export interface MemberProgramAssignment {
+  id: string;
+  gym_id: string;
+  profile_id: string;
+  program_id: string;
+  assigned_by: string;
+  assigned_at: string;
+}
+
 export interface Workout {
   id: string;
   gym_id: string;
   profile_id: string;
+  status: WorkoutStatus;
   started_at: string;
   finished_at: string | null;
 }
@@ -95,14 +110,21 @@ export interface WorkoutExercise {
   order_index: number;
 }
 
-export interface Set {
+export interface WorkoutSet {
   id: string;
   workout_exercise_id: string;
   set_number: number;
   reps: number;
   weight_kg: number;
   rpe: number | null;
+  notes?: string;
   logged_at: string;
+}
+
+// Joined type for exercise with its sets (used in workout UI)
+export interface WorkoutExerciseWithSets extends WorkoutExercise {
+  sets: WorkoutSet[];
+  machine?: Machine;
 }
 
 // ============================================================================
@@ -122,6 +144,94 @@ export interface PointsLedger {
 }
 
 // ============================================================================
+// AI Assist Types
+// ============================================================================
+
+export type ReasonCode =
+  | 'REPEAT_LAST_SET'
+  | 'INCREASE_SMALL'
+  | 'DECREASE_FATIGUE'
+  | 'REPS_ONLY'
+  | 'NEW_MACHINE_BASELINE'
+  | 'INSUFFICIENT_DATA';
+
+export type Confidence = number; // 0–1
+
+export interface NextSetSuggestion {
+  suggested_weight: number | null;
+  suggested_reps: number | null;
+  suggested_rpe: number | null;
+  confidence: Confidence;
+  reason_code: ReasonCode;
+  reason_text: string;
+  safety_note?: string;
+  should_suggest_increase: boolean;
+}
+
+export type PRType = 'PR_WEIGHT' | 'PR_REPS' | 'PR_EST_1RM';
+
+export interface PRDetection {
+  type: PRType;
+  exercise_name: string;
+  machine_id?: string;
+  value: number;
+  previous_value: number | null;
+}
+
+export interface WorkoutInsight {
+  total_sets: number;
+  total_reps: number;
+  total_volume_kg: number;
+  top_exercises_by_volume: Array<{ exercise_name: string; volume: number }>;
+  prs: PRDetection[];
+  volume_change: number | null;   // percentage vs previous session
+  reps_change: number | null;
+  weight_change: number | null;
+  insight_text: string;
+  next_time_suggestion: string;
+}
+
+export interface MachineCues {
+  setup_steps: string[];
+  safety_cues: string[];
+  common_mistakes: string[];
+  cue_version: number;
+  cue_source: string;
+}
+
+export interface FeatureFlag {
+  id: string;
+  gym_id: string | null;
+  profile_id: string | null;
+  key: string;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface AppEvent {
+  id?: string;
+  gym_id?: string | null;
+  profile_id?: string | null;
+  event_name: string;
+  event_props?: Record<string, unknown>;
+  created_at?: string;
+}
+
+export interface AiAuditLog {
+  id?: string;
+  gym_id?: string | null;
+  profile_id?: string | null;
+  context: 'next_set' | 'summary' | 'machine_mistakes';
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  created_at?: string;
+}
+
+export type UserGoal = 'hypertrophy' | 'strength' | 'general';
+
+export type WeightUnit = 'kg' | 'lbs';
+
+// ============================================================================
 // Dashboard / UI Types
 // ============================================================================
 
@@ -130,4 +240,33 @@ export interface DashboardStat {
   value: string | number;
   change?: number; // Percentage change (e.g., 12 for +12%)
   trend?: 'up' | 'down' | 'neutral'; // Trend direction
+}
+
+export interface WorkoutSummary {
+  workout_id: string;
+  total_exercises: number;
+  total_sets: number;
+  total_reps: number;
+  total_volume_kg: number;
+  duration_minutes: number;
+}
+
+// ─── Progress Types ─────────────────────────────────────
+
+export interface ExerciseHistoryEntry {
+  workout_id: string;
+  workout_started_at: string;
+  exercise_name: string;
+  sets: WorkoutSet[];
+  best_set_volume: number; // weight * reps for best set
+}
+
+export interface PersonalRecord {
+  exercise_name: string;
+  machine_id?: string;
+  best_weight_kg: number;
+  best_reps_at_weight: number;
+  best_volume_set: number; // weight * reps
+  estimated_1rm: number;
+  achieved_at: string;
 }

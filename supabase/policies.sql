@@ -258,3 +258,7 @@ CREATE POLICY "points_insert" ON points_ledger
   FOR INSERT WITH CHECK (
     has_gym_role(gym_id, ARRAY['owner', 'trainer']::user_role[])
   );
+
+-- ─── PHASE 2.5 TABLES ────────────────────────────────────
+-- RLS for feature_flags, app_events, and ai_audit_logs
+-- is defined inline in supabase/migrations/003_ai_assist.sql
