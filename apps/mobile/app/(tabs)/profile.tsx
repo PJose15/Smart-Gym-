@@ -11,13 +11,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../src/lib/supabase';
+import { getWeightUnit, saveWeightUnit } from '../../src/lib/weightUnit';
 import { Button, Text, Card } from '../../src/components';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 
-const WEIGHT_UNIT_KEY = 'smartgym_weight_unit';
 
 interface Profile {
   id: string;
@@ -64,10 +63,8 @@ export default function ProfileScreen() {
         email: user.email || '',
       });
 
-      const savedUnit = await AsyncStorage.getItem(WEIGHT_UNIT_KEY);
-      if (savedUnit === 'kg' || savedUnit === 'lbs') {
-        setWeightUnit(savedUnit);
-      }
+      const savedUnit = await getWeightUnit();
+      setWeightUnit(savedUnit);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
     } finally {
@@ -112,7 +109,7 @@ export default function ProfileScreen() {
 
   const handleToggleWeightUnit = async (newUnit: 'kg' | 'lbs') => {
     setWeightUnit(newUnit);
-    await AsyncStorage.setItem(WEIGHT_UNIT_KEY, newUnit);
+    await saveWeightUnit(newUnit);
   };
 
   const handleSignOut = async () => {

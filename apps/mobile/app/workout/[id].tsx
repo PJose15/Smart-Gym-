@@ -23,10 +23,11 @@ import type {
   Machine,
 } from '@smartgym/types';
 import { getNextSetSuggestion } from '@smartgym/ai-assist';
-import type { NextSetSuggestion } from '@smartgym/types';
+import type { NextSetSuggestion, WeightUnit } from '@smartgym/types';
 import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
 import { logAiDecision } from '../../src/lib/aiAudit';
+import { getWeightUnit } from '../../src/lib/weightUnit';
 
 // ─── Helpers ────────────────────────────────────────────
 
@@ -498,6 +499,7 @@ export default function ActiveWorkoutScreen() {
   // AI Assist state
   const [suggestions, setSuggestions] = useState<Record<string, NextSetSuggestion>>({});
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [weightUnit, setWeightUnitState] = useState<WeightUnit>('kg');
 
   // Rest timer state
   const [restTimerRunning, setRestTimerRunning] = useState(false);
@@ -507,12 +509,14 @@ export default function ActiveWorkoutScreen() {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // ─── Initialize feature flags ─────────────────────────
+  // ─── Initialize feature flags + weight unit ──────────
   useEffect(() => {
     const initFlags = async () => {
       try {
         await refreshFeatureFlags();
         setAiEnabled(isFeatureEnabled('ai_assist_enabled'));
+        const unit = await getWeightUnit();
+        setWeightUnitState(unit);
       } catch {
         // Feature flags failed to load; AI assist stays disabled
         setAiEnabled(false);
@@ -591,7 +595,7 @@ export default function ActiveWorkoutScreen() {
         }
 
         // Call the AI suggestion engine
-        const result = await getNextSetSuggestion({ currentSets, previousSets });
+        const result = await getNextSetSuggestion({ currentSets, previousSets, unit: weightUnit });
 
         // Update suggestions state
         setSuggestions((prev) => ({
