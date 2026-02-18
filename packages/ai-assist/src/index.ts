@@ -6,3 +6,4 @@ export { localCache } from './cache/localCache';
 export { generateMachineMistakes } from './generators/machineMistakes';
 export type { LLMProvider } from './providers/llmProvider';
 export { DisabledProvider } from './providers/disabled';
+export { GeminiProvider } from './providers/geminiProvider';

@@ -19,6 +19,15 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@smartgym/types": [
+        "../../packages/types/src"
+      ],
+      "@smartgym/utils": [
+        "../../packages/utils/src"
+      ],
+      "@smartgym/ai-assist": [
+        "../../packages/ai-assist/src"
       ]
     },
     "allowJs": true

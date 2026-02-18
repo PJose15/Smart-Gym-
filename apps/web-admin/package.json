@@ -12,6 +12,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@smartgym/ai-assist": "workspace:*",
     "@smartgym/types": "workspace:*",
     "@smartgym/utils": "workspace:*",
     "@supabase/supabase-js": "^2.47.10",

@@ -3,6 +3,7 @@
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { generateSlug, generateQrSlug } from '@smartgym/utils';
+import { generateMachineMistakes, GeminiProvider } from '@smartgym/ai-assist';
 import { PageHeader } from '../components/PageHeader';
 
 interface MachineRow {
@@ -298,6 +299,19 @@ export default function MachinesPage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
+    // Generate common mistakes via Gemini (falls back to template if key absent)
+    let commonMistakes: string[] = [];
+    try {
+      commonMistakes = await generateMachineMistakes({
+        machineName: formName,
+        targetMuscles,
+        setupSteps,
+        provider: new GeminiProvider(),
+      });
+    } catch {
+      // Non-fatal — machine is created without AI mistakes
+    }
+
     const { error: insertError } = await supabase.from('machines').insert({
       name: formName,
       gym_id: formGymId,
@@ -305,9 +319,9 @@ export default function MachinesPage() {
       target_muscles: targetMuscles,
       setup_steps: setupSteps,
       safety_cues: safetyCues,
-      common_mistakes: [],
+      common_mistakes: commonMistakes,
       cue_version: 1,
-      cue_source: 'admin',
+      cue_source: commonMistakes.length > 0 ? 'gemini' : 'admin',
     });
 
     setSubmitting(false);
