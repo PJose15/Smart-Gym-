@@ -13,6 +13,8 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
 import { getWeightUnit, saveWeightUnit } from '../../src/lib/weightUnit';
+import { getPointsSummary, formatPointsReason } from '../../src/lib/pointsService';
+import type { PointsEntry } from '../../src/lib/pointsService';
 import { Button, Text, Card } from '../../src/components';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
@@ -34,6 +36,9 @@ export default function ProfileScreen() {
   const [nameInput, setNameInput] = useState('');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [error, setError] = useState<string | null>(null);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [pointsEntries, setPointsEntries] = useState<PointsEntry[]>([]);
+  const [gymId, setGymId] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -65,6 +70,25 @@ export default function ProfileScreen() {
 
       const savedUnit = await getWeightUnit();
       setWeightUnit(savedUnit);
+
+      // Load points ledger
+      const { data: memberData } = await supabase
+        .from('gym_members')
+        .select('gym_id')
+        .eq('profile_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (memberData?.gym_id) {
+        setGymId(memberData.gym_id);
+        try {
+          const summary = await getPointsSummary(user.id, memberData.gym_id);
+          setTotalPoints(summary.total);
+          setPointsEntries(summary.entries.slice(0, 5));
+        } catch {
+          // Points are non-critical — ignore errors
+        }
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
     } finally {
@@ -269,6 +293,32 @@ export default function ProfileScreen() {
         </Card>
       </View>
 
+      {gymId && (
+        <View style={styles.section}>
+          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Points</Text>
+          <Card style={styles.card}>
+            <View style={styles.pointsHeader}>
+              <Text variant="heading" style={styles.pointsTotal}>{totalPoints.toLocaleString()}</Text>
+              <Text variant="caption" color="textSecondary">total points</Text>
+            </View>
+            {pointsEntries.length > 0 ? (
+              pointsEntries.map((entry) => (
+                <View key={entry.id} style={styles.pointsRow}>
+                  <Text variant="body" style={styles.pointsReason}>
+                    {formatPointsReason(entry.reason)}
+                  </Text>
+                  <Text variant="label" color="primary">+{entry.points}</Text>
+                </View>
+              ))
+            ) : (
+              <Text variant="caption" color="textSecondary" style={styles.pointsEmpty}>
+                Complete workouts to earn points!
+              </Text>
+            )}
+          </Card>
+        </View>
+      )}
+
       <View style={styles.section}>
         <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Account</Text>
         <Button
@@ -422,5 +472,34 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.error,
     textAlign: 'center',
+  },
+  pointsHeader: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pointsTotal: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: colors.primary,
+    lineHeight: 44,
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pointsReason: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  pointsEmpty: {
+    textAlign: 'center',
+    paddingVertical: spacing.md,
   },
 });

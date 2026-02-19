@@ -25,6 +25,7 @@ import {
   refreshFeatureFlags,
   needsRefresh,
 } from '../../../src/lib/featureFlags';
+import { awardPoints } from '../../../src/lib/pointsService';
 
 function computeSummary(
   workout: Workout,
@@ -172,6 +173,19 @@ export default function WorkoutCompleteScreen() {
 
       const exercises = (exercisesData ?? []) as WorkoutExerciseWithSets[];
       setSummary(computeSummary(workout, exercises));
+
+      // Auto-award points for completing a workout
+      try {
+        await awardPoints({
+          profileId: workout.profile_id,
+          gymId: workout.gym_id,
+          points: 50,
+          reason: 'workout_completed',
+          referenceId: workoutId,
+        });
+      } catch {
+        // Non-fatal — points award failure shouldn't break the summary
+      }
 
       // Track workout finished event
       trackEvent('workout_finished', { workout_id: workoutId });
@@ -390,21 +404,21 @@ export default function WorkoutCompleteScreen() {
           {/* Volume / Reps Change Comparison Badges */}
           {(insight.volume_change != null ||
             insight.reps_change != null) && (
-            <View style={styles.comparisonRow}>
-              {insight.volume_change != null && (
-                <ComparisonBadge
-                  label="Volume"
-                  changePercent={insight.volume_change}
-                />
-              )}
-              {insight.reps_change != null && (
-                <ComparisonBadge
-                  label="Reps"
-                  changePercent={insight.reps_change}
-                />
-              )}
-            </View>
-          )}
+              <View style={styles.comparisonRow}>
+                {insight.volume_change != null && (
+                  <ComparisonBadge
+                    label="Volume"
+                    changePercent={insight.volume_change}
+                  />
+                )}
+                {insight.reps_change != null && (
+                  <ComparisonBadge
+                    label="Reps"
+                    changePercent={insight.reps_change}
+                  />
+                )}
+              </View>
+            )}
 
           {/* Top Exercises by Volume */}
           {topExercises.length > 0 && (
