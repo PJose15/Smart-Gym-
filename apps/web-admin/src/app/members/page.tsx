@@ -4,18 +4,34 @@ import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '../components/PageHeader';
 
+// ─── Types ───────────────────────────────────────────────
+
 interface MemberRow {
   id: string;
   role: string;
   joined_at: string;
   gym_id: string;
-  profiles: { email: string; full_name: string } | null;
+  profile_id: string;
+  profiles: { id: string; email: string; full_name: string } | null;
   gyms: { name: string } | null;
 }
 
 interface GymOption {
   id: string;
   name: string;
+}
+
+interface ProgramOption {
+  id: string;
+  name: string;
+  gym_id: string;
+}
+
+interface AssignmentRow {
+  id: string;
+  profile_id: string;
+  program_id: string;
+  programs: { name: string } | null;
 }
 
 // ─── Styles ─────────────────────────────────────────────
@@ -138,6 +154,7 @@ const tdStyle: CSSProperties = {
   padding: '12px 16px',
   borderBottom: '1px solid #f0f0f0',
   color: '#333',
+  verticalAlign: 'middle',
 };
 
 const roleBadgeBase: CSSProperties = {
@@ -146,6 +163,50 @@ const roleBadgeBase: CSSProperties = {
   borderRadius: 12,
   fontSize: 12,
   fontWeight: 600,
+};
+
+const programBadgeStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '3px 10px',
+  borderRadius: 12,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: 'rgba(79,195,247,0.12)',
+  color: '#0288d1',
+  marginRight: 8,
+};
+
+const assignSelectStyle: CSSProperties = {
+  padding: '5px 8px',
+  fontSize: 13,
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  outline: 'none',
+  backgroundColor: '#fff',
+  marginRight: 6,
+  maxWidth: 180,
+};
+
+const assignBtnStyle: CSSProperties = {
+  padding: '5px 12px',
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#fff',
+  backgroundColor: '#4fc3f7',
+  border: 'none',
+  borderRadius: 5,
+  cursor: 'pointer',
+};
+
+const removeProgramBtnStyle: CSSProperties = {
+  padding: '4px 10px',
+  fontSize: 12,
+  fontWeight: 500,
+  color: '#e53935',
+  backgroundColor: 'transparent',
+  border: '1px solid #e53935',
+  borderRadius: 5,
+  cursor: 'pointer',
 };
 
 const errorBoxStyle: CSSProperties = {
@@ -180,50 +241,53 @@ const emptyStyle: CSSProperties = {
   fontSize: 15,
 };
 
+// ─── Helpers ─────────────────────────────────────────────
+
 function getRoleBadgeStyle(role: string): CSSProperties {
-  if (role === 'owner') {
-    return { ...roleBadgeBase, backgroundColor: '#f3e5f5', color: '#7b1fa2' };
-  }
-  if (role === 'trainer') {
-    return { ...roleBadgeBase, backgroundColor: '#e3f2fd', color: '#1565c0' };
-  }
+  if (role === 'owner') return { ...roleBadgeBase, backgroundColor: '#f3e5f5', color: '#7b1fa2' };
+  if (role === 'trainer') return { ...roleBadgeBase, backgroundColor: '#e3f2fd', color: '#1565c0' };
   return { ...roleBadgeBase, backgroundColor: '#e8f5e9', color: '#2e7d32' };
 }
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 }
 
+// ─── Component ────────────────────────────────────────────
+
 export default function MembersPage() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [gyms, setGyms] = useState<GymOption[]>([]);
+  const [programs, setPrograms] = useState<ProgramOption[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form state
+  // Per-row select state: memberId → selected programId
+  const [pendingAssign, setPendingAssign] = useState<Record<string, string>>({});
+
+  // Add-member form state
   const [formEmail, setFormEmail] = useState('');
   const [formGymId, setFormGymId] = useState('');
   const [formRole, setFormRole] = useState('member');
+
+  // ── Fetches ──────────────────────────────────────────
 
   async function fetchMembers() {
     try {
       const { data, error: fetchError } = await supabase
         .from('gym_members')
-        .select('id, role, joined_at, gym_id, profiles(email, full_name), gyms(name)')
+        .select('id, role, joined_at, gym_id, profile_id, profiles:profile_id(id, email, full_name), gyms(name)')
         .order('joined_at', { ascending: false });
-
-      if (fetchError) {
-        setError(fetchError.message);
-        return;
-      }
-
+      if (fetchError) { setError(fetchError.message); return; }
       setMembers((data as unknown as MemberRow[]) ?? []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load members');
@@ -231,21 +295,34 @@ export default function MembersPage() {
   }
 
   async function fetchGyms() {
-    const { data } = await supabase
-      .from('gyms')
-      .select('id, name')
-      .order('name', { ascending: true });
+    const { data } = await supabase.from('gyms').select('id, name').order('name');
     setGyms((data as GymOption[]) ?? []);
+  }
+
+  async function fetchPrograms() {
+    const { data } = await supabase.from('programs').select('id, name, gym_id').order('name');
+    setPrograms((data as ProgramOption[]) ?? []);
+  }
+
+  async function fetchAssignments() {
+    const { data } = await supabase
+      .from('member_program_assignments')
+      .select('id, profile_id, program_id, programs:program_id(name)');
+    setAssignments((data as unknown as AssignmentRow[]) ?? []);
   }
 
   useEffect(() => {
     async function init() {
       setLoading(true);
-      await Promise.all([fetchMembers(), fetchGyms()]);
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id ?? null);
+      await Promise.all([fetchMembers(), fetchGyms(), fetchPrograms(), fetchAssignments()]);
       setLoading(false);
     }
     init();
   }, []);
+
+  // ── Add-member form ───────────────────────────────────
 
   function resetForm() {
     setFormEmail('');
@@ -267,10 +344,7 @@ export default function MembersPage() {
       .single();
 
     if (profileError || !profileData) {
-      setError(
-        profileError?.message ??
-        `No profile found for email "${formEmail}". The user must sign up first.`
-      );
+      setError(profileError?.message ?? `No profile found for "${formEmail}". The user must sign up first.`);
       setSubmitting(false);
       return;
     }
@@ -282,27 +356,60 @@ export default function MembersPage() {
     });
 
     setSubmitting(false);
-
-    if (insertError) {
-      setError(insertError.message);
-      return;
-    }
-
+    if (insertError) { setError(insertError.message); return; }
     resetForm();
     await fetchMembers();
   }
 
+  // ── Program assignment mutations ──────────────────────
+
+  async function handleAssign(member: MemberRow) {
+    const programId = pendingAssign[member.id];
+    if (!programId || !currentUserId) return;
+
+    const { data, error: err } = await supabase
+      .from('member_program_assignments')
+      .insert({
+        gym_id: member.gym_id,
+        profile_id: member.profile_id,
+        program_id: programId,
+        assigned_by: currentUserId,
+      })
+      .select('id, profile_id, program_id, programs:program_id(name)')
+      .single();
+
+    if (err) { setError(err.message); return; }
+    setAssignments((prev) => [...prev, data as unknown as AssignmentRow]);
+    setPendingAssign((prev) => { const next = { ...prev }; delete next[member.id]; return next; });
+  }
+
+  async function handleRemoveAssignment(assignmentId: string) {
+    const { error: err } = await supabase
+      .from('member_program_assignments')
+      .delete()
+      .eq('id', assignmentId);
+    if (err) { setError(err.message); return; }
+    setAssignments((prev) => prev.filter((a) => a.id !== assignmentId));
+  }
+
+  // ── Derived helpers ───────────────────────────────────
+
+  function getAssignment(profileId: string): AssignmentRow | undefined {
+    return assignments.find((a) => a.profile_id === profileId);
+  }
+
+  function programsForGym(gymId: string): ProgramOption[] {
+    return programs.filter((p) => p.gym_id === gymId);
+  }
+
+  // ── Render ────────────────────────────────────────────
+
   if (loading) {
     return (
       <div style={{ padding: '24px' }}>
-        <PageHeader
-          title="Members"
-          description="View and manage gym members, track membership status, and review activity history."
-        />
+        <PageHeader title="Members" description="View and manage gym members and their assigned programs." />
         <style>{`@keyframes members-spin { to { transform: rotate(360deg); } }`}</style>
-        <div style={loadingContainerStyle}>
-          <div style={spinnerStyle} />
-        </div>
+        <div style={loadingContainerStyle}><div style={spinnerStyle} /></div>
       </div>
     );
   }
@@ -310,10 +417,11 @@ export default function MembersPage() {
   return (
     <div style={{ padding: '24px' }}>
       <style>{`@keyframes members-spin { to { transform: rotate(360deg); } }`}</style>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <PageHeader
           title="Members"
-          description="View and manage gym members, track membership status, and review activity history."
+          description="View and manage gym members and their assigned programs."
         />
         <button style={addButtonStyle} onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancel' : 'Add Member'}
@@ -322,15 +430,14 @@ export default function MembersPage() {
 
       {error && <div style={errorBoxStyle}>{error}</div>}
 
+      {/* ── Add-member form ── */}
       {showForm && (
         <div style={formContainerStyle}>
           <h3 style={formTitleStyle}>Add New Member</h3>
           <form onSubmit={handleAdd}>
             <div style={formGridStyle}>
               <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="member-email">
-                  Email
-                </label>
+                <label style={labelStyle} htmlFor="member-email">Email</label>
                 <input
                   id="member-email"
                   type="email"
@@ -342,9 +449,7 @@ export default function MembersPage() {
                 />
               </div>
               <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="member-gym">
-                  Gym
-                </label>
+                <label style={labelStyle} htmlFor="member-gym">Gym</label>
                 <select
                   id="member-gym"
                   style={selectStyle}
@@ -353,17 +458,11 @@ export default function MembersPage() {
                   required
                 >
                   <option value="">Select a gym...</option>
-                  {gyms.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
+                  {gyms.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
               </div>
               <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="member-role">
-                  Role
-                </label>
+                <label style={labelStyle} htmlFor="member-role">Role</label>
                 <select
                   id="member-role"
                   style={selectStyle}
@@ -381,14 +480,13 @@ export default function MembersPage() {
               <button type="submit" style={submitButtonStyle} disabled={submitting}>
                 {submitting ? 'Adding...' : 'Add Member'}
               </button>
-              <button type="button" style={cancelButtonStyle} onClick={resetForm}>
-                Cancel
-              </button>
+              <button type="button" style={cancelButtonStyle} onClick={resetForm}>Cancel</button>
             </div>
           </form>
         </div>
       )}
 
+      {/* ── Members table ── */}
       <div style={tableContainerStyle}>
         {members.length === 0 ? (
           <p style={emptyStyle}>No members found. Add your first member above.</p>
@@ -401,22 +499,70 @@ export default function MembersPage() {
                 <th style={thStyle}>Gym</th>
                 <th style={thStyle}>Role</th>
                 <th style={thStyle}>Joined</th>
+                <th style={thStyle}>Program</th>
               </tr>
             </thead>
             <tbody>
-              {members.map((m) => (
-                <tr key={m.id}>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>
-                    {m.profiles?.full_name ?? 'Unknown'}
-                  </td>
-                  <td style={tdStyle}>{m.profiles?.email ?? '--'}</td>
-                  <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
-                  <td style={tdStyle}>
-                    <span style={getRoleBadgeStyle(m.role)}>{m.role}</span>
-                  </td>
-                  <td style={tdStyle}>{formatDate(m.joined_at)}</td>
-                </tr>
-              ))}
+              {members.map((m) => {
+                const profileId = m.profiles?.id ?? m.profile_id;
+                const assignment = getAssignment(profileId);
+                const gymPrograms = programsForGym(m.gym_id);
+                const selectedProgramId = pendingAssign[m.id] ?? '';
+
+                return (
+                  <tr key={m.id}>
+                    <td style={{ ...tdStyle, fontWeight: 600 }}>{m.profiles?.full_name ?? 'Unknown'}</td>
+                    <td style={tdStyle}>{m.profiles?.email ?? '--'}</td>
+                    <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
+                    <td style={tdStyle}><span style={getRoleBadgeStyle(m.role)}>{m.role}</span></td>
+                    <td style={tdStyle}>{formatDate(m.joined_at)}</td>
+                    <td style={tdStyle}>
+                      {assignment ? (
+                        /* Assigned — show badge + Remove */
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={programBadgeStyle}>{assignment.programs?.name ?? 'Program'}</span>
+                          <button
+                            style={removeProgramBtnStyle}
+                            onClick={() => handleRemoveAssignment(assignment.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : gymPrograms.length === 0 ? (
+                        /* No programs in this gym yet */
+                        <span style={{ color: '#bbb', fontSize: 13 }}>No programs</span>
+                      ) : (
+                        /* Not assigned — show inline select + Assign */
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <select
+                            style={assignSelectStyle}
+                            value={selectedProgramId}
+                            onChange={(e) =>
+                              setPendingAssign((prev) => ({ ...prev, [m.id]: e.target.value }))
+                            }
+                          >
+                            <option value="">Select program...</option>
+                            {gymPrograms.map((p) => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                          </select>
+                          <button
+                            style={{
+                              ...assignBtnStyle,
+                              opacity: selectedProgramId ? 1 : 0.45,
+                              cursor: selectedProgramId ? 'pointer' : 'not-allowed',
+                            }}
+                            disabled={!selectedProgramId}
+                            onClick={() => handleAssign(m)}
+                          >
+                            Assign
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
