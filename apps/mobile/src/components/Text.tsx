@@ -1,4 +1,4 @@
-import { Text as RNText, TextStyle, StyleSheet, StyleProp } from 'react-native';
+import { Text as RNText, TextStyle, StyleProp } from 'react-native';
 import { colors } from '../theme/colors';
 
 type TextVariant = 'heading' | 'subheading' | 'body' | 'caption' | 'label';

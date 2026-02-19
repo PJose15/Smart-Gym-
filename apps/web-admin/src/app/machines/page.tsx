@@ -2,7 +2,7 @@
 
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
-import { generateSlug, generateQrSlug } from '@smartgym/utils';
+import { generateQrSlug } from '@smartgym/utils';
 import { generateMachineMistakes, GeminiProvider } from '@smartgym/ai-assist';
 import { PageHeader } from '../components/PageHeader';
 
