@@ -14,6 +14,8 @@ export interface Machine {
   common_mistakes: string[];
   cue_version: number;
   cue_source: string;
+  movement_pattern: string | null;
+  equipment_type: string | null;
   created_at: string;
 }
 
@@ -221,15 +223,39 @@ export interface AiAuditLog {
   id?: string;
   gym_id?: string | null;
   profile_id?: string | null;
-  context: 'next_set' | 'summary' | 'machine_mistakes';
+  context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation';
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
   created_at?: string;
 }
 
-export type UserGoal = 'hypertrophy' | 'strength' | 'general';
+export type UserGoal = 'hypertrophy' | 'strength' | 'endurance' | 'general';
 
 export type WeightUnit = 'kg' | 'lbs';
+
+export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface UserTrainingProfile {
+  id: string;
+  gym_id: string;
+  profile_id: string;
+  goal: UserGoal;
+  experience: ExperienceLevel;
+  units: WeightUnit;
+  preferred_rep_min: number | null;
+  preferred_rep_max: number | null;
+  limitations: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TodayExplanation {
+  day_label: string;
+  exercise_count: number;
+  focus_muscles: string[];
+  reasoning: string;
+  last_workout_gap_text: string | null;
+}
 
 // ============================================================================
 // Dashboard / UI Types

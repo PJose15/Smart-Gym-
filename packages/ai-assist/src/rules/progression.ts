@@ -3,6 +3,7 @@ import type {
   WorkoutSet,
   UserGoal,
   WeightUnit,
+  UserTrainingProfile,
 } from '@smartgym/types';
 import { formatWeight } from '@smartgym/utils';
 
@@ -13,11 +14,20 @@ const FATIGUE_DROP_THRESHOLD = 0.30; // 30% rep drop
 const HIGH_RPE_THRESHOLD = 9;
 const LOW_RPE_THRESHOLD = 8;
 
-// Rep ranges by goal
+// Rep ranges by goal (spec: general = 6-10, endurance = 12-20)
 const REP_RANGES: Record<UserGoal, { min: number; max: number }> = {
   strength: { min: 3, max: 6 },
   hypertrophy: { min: 8, max: 12 },
-  general: { min: 8, max: 12 },
+  endurance: { min: 12, max: 20 },
+  general: { min: 6, max: 10 },
+};
+
+// Human-readable goal labels for reason_text
+const GOAL_LABELS: Record<UserGoal, string> = {
+  strength: 'strength',
+  hypertrophy: 'hypertrophy',
+  endurance: 'endurance',
+  general: 'general fitness',
 };
 
 // Weight increments by unit
@@ -37,14 +47,30 @@ export interface ProgressionInput {
   goal?: UserGoal;
   /** Preferred unit */
   unit?: WeightUnit;
+  /** Optional training profile for preferred rep override */
+  trainingProfile?: Pick<UserTrainingProfile, 'preferred_rep_min' | 'preferred_rep_max'>;
 }
 
 // ─── Engine ─────────────────────────────────────────────
 
 export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion {
-  const { currentSets, previousSets, goal = 'general', unit = 'kg' } = input;
-  const range = REP_RANGES[goal];
+  const {
+    currentSets,
+    previousSets,
+    goal = 'general',
+    unit = 'kg',
+    trainingProfile,
+  } = input;
+
+  // Use preferred rep range if set, otherwise fall back to goal-based range
+  const goalRange = REP_RANGES[goal];
+  const range =
+    trainingProfile?.preferred_rep_min != null && trainingProfile?.preferred_rep_max != null
+      ? { min: trainingProfile.preferred_rep_min, max: trainingProfile.preferred_rep_max }
+      : goalRange;
+
   const inc = WEIGHT_INCREMENTS[unit];
+  const goalLabel = GOAL_LABELS[goal];
 
   // ─── CASE: No data at all ──────────────────────────
   if (currentSets.length === 0 && previousSets.length === 0) {
@@ -54,7 +80,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       suggested_rpe: null,
       confidence: 0.2,
       reason_code: 'INSUFFICIENT_DATA',
-      reason_text: 'No history yet. Log 2 sessions to unlock smarter suggestions.',
+      reason_text: `No history yet — log 2 sessions for ${goalLabel} suggestions.`,
       should_suggest_increase: false,
     };
   }
@@ -71,7 +97,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       suggested_rpe: null,
       confidence: 0.4,
       reason_code: 'REPS_ONLY',
-      reason_text: `No weight recorded. Aim for ${range.min}-${range.max} reps.`,
+      reason_text: `No weight recorded. Aim for ${range.min}-${range.max} reps (${goalLabel}).`,
       should_suggest_increase: false,
     };
   }
@@ -139,7 +165,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
         suggested_rpe: null,
         confidence: computeConfidence(currentSets, previousSets, 'strong'),
         reason_code: 'INCREASE_SMALL',
-        reason_text: `Hit ${range.max} reps on ${setsHittingTopRange.length} sets at ${formatWeight(lastWeight, unit)} — time to go up!`,
+        reason_text: `Hit ${range.max} reps on ${setsHittingTopRange.length} sets at ${formatWeight(lastWeight, unit)} — time to go up for ${goalLabel}!`,
         should_suggest_increase: true,
       };
     }
@@ -153,7 +179,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       suggested_rpe: null,
       confidence: computeConfidence(currentSets, previousSets, 'baseline'),
       reason_code: 'NEW_MACHINE_BASELINE',
-      reason_text: `Based on your last session: ${formatWeight(lastWeight, unit)} x ${lastReps}.`,
+      reason_text: `Based on your last session: ${formatWeight(lastWeight, unit)} x ${lastReps} (${goalLabel}).`,
       should_suggest_increase: false,
     };
   }
@@ -165,7 +191,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
     suggested_rpe: null,
     confidence: computeConfidence(currentSets, previousSets, 'moderate'),
     reason_code: 'REPEAT_LAST_SET',
-    reason_text: `Repeat ${formatWeight(lastWeight, unit)} x ${lastReps} for consistency.`,
+    reason_text: `Repeat ${formatWeight(lastWeight, unit)} x ${lastReps} for ${goalLabel} consistency.`,
     should_suggest_increase: false,
   };
 }

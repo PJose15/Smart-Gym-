@@ -11,14 +11,43 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../src/lib/supabase';
 import { getWeightUnit, saveWeightUnit } from '../../src/lib/weightUnit';
 import { getPointsSummary, formatPointsReason } from '../../src/lib/pointsService';
 import type { PointsEntry } from '../../src/lib/pointsService';
+import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { Button, Text, Card } from '../../src/components';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import type { UserGoal, ExperienceLevel, WeightUnit } from '@smartgym/types';
 
+// ─── Constants ──────────────────────────────────────────
+
+const TRAINING_PROFILE_CACHE_KEY = '@smartgym:training_profile';
+
+const GOAL_OPTIONS: { value: UserGoal; label: string }[] = [
+  { value: 'strength', label: 'Strength' },
+  { value: 'hypertrophy', label: 'Hypertrophy' },
+  { value: 'endurance', label: 'Endurance' },
+  { value: 'general', label: 'General Fitness' },
+];
+
+const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string }[] = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
+];
+
+const LIMITATION_OPTIONS: { value: string; label: string }[] = [
+  { value: 'knee_sensitive', label: 'Knee Sensitive' },
+  { value: 'lower_back_sensitive', label: 'Lower Back Sensitive' },
+  { value: 'shoulder_sensitive', label: 'Shoulder Sensitive' },
+  { value: 'wrist_sensitive', label: 'Wrist Sensitive' },
+  { value: 'neck_sensitive', label: 'Neck Sensitive' },
+];
+
+// ─── Types ──────────────────────────────────────────────
 
 interface Profile {
   id: string;
@@ -26,19 +55,42 @@ interface Profile {
   email: string;
 }
 
+interface TrainingProfileState {
+  goal: UserGoal;
+  experience: ExperienceLevel;
+  units: WeightUnit;
+  preferred_rep_min: string;
+  preferred_rep_max: string;
+  limitations: string[];
+}
+
+const DEFAULT_TRAINING_PROFILE: TrainingProfileState = {
+  goal: 'general',
+  experience: 'beginner',
+  units: 'lbs',
+  preferred_rep_min: '',
+  preferred_rep_max: '',
+  limitations: [],
+};
+
+// ─── Screen ─────────────────────────────────────────────
+
 export default function ProfileScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
+  const [weightUnit, setWeightUnit] = useState<WeightUnit>('kg');
   const [error, setError] = useState<string | null>(null);
   const [totalPoints, setTotalPoints] = useState(0);
   const [pointsEntries, setPointsEntries] = useState<PointsEntry[]>([]);
   const [gymId, setGymId] = useState<string | null>(null);
+  const [trainingProfile, setTrainingProfile] = useState<TrainingProfileState>(DEFAULT_TRAINING_PROFILE);
+  const [showTrainingProfile, setShowTrainingProfile] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -52,6 +104,11 @@ export default function ProfileScreen() {
         setProfile(null);
         setLoading(false);
         return;
+      }
+
+      // Refresh feature flags if stale
+      if (needsRefresh()) {
+        await refreshFeatureFlags();
       }
 
       const { data: profileData, error: profileErr } = await supabase
@@ -88,6 +145,14 @@ export default function ProfileScreen() {
         } catch {
           // Points are non-critical — ignore errors
         }
+
+        // Load training profile (check cache first)
+        const profileEnabled = isFeatureEnabled('training_profile_enabled');
+        setShowTrainingProfile(profileEnabled);
+
+        if (profileEnabled) {
+          await loadTrainingProfile(user.id, memberData.gym_id);
+        }
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -95,6 +160,40 @@ export default function ProfileScreen() {
       setLoading(false);
     }
   }, []);
+
+  const loadTrainingProfile = async (userId: string, currentGymId: string) => {
+    try {
+      // Try local cache first
+      const cached = await AsyncStorage.getItem(TRAINING_PROFILE_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as TrainingProfileState;
+        setTrainingProfile(parsed);
+      }
+
+      // Then fetch from server
+      const { data } = await supabase
+        .from('user_training_profiles')
+        .select('goal, experience, units, preferred_rep_min, preferred_rep_max, limitations')
+        .eq('profile_id', userId)
+        .eq('gym_id', currentGymId)
+        .maybeSingle();
+
+      if (data) {
+        const serverProfile: TrainingProfileState = {
+          goal: data.goal as UserGoal,
+          experience: data.experience as ExperienceLevel,
+          units: data.units as WeightUnit,
+          preferred_rep_min: data.preferred_rep_min?.toString() || '',
+          preferred_rep_max: data.preferred_rep_max?.toString() || '',
+          limitations: data.limitations || [],
+        };
+        setTrainingProfile(serverProfile);
+        await AsyncStorage.setItem(TRAINING_PROFILE_CACHE_KEY, JSON.stringify(serverProfile));
+      }
+    } catch {
+      // Non-critical
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -131,9 +230,84 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleToggleWeightUnit = async (newUnit: 'kg' | 'lbs') => {
+  const handleToggleWeightUnit = async (newUnit: WeightUnit) => {
     setWeightUnit(newUnit);
     await saveWeightUnit(newUnit);
+  };
+
+  const handleSaveTrainingProfile = async () => {
+    if (!profile || !gymId) return;
+
+    // Validate rep range
+    const minStr = trainingProfile.preferred_rep_min.trim();
+    const maxStr = trainingProfile.preferred_rep_max.trim();
+    const hasMin = minStr.length > 0;
+    const hasMax = maxStr.length > 0;
+
+    if (hasMin !== hasMax) {
+      Alert.alert('Invalid Range', 'Both min and max reps must be set, or both left empty.');
+      return;
+    }
+
+    if (hasMin && hasMax) {
+      const min = parseInt(minStr, 10);
+      const max = parseInt(maxStr, 10);
+
+      if (isNaN(min) || isNaN(max) || min < 1 || max > 30 || max < min) {
+        Alert.alert('Invalid Range', 'Rep range must be between 1-30, and min must be <= max.');
+        return;
+      }
+    }
+
+    try {
+      setSavingProfile(true);
+
+      const repMin = hasMin ? parseInt(minStr, 10) : null;
+      const repMax = hasMax ? parseInt(maxStr, 10) : null;
+
+      const { error: upsertErr } = await supabase
+        .from('user_training_profiles')
+        .upsert(
+          {
+            gym_id: gymId,
+            profile_id: profile.id,
+            goal: trainingProfile.goal,
+            experience: trainingProfile.experience,
+            units: trainingProfile.units,
+            preferred_rep_min: repMin,
+            preferred_rep_max: repMax,
+            limitations: trainingProfile.limitations,
+          },
+          { onConflict: 'gym_id,profile_id' },
+        );
+
+      if (upsertErr) throw upsertErr;
+
+      // Update local cache
+      await AsyncStorage.setItem(TRAINING_PROFILE_CACHE_KEY, JSON.stringify(trainingProfile));
+
+      // Also sync weight unit
+      await saveWeightUnit(trainingProfile.units);
+      setWeightUnit(trainingProfile.units);
+
+      Alert.alert('Saved', 'Training profile updated successfully.');
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save training profile.');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const toggleLimitation = (limitation: string) => {
+    setTrainingProfile((prev) => {
+      const has = prev.limitations.includes(limitation);
+      return {
+        ...prev,
+        limitations: has
+          ? prev.limitations.filter((l) => l !== limitation)
+          : [...prev.limitations, limitation],
+      };
+    });
   };
 
   const handleSignOut = async () => {
@@ -143,6 +317,7 @@ export default function ProfileScreen() {
         text: 'Sign Out',
         style: 'destructive',
         onPress: async () => {
+          await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
           await supabase.auth.signOut();
           router.replace('/auth');
         },
@@ -315,6 +490,133 @@ export default function ProfileScreen() {
                 Complete workouts to earn points!
               </Text>
             )}
+          </Card>
+        </View>
+      )}
+
+      {showTrainingProfile && gymId && (
+        <View style={styles.section}>
+          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
+            Training Profile
+          </Text>
+          <Card style={styles.card}>
+            {/* Goal */}
+            <Text variant="caption" color="textSecondary" style={styles.fieldLabel}>Goal</Text>
+            <View style={styles.chipRow}>
+              {GOAL_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.chip, trainingProfile.goal === opt.value && styles.chipActive]}
+                  onPress={() => setTrainingProfile((p) => ({ ...p, goal: opt.value }))}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      trainingProfile.goal === opt.value && styles.chipTextActive,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Experience */}
+            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+              Experience
+            </Text>
+            <View style={styles.chipRow}>
+              {EXPERIENCE_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.chip, trainingProfile.experience === opt.value && styles.chipActive]}
+                  onPress={() => setTrainingProfile((p) => ({ ...p, experience: opt.value }))}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      trainingProfile.experience === opt.value && styles.chipTextActive,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Units */}
+            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+              Units
+            </Text>
+            <View style={styles.chipRow}>
+              {(['kg', 'lbs'] as WeightUnit[]).map((u) => (
+                <TouchableOpacity
+                  key={u}
+                  style={[styles.chip, trainingProfile.units === u && styles.chipActive]}
+                  onPress={() => setTrainingProfile((p) => ({ ...p, units: u }))}
+                >
+                  <Text
+                    style={[styles.chipText, trainingProfile.units === u && styles.chipTextActive]}
+                  >
+                    {u}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Rep Range */}
+            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+              Preferred Rep Range (optional)
+            </Text>
+            <View style={styles.repRangeRow}>
+              <TextInput
+                style={styles.repInput}
+                value={trainingProfile.preferred_rep_min}
+                onChangeText={(v) => setTrainingProfile((p) => ({ ...p, preferred_rep_min: v }))}
+                placeholder="Min"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              <Text variant="body" color="textSecondary"> - </Text>
+              <TextInput
+                style={styles.repInput}
+                value={trainingProfile.preferred_rep_max}
+                onChangeText={(v) => setTrainingProfile((p) => ({ ...p, preferred_rep_max: v }))}
+                placeholder="Max"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+
+            {/* Limitations */}
+            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
+              Limitations
+            </Text>
+            <View style={styles.chipRow}>
+              {LIMITATION_OPTIONS.map((opt) => {
+                const selected = trainingProfile.limitations.includes(opt.value);
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[styles.chip, selected && styles.chipActive]}
+                    onPress={() => toggleLimitation(opt.value)}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextActive]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Button
+              title="Save Training Profile"
+              onPress={handleSaveTrainingProfile}
+              loading={savingProfile}
+              style={{ marginTop: spacing.lg }}
+            />
           </Card>
         </View>
       )}
@@ -501,5 +803,47 @@ const styles = StyleSheet.create({
   pointsEmpty: {
     textAlign: 'center',
     paddingVertical: spacing.md,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  chipTextActive: {
+    color: colors.white,
+  },
+  repRangeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  repInput: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 16,
+    color: colors.text,
+    width: 70,
+    textAlign: 'center',
   },
 });

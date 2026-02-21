@@ -7,3 +7,4 @@ export { generateMachineMistakes } from './generators/machineMistakes';
 export type { LLMProvider } from './providers/llmProvider';
 export { DisabledProvider } from './providers/disabled';
 export { GeminiProvider } from './providers/geminiProvider';
+export { getTodayExplanation } from './rules/todayExplanation';

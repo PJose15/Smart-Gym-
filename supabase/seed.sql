@@ -88,7 +88,14 @@ INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety
     'manual'
   );
 
+-- ─── USER TRAINING PROFILES ──────────────────────────────
+
+INSERT INTO user_training_profiles (gym_id, profile_id, goal, experience, units, limitations) VALUES
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', 'hypertrophy', 'intermediate', 'lbs', ARRAY['knee_sensitive']);
+
 -- ─── FEATURE FLAGS (Phase 2.5) ─────────────────────────────
 
 INSERT INTO feature_flags (gym_id, profile_id, key, enabled) VALUES
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', NULL, 'ai_assist_enabled', true);
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', NULL, 'ai_assist_enabled', true),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', NULL, 'training_profile_enabled', true),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', NULL, 'why_this_today_enabled', true);
