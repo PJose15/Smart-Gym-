@@ -1,10 +1,14 @@
+'use client';
+
 import { CSSProperties } from 'react';
+import { AnimatedNumber } from './AnimatedNumber';
 
 interface StatCardProps {
     title: string;
     value: number;
     change?: number;
     trend?: 'up' | 'down' | 'neutral';
+    index?: number;
 }
 
 const cardStyle: CSSProperties = {
@@ -41,16 +45,21 @@ function getTrendStyle(trend?: 'up' | 'down' | 'neutral'): CSSProperties {
 }
 
 function getTrendArrow(trend?: 'up' | 'down' | 'neutral'): string {
-    if (trend === 'up') return '↑';
-    if (trend === 'down') return '↓';
-    return '→';
+    if (trend === 'up') return '\u2191';
+    if (trend === 'down') return '\u2193';
+    return '\u2192';
 }
 
-export function StatCard({ title, value, change, trend }: StatCardProps) {
+export function StatCard({ title, value, change, trend, index = 0 }: StatCardProps) {
     return (
-        <div style={cardStyle}>
+        <div
+            style={cardStyle}
+            className={`stat-card-animated stat-delay-${index}`}
+        >
             <p style={titleStyle}>{title}</p>
-            <p style={valueStyle}>{value.toLocaleString()}</p>
+            <p style={valueStyle}>
+                <AnimatedNumber value={value} />
+            </p>
             {change !== undefined && (
                 <span style={getTrendStyle(trend)}>
                     {getTrendArrow(trend)} {Math.abs(change)}% vs last period

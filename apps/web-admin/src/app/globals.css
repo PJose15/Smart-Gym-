@@ -1,0 +1,304 @@
+/* ═══════════════════════════════════════════════════════════
+   SmartGym – Global Animation System
+   5 Enhancements: Page Transitions, Stat Counters, Staggered
+   Lists, Sidebar Glow, Button/Form Micro-interactions
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Page Transition: Fade + Slide Up ────────────────── */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: fadeSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── 2. Stat Card Animations ────────────────────────────── */
+
+@keyframes statPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  60% {
+    transform: scale(1.02) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.stat-card-animated {
+  animation: statPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stat-card-animated:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(79, 195, 247, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.stat-delay-0 { animation-delay: 0ms; }
+.stat-delay-1 { animation-delay: 80ms; }
+.stat-delay-2 { animation-delay: 160ms; }
+.stat-delay-3 { animation-delay: 240ms; }
+
+/* ── 3. Staggered Row / Card Cascade ────────────────────── */
+
+@keyframes rowSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.row-stagger {
+  animation: rowSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.card-stagger {
+  animation: cardFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Generate 20 stagger delays */
+.stagger-0  { animation-delay: 0ms; }
+.stagger-1  { animation-delay: 50ms; }
+.stagger-2  { animation-delay: 100ms; }
+.stagger-3  { animation-delay: 150ms; }
+.stagger-4  { animation-delay: 200ms; }
+.stagger-5  { animation-delay: 250ms; }
+.stagger-6  { animation-delay: 300ms; }
+.stagger-7  { animation-delay: 350ms; }
+.stagger-8  { animation-delay: 400ms; }
+.stagger-9  { animation-delay: 450ms; }
+.stagger-10 { animation-delay: 500ms; }
+.stagger-11 { animation-delay: 550ms; }
+.stagger-12 { animation-delay: 600ms; }
+.stagger-13 { animation-delay: 650ms; }
+.stagger-14 { animation-delay: 700ms; }
+.stagger-15 { animation-delay: 750ms; }
+.stagger-16 { animation-delay: 800ms; }
+.stagger-17 { animation-delay: 850ms; }
+.stagger-18 { animation-delay: 900ms; }
+.stagger-19 { animation-delay: 950ms; }
+
+/* ── 4. Sidebar Glow (see sidebar.module.css for specifics) ── */
+
+/* ── 5. Button & Form Micro-interactions ────────────────── */
+
+@keyframes btnRipple {
+  0% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes focusGlow {
+  0% { box-shadow: 0 0 0 0 rgba(79, 195, 247, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(79, 195, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 195, 247, 0); }
+}
+
+/* Primary buttons */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.15s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 195, 247, 0.35);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 4px rgba(79, 195, 247, 0.2);
+}
+
+/* Danger buttons */
+.btn-danger {
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.15s;
+}
+
+.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.25);
+  background-color: #ffebee !important;
+}
+
+.btn-danger:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Secondary / cancel buttons */
+.btn-secondary {
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.15s;
+}
+
+.btn-secondary:hover {
+  background-color: #e8e8e8 !important;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Form inputs */
+.input-animate {
+  transition: border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.input-animate:focus {
+  border-color: #4fc3f7 !important;
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.15);
+}
+
+/* Table row hover */
+.table-row-hover {
+  transition: background-color 0.15s;
+}
+
+.table-row-hover:hover {
+  background-color: #f8fbff;
+}
+
+/* Card hover lift */
+.card-hover-lift {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Form slide-down appearance */
+@keyframes formSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 800px;
+  }
+}
+
+.form-slide-down {
+  animation: formSlideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: hidden;
+}
+
+/* Loading spinner pulse */
+@keyframes spinnerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.spinner-enhanced {
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error banner shake */
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 50%, 90% { transform: translateX(-4px); }
+  30%, 70% { transform: translateX(4px); }
+}
+
+.error-shake {
+  animation: errorShake 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Status badge pulse for "in_progress" */
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+.status-pulse {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+/* Toggle switch enhanced */
+.toggle-enhanced {
+  transition: background-color 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toggle-enhanced:hover {
+  filter: brightness(1.08);
+}
+
+.toggle-knob-enhanced {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Auth page specific */
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-card-enter {
+  animation: authFadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Empty state breathing */
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.empty-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}

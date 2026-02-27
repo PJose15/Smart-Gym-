@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { Gym } from '@smartgym/types';
+import { AnimatedPage } from '../../components/AnimatedPage';
 
 export default function CreateProgramPage() {
   const router = useRouter();
@@ -87,6 +88,7 @@ export default function CreateProgramPage() {
   }
 
   return (
+    <AnimatedPage>
     <div>
       {/* Back link */}
       <Link href="/programs" style={backLinkStyle}>
@@ -103,7 +105,7 @@ export default function CreateProgramPage() {
       {/* Form card */}
       <div style={cardStyle}>
         {error && (
-          <div style={errorBannerStyle}>
+          <div style={errorBannerStyle} className="error-shake">
             {error}
           </div>
         )}
@@ -122,6 +124,7 @@ export default function CreateProgramPage() {
               placeholder="e.g. Beginner Full Body"
               required
               style={inputStyle}
+              className="input-animate"
             />
           </div>
 
@@ -137,6 +140,7 @@ export default function CreateProgramPage() {
               placeholder="Optional description of the program goals, target audience, etc."
               rows={4}
               style={textareaStyle}
+              className="input-animate"
             />
           </div>
 
@@ -160,6 +164,7 @@ export default function CreateProgramPage() {
                 onChange={(e) => setGymId(e.target.value)}
                 required
                 style={inputStyle}
+                className="input-animate"
               >
                 {gyms.map((gym) => (
                   <option key={gym.id} value={gym.id}>
@@ -172,12 +177,13 @@ export default function CreateProgramPage() {
 
           {/* Submit */}
           <div style={buttonRowStyle}>
-            <Link href="/programs" style={cancelButtonStyle}>
+            <Link href="/programs" style={cancelButtonStyle} className="btn-secondary">
               Cancel
             </Link>
             <button
               type="submit"
               disabled={submitting || !name.trim() || !gymId}
+              className="btn-primary"
               style={{
                 ...submitButtonStyle,
                 opacity: submitting || !name.trim() || !gymId ? 0.6 : 1,
@@ -193,6 +199,7 @@ export default function CreateProgramPage() {
         </form>
       </div>
     </div>
+    </AnimatedPage>
   );
 }
 

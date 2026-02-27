@@ -2,6 +2,7 @@
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { AnimatedPage } from '../components/AnimatedPage';
 
 interface FeatureFlagRow {
   id: string;
@@ -113,14 +114,14 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div style={centeredStyle}>
-        <div style={spinnerStyle} />
+        <div style={spinnerStyle} className="spinner-enhanced" />
         <p style={{ color: '#999', marginTop: 16 }}>Loading settings...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   return (
+    <AnimatedPage>
     <div>
       <div style={headerStyle}>
         <h1 style={titleStyle}>Settings</h1>
@@ -128,7 +129,7 @@ export default function SettingsPage() {
       </div>
 
       {error && (
-        <div style={errorBannerStyle}>
+        <div style={errorBannerStyle} className="error-shake">
           <span>{error}</span>
         </div>
       )}
@@ -158,7 +159,7 @@ export default function SettingsPage() {
               </thead>
               <tbody>
                 {gyms.map((gym) => (
-                  <tr key={gym.id}>
+                  <tr key={gym.id} className="table-row-hover">
                     <td style={tdStyle}>
                       <span style={gymNameStyle}>{gym.name}</span>
                     </td>
@@ -171,6 +172,7 @@ export default function SettingsPage() {
                           <button
                             onClick={() => handleToggle(gym.id, flag.key)}
                             disabled={isSaving}
+                            className="toggle-enhanced"
                             style={{
                               ...toggleButtonStyle,
                               backgroundColor: enabled ? '#2a9d8f' : '#dee2e6',
@@ -179,6 +181,7 @@ export default function SettingsPage() {
                             title={flag.description}
                           >
                             <span
+                              className="toggle-knob-enhanced"
                               style={{
                                 ...toggleKnobStyle,
                                 transform: enabled ? 'translateX(20px)' : 'translateX(0)',
@@ -209,6 +212,7 @@ export default function SettingsPage() {
         ))}
       </div>
     </div>
+    </AnimatedPage>
   );
 }
 
@@ -325,7 +329,6 @@ const spinnerStyle: CSSProperties = {
   border: '3px solid #e0e0e0',
   borderTopColor: '#4fc3f7',
   borderRadius: '50%',
-  animation: 'spin 0.8s linear infinite',
 };
 
 const errorBannerStyle: CSSProperties = {

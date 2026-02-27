@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, CSSProperties, FormEvent } from 'reac
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { AnimatedPage } from '../../components/AnimatedPage';
 import type {
   Program,
   ProgramDay,
@@ -287,9 +288,8 @@ export default function ProgramDetailPage() {
   if (loading) {
     return (
       <div style={centeredStyle}>
-        <div style={spinnerStyle} />
+        <div style={spinnerStyle} className="spinner-enhanced" />
         <p style={{ color: '#999', marginTop: 16, fontSize: 15 }}>Loading program...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -308,6 +308,7 @@ export default function ProgramDetailPage() {
   }
 
   return (
+    <AnimatedPage>
     <div>
       {/* Back link */}
       <Link href="/programs" style={backLinkStyle}>
@@ -323,10 +324,11 @@ export default function ProgramDetailPage() {
               value={nameValue}
               onChange={(e) => setNameValue(e.target.value)}
               style={{ ...inputStyle, fontSize: 22, fontWeight: 700, flex: 1 }}
+              className="input-animate"
               autoFocus
             />
-            <button onClick={saveName} style={smallBtnPrimary}>Save</button>
-            <button onClick={() => { setEditingName(false); setNameValue(program.name); }} style={smallBtnSecondary}>Cancel</button>
+            <button onClick={saveName} style={smallBtnPrimary} className="btn-primary">Save</button>
+            <button onClick={() => { setEditingName(false); setNameValue(program.name); }} style={smallBtnSecondary} className="btn-secondary">Cancel</button>
           </div>
         ) : (
           <h1
@@ -345,11 +347,12 @@ export default function ProgramDetailPage() {
               value={descValue}
               onChange={(e) => setDescValue(e.target.value)}
               style={{ ...inputStyle, flex: 1, minHeight: 60, resize: 'vertical' }}
+              className="input-animate"
               autoFocus
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <button onClick={saveDescription} style={smallBtnPrimary}>Save</button>
-              <button onClick={() => { setEditingDesc(false); setDescValue(program.description ?? ''); }} style={smallBtnSecondary}>Cancel</button>
+              <button onClick={saveDescription} style={smallBtnPrimary} className="btn-primary">Save</button>
+              <button onClick={() => { setEditingDesc(false); setDescValue(program.description ?? ''); }} style={smallBtnSecondary} className="btn-secondary">Cancel</button>
             </div>
           </div>
         ) : (
@@ -380,7 +383,7 @@ export default function ProgramDetailPage() {
           const form = getExerciseForm(day.id);
 
           return (
-            <div key={day.id} style={dayCardStyle}>
+            <div key={day.id} style={dayCardStyle} className={`card-stagger stagger-${Math.min(day.day_number - 1, 19)}`}>
               {/* Day header */}
               <div
                 style={dayHeaderStyle}
@@ -539,14 +542,15 @@ export default function ProgramDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {assignments.map((a) => (
-                  <tr key={a.id}>
+                {assignments.map((a, i) => (
+                  <tr key={a.id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
                     <td style={tdStyle}>{a.profiles.full_name}</td>
                     <td style={tdStyle}>{a.profiles.email}</td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
                       <button
                         onClick={() => removeAssignment(a.id)}
                         style={removeBtnStyle}
+                        className="btn-danger"
                       >
                         Remove
                       </button>
@@ -564,6 +568,7 @@ export default function ProgramDetailPage() {
             value={assignMemberId}
             onChange={(e) => setAssignMemberId(e.target.value)}
             style={{ ...inputStyle, flex: 1, maxWidth: 320 }}
+            className="input-animate"
           >
             <option value="">Select a member to assign...</option>
             {unassignedMembers.map((m) => (
@@ -575,6 +580,7 @@ export default function ProgramDetailPage() {
           <button
             onClick={assignMember}
             disabled={!assignMemberId}
+            className="btn-primary"
             style={{
               ...smallBtnPrimary,
               opacity: assignMemberId ? 1 : 0.5,
@@ -591,9 +597,8 @@ export default function ProgramDetailPage() {
         )}
       </div>
 
-      {/* Spinner animation */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
+    </AnimatedPage>
   );
 }
 
@@ -616,7 +621,6 @@ const spinnerStyle: CSSProperties = {
   border: '3px solid #e0e0e0',
   borderTopColor: '#4fc3f7',
   borderRadius: '50%',
-  animation: 'spin 0.8s linear infinite',
 };
 
 const backLinkStyle: CSSProperties = {

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { generateQrSlug } from '@smartgym/utils';
 import { generateMachineMistakes, GeminiProvider } from '@smartgym/ai-assist';
 import { PageHeader } from '../components/PageHeader';
+import { AnimatedPage } from '../components/AnimatedPage';
 
 interface MachineRow {
   id: string;
@@ -205,7 +206,6 @@ const spinnerStyle: CSSProperties = {
   border: '4px solid #e0e0e0',
   borderTopColor: '#4fc3f7',
   borderRadius: '50%',
-  animation: 'machines-spin 0.8s linear infinite',
 };
 
 const emptyStyle: CSSProperties = {
@@ -360,170 +360,176 @@ export default function MachinesPage() {
           title="Machines"
           description="Manage gym machines, monitor status, and configure settings for each piece of equipment."
         />
-        <style>{`@keyframes machines-spin { to { transform: rotate(360deg); } }`}</style>
         <div style={loadingContainerStyle}>
-          <div style={spinnerStyle} />
+          <div style={spinnerStyle} className="spinner-enhanced" />
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <style>{`@keyframes machines-spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-        <PageHeader
-          title="Machines"
-          description="Manage gym machines, monitor status, and configure settings for each piece of equipment."
-        />
-        <button style={addButtonStyle} onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Add Machine'}
-        </button>
-      </div>
+    <AnimatedPage>
+      <div style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <PageHeader
+            title="Machines"
+            description="Manage gym machines, monitor status, and configure settings for each piece of equipment."
+          />
+          <button style={addButtonStyle} className="btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? 'Cancel' : 'Add Machine'}
+          </button>
+        </div>
 
-      {error && <div style={errorBoxStyle}>{error}</div>}
+        {error && <div style={errorBoxStyle} className="error-shake">{error}</div>}
 
-      {showForm && (
-        <div style={formContainerStyle}>
-          <h3 style={formTitleStyle}>Add New Machine</h3>
-          <form onSubmit={handleAdd}>
-            <div style={formGridStyle}>
+        {showForm && (
+          <div style={formContainerStyle} className="form-slide-down">
+            <h3 style={formTitleStyle}>Add New Machine</h3>
+            <form onSubmit={handleAdd}>
+              <div style={formGridStyle}>
+                <div style={fieldStyle}>
+                  <label style={labelStyle} htmlFor="machine-name">
+                    Machine Name
+                  </label>
+                  <input
+                    id="machine-name"
+                    style={inputStyle}
+                    className="input-animate"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="e.g. Lat Pulldown"
+                    required
+                  />
+                </div>
+                <div style={fieldStyle}>
+                  <label style={labelStyle} htmlFor="machine-gym">
+                    Gym
+                  </label>
+                  <select
+                    id="machine-gym"
+                    style={selectStyle}
+                    className="input-animate"
+                    value={formGymId}
+                    onChange={(e) => setFormGymId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a gym...</option>
+                    {gyms.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="machine-name">
-                  Machine Name
+                <label style={labelStyle} htmlFor="machine-muscles">
+                  Target Muscles (comma-separated)
                 </label>
                 <input
-                  id="machine-name"
+                  id="machine-muscles"
                   style={inputStyle}
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Lat Pulldown"
-                  required
+                  className="input-animate"
+                  value={formTargetMuscles}
+                  onChange={(e) => setFormTargetMuscles(e.target.value)}
+                  placeholder="e.g. lats, biceps, upper back"
                 />
               </div>
-              <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="machine-gym">
-                  Gym
-                </label>
-                <select
-                  id="machine-gym"
-                  style={selectStyle}
-                  value={formGymId}
-                  onChange={(e) => setFormGymId(e.target.value)}
-                  required
-                >
-                  <option value="">Select a gym...</option>
-                  {gyms.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
+              <div style={formGridStyle}>
+                <div style={fieldStyle}>
+                  <label style={labelStyle} htmlFor="machine-setup">
+                    Setup Steps (one per line)
+                  </label>
+                  <textarea
+                    id="machine-setup"
+                    style={textareaStyle}
+                    className="input-animate"
+                    value={formSetupSteps}
+                    onChange={(e) => setFormSetupSteps(e.target.value)}
+                    placeholder={"Adjust the seat height\nSet the weight\nGrip the handles"}
+                  />
+                </div>
+                <div style={fieldStyle}>
+                  <label style={labelStyle} htmlFor="machine-safety">
+                    Safety Cues (one per line)
+                  </label>
+                  <textarea
+                    id="machine-safety"
+                    style={textareaStyle}
+                    className="input-animate"
+                    value={formSafetyCues}
+                    onChange={(e) => setFormSafetyCues(e.target.value)}
+                    placeholder={"Keep back straight\nDon't lock elbows\nBreathe steadily"}
+                  />
+                </div>
               </div>
-            </div>
-            <div style={fieldStyle}>
-              <label style={labelStyle} htmlFor="machine-muscles">
-                Target Muscles (comma-separated)
-              </label>
-              <input
-                id="machine-muscles"
-                style={inputStyle}
-                value={formTargetMuscles}
-                onChange={(e) => setFormTargetMuscles(e.target.value)}
-                placeholder="e.g. lats, biceps, upper back"
-              />
-            </div>
-            <div style={formGridStyle}>
-              <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="machine-setup">
-                  Setup Steps (one per line)
-                </label>
-                <textarea
-                  id="machine-setup"
-                  style={textareaStyle}
-                  value={formSetupSteps}
-                  onChange={(e) => setFormSetupSteps(e.target.value)}
-                  placeholder={"Adjust the seat height\nSet the weight\nGrip the handles"}
-                />
+              {formGymId && formName && (
+                <p style={{ fontSize: 13, color: '#888', margin: '0 0 12px' }}>
+                  QR Slug:{' '}
+                  <code style={slugStyle}>
+                    {generateQrSlug(gyms.find((g) => g.id === formGymId)?.slug ?? 'gym', formName)}
+                  </code>
+                </p>
+              )}
+              <div style={formActionsStyle}>
+                <button type="submit" style={submitButtonStyle} className="btn-primary" disabled={submitting}>
+                  {submitting ? 'Adding...' : 'Add Machine'}
+                </button>
+                <button type="button" style={cancelButtonStyle} className="btn-secondary" onClick={resetForm}>
+                  Cancel
+                </button>
               </div>
-              <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="machine-safety">
-                  Safety Cues (one per line)
-                </label>
-                <textarea
-                  id="machine-safety"
-                  style={textareaStyle}
-                  value={formSafetyCues}
-                  onChange={(e) => setFormSafetyCues(e.target.value)}
-                  placeholder={"Keep back straight\nDon't lock elbows\nBreathe steadily"}
-                />
-              </div>
-            </div>
-            {formGymId && formName && (
-              <p style={{ fontSize: 13, color: '#888', margin: '0 0 12px' }}>
-                QR Slug:{' '}
-                <code style={slugStyle}>
-                  {generateQrSlug(gyms.find((g) => g.id === formGymId)?.slug ?? 'gym', formName)}
-                </code>
-              </p>
-            )}
-            <div style={formActionsStyle}>
-              <button type="submit" style={submitButtonStyle} disabled={submitting}>
-                {submitting ? 'Adding...' : 'Add Machine'}
-              </button>
-              <button type="button" style={cancelButtonStyle} onClick={resetForm}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <div style={tableContainerStyle}>
-        {machines.length === 0 ? (
-          <p style={emptyStyle}>No machines found. Add your first machine above.</p>
-        ) : (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Name</th>
-                <th style={thStyle}>Gym</th>
-                <th style={thStyle}>Target Muscles</th>
-                <th style={thStyle}>QR Slug</th>
-                <th style={thStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {machines.map((m) => (
-                <tr key={m.id}>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{m.name}</td>
-                  <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
-                  <td style={tdStyle}>
-                    {m.target_muscles.length > 0
-                      ? m.target_muscles.map((muscle) => (
-                        <span key={muscle} style={tagStyle}>
-                          {muscle}
-                        </span>
-                      ))
-                      : '--'}
-                  </td>
-                  <td style={tdStyle}>
-                    <code style={slugStyle}>{m.qr_slug}</code>
-                  </td>
-                  <td style={tdStyle}>
-                    <button
-                      style={deleteButtonStyle}
-                      onClick={() => handleDelete(m.id, m.name)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            </form>
+          </div>
         )}
+
+        <div style={tableContainerStyle}>
+          {machines.length === 0 ? (
+            <p style={emptyStyle} className="empty-breathe">No machines found. Add your first machine above.</p>
+          ) : (
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Gym</th>
+                  <th style={thStyle}>Target Muscles</th>
+                  <th style={thStyle}>QR Slug</th>
+                  <th style={thStyle}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {machines.map((m, i) => (
+                  <tr key={m.id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
+                    <td style={{ ...tdStyle, fontWeight: 600 }}>{m.name}</td>
+                    <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
+                    <td style={tdStyle}>
+                      {m.target_muscles.length > 0
+                        ? m.target_muscles.map((muscle) => (
+                          <span key={muscle} style={tagStyle}>
+                            {muscle}
+                          </span>
+                        ))
+                        : '--'}
+                    </td>
+                    <td style={tdStyle}>
+                      <code style={slugStyle}>{m.qr_slug}</code>
+                    </td>
+                    <td style={tdStyle}>
+                      <button
+                        style={deleteButtonStyle}
+                        className="btn-danger"
+                        onClick={() => handleDelete(m.id, m.name)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-    </div>
+    </AnimatedPage>
   );
 }

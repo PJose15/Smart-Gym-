@@ -3,6 +3,7 @@
 import { useEffect, useState, CSSProperties } from 'react';
 import styles from './page.module.css';
 import { StatCard } from './components/StatCard';
+import { AnimatedPage } from './components/AnimatedPage';
 import { supabase } from '@/lib/supabase';
 
 interface DashboardMetrics {
@@ -88,7 +89,6 @@ const spinnerStyle: CSSProperties = {
   border: '4px solid #e0e0e0',
   borderTopColor: '#4fc3f7',
   borderRadius: '50%',
-  animation: 'dashboard-spin 0.8s linear infinite',
 };
 
 function getStatusBadgeStyle(status: string): CSSProperties {
@@ -191,9 +191,8 @@ export default function DashboardPage() {
         <p className={styles.description}>
           Overview of gym operations, usage statistics, and key metrics.
         </p>
-        <style>{`@keyframes dashboard-spin { to { transform: rotate(360deg); } }`}</style>
         <div style={loadingContainerStyle}>
-          <div style={spinnerStyle} />
+          <div style={spinnerStyle} className="spinner-enhanced" />
         </div>
       </div>
     );
@@ -206,58 +205,65 @@ export default function DashboardPage() {
         <p className={styles.description}>
           Overview of gym operations, usage statistics, and key metrics.
         </p>
-        <div style={errorBoxStyle}>{error}</div>
+        <div style={errorBoxStyle} className="error-shake">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Dashboard</h1>
-      <p className={styles.description}>
-        Overview of gym operations, usage statistics, and key metrics.
-      </p>
+    <AnimatedPage>
+      <div className={styles.container}>
+        <h1 className={styles.title}>Dashboard</h1>
+        <p className={styles.description}>
+          Overview of gym operations, usage statistics, and key metrics.
+        </p>
 
-      <div className={styles.grid}>
-        <StatCard title="Total Machines" value={metrics.totalMachines ?? 0} change={12} trend="up" />
-        <StatCard title="Active Programs" value={metrics.activePrograms ?? 0} change={-3} trend="down" />
-        <StatCard title="Members" value={metrics.members ?? 0} change={8} trend="up" />
-        <StatCard title="Sessions Today" value={metrics.sessionsToday ?? 0} change={15} trend="up" />
-      </div>
+        <div className={styles.grid}>
+          <StatCard title="Total Machines" value={metrics.totalMachines ?? 0} change={12} trend="up" index={0} />
+          <StatCard title="Active Programs" value={metrics.activePrograms ?? 0} change={-3} trend="down" index={1} />
+          <StatCard title="Members" value={metrics.members ?? 0} change={8} trend="up" index={2} />
+          <StatCard title="Sessions Today" value={metrics.sessionsToday ?? 0} change={15} trend="up" index={3} />
+        </div>
 
-      <h2 style={sectionHeadingStyle}>Recent Workouts</h2>
-      <div style={tableContainerStyle}>
-        {recentWorkouts.length === 0 ? (
-          <p style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 14 }}>
-            No workouts recorded yet.
-          </p>
-        ) : (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Member</th>
-                <th style={thStyle}>Email</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}>Started</th>
-                <th style={thStyle}>Finished</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentWorkouts.map((w) => (
-                <tr key={w.id}>
-                  <td style={tdStyle}>{w.profiles?.full_name ?? 'Unknown'}</td>
-                  <td style={tdStyle}>{w.profiles?.email ?? '--'}</td>
-                  <td style={tdStyle}>
-                    <span style={getStatusBadgeStyle(w.status)}>{w.status}</span>
-                  </td>
-                  <td style={tdStyle}>{formatDate(w.started_at)}</td>
-                  <td style={tdStyle}>{w.finished_at ? formatDate(w.finished_at) : '--'}</td>
+        <h2 style={sectionHeadingStyle}>Recent Workouts</h2>
+        <div style={tableContainerStyle}>
+          {recentWorkouts.length === 0 ? (
+            <p style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 14 }} className="empty-breathe">
+              No workouts recorded yet.
+            </p>
+          ) : (
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Member</th>
+                  <th style={thStyle}>Email</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Started</th>
+                  <th style={thStyle}>Finished</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {recentWorkouts.map((w, i) => (
+                  <tr key={w.id} className={`row-stagger stagger-${i} table-row-hover`}>
+                    <td style={tdStyle}>{w.profiles?.full_name ?? 'Unknown'}</td>
+                    <td style={tdStyle}>{w.profiles?.email ?? '--'}</td>
+                    <td style={tdStyle}>
+                      <span
+                        style={getStatusBadgeStyle(w.status)}
+                        className={w.status === 'in_progress' ? 'status-pulse' : ''}
+                      >
+                        {w.status}
+                      </span>
+                    </td>
+                    <td style={tdStyle}>{formatDate(w.started_at)}</td>
+                    <td style={tdStyle}>{w.finished_at ? formatDate(w.finished_at) : '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-    </div>
+    </AnimatedPage>
   );
 }

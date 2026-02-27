@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { Program, ProgramDay, ProgramExercise } from '@smartgym/types';
 import { PageHeader } from '../components/PageHeader';
+import { AnimatedPage } from '../components/AnimatedPage';
 
 type ProgramWithDays = Program & {
   program_days: (Pick<ProgramDay, 'id' | 'day_number' | 'name'> & {
@@ -44,76 +45,72 @@ export default function ProgramsPage() {
     );
 
   return (
-    <div style={{ padding: '24px' }}>
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
-      <div style={headerStyle}>
-        <PageHeader
-          title="Programs"
-          description="Create and manage workout programs, assign exercises, and set training schedules."
-        />
-        <Link href="/programs/create" style={createButtonStyle}>
-          + Create Program
-        </Link>
-      </div>
-
-      {loading ? (
-        <div style={centeredContainerStyle}>
-          <div style={spinnerStyle} />
-          <p style={{ color: '#999', marginTop: 16, fontSize: 15 }}>
-            Loading programs...
-          </p>
-        </div>
-      ) : error ? (
-        <div style={centeredContainerStyle}>
-          <p style={{ color: '#e53935', fontSize: 15 }}>Error: {error}</p>
-        </div>
-      ) : programs.length === 0 ? (
-        <div style={centeredContainerStyle}>
-          <p style={{ color: '#999', fontSize: 15, marginBottom: 16 }}>
-            No programs yet. Create your first workout program to get started.
-          </p>
-          <Link href="/programs/create" style={createButtonStyle}>
+    <AnimatedPage>
+      <div style={{ padding: '24px' }}>
+        <div style={headerStyle}>
+          <PageHeader
+            title="Programs"
+            description="Create and manage workout programs, assign exercises, and set training schedules."
+          />
+          <Link href="/programs/create" style={createButtonStyle} className="btn-primary">
             + Create Program
           </Link>
         </div>
-      ) : (
-        <div style={gridStyle}>
-          {programs.map((program) => (
-            <Link
-              key={program.id}
-              href={`/programs/${program.id}`}
-              style={cardLinkStyle}
-            >
-              <div style={cardStyle}>
-                <h3 style={cardTitleStyle}>{program.name}</h3>
-                {program.description && (
-                  <p style={cardDescriptionStyle}>
-                    {program.description.length > 120
-                      ? program.description.slice(0, 120) + '...'
-                      : program.description}
-                  </p>
-                )}
-                <div style={cardFooterStyle}>
-                  <span style={cardBadgeStyle}>
-                    {program.program_days.length}{' '}
-                    {program.program_days.length === 1 ? 'day' : 'days'}
-                  </span>
-                  <span style={cardBadgeStyle}>
-                    {totalExercises(program)}{' '}
-                    {totalExercises(program) === 1 ? 'exercise' : 'exercises'}
-                  </span>
-                </div>
-              </div>
+
+        {loading ? (
+          <div style={centeredContainerStyle}>
+            <div style={spinnerStyle} className="spinner-enhanced" />
+            <p style={{ color: '#999', marginTop: 16, fontSize: 15 }}>
+              Loading programs...
+            </p>
+          </div>
+        ) : error ? (
+          <div style={centeredContainerStyle}>
+            <p style={{ color: '#e53935', fontSize: 15 }} className="error-shake">Error: {error}</p>
+          </div>
+        ) : programs.length === 0 ? (
+          <div style={centeredContainerStyle}>
+            <p style={{ color: '#999', fontSize: 15, marginBottom: 16 }} className="empty-breathe">
+              No programs yet. Create your first workout program to get started.
+            </p>
+            <Link href="/programs/create" style={createButtonStyle} className="btn-primary">
+              + Create Program
             </Link>
-          ))}
-        </div>
-      )}
-    </div>
+          </div>
+        ) : (
+          <div style={gridStyle}>
+            {programs.map((program, i) => (
+              <Link
+                key={program.id}
+                href={`/programs/${program.id}`}
+                style={cardLinkStyle}
+              >
+                <div style={cardStyle} className={`card-stagger stagger-${Math.min(i, 19)} card-hover-lift`}>
+                  <h3 style={cardTitleStyle}>{program.name}</h3>
+                  {program.description && (
+                    <p style={cardDescriptionStyle}>
+                      {program.description.length > 120
+                        ? program.description.slice(0, 120) + '...'
+                        : program.description}
+                    </p>
+                  )}
+                  <div style={cardFooterStyle}>
+                    <span style={cardBadgeStyle}>
+                      {program.program_days.length}{' '}
+                      {program.program_days.length === 1 ? 'day' : 'days'}
+                    </span>
+                    <span style={cardBadgeStyle}>
+                      {totalExercises(program)}{' '}
+                      {totalExercises(program) === 1 ? 'exercise' : 'exercises'}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </AnimatedPage>
   );
 }
 
@@ -158,7 +155,6 @@ const spinnerStyle: CSSProperties = {
   border: '3px solid #e0e0e0',
   borderTopColor: '#4fc3f7',
   borderRadius: '50%',
-  animation: 'spin 0.8s linear infinite',
 };
 
 const gridStyle: CSSProperties = {
@@ -180,7 +176,6 @@ const cardStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
-  transition: 'box-shadow 0.15s',
   cursor: 'pointer',
 };
 

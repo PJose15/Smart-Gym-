@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Sidebar } from './sidebar';
 import { AuthGate } from '@/components/AuthGate';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'SmartGym Admin',

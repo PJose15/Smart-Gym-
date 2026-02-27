@@ -3,6 +3,7 @@
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '../components/PageHeader';
+import { AnimatedPage } from '../components/AnimatedPage';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -231,7 +232,6 @@ const spinnerStyle: CSSProperties = {
   border: '4px solid #e0e0e0',
   borderTopColor: '#4fc3f7',
   borderRadius: '50%',
-  animation: 'members-spin 0.8s linear infinite',
 };
 
 const emptyStyle: CSSProperties = {
@@ -408,165 +408,167 @@ export default function MembersPage() {
     return (
       <div style={{ padding: '24px' }}>
         <PageHeader title="Members" description="View and manage gym members and their assigned programs." />
-        <style>{`@keyframes members-spin { to { transform: rotate(360deg); } }`}</style>
-        <div style={loadingContainerStyle}><div style={spinnerStyle} /></div>
+        <div style={loadingContainerStyle}><div style={spinnerStyle} className="spinner-enhanced" /></div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <style>{`@keyframes members-spin { to { transform: rotate(360deg); } }`}</style>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-        <PageHeader
-          title="Members"
-          description="View and manage gym members and their assigned programs."
-        />
-        <button style={addButtonStyle} onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Add Member'}
-        </button>
-      </div>
-
-      {error && <div style={errorBoxStyle}>{error}</div>}
-
-      {/* ── Add-member form ── */}
-      {showForm && (
-        <div style={formContainerStyle}>
-          <h3 style={formTitleStyle}>Add New Member</h3>
-          <form onSubmit={handleAdd}>
-            <div style={formGridStyle}>
-              <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="member-email">Email</label>
-                <input
-                  id="member-email"
-                  type="email"
-                  style={inputStyle}
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  placeholder="user@example.com"
-                  required
-                />
-              </div>
-              <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="member-gym">Gym</label>
-                <select
-                  id="member-gym"
-                  style={selectStyle}
-                  value={formGymId}
-                  onChange={(e) => setFormGymId(e.target.value)}
-                  required
-                >
-                  <option value="">Select a gym...</option>
-                  {gyms.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
-              </div>
-              <div style={fieldStyle}>
-                <label style={labelStyle} htmlFor="member-role">Role</label>
-                <select
-                  id="member-role"
-                  style={selectStyle}
-                  value={formRole}
-                  onChange={(e) => setFormRole(e.target.value)}
-                  required
-                >
-                  <option value="member">Member</option>
-                  <option value="trainer">Trainer</option>
-                  <option value="owner">Owner</option>
-                </select>
-              </div>
-            </div>
-            <div style={formActionsStyle}>
-              <button type="submit" style={submitButtonStyle} disabled={submitting}>
-                {submitting ? 'Adding...' : 'Add Member'}
-              </button>
-              <button type="button" style={cancelButtonStyle} onClick={resetForm}>Cancel</button>
-            </div>
-          </form>
+    <AnimatedPage>
+      <div style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <PageHeader
+            title="Members"
+            description="View and manage gym members and their assigned programs."
+          />
+          <button style={addButtonStyle} className="btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? 'Cancel' : 'Add Member'}
+          </button>
         </div>
-      )}
 
-      {/* ── Members table ── */}
-      <div style={tableContainerStyle}>
-        {members.length === 0 ? (
-          <p style={emptyStyle}>No members found. Add your first member above.</p>
-        ) : (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Name</th>
-                <th style={thStyle}>Email</th>
-                <th style={thStyle}>Gym</th>
-                <th style={thStyle}>Role</th>
-                <th style={thStyle}>Joined</th>
-                <th style={thStyle}>Program</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => {
-                const profileId = m.profiles?.id ?? m.profile_id;
-                const assignment = getAssignment(profileId);
-                const gymPrograms = programsForGym(m.gym_id);
-                const selectedProgramId = pendingAssign[m.id] ?? '';
+        {error && <div style={errorBoxStyle} className="error-shake">{error}</div>}
 
-                return (
-                  <tr key={m.id}>
-                    <td style={{ ...tdStyle, fontWeight: 600 }}>{m.profiles?.full_name ?? 'Unknown'}</td>
-                    <td style={tdStyle}>{m.profiles?.email ?? '--'}</td>
-                    <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
-                    <td style={tdStyle}><span style={getRoleBadgeStyle(m.role)}>{m.role}</span></td>
-                    <td style={tdStyle}>{formatDate(m.joined_at)}</td>
-                    <td style={tdStyle}>
-                      {assignment ? (
-                        /* Assigned — show badge + Remove */
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={programBadgeStyle}>{assignment.programs?.name ?? 'Program'}</span>
-                          <button
-                            style={removeProgramBtnStyle}
-                            onClick={() => handleRemoveAssignment(assignment.id)}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ) : gymPrograms.length === 0 ? (
-                        /* No programs in this gym yet */
-                        <span style={{ color: '#bbb', fontSize: 13 }}>No programs</span>
-                      ) : (
-                        /* Not assigned — show inline select + Assign */
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <select
-                            style={assignSelectStyle}
-                            value={selectedProgramId}
-                            onChange={(e) =>
-                              setPendingAssign((prev) => ({ ...prev, [m.id]: e.target.value }))
-                            }
-                          >
-                            <option value="">Select program...</option>
-                            {gymPrograms.map((p) => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                          </select>
-                          <button
-                            style={{
-                              ...assignBtnStyle,
-                              opacity: selectedProgramId ? 1 : 0.45,
-                              cursor: selectedProgramId ? 'pointer' : 'not-allowed',
-                            }}
-                            disabled={!selectedProgramId}
-                            onClick={() => handleAssign(m)}
-                          >
-                            Assign
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {/* ── Add-member form ── */}
+        {showForm && (
+          <div style={formContainerStyle} className="form-slide-down">
+            <h3 style={formTitleStyle}>Add New Member</h3>
+            <form onSubmit={handleAdd}>
+              <div style={formGridStyle}>
+                <div style={fieldStyle}>
+                  <label style={labelStyle} htmlFor="member-email">Email</label>
+                  <input
+                    id="member-email"
+                    type="email"
+                    style={inputStyle}
+                    className="input-animate"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    required
+                  />
+                </div>
+                <div style={fieldStyle}>
+                  <label style={labelStyle} htmlFor="member-gym">Gym</label>
+                  <select
+                    id="member-gym"
+                    style={selectStyle}
+                    className="input-animate"
+                    value={formGymId}
+                    onChange={(e) => setFormGymId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a gym...</option>
+                    {gyms.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                </div>
+                <div style={fieldStyle}>
+                  <label style={labelStyle} htmlFor="member-role">Role</label>
+                  <select
+                    id="member-role"
+                    style={selectStyle}
+                    className="input-animate"
+                    value={formRole}
+                    onChange={(e) => setFormRole(e.target.value)}
+                    required
+                  >
+                    <option value="member">Member</option>
+                    <option value="trainer">Trainer</option>
+                    <option value="owner">Owner</option>
+                  </select>
+                </div>
+              </div>
+              <div style={formActionsStyle}>
+                <button type="submit" style={submitButtonStyle} className="btn-primary" disabled={submitting}>
+                  {submitting ? 'Adding...' : 'Add Member'}
+                </button>
+                <button type="button" style={cancelButtonStyle} className="btn-secondary" onClick={resetForm}>Cancel</button>
+              </div>
+            </form>
+          </div>
         )}
+
+        {/* ── Members table ── */}
+        <div style={tableContainerStyle}>
+          {members.length === 0 ? (
+            <p style={emptyStyle} className="empty-breathe">No members found. Add your first member above.</p>
+          ) : (
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Email</th>
+                  <th style={thStyle}>Gym</th>
+                  <th style={thStyle}>Role</th>
+                  <th style={thStyle}>Joined</th>
+                  <th style={thStyle}>Program</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.map((m, i) => {
+                  const profileId = m.profiles?.id ?? m.profile_id;
+                  const assignment = getAssignment(profileId);
+                  const gymPrograms = programsForGym(m.gym_id);
+                  const selectedProgramId = pendingAssign[m.id] ?? '';
+
+                  return (
+                    <tr key={m.id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
+                      <td style={{ ...tdStyle, fontWeight: 600 }}>{m.profiles?.full_name ?? 'Unknown'}</td>
+                      <td style={tdStyle}>{m.profiles?.email ?? '--'}</td>
+                      <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
+                      <td style={tdStyle}><span style={getRoleBadgeStyle(m.role)}>{m.role}</span></td>
+                      <td style={tdStyle}>{formatDate(m.joined_at)}</td>
+                      <td style={tdStyle}>
+                        {assignment ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={programBadgeStyle}>{assignment.programs?.name ?? 'Program'}</span>
+                            <button
+                              style={removeProgramBtnStyle}
+                              className="btn-danger"
+                              onClick={() => handleRemoveAssignment(assignment.id)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : gymPrograms.length === 0 ? (
+                          <span style={{ color: '#bbb', fontSize: 13 }}>No programs</span>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <select
+                              style={assignSelectStyle}
+                              className="input-animate"
+                              value={selectedProgramId}
+                              onChange={(e) =>
+                                setPendingAssign((prev) => ({ ...prev, [m.id]: e.target.value }))
+                              }
+                            >
+                              <option value="">Select program...</option>
+                              {gymPrograms.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                            <button
+                              style={{
+                                ...assignBtnStyle,
+                                opacity: selectedProgramId ? 1 : 0.45,
+                                cursor: selectedProgramId ? 'pointer' : 'not-allowed',
+                              }}
+                              className="btn-primary"
+                              disabled={!selectedProgramId}
+                              onClick={() => handleAssign(m)}
+                            >
+                              Assign
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-    </div>
+    </AnimatedPage>
   );
 }

@@ -108,13 +108,13 @@ export default function AuthPage() {
   }
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} className="auth-card-enter">
       <h1 style={logoStyle}>
         Smart<span style={logoAccentStyle}>Gym</span>
       </h1>
       <p style={subtitleStyle}>Admin Panel</p>
 
-      {error && <div style={errorStyle}>{error}</div>}
+      {error && <div style={errorStyle} className="error-shake">{error}</div>}
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 20 }}>
@@ -127,6 +127,7 @@ export default function AuthPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={inputStyle}
+            className="input-animate"
             placeholder="admin@smartgym.com"
             required
             autoComplete="email"
@@ -143,6 +144,7 @@ export default function AuthPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={inputStyle}
+            className="input-animate"
             placeholder="Enter your password"
             required
             autoComplete="current-password"
@@ -152,6 +154,7 @@ export default function AuthPage() {
         <button
           type="submit"
           disabled={loading}
+          className="btn-primary"
           style={loading ? buttonDisabledStyle : buttonStyle}
         >
           {loading ? 'Signing in...' : 'Sign In'}
