@@ -173,6 +173,7 @@ export default function AnalyticsPage() {
       coach_draft: 'Coach Draft',
       safety_nudge: 'Safety Nudge',
       checklist: 'Form Checklist',
+      coaching: 'AI Coaching',
     };
     return labels[ctx] ?? ctx;
   }

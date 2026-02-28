@@ -31,3 +31,21 @@ export type { AtRiskMember, AtRiskReason, MemberData } from './trainerCopilot/at
 
 // Style templates
 export { applyTone, applyVerbosity, feedbackTrendNote, adherenceNote } from './trainerCopilot/templates';
+
+// Streaks
+export { computeStreak } from './rules/streaks';
+export type { StreakInput, StreakResult } from './rules/streaks';
+
+// Badges
+export { checkBadgeUnlocks } from './rules/badges';
+export type { BadgeCheckInput } from './rules/badges';
+
+// Member Context & Coaching
+export { buildMemberContext } from './rules/memberContext';
+export type { MemberContextInput, MemberContext, MemberContextWorkout } from './rules/memberContext';
+export { getCoachingInsight } from './rules/coaching';
+export type { CoachingInsight, CoachingInput } from './rules/coaching';
+
+// Program Generation
+export { generateProgram } from './generators/programGenerator';
+export type { GeneratedProgram, GeneratedProgramDay, GeneratedExercise, ProgramGenerationInput } from './generators/programGenerator';
