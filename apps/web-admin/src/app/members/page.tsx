@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
@@ -259,6 +260,7 @@ function formatDate(dateStr: string): string {
 // ─── Component ────────────────────────────────────────────
 
 export default function MembersPage() {
+  const router = useRouter();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [gyms, setGyms] = useState<GymOption[]>([]);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
@@ -511,7 +513,12 @@ export default function MembersPage() {
 
                   return (
                     <tr key={m.id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
-                      <td style={{ ...tdStyle, fontWeight: 600 }}>{m.profiles?.full_name ?? 'Unknown'}</td>
+                      <td
+                        style={{ ...tdStyle, fontWeight: 600, color: '#4361ee', cursor: 'pointer' }}
+                        onClick={() => router.push(`/members/${profileId}`)}
+                      >
+                        {m.profiles?.full_name ?? 'Unknown'}
+                      </td>
                       <td style={tdStyle}>{m.profiles?.email ?? '--'}</td>
                       <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
                       <td style={tdStyle}><span style={getRoleBadgeStyle(m.role)}>{m.role}</span></td>

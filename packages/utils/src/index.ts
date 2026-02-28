@@ -113,3 +113,121 @@ export function generateSlug(text: string): string {
 export function generateQrSlug(gymSlug: string, machineName: string): string {
   return `${generateSlug(gymSlug)}-${generateSlug(machineName)}`;
 }
+
+// ─── Trend Computation Utils (Phase 2.6 — Charts) ──────
+
+export interface TrendDataPoint {
+  date: string;   // ISO date string (YYYY-MM-DD)
+  value: number;
+}
+
+export interface SessionForTrend {
+  startedAt: string;
+  sets: Array<{ weight_kg: number; reps: number }>;
+}
+
+/**
+ * Computes volume (sum of weight * reps) per session over time.
+ */
+export function computeVolumeTrend(sessions: SessionForTrend[]): TrendDataPoint[] {
+  return sessions
+    .map((s) => ({
+      date: s.startedAt.slice(0, 10),
+      value: s.sets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0),
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Computes best estimated 1RM per session over time.
+ */
+export function compute1RMTrend(sessions: SessionForTrend[]): TrendDataPoint[] {
+  return sessions
+    .map((s) => {
+      let best = 0;
+      for (const set of s.sets) {
+        const e = estimate1RM(set.weight_kg, set.reps);
+        if (e > best) best = e;
+      }
+      return { date: s.startedAt.slice(0, 10), value: best };
+    })
+    .filter((p) => p.value > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Computes best weight per session over time.
+ */
+export function computeWeightTrend(sessions: SessionForTrend[]): TrendDataPoint[] {
+  return sessions
+    .map((s) => {
+      let best = 0;
+      for (const set of s.sets) {
+        if (set.weight_kg > best) best = set.weight_kg;
+      }
+      return { date: s.startedAt.slice(0, 10), value: best };
+    })
+    .filter((p) => p.value > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Aggregates total volume by ISO week (YYYY-WXX format).
+ */
+export function computeWeeklyVolume(
+  sessions: SessionForTrend[],
+): TrendDataPoint[] {
+  const weekMap = new Map<string, number>();
+  for (const s of sessions) {
+    const d = new Date(s.startedAt);
+    const weekKey = getISOWeekKey(d);
+    const vol = s.sets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
+    weekMap.set(weekKey, (weekMap.get(weekKey) ?? 0) + vol);
+  }
+  return Array.from(weekMap.entries())
+    .map(([date, value]) => ({ date, value: Math.round(value) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Computes workout count per ISO week.
+ */
+export function computeWeeklyFrequency(dates: string[]): TrendDataPoint[] {
+  const weekMap = new Map<string, number>();
+  for (const ds of dates) {
+    const d = new Date(ds);
+    const weekKey = getISOWeekKey(d);
+    weekMap.set(weekKey, (weekMap.get(weekKey) ?? 0) + 1);
+  }
+  return Array.from(weekMap.entries())
+    .map(([date, value]) => ({ date, value }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Determines if a numeric series is trending up, down, or stable.
+ */
+export function computeTrendDirection(
+  points: TrendDataPoint[],
+): 'increasing' | 'decreasing' | 'stable' {
+  if (points.length < 3) return 'stable';
+  const mid = Math.floor(points.length / 2);
+  const first = points.slice(0, mid);
+  const second = points.slice(mid);
+  const avgFirst = first.reduce((s, p) => s + p.value, 0) / first.length;
+  const avgSecond = second.reduce((s, p) => s + p.value, 0) / second.length;
+  const change = avgFirst > 0 ? (avgSecond - avgFirst) / avgFirst : 0;
+  if (change > 0.05) return 'increasing';
+  if (change < -0.05) return 'decreasing';
+  return 'stable';
+}
+
+/** Returns ISO week key like "2026-W09" */
+function getISOWeekKey(d: Date): string {
+  const temp = new Date(d.getTime());
+  temp.setHours(0, 0, 0, 0);
+  temp.setDate(temp.getDate() + 3 - ((temp.getDay() + 6) % 7));
+  const yearStart = new Date(temp.getFullYear(), 0, 4);
+  const weekNum = Math.ceil(((temp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${temp.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+}

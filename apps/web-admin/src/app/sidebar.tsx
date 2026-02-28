@@ -13,6 +13,7 @@ const navItems = [
   { href: '/copilot', label: 'Co-Pilot' },
   { href: '/assignments', label: 'Assignments' },
   { href: '/analytics', label: 'Analytics' },
+  { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/settings', label: 'Settings' },
 ];
 

@@ -145,7 +145,7 @@ export interface WorkoutExerciseWithSets extends WorkoutExercise {
 // Gamification Types
 // ============================================================================
 
-export type PointsReason = 'workout_completed' | 'set_logged' | 'streak_bonus' | 'manual';
+export type PointsReason = 'workout_completed' | 'set_logged' | 'streak_bonus' | 'badge_unlocked' | 'manual';
 
 export interface PointsLedger {
   id: string;
@@ -155,6 +155,45 @@ export interface PointsLedger {
   reason: PointsReason;
   reference_id: string | null;
   created_at: string;
+}
+
+// ─── Badge Types ──────────────────────────────────────
+
+export type BadgeCriteriaType =
+  | 'first_workout'
+  | 'workouts_10' | 'workouts_50' | 'workouts_100'
+  | 'streak_4' | 'streak_12'
+  | 'total_volume_10k' | 'total_volume_100k'
+  | 'prs_5' | 'prs_25'
+  | 'points_500' | 'points_5000';
+
+export type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+export interface Badge {
+  id: string;
+  gym_id: string | null;
+  slug: string;
+  name: string;
+  description: string;
+  icon_emoji: string;
+  criteria_type: BadgeCriteriaType;
+  criteria_value: number;
+  rarity: BadgeRarity;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface MemberBadge {
+  id: string;
+  gym_id: string;
+  profile_id: string;
+  badge_id: string;
+  unlocked_at: string;
+}
+
+export interface BadgeWithStatus extends Badge {
+  unlocked: boolean;
+  unlocked_at: string | null;
 }
 
 // ============================================================================
@@ -235,7 +274,7 @@ export interface AiAuditLog {
   id?: string;
   gym_id?: string | null;
   profile_id?: string | null;
-  context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails' | 'coach_draft' | 'safety_nudge' | 'checklist';
+  context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails' | 'coach_draft' | 'safety_nudge' | 'checklist' | 'coaching' | 'program_gen';
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
   created_at?: string;
@@ -436,6 +475,29 @@ export interface CoachNoteAction {
   action: CoachNoteActionType;
   meta: Record<string, unknown> | null;
   created_at: string;
+}
+
+// ============================================================================
+// Phase 2.6 — Leaderboard Types
+// ============================================================================
+
+export type LeaderboardPeriod = 'weekly' | 'all_time';
+
+export interface LeaderboardEntry {
+  rank: number;
+  profile_id: string;
+  full_name: string;
+  avatar_url: string | null;
+  total_points: number;
+  is_current_user: boolean;
+}
+
+// ─── Coaching Types ─────────────────────────────────────
+
+export interface CoachingInsightDisplay {
+  message: string;
+  action_items: string[];
+  source: 'ai' | 'rules';
 }
 
 // ============================================================================

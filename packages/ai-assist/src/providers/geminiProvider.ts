@@ -121,4 +121,130 @@ Output ONLY a JSON object with keys "insightText" and "suggestionText", no other
 
         return input;
     }
+
+    async generateCoachingInsight(input: {
+        memberName: string;
+        contextSummary: string;
+        gaps: string[];
+        risks: string[];
+        recentPRs: string[];
+    }): Promise<{ message: string; action_items: string[] }> {
+        const { memberName, contextSummary, gaps, risks, recentPRs } = input;
+
+        const prompt = `You are a friendly, motivating personal fitness coach. Write a short personalized coaching message for a gym member.
+
+Member name: ${memberName}
+Recent activity: ${contextSummary}
+${gaps.length > 0 ? `Areas to address: ${gaps.join('; ')}` : ''}
+${risks.length > 0 ? `Risks: ${risks.join('; ')}` : ''}
+${recentPRs.length > 0 ? `Recent PRs: ${recentPRs.join(', ')}` : ''}
+
+Rules:
+- Address them by first name
+- Be encouraging but honest
+- Keep the message to 2-3 sentences max
+- Include 1-3 specific, actionable tips
+- Output ONLY a JSON object with keys "message" (string) and "action_items" (string array), no other text`;
+
+        try {
+            const raw = await this.complete(prompt, 400);
+            const match = raw.match(/\{[\s\S]*\}/);
+            if (!match) return { message: '', action_items: [] };
+
+            const parsed = JSON.parse(match[0]) as unknown;
+            if (
+                typeof parsed === 'object' &&
+                parsed !== null &&
+                'message' in parsed &&
+                'action_items' in parsed
+            ) {
+                const obj = parsed as Record<string, unknown>;
+                return {
+                    message: String(obj.message),
+                    action_items: Array.isArray(obj.action_items)
+                        ? obj.action_items.filter((i): i is string => typeof i === 'string')
+                        : [],
+                };
+            }
+        } catch {
+            // Fall through
+        }
+
+        return { message: '', action_items: [] };
+    }
+
+    async generateProgram(input: {
+        goal: string;
+        experience: string;
+        daysPerWeek: number;
+        limitations: string[];
+        availableMachines: Array<{ id: string; name: string; target_muscles: string[] }>;
+    }): Promise<{
+        name: string;
+        description: string;
+        days: Array<{
+            day_number: number;
+            name: string;
+            exercises: Array<{
+                exercise_name: string;
+                machine_id: string | null;
+                default_sets: number;
+                default_reps: number;
+            }>;
+        }>;
+        overall_rationale: string;
+    }> {
+        const machineList = input.availableMachines
+            .map((m) => `- ${m.name} (ID: ${m.id}, targets: ${m.target_muscles.join(', ')})`)
+            .join('\n');
+
+        const prompt = `You are an expert personal trainer. Design a ${input.daysPerWeek}-day workout program.
+
+Goal: ${input.goal}
+Experience level: ${input.experience}
+${input.limitations.length > 0 ? `Limitations/injuries: ${input.limitations.join(', ')}` : 'No limitations.'}
+
+Available equipment:
+${machineList}
+
+Rules:
+- Use ONLY machines from the list above
+- Each day should have 4-6 exercises
+- Include the machine ID (from the list) for each exercise
+- Appropriate sets/reps for the experience level
+- Output ONLY a JSON object with keys: "name" (string), "description" (string), "days" (array of {day_number, name, exercises: [{exercise_name, machine_id, default_sets, default_reps}]}), "overall_rationale" (string)`;
+
+        try {
+            const raw = await this.complete(prompt, 1500);
+            const match = raw.match(/\{[\s\S]*\}/);
+            if (!match) return { name: '', description: '', days: [], overall_rationale: '' };
+
+            const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+            if (!parsed.days || !Array.isArray(parsed.days)) {
+                return { name: '', description: '', days: [], overall_rationale: '' };
+            }
+
+            return {
+                name: String(parsed.name ?? ''),
+                description: String(parsed.description ?? ''),
+                days: (parsed.days as Array<Record<string, unknown>>).map((d, i) => ({
+                    day_number: Number(d.day_number ?? i + 1),
+                    name: String(d.name ?? `Day ${i + 1}`),
+                    exercises: Array.isArray(d.exercises)
+                        ? (d.exercises as Array<Record<string, unknown>>).map((e) => ({
+                            exercise_name: String(e.exercise_name ?? ''),
+                            machine_id: e.machine_id ? String(e.machine_id) : null,
+                            default_sets: Number(e.default_sets ?? 3),
+                            default_reps: Number(e.default_reps ?? 10),
+                        }))
+                        : [],
+                })),
+                overall_rationale: String(parsed.overall_rationale ?? ''),
+            };
+        } catch {
+            // Fall through
+        }
+
+        return { name: '', description: '', days: [], overall_rationale: '' };
+    }
 }

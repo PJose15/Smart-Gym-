@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
+  TouchableOpacity,
   Animated as RNAnimated,
   Platform,
 } from 'react-native';
@@ -12,10 +13,13 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
 import { getTodaysProgramDay } from '@smartgym/utils';
-import { getTodayExplanation, computeGuardrails } from '@smartgym/ai-assist';
-import type { WorkoutRecord } from '@smartgym/ai-assist';
+import { getTodayExplanation, computeGuardrails, getCoachingInsight } from '@smartgym/ai-assist';
+import type { WorkoutRecord, CoachingInsight } from '@smartgym/ai-assist';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
+import { getStreak } from '../../src/lib/streakService';
+import type { StreakResult } from '../../src/lib/streakService';
+import { getUserRank } from '../../src/lib/leaderboardService';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
@@ -104,6 +108,9 @@ export default function HomeScreen() {
   const [unreadNotes, setUnreadNotes] = useState(0);
   const [sessionIntent, setSessionIntent] = useState<SessionIntent>('push');
   const [gymId, setGymId] = useState<string | null>(null);
+  const [streak, setStreak] = useState<StreakResult | null>(null);
+  const [userRank, setUserRank] = useState<{ rank: number; total: number } | null>(null);
+  const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
 
   const loadHome = useCallback(async () => {
     try {
@@ -155,6 +162,26 @@ export default function HomeScreen() {
 
       const gymId = memberData.gym_id;
       setGymId(gymId);
+
+      // Load streak
+      if (isFeatureEnabled('streaks_enabled')) {
+        try {
+          const streakData = await getStreak(user.id, gymId);
+          setStreak(streakData);
+        } catch {
+          // Non-critical
+        }
+      }
+
+      // Load leaderboard rank
+      if (isFeatureEnabled('leaderboard_enabled')) {
+        try {
+          const rank = await getUserRank(gymId, user.id, 'weekly');
+          setUserRank(rank);
+        } catch {
+          // Non-critical
+        }
+      }
 
       // Load program assignment
       const { data: assignment } = await supabase
@@ -349,6 +376,82 @@ export default function HomeScreen() {
           // Non-critical
         }
       }
+      // ─── Phase 3: AI Coaching Insight ─────────────
+      if (isFeatureEnabled('ai_coaching')) {
+        try {
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: recentWk } = await supabase
+            .from('workouts')
+            .select('id, started_at, finished_at')
+            .eq('profile_id', user.id)
+            .eq('status', 'completed')
+            .gte('started_at', thirtyDaysAgo)
+            .order('started_at', { ascending: false });
+
+          const workoutIds30d = (recentWk ?? []).map((w: { id: string }) => w.id);
+          let coachingWorkouts: Array<{
+            id: string; started_at: string; finished_at: string | null;
+            exercises: Array<{ exercise_name: string; sets: Array<{ weight_kg: number; reps: number }> }>;
+          }> = [];
+
+          if (workoutIds30d.length > 0) {
+            const { data: wxData } = await supabase
+              .from('workout_exercises')
+              .select('workout_id, exercise_name, sets(*)')
+              .in('workout_id', workoutIds30d);
+
+            coachingWorkouts = (recentWk ?? []).map((w: { id: string; started_at: string; finished_at: string | null }) => ({
+              id: w.id,
+              started_at: w.started_at,
+              finished_at: w.finished_at,
+              exercises: (wxData ?? [])
+                .filter((e: { workout_id: string }) => e.workout_id === w.id)
+                .map((e: { exercise_name: string; sets: Array<{ weight_kg: number; reps: number }> }) => ({
+                  exercise_name: e.exercise_name,
+                  sets: (e.sets ?? []) as Array<{ weight_kg: number; reps: number }>,
+                })),
+            }));
+          }
+
+          // Get all completed workout dates for streak calc
+          const { data: allDates } = await supabase
+            .from('workouts')
+            .select('started_at')
+            .eq('profile_id', user.id)
+            .eq('status', 'completed');
+
+          // Get feedback trends
+          const { data: feedbackData } = await supabase
+            .from('set_feedback')
+            .select('rating')
+            .eq('profile_id', user.id)
+            .gte('created_at', thirtyDaysAgo);
+
+          const feedbackTrends = {
+            discomfort_count: 0,
+            unstable_count: 0,
+            ok_count: 0,
+          };
+          for (const f of feedbackData ?? []) {
+            if (f.rating === 'discomfort') feedbackTrends.discomfort_count++;
+            else if (f.rating === 'unstable') feedbackTrends.unstable_count++;
+            else feedbackTrends.ok_count++;
+          }
+
+          const coaching = await getCoachingInsight({
+            memberName: profileData?.full_name || 'there',
+            workouts: coachingWorkouts,
+            prs: [],
+            feedbackTrends,
+            completedWorkoutDates: (allDates ?? []).map((d: { started_at: string }) => d.started_at),
+          });
+
+          setCoachingInsight(coaching);
+        } catch {
+          // Non-critical
+        }
+      }
+
       // ─── Phase 2.5.3: Coach Notes count ─────────────
       if (isFeatureEnabled('ai_trainer_copilot')) {
         try {
@@ -441,6 +544,35 @@ export default function HomeScreen() {
         )}
 
         <PulsingGreeting name={userName} />
+
+        {/* Phase 2.6: Streak Badge */}
+        {streak && streak.currentStreak > 0 && (
+          <View style={styles.streakBadge}>
+            <Text style={styles.streakBadgeFlame}>{'\uD83D\uDD25'}</Text>
+            <Text style={styles.streakBadgeText}>
+              {streak.currentStreak} week streak
+            </Text>
+            {!streak.currentWeekActive && (
+              <Text style={styles.streakBadgeNudge}> — keep it going!</Text>
+            )}
+          </View>
+        )}
+
+        {/* Phase 2.6: Leaderboard CTA */}
+        {userRank && (
+          <TouchableOpacity
+            style={styles.leaderboardCta}
+            onPress={() => router.push('/leaderboard')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.leaderboardCtaText}>
+              You're #{userRank.rank} of {userRank.total} this week
+            </Text>
+            <Text variant="caption" color="primary" style={{ fontWeight: '600' }}>
+              View Leaderboard
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Phase 2.5.2: Guardrails Nudge Banner */}
         {guardrails.length > 0 && (
@@ -545,6 +677,28 @@ export default function HomeScreen() {
                   <Text variant="caption" color="textSecondary" style={styles.gapText}>
                     {explanation.last_workout_gap_text}
                   </Text>
+                )}
+              </AnimatedCard>
+            )}
+
+            {/* Phase 3: AI Coaching Insight */}
+            {coachingInsight && (
+              <AnimatedCard index={(todayWorkout?.exercises.length ?? 0) + 2} style={styles.coachingCard}>
+                <Text variant="label" style={styles.coachingTitle}>
+                  {coachingInsight.source === 'ai' ? 'AI Coach' : 'Coach Tip'}
+                </Text>
+                <Text variant="body" color="textSecondary" style={styles.coachingMessage}>
+                  {coachingInsight.message}
+                </Text>
+                {coachingInsight.action_items.length > 0 && (
+                  <View style={styles.coachingActions}>
+                    {coachingInsight.action_items.map((item, i) => (
+                      <View key={i} style={styles.coachingActionRow}>
+                        <View style={styles.coachingBullet} />
+                        <Text variant="caption" style={styles.coachingActionText}>{item}</Text>
+                      </View>
+                    ))}
+                  </View>
                 )}
               </AnimatedCard>
             )}
@@ -747,5 +901,91 @@ const styles = StyleSheet.create({
   coachNotesBtn: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+  },
+  // Streak badge styles
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: '#fff3e0',
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  streakBadgeFlame: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  streakBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ff6b35',
+  },
+  streakBadgeNudge: {
+    fontSize: 13,
+    color: '#ff6b35',
+    fontStyle: 'italic',
+  },
+  // Leaderboard CTA
+  leaderboardCta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#edf2ff',
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
+  },
+  leaderboardCtaText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  // Phase 3: Coaching Card
+  coachingCard: {
+    backgroundColor: '#f0f4ff',
+    borderRadius: 14,
+    padding: spacing.md,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#d0dafe',
+  },
+  coachingTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
+  },
+  coachingMessage: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.text,
+  },
+  coachingActions: {
+    marginTop: spacing.sm,
+    gap: 6,
+  },
+  coachingActionRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    gap: 8,
+  },
+  coachingBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginTop: 6,
+  },
+  coachingActionText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 18,
   },
 });

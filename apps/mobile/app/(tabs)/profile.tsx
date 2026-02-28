@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   Animated as RNAnimated,
   Platform,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,12 +19,15 @@ import { supabase } from '../../src/lib/supabase';
 import { getWeightUnit, saveWeightUnit } from '../../src/lib/weightUnit';
 import { getPointsSummary, formatPointsReason } from '../../src/lib/pointsService';
 import type { PointsEntry } from '../../src/lib/pointsService';
+import { getStreak } from '../../src/lib/streakService';
+import type { StreakResult } from '../../src/lib/streakService';
+import { getBadges, RARITY_COLORS, RARITY_LABELS } from '../../src/lib/badgeService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
-import type { UserGoal, ExperienceLevel, WeightUnit } from '@smartgym/types';
+import type { UserGoal, ExperienceLevel, WeightUnit, BadgeWithStatus } from '@smartgym/types';
 
 // ─── Constants ──────────────────────────────────────────
 
@@ -147,6 +151,9 @@ export default function ProfileScreen() {
   const [gymId, setGymId] = useState<string | null>(null);
   const [trainingProfile, setTrainingProfile] = useState<TrainingProfileState>(DEFAULT_TRAINING_PROFILE);
   const [showTrainingProfile, setShowTrainingProfile] = useState(false);
+  const [streak, setStreak] = useState<StreakResult | null>(null);
+  const [badges, setBadges] = useState<BadgeWithStatus[]>([]);
+  const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -200,6 +207,26 @@ export default function ProfileScreen() {
           setPointsEntries(summary.entries.slice(0, 5));
         } catch {
           // Points are non-critical — ignore errors
+        }
+
+        // Load streak data
+        if (isFeatureEnabled('streaks_enabled')) {
+          try {
+            const streakData = await getStreak(user.id, memberData.gym_id);
+            setStreak(streakData);
+          } catch {
+            // Non-critical
+          }
+        }
+
+        // Load badges
+        if (isFeatureEnabled('badges_enabled')) {
+          try {
+            const badgeData = await getBadges(user.id, memberData.gym_id);
+            setBadges(badgeData);
+          } catch {
+            // Non-critical
+          }
         }
 
         // Load training profile (check cache first)
@@ -453,6 +480,114 @@ export default function ProfileScreen() {
         </Text>
         <Text variant="body" color="textSecondary">{profile.email}</Text>
       </View>
+
+      {streak && streak.currentStreak > 0 && (
+        <View style={styles.section}>
+          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Streak</Text>
+          <Card style={styles.streakCard}>
+            <View style={styles.streakRow}>
+              <Text style={styles.streakFlame}>{'\uD83D\uDD25'}</Text>
+              <View style={{ flex: 1 }}>
+                <Text variant="heading" style={styles.streakCount}>
+                  {streak.currentStreak} week{streak.currentStreak !== 1 ? 's' : ''}
+                </Text>
+                <Text variant="caption" color="textSecondary">
+                  Longest: {streak.longestStreak} week{streak.longestStreak !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              {streak.bonusPoints > 0 && (
+                <View style={styles.streakBonusBadge}>
+                  <Text style={styles.streakBonusText}>+{streak.bonusPoints}</Text>
+                </View>
+              )}
+            </View>
+            {!streak.currentWeekActive && (
+              <Text variant="caption" style={styles.streakNudge}>
+                Work out this week to keep your streak!
+              </Text>
+            )}
+          </Card>
+        </View>
+      )}
+
+      {badges.length > 0 && (
+        <View style={styles.section}>
+          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
+            Badges ({badges.filter((b) => b.unlocked).length}/{badges.length})
+          </Text>
+          <Card style={styles.card}>
+            <View style={styles.badgeGrid}>
+              {badges.map((badge) => (
+                <TouchableOpacity
+                  key={badge.id}
+                  style={[styles.badgeCell, !badge.unlocked && styles.badgeLocked]}
+                  onPress={() => setSelectedBadge(badge)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.badgeEmoji}>
+                    {badge.unlocked ? badge.icon_emoji : '\uD83D\uDD12'}
+                  </Text>
+                  <Text
+                    style={[styles.badgeName, !badge.unlocked && styles.badgeNameLocked]}
+                    numberOfLines={1}
+                  >
+                    {badge.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Card>
+        </View>
+      )}
+
+      {/* Badge Detail Modal */}
+      <Modal
+        visible={selectedBadge !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedBadge(null)}
+      >
+        <TouchableOpacity
+          style={styles.badgeModalOverlay}
+          activeOpacity={1}
+          onPress={() => setSelectedBadge(null)}
+        >
+          <View style={styles.badgeModalContent}>
+            <Text style={styles.badgeModalEmoji}>
+              {selectedBadge?.unlocked ? selectedBadge.icon_emoji : '\uD83D\uDD12'}
+            </Text>
+            <Text style={styles.badgeModalName}>{selectedBadge?.name}</Text>
+            {selectedBadge && (
+              <View style={[
+                styles.badgeRarityTag,
+                { backgroundColor: (RARITY_COLORS[selectedBadge.rarity] ?? '#6c757d') + '20' },
+              ]}>
+                <Text style={[
+                  styles.badgeRarityText,
+                  { color: RARITY_COLORS[selectedBadge.rarity] ?? '#6c757d' },
+                ]}>
+                  {RARITY_LABELS[selectedBadge.rarity] ?? selectedBadge.rarity}
+                </Text>
+              </View>
+            )}
+            <Text style={styles.badgeModalDesc}>{selectedBadge?.description}</Text>
+            {selectedBadge?.unlocked && selectedBadge.unlocked_at && (
+              <Text style={styles.badgeModalDate}>
+                Unlocked {new Date(selectedBadge.unlocked_at).toLocaleDateString()}
+              </Text>
+            )}
+            {selectedBadge && !selectedBadge.unlocked && (
+              <Text style={styles.badgeModalLocked}>Keep going to unlock this badge!</Text>
+            )}
+            <TouchableOpacity
+              style={styles.badgeModalClose}
+              onPress={() => setSelectedBadge(null)}
+            >
+              <Text style={styles.badgeModalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <View style={styles.section}>
         <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Edit Profile</Text>
@@ -905,5 +1040,41 @@ const styles = StyleSheet.create({
     color: colors.text,
     width: 70,
     textAlign: 'center',
+  },
+  // Streak styles
+  streakCard: {
+    padding: spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff6b35',
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  streakFlame: {
+    fontSize: 32,
+  },
+  streakCount: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ff6b35',
+    lineHeight: 26,
+  },
+  streakBonusBadge: {
+    backgroundColor: '#ff6b35',
+    borderRadius: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  streakBonusText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  streakNudge: {
+    marginTop: spacing.sm,
+    color: '#ff6b35',
+    fontStyle: 'italic',
   },
 });

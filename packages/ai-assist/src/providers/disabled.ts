@@ -27,4 +27,40 @@ export class DisabledProvider implements LLMProvider {
       suggestionText: input.suggestionText,
     };
   }
+
+  async generateCoachingInsight(_input: {
+    memberName: string;
+    contextSummary: string;
+    gaps: string[];
+    risks: string[];
+    recentPRs: string[];
+  }): Promise<{ message: string; action_items: string[] }> {
+    // Return empty — coaching module will use rules-based fallback
+    return { message: '', action_items: [] };
+  }
+
+  async generateProgram(_input: {
+    goal: string;
+    experience: string;
+    daysPerWeek: number;
+    limitations: string[];
+    availableMachines: Array<{ id: string; name: string; target_muscles: string[] }>;
+  }): Promise<{
+    name: string;
+    description: string;
+    days: Array<{
+      day_number: number;
+      name: string;
+      exercises: Array<{
+        exercise_name: string;
+        machine_id: string | null;
+        default_sets: number;
+        default_reps: number;
+      }>;
+    }>;
+    overall_rationale: string;
+  }> {
+    // Return empty — program generator will use rules-based fallback
+    return { name: '', description: '', days: [], overall_rationale: '' };
+  }
 }

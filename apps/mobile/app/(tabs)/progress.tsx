@@ -12,8 +12,17 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
-import { estimate1RM, calculateVolume, formatWeight } from '@smartgym/utils';
+import {
+  estimate1RM,
+  calculateVolume,
+  formatWeight,
+  computeVolumeTrend,
+  compute1RMTrend,
+  computeWeightTrend,
+} from '@smartgym/utils';
+import type { TrendDataPoint, SessionForTrend } from '@smartgym/utils';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
+import { MiniChart } from '../../src/components/MiniChart';
 import type { WorkoutSet } from '@smartgym/types';
 
 // ─── Local Types ────────────────────────────────────────
@@ -49,6 +58,8 @@ interface ExerciseSummary {
   sessions: SessionEntry[];
 }
 
+type ChartMetric = '1rm' | 'volume' | 'weight';
+
 // ─── Component ──────────────────────────────────────────
 
 export default function ProgressScreen() {
@@ -56,6 +67,7 @@ export default function ProgressScreen() {
   const [userId, setUserId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<ExerciseSummary[]>([]);
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
+  const [chartMetric, setChartMetric] = useState<ChartMetric>('1rm');
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -337,9 +349,51 @@ export default function ProgressScreen() {
           {isExpanded ? 'Hide details' : 'Tap for details'}
         </Text>
 
-        {/* Expanded Session Details */}
+        {/* Expanded: Chart + Session Details */}
         {isExpanded && (
           <View style={styles.sessionList}>
+            {/* Chart Metric Toggle */}
+            <View style={styles.chartToggleRow}>
+              {(['1rm', 'volume', 'weight'] as ChartMetric[]).map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.chartToggleBtn, chartMetric === m && styles.chartToggleBtnActive]}
+                  onPress={() => setChartMetric(m)}
+                >
+                  <Text style={[styles.chartToggleText, chartMetric === m && styles.chartToggleTextActive]}>
+                    {m === '1rm' ? 'Est. 1RM' : m === 'volume' ? 'Volume' : 'Weight'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Mini Chart */}
+            {(() => {
+              const sessionsForTrend: SessionForTrend[] = item.sessions.map((s) => ({
+                startedAt: s.startedAt,
+                sets: s.sets,
+              }));
+              const trendData: TrendDataPoint[] =
+                chartMetric === '1rm'
+                  ? compute1RMTrend(sessionsForTrend)
+                  : chartMetric === 'volume'
+                    ? computeVolumeTrend(sessionsForTrend)
+                    : computeWeightTrend(sessionsForTrend);
+              const chartLabel =
+                chartMetric === '1rm' ? 'Est. 1RM' : chartMetric === 'volume' ? 'Session Volume' : 'Best Weight';
+              const chartColor =
+                chartMetric === '1rm' ? '#4361ee' : chartMetric === 'volume' ? '#2a9d8f' : '#3a0ca3';
+              return (
+                <MiniChart
+                  data={trendData}
+                  label={chartLabel}
+                  unit="kg"
+                  color={chartColor}
+                />
+              );
+            })()}
+
+            {/* Session History */}
             {item.sessions.map((session) => (
               <View key={session.workoutId} style={styles.sessionEntry}>
                 <Text style={styles.sessionDate}>
@@ -626,5 +680,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#212529',
     fontWeight: '500',
+  },
+  // ─── Chart Toggle ─────────────────────────────────────────
+  chartToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 3,
+    marginBottom: 8,
+  },
+  chartToggleBtn: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  chartToggleBtnActive: {
+    backgroundColor: '#4361ee',
+  },
+  chartToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#888',
+  },
+  chartToggleTextActive: {
+    color: '#ffffff',
   },
 });

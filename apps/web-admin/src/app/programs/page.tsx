@@ -52,9 +52,14 @@ export default function ProgramsPage() {
             title="Programs"
             description="Create and manage workout programs, assign exercises, and set training schedules."
           />
-          <Link href="/programs/create" style={createButtonStyle} className="btn-primary">
-            + Create Program
-          </Link>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Link href="/programs/generate" style={{ ...createButtonStyle, backgroundColor: '#4361ee' }} className="btn-primary">
+              Generate with AI
+            </Link>
+            <Link href="/programs/create" style={createButtonStyle} className="btn-primary">
+              + Create Program
+            </Link>
+          </div>
         </div>
 
         {loading ? (

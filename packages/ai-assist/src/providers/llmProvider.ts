@@ -26,4 +26,40 @@ export interface LLMProvider {
     insightText: string;
     suggestionText: string;
   }): Promise<{ insightText: string; suggestionText: string }>;
+
+  /**
+   * Generate a personalized coaching insight based on member context.
+   */
+  generateCoachingInsight(input: {
+    memberName: string;
+    contextSummary: string;
+    gaps: string[];
+    risks: string[];
+    recentPRs: string[];
+  }): Promise<{ message: string; action_items: string[] }>;
+
+  /**
+   * Generate a workout program based on goals, experience, and available equipment.
+   */
+  generateProgram(input: {
+    goal: string;
+    experience: string;
+    daysPerWeek: number;
+    limitations: string[];
+    availableMachines: Array<{ id: string; name: string; target_muscles: string[] }>;
+  }): Promise<{
+    name: string;
+    description: string;
+    days: Array<{
+      day_number: number;
+      name: string;
+      exercises: Array<{
+        exercise_name: string;
+        machine_id: string | null;
+        default_sets: number;
+        default_reps: number;
+      }>;
+    }>;
+    overall_rationale: string;
+  }>;
 }

@@ -12,8 +12,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
 import { calculateVolume, formatDuration, formatWeight } from '@smartgym/utils';
-import { getWorkoutInsight, computeGuardrails } from '@smartgym/ai-assist';
-import type { WorkoutRecord } from '@smartgym/ai-assist';
+import { getWorkoutInsight, computeGuardrails, getCoachingInsight } from '@smartgym/ai-assist';
+import type { WorkoutRecord, CoachingInsight } from '@smartgym/ai-assist';
 import type {
   Workout,
   WorkoutExerciseWithSets,
@@ -31,6 +31,7 @@ import {
   needsRefresh,
 } from '../../../src/lib/featureFlags';
 import { awardPoints } from '../../../src/lib/pointsService';
+import { checkAndAwardStreakBonus } from '../../../src/lib/streakService';
 import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
 import { AnimatedNumber } from '../../../src/components/AnimatedNumber';
 
@@ -166,6 +167,7 @@ export default function WorkoutCompleteScreen() {
   const [insight, setInsight] = useState<WorkoutInsight | null>(null);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [guardrails, setGuardrails] = useState<GuardrailInsight[]>([]);
+  const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -222,6 +224,13 @@ export default function WorkoutCompleteScreen() {
         });
       } catch {
         // Non-fatal — points award failure shouldn't break the summary
+      }
+
+      // Award streak bonus if applicable
+      try {
+        await checkAndAwardStreakBonus(workout.profile_id, workout.gym_id);
+      } catch {
+        // Non-fatal
       }
 
       // Track workout finished event
@@ -364,6 +373,69 @@ export default function WorkoutCompleteScreen() {
 
             setGuardrails(grInsights);
           }
+        } catch {
+          // Non-critical
+        }
+      }
+
+      // ─── Phase 3: Post-workout coaching insight ───────
+      if (isFeatureEnabled('ai_coaching')) {
+        try {
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: cWorkouts } = await supabase
+            .from('workouts')
+            .select('id, started_at, finished_at')
+            .eq('profile_id', workout.profile_id)
+            .eq('status', 'completed')
+            .gte('started_at', thirtyDaysAgo)
+            .order('started_at', { ascending: false });
+
+          const cIds = (cWorkouts ?? []).map((w: { id: string }) => w.id);
+          let cMapped: Array<{
+            id: string; started_at: string; finished_at: string | null;
+            exercises: Array<{ exercise_name: string; sets: Array<{ weight_kg: number; reps: number }> }>;
+          }> = [];
+
+          if (cIds.length > 0) {
+            const { data: cExData } = await supabase
+              .from('workout_exercises')
+              .select('workout_id, exercise_name, sets(*)')
+              .in('workout_id', cIds);
+
+            cMapped = (cWorkouts ?? []).map((w: { id: string; started_at: string; finished_at: string | null }) => ({
+              id: w.id,
+              started_at: w.started_at,
+              finished_at: w.finished_at,
+              exercises: (cExData ?? [])
+                .filter((e: { workout_id: string }) => e.workout_id === w.id)
+                .map((e: { exercise_name: string; sets: Array<{ weight_kg: number; reps: number }> }) => ({
+                  exercise_name: e.exercise_name,
+                  sets: (e.sets ?? []) as Array<{ weight_kg: number; reps: number }>,
+                })),
+            }));
+          }
+
+          const { data: allDates } = await supabase
+            .from('workouts')
+            .select('started_at')
+            .eq('profile_id', workout.profile_id)
+            .eq('status', 'completed');
+
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', workout.profile_id)
+            .maybeSingle();
+
+          const coaching = await getCoachingInsight({
+            memberName: profileData?.full_name || 'there',
+            workouts: cMapped,
+            prs: (insight?.prs ?? []).map((p: PRDetection) => ({ exercise_name: p.exercise_name })),
+            feedbackTrends: { discomfort_count: 0, unstable_count: 0, ok_count: 0 },
+            completedWorkoutDates: (allDates ?? []).map((d: { started_at: string }) => d.started_at),
+          });
+
+          setCoachingInsight(coaching);
         } catch {
           // Non-critical
         }
@@ -599,6 +671,28 @@ export default function WorkoutCompleteScreen() {
               </View>
             </View>
           ))}
+        </View>
+      )}
+
+      {/* Phase 3: Coaching Insight */}
+      {coachingInsight && (
+        <View style={styles.coachingSection}>
+          <Text style={styles.coachingSectionTitle}>
+            {coachingInsight.source === 'ai' ? 'AI Coach Says' : 'Coach Tip'}
+          </Text>
+          <Text style={styles.coachingSectionMessage}>
+            {coachingInsight.message}
+          </Text>
+          {coachingInsight.action_items.length > 0 && (
+            <View style={styles.coachingActionsList}>
+              {coachingInsight.action_items.map((item, i) => (
+                <View key={i} style={styles.coachingActionItem}>
+                  <View style={styles.coachingDot} />
+                  <Text style={styles.coachingActionItemText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
@@ -986,5 +1080,50 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
+  },
+  // Phase 3: Coaching
+  coachingSection: {
+    width: '100%',
+    backgroundColor: '#f0f4ff',
+    borderRadius: 14,
+    padding: 18,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#d0dafe',
+  },
+  coachingSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4361ee',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  coachingSectionMessage: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#212529',
+  },
+  coachingActionsList: {
+    marginTop: 10,
+    gap: 6,
+  },
+  coachingActionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  coachingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4361ee',
+    marginTop: 6,
+  },
+  coachingActionItemText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#212529',
+    lineHeight: 18,
   },
 });
