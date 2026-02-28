@@ -540,3 +540,86 @@ export interface MemberNoteAck {
   profile_id: string;
   acknowledged_at: string;
 }
+
+// ============================================================================
+// Phase 4.1 — Equipment Maintenance Types
+// ============================================================================
+
+export type MaintenanceStatus = 'ok' | 'due_soon' | 'overdue' | 'in_maintenance';
+
+export interface MaintenanceLog {
+  id: string;
+  gym_id: string;
+  machine_id: string;
+  performed_by: string | null;
+  notes: string | null;
+  performed_at: string;
+  created_at: string;
+}
+
+export interface MachineMaintenanceOverview {
+  machine_id: string;
+  machine_name: string;
+  equipment_type: string;
+  maintenance_status: MaintenanceStatus;
+  maintenance_interval_days: number;
+  last_maintained_at: string | null;
+  days_since_maintenance: number;
+  usage_since_maintenance: number;
+}
+
+// ============================================================================
+// Phase 4.2 — Occupancy Heatmap Types
+// ============================================================================
+
+export interface HourlyUsageCell {
+  day_of_week: number;
+  hour_of_day: number;
+  session_count: number;
+}
+
+export interface MachineUsageFrequency {
+  machine_id: string;
+  machine_name: string;
+  equipment_type: string;
+  session_count: number;
+  unique_users: number;
+}
+
+// ============================================================================
+// Phase 4.3 — Multi-Gym Franchise Types
+// ============================================================================
+
+export interface Franchise {
+  id: string;
+  name: string;
+  owner_profile_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FranchiseGym {
+  id: string;
+  franchise_id: string;
+  gym_id: string;
+  added_at: string;
+}
+
+export interface FranchiseGymOverview {
+  gym_id: string;
+  gym_name: string;
+  total_members: number;
+  total_machines: number;
+  workouts_7d: number;
+  workouts_30d: number;
+  active_members_7d: number;
+}
+
+export interface FranchiseTotals {
+  total_gyms: number;
+  total_members: number;
+  total_machines: number;
+  total_workouts_7d: number;
+  total_workouts_30d: number;
+  total_active_members_7d: number;
+}

@@ -24,6 +24,21 @@ const KNOWN_FLAGS = [
     label: 'AI Assist',
     description: 'Enable next-set suggestions, smart cues, and workout insights for gym members.',
   },
+  {
+    key: 'maintenance_alerts',
+    label: 'Maintenance Alerts',
+    description: 'Track equipment usage and flag machines approaching maintenance thresholds.',
+  },
+  {
+    key: 'occupancy_heatmaps',
+    label: 'Occupancy Heatmaps',
+    description: 'Show historical views of which machines and times are busiest.',
+  },
+  {
+    key: 'franchise_dashboard',
+    label: 'Franchise Dashboard',
+    description: 'Aggregate analytics across multiple gym locations.',
+  },
 ];
 
 export default function SettingsPage() {
