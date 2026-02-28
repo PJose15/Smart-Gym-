@@ -6,11 +6,14 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
+  Animated,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
 import { calculateVolume, formatDuration, formatWeight } from '@smartgym/utils';
-import { getWorkoutInsight } from '@smartgym/ai-assist';
+import { getWorkoutInsight, computeGuardrails } from '@smartgym/ai-assist';
+import type { WorkoutRecord } from '@smartgym/ai-assist';
 import type {
   Workout,
   WorkoutExerciseWithSets,
@@ -18,6 +21,8 @@ import type {
   WorkoutInsight,
   PRDetection,
   WorkoutSet,
+  GuardrailInsight,
+  ExperienceLevel,
 } from '@smartgym/types';
 import { trackEvent } from '../../../src/lib/events';
 import {
@@ -26,6 +31,8 @@ import {
   needsRefresh,
 } from '../../../src/lib/featureFlags';
 import { awardPoints } from '../../../src/lib/pointsService';
+import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
+import { AnimatedNumber } from '../../../src/components/AnimatedNumber';
 
 function computeSummary(
   workout: Workout,
@@ -60,14 +67,43 @@ function computeSummary(
 interface StatCardProps {
   label: string;
   value: string;
+  numericValue?: number;
+  suffix?: string;
+  index?: number;
 }
 
-function StatCard({ label, value }: StatCardProps) {
+function StatCard({ label, value, numericValue, suffix, index = 0 }: StatCardProps) {
+  const scale = useRef(new Animated.Value(0.8)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const delay = index * 120;
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: 1,
+        delay,
+        tension: 60,
+        friction: 6,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 400,
+        delay,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start();
+  }, []);
+
   return (
-    <View style={styles.statCard}>
-      <Text style={styles.statValue}>{value}</Text>
+    <Animated.View style={[styles.statCard, { opacity, transform: [{ scale }] }]}>
+      {numericValue !== undefined ? (
+        <AnimatedNumber value={numericValue} style={styles.statValue} suffix={suffix} />
+      ) : (
+        <Text style={styles.statValue}>{value}</Text>
+      )}
       <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -129,6 +165,7 @@ export default function WorkoutCompleteScreen() {
   const [error, setError] = useState<string | null>(null);
   const [insight, setInsight] = useState<WorkoutInsight | null>(null);
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [guardrails, setGuardrails] = useState<GuardrailInsight[]>([]);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -262,6 +299,75 @@ export default function WorkoutCompleteScreen() {
           // AI insight is non-critical; silently swallow errors
         }
       }
+
+      // ─── Phase 2.5.2: Guardrails on workout finish ──────
+      if (isFeatureEnabled('ai_guardrails')) {
+        try {
+          const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: recentWorkoutsData } = await supabase
+            .from('workouts')
+            .select('id, started_at, finished_at')
+            .eq('profile_id', workout.profile_id)
+            .eq('status', 'completed')
+            .gte('started_at', twoWeeksAgo)
+            .order('started_at', { ascending: false })
+            .abortSignal(controller.signal);
+
+          if (recentWorkoutsData && recentWorkoutsData.length > 0) {
+            const wIds = recentWorkoutsData.map((w: { id: string }) => w.id);
+            const { data: recentExData } = await supabase
+              .from('workout_exercises')
+              .select('workout_id, exercise_name, machine_id, sets(*)')
+              .in('workout_id', wIds)
+              .abortSignal(controller.signal);
+
+            const machineIds = [...new Set((recentExData ?? [])
+              .map((e: { machine_id: string | null }) => e.machine_id)
+              .filter(Boolean))] as string[];
+
+            let machineMap = new Map<string, string[]>();
+            if (machineIds.length > 0) {
+              const { data: machData } = await supabase
+                .from('machines')
+                .select('id, primary_muscles')
+                .in('id', machineIds)
+                .abortSignal(controller.signal);
+              for (const m of machData ?? []) {
+                machineMap.set(m.id, m.primary_muscles ?? []);
+              }
+            }
+
+            const records: WorkoutRecord[] = recentWorkoutsData.map((w: { id: string; started_at: string; finished_at: string | null }) => ({
+              id: w.id,
+              started_at: w.started_at,
+              finished_at: w.finished_at,
+              exercises: (recentExData ?? [])
+                .filter((e: { workout_id: string }) => e.workout_id === w.id)
+                .map((e: { exercise_name: string; machine_id: string | null; sets: WorkoutSet[] }) => ({
+                  exercise_name: e.exercise_name,
+                  machine_id: e.machine_id,
+                  primary_muscles: e.machine_id ? machineMap.get(e.machine_id) : undefined,
+                  sets: (e.sets ?? []) as WorkoutSet[],
+                })),
+            }));
+
+            const { data: tp } = await supabase
+              .from('user_training_profiles')
+              .select('experience')
+              .eq('profile_id', workout.profile_id)
+              .maybeSingle();
+
+            const grInsights = computeGuardrails({
+              experience: (tp?.experience as ExperienceLevel) ?? 'intermediate',
+              recentWorkouts: records,
+            });
+
+            setGuardrails(grInsights);
+          }
+        } catch {
+          // Non-critical
+        }
+      }
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         setError('Request timed out. Check your connection and try again.');
@@ -338,6 +444,7 @@ export default function WorkoutCompleteScreen() {
 
   // ─── Render: Summary ───────────────────────────────
   return (
+    <AnimatedScreen>
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.scrollContent}
@@ -354,18 +461,27 @@ export default function WorkoutCompleteScreen() {
         <StatCard
           label="Exercises"
           value={summary.total_exercises.toString()}
+          numericValue={summary.total_exercises}
+          index={0}
         />
         <StatCard
           label="Sets"
           value={summary.total_sets.toString()}
+          numericValue={summary.total_sets}
+          index={1}
         />
         <StatCard
           label="Reps"
           value={summary.total_reps.toString()}
+          numericValue={summary.total_reps}
+          index={2}
         />
         <StatCard
           label="Volume"
           value={formatWeight(summary.total_volume_kg)}
+          numericValue={Math.round(summary.total_volume_kg)}
+          suffix=" kg"
+          index={3}
         />
       </View>
 
@@ -466,6 +582,26 @@ export default function WorkoutCompleteScreen() {
         </View>
       )}
 
+      {/* Phase 2.5.2: Recovery Notes */}
+      {guardrails.length > 0 && (
+        <View style={styles.guardrailSection}>
+          <Text style={styles.guardrailTitle}>Recovery Notes</Text>
+          {guardrails.slice(0, 2).map((g, i) => (
+            <View key={i} style={styles.guardrailCard}>
+              <View style={[
+                styles.guardrailSeverityBar,
+                g.severity === 'high' ? { backgroundColor: '#e63946' }
+                  : g.severity === 'medium' ? { backgroundColor: '#ffa726' }
+                  : { backgroundColor: '#66bb6a' },
+              ]} />
+              <View style={styles.guardrailCardContent}>
+                <Text style={styles.guardrailMessage}>{g.message}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* Back to Home */}
       <TouchableOpacity
         style={styles.backToHomeButton}
@@ -474,6 +610,7 @@ export default function WorkoutCompleteScreen() {
         <Text style={styles.backToHomeText}>Back to Home</Text>
       </TouchableOpacity>
     </ScrollView>
+    </AnimatedScreen>
   );
 }
 
@@ -802,6 +939,38 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#1a1a2e',
     lineHeight: 22,
+  },
+
+  // Guardrail styles
+  guardrailSection: {
+    width: '100%',
+    marginBottom: 24,
+    gap: 8,
+  },
+  guardrailTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#e65100',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  guardrailCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff8e1',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  guardrailSeverityBar: {
+    width: 4,
+  },
+  guardrailCardContent: {
+    flex: 1,
+    padding: 12,
+  },
+  guardrailMessage: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
   },
 
   // Back to Home

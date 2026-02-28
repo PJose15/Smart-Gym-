@@ -31,6 +31,14 @@ export default function RootLayout() {
           name="workout/complete/[id]"
           options={{ title: 'Workout Complete', headerShown: false }}
         />
+        <Stack.Screen
+          name="coach-notes/index"
+          options={{ title: 'Coach Notes' }}
+        />
+        <Stack.Screen
+          name="coach-notes/[id]"
+          options={{ title: 'Coach Note' }}
+        />
       </Stack>
     </ErrorBoundary>
   );

@@ -2,6 +2,10 @@
 // Equipment Types
 // ============================================================================
 
+export type MovementPattern = 'push' | 'pull' | 'squat' | 'hinge' | 'carry' | 'core' | 'isolation' | 'unknown';
+export type EquipmentType = 'machine' | 'cable' | 'dumbbell' | 'barbell' | 'bodyweight' | 'smith' | 'cardio' | 'unknown';
+export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
+
 export interface Machine {
   id: string;
   gym_id: string;
@@ -14,8 +18,16 @@ export interface Machine {
   common_mistakes: string[];
   cue_version: number;
   cue_source: string;
-  movement_pattern: string | null;
-  equipment_type: string | null;
+  movement_pattern: MovementPattern;
+  equipment_type: EquipmentType;
+  difficulty: Difficulty;
+  primary_muscles: string[];
+  secondary_muscles: string[];
+  tags: string[] | null;
+  form_checklist_before: string[] | null;
+  form_checklist_during: string[] | null;
+  form_checklist_after: string[] | null;
+  checklist_version: number;
   created_at: string;
 }
 
@@ -223,10 +235,59 @@ export interface AiAuditLog {
   id?: string;
   gym_id?: string | null;
   profile_id?: string | null;
-  context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation';
+  context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails';
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
   created_at?: string;
+}
+
+// ─── Machine Alternatives Types ─────────────────────────
+
+export interface AlternativeResult {
+  machine: Machine;
+  score: number;
+  reasons: string[];
+}
+
+// ─── Set Feedback Types ─────────────────────────────────
+
+export type SetFeedbackRating = 'ok' | 'unstable' | 'discomfort';
+export type BodyArea = 'knee' | 'shoulder' | 'back' | 'wrist' | 'neck' | 'other';
+
+export interface SetFeedback {
+  id: string;
+  gym_id: string;
+  profile_id: string;
+  workout_id: string;
+  workout_exercise_id: string;
+  set_id: string;
+  feedback: SetFeedbackRating;
+  body_area: BodyArea | null;
+  notes: string | null;
+  created_at: string;
+}
+
+// ─── Form Checklist Types ───────────────────────────────
+
+export interface FormChecklist {
+  before: string[];
+  during: string[];
+  after: string[];
+}
+
+// ─── Guardrail Types ────────────────────────────────────
+
+export type GuardrailType = 'volume_spike' | 'high_rpe' | 'rep_collapse' | 'recovery_overlap';
+export type GuardrailSeverity = 'low' | 'medium' | 'high';
+export type GuardrailAction = 'reduce_load' | 'reduce_sets' | 'rest_day' | 'deload_light';
+
+export interface GuardrailInsight {
+  insight_type: GuardrailType;
+  severity: GuardrailSeverity;
+  confidence: number;
+  message: string;
+  recommended_action: GuardrailAction;
+  meta?: Record<string, unknown>;
 }
 
 export type UserGoal = 'hypertrophy' | 'strength' | 'endurance' | 'general';
@@ -295,4 +356,81 @@ export interface PersonalRecord {
   best_volume_set: number; // weight * reps
   estimated_1rm: number;
   achieved_at: string;
+}
+
+// ============================================================================
+// Trainer Co-Pilot Types (Phase 2.5.3)
+// ============================================================================
+
+export type TrainerAssignmentStatus = 'active' | 'paused';
+
+export interface TrainerAssignment {
+  id: string;
+  gym_id: string;
+  trainer_profile_id: string;
+  member_profile_id: string;
+  status: TrainerAssignmentStatus;
+  created_at: string;
+}
+
+export type CoachNoteSource = 'workout' | 'weekly' | 'manual';
+export type CoachNoteStatus = 'draft' | 'sent' | 'archived';
+
+export interface CoachNote {
+  id: string;
+  gym_id: string;
+  trainer_profile_id: string;
+  member_profile_id: string;
+  source: CoachNoteSource;
+  status: CoachNoteStatus;
+  title: string;
+  body: string;
+  meta: Record<string, unknown> | null;
+  created_at: string;
+  sent_at: string | null;
+}
+
+export type DraftStatus = 'pending' | 'approved' | 'sent' | 'discarded';
+
+export interface CoachNoteDraft {
+  id: string;
+  gym_id: string;
+  trainer_profile_id: string;
+  member_profile_id: string;
+  workout_id: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  draft_title: string;
+  draft_body: string;
+  confidence: number;
+  signals: DraftSignals | null;
+  status: DraftStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DraftSignals {
+  prs?: Array<{ exercise: string; type: string; value: number }>;
+  volume_change_pct?: number | null;
+  total_sets?: number;
+  total_reps?: number;
+  total_volume_kg?: number;
+  guardrails?: Array<{ type: string; severity: string; message: string }>;
+  streak_days?: number;
+  workouts_in_period?: number;
+  goal?: string;
+  experience?: string;
+}
+
+export type CoachNoteActionType = 'generated' | 'edited' | 'approved' | 'sent' | 'discarded';
+
+export interface CoachNoteAction {
+  id: string;
+  gym_id: string;
+  draft_id: string | null;
+  note_id: string | null;
+  actor_profile_id: string;
+  action: CoachNoteActionType;
+  meta: Record<string, unknown> | null;
+  created_at: string;
 }

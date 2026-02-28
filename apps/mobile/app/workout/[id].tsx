@@ -22,8 +22,8 @@ import type {
   WorkoutSet,
   Machine,
 } from '@smartgym/types';
-import { getNextSetSuggestion } from '@smartgym/ai-assist';
-import type { NextSetSuggestion, WeightUnit } from '@smartgym/types';
+import { getNextSetSuggestion, getFormChecklist } from '@smartgym/ai-assist';
+import type { NextSetSuggestion, WeightUnit, FormChecklist, SetFeedbackRating, BodyArea } from '@smartgym/types';
 import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
 import { logAiDecision } from '../../src/lib/aiAudit';
@@ -229,6 +229,116 @@ function AddSetForm({
   );
 }
 
+// ─── Form Checklist Card ────────────────────────────────
+
+interface ChecklistCardProps {
+  checklist: FormChecklist;
+}
+
+function ChecklistCard({ checklist }: ChecklistCardProps) {
+  const [activeTab, setActiveTab] = useState<'before' | 'during' | 'after'>('before');
+
+  const items = activeTab === 'before' ? checklist.before
+    : activeTab === 'during' ? checklist.during
+    : checklist.after;
+
+  return (
+    <View style={styles.checklistCard}>
+      <Text style={styles.checklistTitle}>Form Checklist</Text>
+      <View style={styles.checklistTabs}>
+        {(['before', 'during', 'after'] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.checklistTab, activeTab === tab && styles.checklistTabActive]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={[styles.checklistTabText, activeTab === tab && styles.checklistTabTextActive]}>
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {items.map((item, i) => (
+        <View key={i} style={styles.checklistItem}>
+          <Text style={styles.checklistBullet}>{'\u2022'}</Text>
+          <Text style={styles.checklistItemText}>{item}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ─── Set Feedback Prompt ────────────────────────────────
+
+interface SetFeedbackPromptProps {
+  setId: string;
+  onSubmit: (setId: string, feedback: SetFeedbackRating, bodyArea?: BodyArea) => void;
+}
+
+function SetFeedbackPrompt({ setId, onSubmit }: SetFeedbackPromptProps) {
+  const [showBodyArea, setShowBodyArea] = useState(false);
+
+  const BODY_AREAS: { label: string; value: BodyArea }[] = [
+    { label: 'Knee', value: 'knee' },
+    { label: 'Shoulder', value: 'shoulder' },
+    { label: 'Back', value: 'back' },
+    { label: 'Wrist', value: 'wrist' },
+    { label: 'Neck', value: 'neck' },
+    { label: 'Other', value: 'other' },
+  ];
+
+  if (showBodyArea) {
+    return (
+      <View style={styles.feedbackContainer}>
+        <Text style={styles.feedbackDiscomfortWarning}>
+          Consider reducing weight or stopping. If pain persists, seek a qualified professional.
+        </Text>
+        <Text style={styles.feedbackLabel}>Where?</Text>
+        <View style={styles.feedbackChips}>
+          {BODY_AREAS.map((area) => (
+            <TouchableOpacity
+              key={area.value}
+              style={styles.feedbackBodyChip}
+              onPress={() => {
+                onSubmit(setId, 'discomfort', area.value);
+                setShowBodyArea(false);
+              }}
+            >
+              <Text style={styles.feedbackBodyChipText}>{area.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.feedbackContainer}>
+      <Text style={styles.feedbackLabel}>Felt right?</Text>
+      <View style={styles.feedbackChips}>
+        <TouchableOpacity
+          style={[styles.feedbackChip, styles.feedbackChipOk]}
+          onPress={() => onSubmit(setId, 'ok')}
+        >
+          <Text style={styles.feedbackChipText}>OK</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.feedbackChip, styles.feedbackChipUnstable]}
+          onPress={() => onSubmit(setId, 'unstable')}
+        >
+          <Text style={styles.feedbackChipText}>Unstable</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.feedbackChip, styles.feedbackChipDiscomfort]}
+          onPress={() => setShowBodyArea(true)}
+        >
+          <Text style={styles.feedbackChipText}>Discomfort</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 // ─── Exercise Card ──────────────────────────────────────
 
 interface ExerciseCardProps {
@@ -243,6 +353,12 @@ interface ExerciseCardProps {
   suggestion: NextSetSuggestion | null;
   onApplySuggestion: (exerciseId: string) => void;
   aiEnabled: boolean;
+  checklist: FormChecklist | null;
+  checklistEnabled: boolean;
+  feedbackEnabled: boolean;
+  lastLoggedSetId: string | null;
+  onSubmitFeedback: (setId: string, feedback: SetFeedbackRating, bodyArea?: BodyArea) => void;
+  feedbackSubmitted: Set<string>;
 }
 
 function ExerciseCard({
@@ -252,6 +368,12 @@ function ExerciseCard({
   suggestion,
   onApplySuggestion,
   aiEnabled,
+  checklist,
+  checklistEnabled,
+  feedbackEnabled,
+  lastLoggedSetId,
+  onSubmitFeedback,
+  feedbackSubmitted,
 }: ExerciseCardProps) {
   const sortedSets = [...exercise.sets].sort((a, b) => a.set_number - b.set_number);
   const lastSet = sortedSets[sortedSets.length - 1];
@@ -299,6 +421,11 @@ function ExerciseCard({
         <SuggestionCard suggestion={suggestion} onApply={handleApply} />
       )}
 
+      {/* Form Checklist (collapsible) */}
+      {checklistEnabled && checklist && (
+        <ChecklistCard checklist={checklist} />
+      )}
+
       <View style={styles.addSetSection}>
         <Text style={styles.addSetLabel}>Add Set</Text>
         <AddSetForm
@@ -309,6 +436,14 @@ function ExerciseCard({
           prefillReps={prefillReps}
         />
       </View>
+
+      {/* Set Feedback Prompt (shown after logging a set) */}
+      {feedbackEnabled && lastLoggedSetId && !feedbackSubmitted.has(lastLoggedSetId) && (
+        <SetFeedbackPrompt
+          setId={lastLoggedSetId}
+          onSubmit={onSubmitFeedback}
+        />
+      )}
     </View>
   );
 }
@@ -501,6 +636,13 @@ export default function ActiveWorkoutScreen() {
   const [aiEnabled, setAiEnabled] = useState(false);
   const [weightUnit, setWeightUnitState] = useState<WeightUnit>('kg');
 
+  // Phase 2.5.2: Checklist + Feedback state
+  const [checklistEnabled, setChecklistEnabled] = useState(false);
+  const [feedbackEnabled, setFeedbackEnabled] = useState(false);
+  const [checklists, setChecklists] = useState<Record<string, FormChecklist>>({});
+  const [lastLoggedSetIds, setLastLoggedSetIds] = useState<Record<string, string>>({});
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
+
   // Rest timer state
   const [restTimerRunning, setRestTimerRunning] = useState(false);
   const [restSecondsLeft, setRestSecondsLeft] = useState(0);
@@ -515,6 +657,8 @@ export default function ActiveWorkoutScreen() {
       try {
         await refreshFeatureFlags();
         setAiEnabled(isFeatureEnabled('ai_assist_enabled'));
+        setChecklistEnabled(isFeatureEnabled('ai_form_checklist'));
+        setFeedbackEnabled(isFeatureEnabled('ai_form_checklist')); // tied to same flag
         const unit = await getWeightUnit();
         setWeightUnitState(unit);
       } catch {
@@ -676,6 +820,21 @@ export default function ActiveWorkoutScreen() {
     };
   }, [fetchWorkoutData]);
 
+  // ─── Compute form checklists for exercises with machines ──
+  useEffect(() => {
+    if (!checklistEnabled || exercises.length === 0) return;
+
+    const newChecklists: Record<string, FormChecklist> = {};
+    for (const ex of exercises) {
+      if (ex.machine && !checklists[ex.id]) {
+        newChecklists[ex.id] = getFormChecklist({ machine: ex.machine });
+      }
+    }
+    if (Object.keys(newChecklists).length > 0) {
+      setChecklists((prev) => ({ ...prev, ...newChecklists }));
+    }
+  }, [exercises, checklistEnabled]);
+
   // ─── Fetch machines (when modal opens) ──────────────
   const fetchMachines = useCallback(async () => {
     if (!workout) return;
@@ -786,6 +945,9 @@ export default function ActiveWorkoutScreen() {
         rpe,
       });
 
+      // Track last logged set for feedback prompt
+      setLastLoggedSetIds((prev) => ({ ...prev, [exerciseId]: serverSet.id }));
+
       // Start rest timer
       startRestTimer();
 
@@ -814,6 +976,43 @@ export default function ActiveWorkoutScreen() {
   // ─── Handle apply suggestion ──────────────────────
   const handleApplySuggestion = (exerciseId: string) => {
     trackEvent('ai_next_set_applied', { exercise_id: exerciseId });
+  };
+
+  // ─── Handle set feedback ───────────────────────────
+  const handleSubmitFeedback = async (
+    setId: string,
+    feedback: SetFeedbackRating,
+    bodyArea?: BodyArea,
+  ) => {
+    // Optimistic: mark as submitted immediately
+    setFeedbackSubmitted((prev) => new Set([...prev, setId]));
+
+    if (!workout) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Find the exercise that owns this set
+      const exercise = exercises.find((ex) =>
+        ex.sets.some((s) => s.id === setId),
+      );
+      if (!exercise) return;
+
+      await supabase.from('set_feedback').insert({
+        gym_id: workout.gym_id,
+        profile_id: user.id,
+        workout_id: workout.id,
+        workout_exercise_id: exercise.id,
+        set_id: setId,
+        feedback,
+        body_area: bodyArea ?? null,
+      });
+
+      trackEvent('set_feedback_submitted', { set_id: setId, feedback, body_area: bodyArea });
+    } catch {
+      // Non-fatal — feedback is best-effort
+    }
   };
 
   // ─── Add exercise ───────────────────────────────────
@@ -980,6 +1179,12 @@ export default function ActiveWorkoutScreen() {
             suggestion={suggestions[exercise.id] ?? null}
             onApplySuggestion={handleApplySuggestion}
             aiEnabled={aiEnabled}
+            checklist={checklists[exercise.id] ?? null}
+            checklistEnabled={checklistEnabled}
+            feedbackEnabled={feedbackEnabled}
+            lastLoggedSetId={lastLoggedSetIds[exercise.id] ?? null}
+            onSubmitFeedback={handleSubmitFeedback}
+            feedbackSubmitted={feedbackSubmitted}
           />
         ))}
 
@@ -1510,5 +1715,124 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+
+  // ─── Form Checklist Styles ─────────────────────────
+  checklistCard: {
+    backgroundColor: '#f0f4ff',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  checklistTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4361ee',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  checklistTabs: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 8,
+  },
+  checklistTab: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: '#dde4ff',
+  },
+  checklistTabActive: {
+    backgroundColor: '#4361ee',
+  },
+  checklistTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4361ee',
+  },
+  checklistTabTextActive: {
+    color: '#ffffff',
+  },
+  checklistItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  checklistBullet: {
+    fontSize: 14,
+    color: '#4361ee',
+    marginRight: 6,
+    lineHeight: 18,
+  },
+  checklistItemText: {
+    fontSize: 13,
+    color: '#1a1a2e',
+    flex: 1,
+    lineHeight: 18,
+  },
+
+  // ─── Set Feedback Styles ───────────────────────────
+  feedbackContainer: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 4,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  feedbackLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6c757d',
+    marginBottom: 6,
+  },
+  feedbackChips: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  feedbackChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  feedbackChipOk: {
+    backgroundColor: '#d4edda',
+    borderColor: '#28a745',
+  },
+  feedbackChipUnstable: {
+    backgroundColor: '#fff3cd',
+    borderColor: '#ffc107',
+  },
+  feedbackChipDiscomfort: {
+    backgroundColor: '#f8d7da',
+    borderColor: '#dc3545',
+  },
+  feedbackChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  feedbackBodyChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#e2e3e5',
+    borderWidth: 1,
+    borderColor: '#adb5bd',
+  },
+  feedbackBodyChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#495057',
+  },
+  feedbackDiscomfortWarning: {
+    fontSize: 12,
+    color: '#dc3545',
+    fontWeight: '600',
+    marginBottom: 8,
+    lineHeight: 18,
   },
 });

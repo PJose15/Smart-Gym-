@@ -32,7 +32,7 @@ INSERT INTO gym_members (gym_id, profile_id, role) VALUES
 
 -- ─── MACHINES ───────────────────────────────────────────────
 
-INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety_cues, common_mistakes, cue_version, cue_source) VALUES
+INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety_cues, common_mistakes, cue_version, cue_source, movement_pattern, equipment_type, difficulty, primary_muscles, secondary_muscles) VALUES
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'Chest Press Machine',
@@ -58,7 +58,12 @@ INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety
       'Gripping the handles too tightly — relax your grip.'
     ],
     1,
-    'manual'
+    'manual',
+    'push',
+    'machine',
+    'beginner',
+    ARRAY['chest', 'triceps'],
+    ARRAY['front deltoids']
   ),
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
@@ -85,13 +90,87 @@ INSERT INTO machines (gym_id, name, qr_slug, target_muscles, setup_steps, safety
       'Leaning too far back on the pulldown — maintain a slight lean only.'
     ],
     1,
-    'manual'
+    'manual',
+    'pull',
+    'cable',
+    'beginner',
+    ARRAY['lats', 'biceps'],
+    ARRAY['rear deltoids', 'rhomboids']
+  ),
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'Leg Press',
+    'iron-paradise-leg-press',
+    ARRAY['quadriceps', 'glutes', 'hamstrings'],
+    ARRAY[
+      'Adjust the seat to a comfortable position',
+      'Place your feet shoulder-width apart on the platform',
+      'Set the desired weight',
+      'Release the safety catch'
+    ],
+    ARRAY[
+      'Do not lock your knees at full extension',
+      'Keep your lower back pressed against the pad',
+      'Start with a lighter weight to warm up',
+      'Re-engage the safety catch when finished'
+    ],
+    ARRAY[
+      'Letting knees cave inward — push knees outward in line with toes.',
+      'Bouncing at the bottom — control the eccentric.',
+      'Locking out knees at the top.',
+      'Lifting hips off the pad.',
+      'Using too narrow a foot position.'
+    ],
+    1,
+    'manual',
+    'squat',
+    'machine',
+    'beginner',
+    ARRAY['quadriceps', 'glutes'],
+    ARRAY['hamstrings', 'calves']
+  ),
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'Cable Chest Fly',
+    'iron-paradise-cable-chest-fly',
+    ARRAY['chest', 'front deltoids'],
+    ARRAY[
+      'Set cable pulleys to shoulder height',
+      'Select the desired weight on each side',
+      'Stand in the center and grip both handles',
+      'Step forward slightly for a stable stance'
+    ],
+    ARRAY[
+      'Control the movement — avoid letting cables snap back',
+      'Keep a slight bend in your elbows throughout',
+      'Do not use excessive weight',
+      'Stop if you feel shoulder impingement'
+    ],
+    ARRAY[
+      'Using too much weight and losing form.',
+      'Straightening arms fully — maintain the elbow bend.',
+      'Not controlling the eccentric portion.',
+      'Leaning too far forward.',
+      'Rushing through reps.'
+    ],
+    1,
+    'manual',
+    'push',
+    'cable',
+    'intermediate',
+    ARRAY['chest'],
+    ARRAY['front deltoids', 'biceps']
   );
 
 -- ─── USER TRAINING PROFILES ──────────────────────────────
 
 INSERT INTO user_training_profiles (gym_id, profile_id, goal, experience, units, limitations) VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', 'hypertrophy', 'intermediate', 'lbs', ARRAY['knee_sensitive']);
+
+-- ─── TRAINER ASSIGNMENTS (Phase 2.5.3) ───────────────────
+
+INSERT INTO trainer_assignments (gym_id, trainer_profile_id, member_profile_id, status) VALUES
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '22222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333', 'active');
 
 -- ─── FEATURE FLAGS (Phase 2.5) ─────────────────────────────
 
