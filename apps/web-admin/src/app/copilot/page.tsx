@@ -1,0 +1,570 @@
+'use client';
+
+import { useEffect, useState, CSSProperties } from 'react';
+import { supabase } from '@/lib/supabase';
+import { PageHeader } from '../components/PageHeader';
+import { AnimatedPage } from '../components/AnimatedPage';
+
+// ─── Types ───────────────────────────────────────────────
+
+interface DraftRow {
+  id: string;
+  gym_id: string;
+  trainer_profile_id: string;
+  member_profile_id: string;
+  workout_id: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  draft_title: string;
+  draft_body: string;
+  confidence: number;
+  signals: Record<string, unknown> | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  member_profile?: { full_name: string } | null;
+}
+
+// ─── Styles ─────────────────────────────────────────────
+
+const filterBarStyle: CSSProperties = {
+  display: 'flex',
+  gap: 12,
+  marginBottom: 20,
+  alignItems: 'center',
+};
+
+const filterSelectStyle: CSSProperties = {
+  padding: '6px 12px',
+  fontSize: 13,
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  outline: 'none',
+  backgroundColor: '#fff',
+};
+
+const cardGridStyle: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
+  gap: 16,
+};
+
+const cardStyle: CSSProperties = {
+  backgroundColor: '#ffffff',
+  borderRadius: 10,
+  padding: '20px',
+  border: '1px solid rgba(0,0,0,0.06)',
+  cursor: 'pointer',
+  transition: 'box-shadow 0.2s',
+};
+
+const cardTitleStyle: CSSProperties = {
+  fontSize: 16,
+  fontWeight: 600,
+  color: '#1a1a2e',
+  marginBottom: 6,
+};
+
+const memberNameStyle: CSSProperties = {
+  fontSize: 13,
+  color: '#666',
+  marginBottom: 8,
+};
+
+const bodyPreviewStyle: CSSProperties = {
+  fontSize: 13,
+  color: '#555',
+  lineHeight: 1.5,
+  marginBottom: 12,
+  maxHeight: 60,
+  overflow: 'hidden',
+};
+
+const chipRowStyle: CSSProperties = {
+  display: 'flex',
+  gap: 6,
+  flexWrap: 'wrap',
+  marginBottom: 12,
+};
+
+const chipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '2px 8px',
+  borderRadius: 10,
+  fontSize: 11,
+  fontWeight: 600,
+};
+
+const actionsRowStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  marginTop: 8,
+};
+
+const sendBtnStyle: CSSProperties = {
+  padding: '6px 16px',
+  fontSize: 13,
+  fontWeight: 600,
+  color: '#fff',
+  backgroundColor: '#4fc3f7',
+  border: 'none',
+  borderRadius: 6,
+  cursor: 'pointer',
+};
+
+const discardBtnStyle: CSSProperties = {
+  padding: '6px 16px',
+  fontSize: 13,
+  fontWeight: 600,
+  color: '#e53935',
+  backgroundColor: 'transparent',
+  border: '1px solid #e53935',
+  borderRadius: 6,
+  cursor: 'pointer',
+};
+
+const modalOverlayStyle: CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.4)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+};
+
+const modalStyle: CSSProperties = {
+  backgroundColor: '#fff',
+  borderRadius: 12,
+  padding: 32,
+  width: '90%',
+  maxWidth: 640,
+  maxHeight: '85vh',
+  overflowY: 'auto',
+};
+
+const textareaStyle: CSSProperties = {
+  width: '100%',
+  minHeight: 160,
+  padding: '10px 12px',
+  fontSize: 14,
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  fontFamily: 'inherit',
+  resize: 'vertical',
+  boxSizing: 'border-box',
+};
+
+const inputStyle: CSSProperties = {
+  width: '100%',
+  padding: '8px 12px',
+  fontSize: 14,
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  boxSizing: 'border-box',
+  marginBottom: 12,
+};
+
+const labelStyle: CSSProperties = {
+  display: 'block',
+  fontSize: 13,
+  fontWeight: 600,
+  color: '#333',
+  marginBottom: 6,
+};
+
+const signalsPanelStyle: CSSProperties = {
+  backgroundColor: '#f8f9fa',
+  borderRadius: 8,
+  padding: '14px 16px',
+  marginBottom: 16,
+  fontSize: 13,
+  color: '#555',
+};
+
+const confidenceBadgeStyle = (confidence: number): CSSProperties => ({
+  ...chipStyle,
+  backgroundColor: confidence >= 0.7 ? '#e8f5e9' : confidence >= 0.5 ? '#fff8e1' : '#fce4ec',
+  color: confidence >= 0.7 ? '#2e7d32' : confidence >= 0.5 ? '#f57f17' : '#c62828',
+});
+
+const emptyStyle: CSSProperties = {
+  padding: 40,
+  textAlign: 'center',
+  color: '#999',
+  fontSize: 15,
+};
+
+const loadingStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'center',
+  padding: '60px 0',
+};
+
+const errorStyle: CSSProperties = {
+  backgroundColor: '#fdecea',
+  color: '#b71c1c',
+  padding: '14px 18px',
+  borderRadius: 8,
+  fontSize: 14,
+  marginBottom: 16,
+};
+
+// ─── Component ────────────────────────────────────────────
+
+export default function CopilotInboxPage() {
+  const [drafts, setDrafts] = useState<DraftRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('pending');
+  const [selectedDraft, setSelectedDraft] = useState<DraftRow | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [featureEnabled, setFeatureEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkFeatureFlag();
+  }, []);
+
+  useEffect(() => {
+    if (featureEnabled) fetchDrafts();
+  }, [featureEnabled, filterStatus]);
+
+  async function checkFeatureFlag() {
+    const { data } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('key', 'ai_trainer_copilot')
+      .is('profile_id', null)
+      .limit(1)
+      .single();
+    setFeatureEnabled(data?.enabled ?? false);
+    setLoading(false);
+  }
+
+  async function fetchDrafts() {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('coach_note_drafts')
+        .select('*, member_profile:member_profile_id(full_name)')
+        .order('created_at', { ascending: false });
+
+      if (filterStatus !== 'all') {
+        query = query.eq('status', filterStatus);
+      }
+
+      const { data, error: fetchError } = await query;
+      if (fetchError) { setError(fetchError.message); return; }
+      setDrafts((data as unknown as DraftRow[]) ?? []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load drafts');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openDraft(draft: DraftRow) {
+    setSelectedDraft(draft);
+    setEditTitle(draft.draft_title);
+    setEditBody(draft.draft_body);
+  }
+
+  function closeDraft() {
+    setSelectedDraft(null);
+    setEditTitle('');
+    setEditBody('');
+  }
+
+  async function handleApproveAndSend() {
+    if (!selectedDraft) return;
+    setSending(true);
+    setError(null);
+
+    try {
+      const wasEdited =
+        editTitle !== selectedDraft.draft_title || editBody !== selectedDraft.draft_body;
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Call edge function if available, otherwise do client-side operations
+      // For now, do client-side since edge functions may not be deployed
+      const source = selectedDraft.workout_id ? 'workout' : (selectedDraft.period_start ? 'weekly' : 'manual');
+
+      // Create coach_notes row
+      const { data: note, error: noteErr } = await supabase
+        .from('coach_notes')
+        .insert({
+          gym_id: selectedDraft.gym_id,
+          trainer_profile_id: selectedDraft.trainer_profile_id,
+          member_profile_id: selectedDraft.member_profile_id,
+          source,
+          status: 'sent',
+          title: editTitle,
+          body: editBody,
+          meta: selectedDraft.signals,
+          sent_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (noteErr) { setError(noteErr.message); setSending(false); return; }
+
+      // Update draft status
+      await supabase
+        .from('coach_note_drafts')
+        .update({
+          status: 'sent',
+          draft_title: editTitle,
+          draft_body: editBody,
+        })
+        .eq('id', selectedDraft.id);
+
+      // Log actions
+      const userId = session?.user?.id;
+      if (userId && note) {
+        const actions: any[] = [];
+        if (wasEdited) {
+          actions.push({
+            gym_id: selectedDraft.gym_id,
+            draft_id: selectedDraft.id,
+            note_id: note.id,
+            actor_profile_id: userId,
+            action: 'edited',
+          });
+        }
+        actions.push({
+          gym_id: selectedDraft.gym_id,
+          draft_id: selectedDraft.id,
+          note_id: note.id,
+          actor_profile_id: userId,
+          action: 'approved',
+        });
+        actions.push({
+          gym_id: selectedDraft.gym_id,
+          draft_id: selectedDraft.id,
+          note_id: note.id,
+          actor_profile_id: userId,
+          action: 'sent',
+        });
+        await supabase.from('coach_note_actions').insert(actions);
+      }
+
+      closeDraft();
+      fetchDrafts();
+    } catch {
+      setError('Failed to send note');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleDiscard(draftId: string) {
+    setError(null);
+    const { data: { session } } = await supabase.auth.getSession();
+
+    await supabase
+      .from('coach_note_drafts')
+      .update({ status: 'discarded' })
+      .eq('id', draftId);
+
+    if (session?.user?.id) {
+      const draft = drafts.find((d) => d.id === draftId);
+      await supabase.from('coach_note_actions').insert({
+        gym_id: draft?.gym_id,
+        draft_id: draftId,
+        actor_profile_id: session.user.id,
+        action: 'discarded',
+      });
+    }
+
+    closeDraft();
+    fetchDrafts();
+  }
+
+  // Feature flag gate
+  if (featureEnabled === false) {
+    return (
+      <div style={{ padding: 24 }}>
+        <PageHeader title="Co-Pilot" description="Trainer Co-Pilot is not enabled for your gym." />
+        <p style={emptyStyle}>Contact your gym owner to enable the <strong>ai_trainer_copilot</strong> feature flag.</p>
+      </div>
+    );
+  }
+
+  if (loading && featureEnabled === null) {
+    return (
+      <div style={{ padding: 24 }}>
+        <PageHeader title="Co-Pilot" description="AI-assisted coach note drafts" />
+        <div style={loadingStyle}><div className="spinner-enhanced" /></div>
+      </div>
+    );
+  }
+
+  const signalsDisplay = (signals: Record<string, unknown> | null) => {
+    if (!signals) return null;
+    const items: string[] = [];
+    if (signals.total_sets) items.push(`${signals.total_sets} sets`);
+    if (signals.total_volume_kg) items.push(`${Math.round(signals.total_volume_kg as number)} kg vol`);
+    if (signals.workouts_in_period) items.push(`${signals.workouts_in_period} workouts`);
+    if (Array.isArray(signals.prs) && signals.prs.length > 0) items.push(`${signals.prs.length} PR${signals.prs.length > 1 ? 's' : ''}`);
+    if (Array.isArray(signals.guardrails) && signals.guardrails.length > 0) items.push(`${signals.guardrails.length} guardrail${signals.guardrails.length > 1 ? 's' : ''}`);
+    return items;
+  };
+
+  return (
+    <AnimatedPage>
+      <div style={{ padding: 24 }}>
+        <PageHeader title="Co-Pilot Inbox" description="Review, edit, and send AI-generated coach note drafts to your members." />
+
+        {error && <div style={errorStyle}>{error}</div>}
+
+        <div style={filterBarStyle}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#555' }}>Status:</label>
+          <select
+            style={filterSelectStyle}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="pending">Pending</option>
+            <option value="sent">Sent</option>
+            <option value="discarded">Discarded</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+
+        {loading ? (
+          <div style={loadingStyle}><div className="spinner-enhanced" /></div>
+        ) : drafts.length === 0 ? (
+          <p style={emptyStyle}>No drafts found. Drafts are generated when members complete workouts.</p>
+        ) : (
+          <div style={cardGridStyle}>
+            {drafts.map((draft) => {
+              const chips = signalsDisplay(draft.signals);
+              return (
+                <div
+                  key={draft.id}
+                  style={cardStyle}
+                  className="section-glow"
+                  onClick={() => openDraft(draft)}
+                >
+                  <div style={cardTitleStyle}>{draft.draft_title}</div>
+                  <div style={memberNameStyle}>
+                    {(draft as any).member_profile?.full_name ?? 'Member'}
+                    {' · '}
+                    {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
+                  <div style={bodyPreviewStyle}>{draft.draft_body}</div>
+                  <div style={chipRowStyle}>
+                    <span style={confidenceBadgeStyle(draft.confidence)}>
+                      {Math.round(draft.confidence * 100)}% confidence
+                    </span>
+                    {chips?.map((c, i) => (
+                      <span key={i} style={{ ...chipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{c}</span>
+                    ))}
+                  </div>
+                  {draft.status === 'pending' && (
+                    <div style={actionsRowStyle}>
+                      <button
+                        style={sendBtnStyle}
+                        className="btn-primary"
+                        onClick={(e) => { e.stopPropagation(); openDraft(draft); }}
+                      >
+                        Review & Send
+                      </button>
+                      <button
+                        style={discardBtnStyle}
+                        className="btn-danger"
+                        onClick={(e) => { e.stopPropagation(); handleDiscard(draft.id); }}
+                      >
+                        Discard
+                      </button>
+                    </div>
+                  )}
+                  {draft.status !== 'pending' && (
+                    <span style={{
+                      ...chipStyle,
+                      backgroundColor: draft.status === 'sent' ? '#e8f5e9' : '#f5f5f5',
+                      color: draft.status === 'sent' ? '#2e7d32' : '#999',
+                    }}>
+                      {draft.status}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Draft Editor Modal ── */}
+        {selectedDraft && (
+          <div style={modalOverlayStyle} onClick={closeDraft}>
+            <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 16, color: '#1a1a2e' }}>
+                Edit Draft
+              </h2>
+
+              {/* Signals panel */}
+              <div style={signalsPanelStyle}>
+                <strong>Signals used:</strong>
+                <div style={{ marginTop: 6 }}>
+                  {selectedDraft.signals && Object.entries(selectedDraft.signals).map(([key, val]) => {
+                    if (val === null || val === undefined || (Array.isArray(val) && val.length === 0)) return null;
+                    const display = Array.isArray(val) ? JSON.stringify(val) : String(val);
+                    return (
+                      <div key={key} style={{ marginBottom: 2 }}>
+                        <strong>{key}:</strong> {display}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <label style={labelStyle}>Title</label>
+              <input
+                style={inputStyle}
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+
+              <label style={labelStyle}>Body</label>
+              <textarea
+                style={textareaStyle}
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+              />
+
+              <div style={{ ...actionsRowStyle, marginTop: 16, justifyContent: 'flex-end' }}>
+                <button style={{ ...discardBtnStyle, color: '#666', borderColor: '#ccc' }} onClick={closeDraft}>
+                  Cancel
+                </button>
+                {selectedDraft.status === 'pending' && (
+                  <>
+                    <button
+                      style={{ ...discardBtnStyle }}
+                      onClick={() => handleDiscard(selectedDraft.id)}
+                    >
+                      Discard
+                    </button>
+                    <button
+                      style={sendBtnStyle}
+                      className="btn-primary"
+                      disabled={sending}
+                      onClick={handleApproveAndSend}
+                    >
+                      {sending ? 'Sending...' : 'Approve & Send'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </AnimatedPage>
+  );
+}

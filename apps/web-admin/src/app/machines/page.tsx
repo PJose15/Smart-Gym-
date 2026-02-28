@@ -14,6 +14,11 @@ interface MachineRow {
   target_muscles: string[];
   setup_steps: string[];
   safety_cues: string[];
+  movement_pattern: string;
+  equipment_type: string;
+  difficulty: string;
+  primary_muscles: string[];
+  secondary_muscles: string[];
   gym_id: string;
   gyms: { name: string } | null;
 }
@@ -23,6 +28,17 @@ interface GymOption {
   name: string;
   slug: string;
 }
+
+const MOVEMENT_PATTERNS = ['push', 'pull', 'squat', 'hinge', 'carry', 'core', 'isolation', 'unknown'] as const;
+const EQUIPMENT_TYPES = ['machine', 'cable', 'dumbbell', 'barbell', 'bodyweight', 'smith', 'cardio', 'unknown'] as const;
+const DIFFICULTY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
+
+const COMMON_MUSCLES = [
+  'chest', 'triceps', 'front deltoids', 'rear deltoids', 'lats',
+  'biceps', 'rhomboids', 'traps', 'quadriceps', 'hamstrings',
+  'glutes', 'calves', 'core', 'obliques', 'forearms',
+  'hip flexors', 'lower back', 'upper back', 'shoulders',
+];
 
 // ─── Styles ─────────────────────────────────────────────
 
@@ -39,11 +55,10 @@ const addButtonStyle: CSSProperties = {
 
 const formContainerStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
+  borderRadius: 10,
   padding: '24px',
   marginBottom: 24,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-  border: '1px solid #e0e0e0',
+  border: '1px solid rgba(79, 195, 247, 0.15)',
 };
 
 const formTitleStyle: CSSProperties = {
@@ -57,6 +72,12 @@ const formTitleStyle: CSSProperties = {
 const formGridStyle: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: '1fr 1fr',
+  gap: 16,
+};
+
+const formGrid3Style: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr 1fr',
   gap: 16,
 };
 
@@ -124,9 +145,9 @@ const cancelButtonStyle: CSSProperties = {
 
 const tableContainerStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  borderRadius: 10,
   overflow: 'hidden',
+  border: '1px solid rgba(0,0,0,0.06)',
 };
 
 const tableStyle: CSSProperties = {
@@ -162,6 +183,12 @@ const tagStyle: CSSProperties = {
   fontSize: 12,
   marginRight: 4,
   marginBottom: 2,
+};
+
+const metaTagStyle: CSSProperties = {
+  ...tagStyle,
+  backgroundColor: '#f3e5f5',
+  color: '#7b1fa2',
 };
 
 const slugStyle: CSSProperties = {
@@ -215,7 +242,174 @@ const emptyStyle: CSSProperties = {
   fontSize: 15,
 };
 
+const sectionDividerStyle: CSSProperties = {
+  borderTop: '1px solid #eee',
+  marginTop: 16,
+  marginBottom: 16,
+  paddingTop: 16,
+};
 
+const sectionLabelStyle: CSSProperties = {
+  fontSize: 14,
+  fontWeight: 600,
+  color: '#4fc3f7',
+  marginBottom: 12,
+};
+
+const muscleChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 10px',
+  margin: '2px 4px 2px 0',
+  borderRadius: 16,
+  fontSize: 12,
+  cursor: 'pointer',
+  border: '1px solid #ddd',
+  transition: 'all 0.15s',
+};
+
+const muscleChipActiveStyle: CSSProperties = {
+  ...muscleChipStyle,
+  backgroundColor: '#4fc3f7',
+  color: '#fff',
+  borderColor: '#4fc3f7',
+};
+
+const tagInputContainerStyle: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 4,
+  padding: '6px 8px',
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  minHeight: 38,
+  alignItems: 'center',
+};
+
+const tagChipStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  padding: '2px 8px',
+  backgroundColor: '#e8eaf6',
+  color: '#3949ab',
+  borderRadius: 12,
+  fontSize: 12,
+};
+
+const tagRemoveStyle: CSSProperties = {
+  cursor: 'pointer',
+  fontWeight: 700,
+  fontSize: 14,
+  lineHeight: 1,
+  color: '#7986cb',
+};
+
+const tagInputStyle: CSSProperties = {
+  border: 'none',
+  outline: 'none',
+  fontSize: 13,
+  flex: 1,
+  minWidth: 80,
+  padding: '2px 0',
+};
+
+// ─── Multi-select muscle component ──────────────────────
+
+function MuscleMultiSelect({
+  selected,
+  onChange,
+  label,
+  id,
+}: {
+  selected: string[];
+  onChange: (muscles: string[]) => void;
+  label: string;
+  id: string;
+}) {
+  return (
+    <div style={fieldStyle}>
+      <label style={labelStyle} htmlFor={id}>{label}</label>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+        {COMMON_MUSCLES.map((muscle) => {
+          const isActive = selected.includes(muscle);
+          return (
+            <span
+              key={muscle}
+              style={isActive ? muscleChipActiveStyle : muscleChipStyle}
+              onClick={() => {
+                if (isActive) {
+                  onChange(selected.filter((m) => m !== muscle));
+                } else {
+                  onChange([...selected, muscle]);
+                }
+              }}
+            >
+              {muscle}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Tag input component ────────────────────────────────
+
+function TagInput({
+  tags,
+  onChange,
+  label,
+  id,
+  placeholder,
+}: {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  label: string;
+  id: string;
+  placeholder?: string;
+}) {
+  const [inputValue, setInputValue] = useState('');
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if ((e.key === 'Enter' || e.key === ',') && inputValue.trim()) {
+      e.preventDefault();
+      const newTag = inputValue.trim();
+      if (!tags.includes(newTag)) {
+        onChange([...tags, newTag]);
+      }
+      setInputValue('');
+    }
+    if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
+      onChange(tags.slice(0, -1));
+    }
+  }
+
+  return (
+    <div style={fieldStyle}>
+      <label style={labelStyle} htmlFor={id}>{label}</label>
+      <div style={tagInputContainerStyle}>
+        {tags.map((tag) => (
+          <span key={tag} style={tagChipStyle}>
+            {tag}
+            <span style={tagRemoveStyle} onClick={() => onChange(tags.filter((t) => t !== tag))}>
+              &times;
+            </span>
+          </span>
+        ))}
+        <input
+          id={id}
+          style={tagInputStyle}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={tags.length === 0 ? (placeholder ?? 'Type and press Enter...') : ''}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ─────────────────────────────────────
 
 export default function MachinesPage() {
   const [machines, setMachines] = useState<MachineRow[]>([]);
@@ -225,18 +419,26 @@ export default function MachinesPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form state
+  // Form state — base
   const [formName, setFormName] = useState('');
   const [formGymId, setFormGymId] = useState('');
   const [formTargetMuscles, setFormTargetMuscles] = useState('');
   const [formSetupSteps, setFormSetupSteps] = useState('');
   const [formSafetyCues, setFormSafetyCues] = useState('');
 
+  // Form state — Phase 2.5.2 machine tagging
+  const [formMovementPattern, setFormMovementPattern] = useState('unknown');
+  const [formEquipmentType, setFormEquipmentType] = useState('machine');
+  const [formDifficulty, setFormDifficulty] = useState('beginner');
+  const [formPrimaryMuscles, setFormPrimaryMuscles] = useState<string[]>([]);
+  const [formSecondaryMuscles, setFormSecondaryMuscles] = useState<string[]>([]);
+  const [formTags, setFormTags] = useState<string[]>([]);
+
   async function fetchMachines() {
     try {
       const { data, error: fetchError } = await supabase
         .from('machines')
-        .select('id, name, qr_slug, target_muscles, setup_steps, safety_cues, gym_id, gyms(name)')
+        .select('id, name, qr_slug, target_muscles, setup_steps, safety_cues, movement_pattern, equipment_type, difficulty, primary_muscles, secondary_muscles, gym_id, gyms(name)')
         .order('name', { ascending: true });
 
       if (fetchError) {
@@ -273,6 +475,12 @@ export default function MachinesPage() {
     setFormTargetMuscles('');
     setFormSetupSteps('');
     setFormSafetyCues('');
+    setFormMovementPattern('unknown');
+    setFormEquipmentType('machine');
+    setFormDifficulty('beginner');
+    setFormPrimaryMuscles([]);
+    setFormSecondaryMuscles([]);
+    setFormTags([]);
     setShowForm(false);
     setError(null);
   }
@@ -322,6 +530,12 @@ export default function MachinesPage() {
       common_mistakes: commonMistakes,
       cue_version: 1,
       cue_source: commonMistakes.length > 0 ? 'gemini' : 'admin',
+      movement_pattern: formMovementPattern,
+      equipment_type: formEquipmentType,
+      difficulty: formDifficulty,
+      primary_muscles: formPrimaryMuscles,
+      secondary_muscles: formSecondaryMuscles,
+      tags: formTags.length > 0 ? formTags : null,
     });
 
     setSubmitting(false);
@@ -463,6 +677,84 @@ export default function MachinesPage() {
                   />
                 </div>
               </div>
+
+              {/* ─── Phase 2.5.2: Machine Tagging ──────────── */}
+              <div style={sectionDividerStyle}>
+                <p style={sectionLabelStyle}>Machine Classification</p>
+                <div style={formGrid3Style}>
+                  <div style={fieldStyle}>
+                    <label style={labelStyle} htmlFor="machine-movement">
+                      Movement Pattern
+                    </label>
+                    <select
+                      id="machine-movement"
+                      style={selectStyle}
+                      className="input-animate"
+                      value={formMovementPattern}
+                      onChange={(e) => setFormMovementPattern(e.target.value)}
+                    >
+                      {MOVEMENT_PATTERNS.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={fieldStyle}>
+                    <label style={labelStyle} htmlFor="machine-equipment">
+                      Equipment Type
+                    </label>
+                    <select
+                      id="machine-equipment"
+                      style={selectStyle}
+                      className="input-animate"
+                      value={formEquipmentType}
+                      onChange={(e) => setFormEquipmentType(e.target.value)}
+                    >
+                      {EQUIPMENT_TYPES.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={fieldStyle}>
+                    <label style={labelStyle} htmlFor="machine-difficulty">
+                      Difficulty
+                    </label>
+                    <select
+                      id="machine-difficulty"
+                      style={selectStyle}
+                      className="input-animate"
+                      value={formDifficulty}
+                      onChange={(e) => setFormDifficulty(e.target.value)}
+                    >
+                      {DIFFICULTY_LEVELS.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <MuscleMultiSelect
+                  selected={formPrimaryMuscles}
+                  onChange={setFormPrimaryMuscles}
+                  label="Primary Muscles"
+                  id="machine-primary-muscles"
+                />
+
+                <MuscleMultiSelect
+                  selected={formSecondaryMuscles}
+                  onChange={setFormSecondaryMuscles}
+                  label="Secondary Muscles"
+                  id="machine-secondary-muscles"
+                />
+
+                <TagInput
+                  tags={formTags}
+                  onChange={setFormTags}
+                  label="Tags (optional)"
+                  id="machine-tags"
+                  placeholder="e.g. compound, beginner-friendly (press Enter)"
+                />
+              </div>
+
               {formGymId && formName && (
                 <p style={{ fontSize: 13, color: '#888', margin: '0 0 12px' }}>
                   QR Slug:{' '}
@@ -483,7 +775,7 @@ export default function MachinesPage() {
           </div>
         )}
 
-        <div style={tableContainerStyle}>
+        <div style={tableContainerStyle} className="section-glow">
           {machines.length === 0 ? (
             <p style={emptyStyle} className="empty-breathe">No machines found. Add your first machine above.</p>
           ) : (
@@ -493,6 +785,7 @@ export default function MachinesPage() {
                   <th style={thStyle}>Name</th>
                   <th style={thStyle}>Gym</th>
                   <th style={thStyle}>Target Muscles</th>
+                  <th style={thStyle}>Classification</th>
                   <th style={thStyle}>QR Slug</th>
                   <th style={thStyle}>Actions</th>
                 </tr>
@@ -510,6 +803,17 @@ export default function MachinesPage() {
                           </span>
                         ))
                         : '--'}
+                    </td>
+                    <td style={tdStyle}>
+                      {m.movement_pattern && m.movement_pattern !== 'unknown' && (
+                        <span style={metaTagStyle}>{m.movement_pattern}</span>
+                      )}
+                      {m.equipment_type && m.equipment_type !== 'unknown' && (
+                        <span style={{ ...metaTagStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{m.equipment_type}</span>
+                      )}
+                      {m.difficulty && m.difficulty !== 'beginner' && (
+                        <span style={{ ...metaTagStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{m.difficulty}</span>
+                      )}
                     </td>
                     <td style={tdStyle}>
                       <code style={slugStyle}>{m.qr_slug}</code>

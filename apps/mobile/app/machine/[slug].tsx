@@ -1,14 +1,28 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  FlatList,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import type { Machine, WorkoutStatus } from '@smartgym/types';
+import type { Machine, WorkoutStatus, AlternativeResult } from '@smartgym/types';
+import { getMachineAlternatives } from '@smartgym/ai-assist';
 import { Button, Text, Card } from '../../src/components';
+import { AnimatedScreen } from '../../src/components/AnimatedScreen';
+import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import { trackEvent } from '../../src/lib/events';
 import { isFeatureEnabled, refreshFeatureFlags, needsRefresh } from '../../src/lib/featureFlags';
-import { generateMachineMistakes } from '@smartgym/ai-assist';
+import { generateMachineMistakes, localCache } from '@smartgym/ai-assist';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface MachineWithGym extends Machine {
   gym_name: string;
@@ -16,6 +30,9 @@ interface MachineWithGym extends Machine {
   cue_version: number;
   cue_source: string;
 }
+
+const GYM_MACHINES_CACHE_KEY = '@smartgym:gym_machines';
+const GYM_MACHINES_CACHE_VERSION_KEY = '@smartgym:gym_machines_version';
 
 export default function MachineDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -25,6 +42,11 @@ export default function MachineDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [startingWorkout, setStartingWorkout] = useState(false);
   const [commonMistakes, setCommonMistakes] = useState<string[]>([]);
+
+  // Alternatives state
+  const [showAlternatives, setShowAlternatives] = useState(false);
+  const [alternatives, setAlternatives] = useState<AlternativeResult[]>([]);
+  const [loadingAlternatives, setLoadingAlternatives] = useState(false);
 
   const handleStartWorkout = async () => {
     if (!machine) return;
@@ -133,6 +155,80 @@ export default function MachineDetailScreen() {
     })();
   }, [machine]);
 
+  // ─── Alternatives Logic ────────────────────────────────
+
+  async function fetchGymMachines(gymId: string): Promise<Machine[]> {
+    // Check in-memory cache first
+    const cacheKey = `gym-machines:${gymId}`;
+    const cached = localCache.get<Machine[]>(cacheKey);
+    if (cached) return cached;
+
+    // Check AsyncStorage
+    try {
+      const stored = await AsyncStorage.getItem(`${GYM_MACHINES_CACHE_KEY}:${gymId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Machine[];
+        localCache.set(cacheKey, parsed, 10 * 60 * 1000); // 10 min in-memory
+        return parsed;
+      }
+    } catch { /* ignore */ }
+
+    // Fetch from Supabase
+    const { data, error: fetchErr } = await supabase
+      .from('machines')
+      .select('id, name, gym_id, qr_slug, target_muscles, setup_steps, safety_cues, image_url, common_mistakes, cue_version, cue_source, movement_pattern, equipment_type, difficulty, primary_muscles, secondary_muscles, tags, form_checklist_before, form_checklist_during, form_checklist_after, checklist_version, created_at')
+      .eq('gym_id', gymId);
+
+    if (fetchErr || !data) return [];
+
+    const machines = data as unknown as Machine[];
+
+    // Cache
+    localCache.set(cacheKey, machines, 10 * 60 * 1000);
+    try {
+      await AsyncStorage.setItem(`${GYM_MACHINES_CACHE_KEY}:${gymId}`, JSON.stringify(machines));
+    } catch { /* ignore */ }
+
+    return machines;
+  }
+
+  async function handleFindAlternatives() {
+    if (!machine) return;
+    setLoadingAlternatives(true);
+    setShowAlternatives(true);
+
+    try {
+      const gymMachines = await fetchGymMachines(machine.gym_id);
+
+      // Get training profile for experience level
+      const { data: { user } } = await supabase.auth.getUser();
+      let experience: 'beginner' | 'intermediate' | 'advanced' = 'intermediate';
+      if (user) {
+        const { data: tp } = await supabase
+          .from('user_training_profiles')
+          .select('experience')
+          .eq('profile_id', user.id)
+          .maybeSingle();
+        if (tp?.experience) {
+          experience = tp.experience as typeof experience;
+        }
+      }
+
+      const results = getMachineAlternatives({
+        machine,
+        machinesInGym: gymMachines,
+        experience,
+      });
+
+      setAlternatives(results);
+      trackEvent('alternatives_viewed', { machine_id: machine.id, count: results.length });
+    } catch {
+      setAlternatives([]);
+    } finally {
+      setLoadingAlternatives(false);
+    }
+  }
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -160,6 +256,7 @@ export default function MachineDetailScreen() {
   }
 
   return (
+    <AnimatedScreen>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {machine.image_url && (
         <Image source={{ uri: machine.image_url }} style={styles.image} resizeMode="cover" />
@@ -236,6 +333,18 @@ export default function MachineDetailScreen() {
         </View>
       )}
 
+      {/* Machine Busy? — Alternatives Button */}
+      {isFeatureEnabled('ai_machine_alternatives') && (
+        <TouchableOpacity
+          style={styles.alternativesButton}
+          onPress={handleFindAlternatives}
+        >
+          <Text style={styles.alternativesButtonText}>
+            Machine busy? Find alternatives
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={[styles.startWorkoutButton, startingWorkout && { opacity: 0.6 }]}
         onPress={handleStartWorkout}
@@ -246,6 +355,67 @@ export default function MachineDetailScreen() {
         </Text>
       </TouchableOpacity>
     </ScrollView>
+
+    {/* ─── Alternatives Modal ─────────────────────────── */}
+    <Modal
+      visible={showAlternatives}
+      animationType="slide"
+      transparent
+      onRequestClose={() => setShowAlternatives(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Alternative Machines</Text>
+            <TouchableOpacity onPress={() => setShowAlternatives(false)}>
+              <Text style={styles.modalClose}>Close</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingAlternatives ? (
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 24 }} />
+          ) : alternatives.length === 0 ? (
+            <View style={styles.emptyAlternatives}>
+              <Text style={styles.emptyAlternativesText}>
+                No similar machines found in this gym. Try asking a trainer for exercise swaps.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={alternatives}
+              keyExtractor={(item) => item.machine.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.alternativeCard}
+                  onPress={() => {
+                    setShowAlternatives(false);
+                    router.push(`/machine/${item.machine.qr_slug}`);
+                  }}
+                >
+                  <Text style={styles.alternativeName}>{item.machine.name}</Text>
+                  <View style={styles.alternativeReasons}>
+                    {item.reasons.filter((r) => r !== 'Higher difficulty').map((reason, i) => (
+                      <View key={i} style={styles.reasonChip}>
+                        <Text style={styles.reasonText}>{reason}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {item.machine.primary_muscles.length > 0 && (
+                    <View style={styles.alternativeMuscles}>
+                      {item.machine.primary_muscles.slice(0, 3).map((m) => (
+                        <Text key={m} style={styles.alternativeMuscleText}>{m}</Text>
+                      ))}
+                    </View>
+                  )}
+                  <Text style={styles.alternativeAction}>Open</Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
+    </AnimatedScreen>
   );
 }
 
@@ -353,5 +523,108 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 17,
     fontWeight: '700',
+  },
+
+  // Alternatives button
+  alternativesButton: {
+    backgroundColor: '#edf2ff',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#c5cae9',
+  },
+  alternativesButtonText: {
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: spacing.lg,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.dark,
+  },
+  modalClose: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  emptyAlternatives: {
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  emptyAlternativesText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Alternative card
+  alternativeCard: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  alternativeName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.dark,
+    marginBottom: spacing.xs,
+  },
+  alternativeReasons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginBottom: spacing.xs,
+  },
+  reasonChip: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  reasonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  alternativeMuscles: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: spacing.xs,
+  },
+  alternativeMuscleText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  alternativeAction: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+    marginTop: 4,
   },
 });

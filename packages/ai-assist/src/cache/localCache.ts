@@ -55,6 +55,16 @@ class LocalCache {
   static machineCueKey(machineId: string): string {
     return `cues:${machineId}`;
   }
+
+  /** Build cache key for gym machines list (for alternatives) */
+  static gymMachinesKey(gymId: string): string {
+    return `gym-machines:${gymId}`;
+  }
+
+  /** Build cache key for guardrail insights */
+  static guardrailKey(profileId: string): string {
+    return `guardrails:${profileId}`;
+  }
 }
 
 export const localCache = new LocalCache();

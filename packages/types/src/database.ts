@@ -84,8 +84,16 @@ export interface Database {
           common_mistakes: string[];
           cue_version: number;
           cue_source: string;
-          movement_pattern: string | null;
-          equipment_type: string | null;
+          movement_pattern: string;
+          equipment_type: string;
+          difficulty: string;
+          primary_muscles: string[];
+          secondary_muscles: string[];
+          tags: string[] | null;
+          form_checklist_before: string[] | null;
+          form_checklist_during: string[] | null;
+          form_checklist_after: string[] | null;
+          checklist_version: number;
           created_at: string;
         };
         Insert: {
@@ -100,8 +108,16 @@ export interface Database {
           common_mistakes?: string[];
           cue_version?: number;
           cue_source?: string;
-          movement_pattern?: string | null;
-          equipment_type?: string | null;
+          movement_pattern?: string;
+          equipment_type?: string;
+          difficulty?: string;
+          primary_muscles?: string[];
+          secondary_muscles?: string[];
+          tags?: string[] | null;
+          form_checklist_before?: string[] | null;
+          form_checklist_during?: string[] | null;
+          form_checklist_after?: string[] | null;
+          checklist_version?: number;
           created_at?: string;
         };
         Update: {
@@ -114,8 +130,16 @@ export interface Database {
           common_mistakes?: string[];
           cue_version?: number;
           cue_source?: string;
-          movement_pattern?: string | null;
-          equipment_type?: string | null;
+          movement_pattern?: string;
+          equipment_type?: string;
+          difficulty?: string;
+          primary_muscles?: string[];
+          secondary_muscles?: string[];
+          tags?: string[] | null;
+          form_checklist_before?: string[] | null;
+          form_checklist_during?: string[] | null;
+          form_checklist_after?: string[] | null;
+          checklist_version?: number;
         };
       };
       programs: {
@@ -373,6 +397,72 @@ export interface Database {
           outputs?: Record<string, unknown>;
         };
       };
+      set_feedback: {
+        Row: {
+          id: string;
+          gym_id: string;
+          profile_id: string;
+          workout_id: string;
+          workout_exercise_id: string;
+          set_id: string;
+          feedback: 'ok' | 'unstable' | 'discomfort';
+          body_area: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          profile_id: string;
+          workout_id: string;
+          workout_exercise_id: string;
+          set_id: string;
+          feedback: 'ok' | 'unstable' | 'discomfort';
+          body_area?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          feedback?: 'ok' | 'unstable' | 'discomfort';
+          body_area?: string | null;
+          notes?: string | null;
+        };
+      };
+      ai_guardrail_insights: {
+        Row: {
+          id: string;
+          gym_id: string;
+          profile_id: string;
+          insight_type: string;
+          severity: string;
+          confidence: number;
+          message: string;
+          recommended_action: string;
+          meta: Record<string, unknown> | null;
+          created_at: string;
+          expires_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          profile_id: string;
+          insight_type: string;
+          severity: string;
+          confidence: number;
+          message: string;
+          recommended_action: string;
+          meta?: Record<string, unknown> | null;
+          created_at?: string;
+          expires_at?: string | null;
+        };
+        Update: {
+          severity?: string;
+          message?: string;
+          recommended_action?: string;
+          meta?: Record<string, unknown> | null;
+          expires_at?: string | null;
+        };
+      };
       user_training_profiles: {
         Row: {
           id: string;
@@ -409,6 +499,129 @@ export interface Database {
           limitations?: string[];
         };
       };
+      trainer_assignments: {
+        Row: {
+          id: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          member_profile_id: string;
+          status: 'active' | 'paused';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          member_profile_id: string;
+          status?: 'active' | 'paused';
+          created_at?: string;
+        };
+        Update: {
+          status?: 'active' | 'paused';
+        };
+      };
+      coach_notes: {
+        Row: {
+          id: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          member_profile_id: string;
+          source: 'workout' | 'weekly' | 'manual';
+          status: 'draft' | 'sent' | 'archived';
+          title: string;
+          body: string;
+          meta: Record<string, unknown> | null;
+          created_at: string;
+          sent_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          member_profile_id: string;
+          source: 'workout' | 'weekly' | 'manual';
+          status?: 'draft' | 'sent' | 'archived';
+          title: string;
+          body: string;
+          meta?: Record<string, unknown> | null;
+          created_at?: string;
+          sent_at?: string | null;
+        };
+        Update: {
+          status?: 'draft' | 'sent' | 'archived';
+          title?: string;
+          body?: string;
+          meta?: Record<string, unknown> | null;
+          sent_at?: string | null;
+        };
+      };
+      coach_note_drafts: {
+        Row: {
+          id: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          member_profile_id: string;
+          workout_id: string | null;
+          period_start: string | null;
+          period_end: string | null;
+          draft_title: string;
+          draft_body: string;
+          confidence: number;
+          signals: Record<string, unknown> | null;
+          status: 'pending' | 'approved' | 'sent' | 'discarded';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          member_profile_id: string;
+          workout_id?: string | null;
+          period_start?: string | null;
+          period_end?: string | null;
+          draft_title: string;
+          draft_body: string;
+          confidence?: number;
+          signals?: Record<string, unknown> | null;
+          status?: 'pending' | 'approved' | 'sent' | 'discarded';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          draft_title?: string;
+          draft_body?: string;
+          confidence?: number;
+          signals?: Record<string, unknown> | null;
+          status?: 'pending' | 'approved' | 'sent' | 'discarded';
+        };
+      };
+      coach_note_actions: {
+        Row: {
+          id: string;
+          gym_id: string;
+          draft_id: string | null;
+          note_id: string | null;
+          actor_profile_id: string;
+          action: 'generated' | 'edited' | 'approved' | 'sent' | 'discarded';
+          meta: Record<string, unknown> | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          draft_id?: string | null;
+          note_id?: string | null;
+          actor_profile_id: string;
+          action: 'generated' | 'edited' | 'approved' | 'sent' | 'discarded';
+          meta?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: {
+          action?: 'generated' | 'edited' | 'approved' | 'sent' | 'discarded';
+          meta?: Record<string, unknown> | null;
+        };
+      };
     };
     Functions: {
       get_machine_by_slug: {
@@ -425,8 +638,16 @@ export interface Database {
           common_mistakes: string[];
           cue_version: number;
           cue_source: string;
-          movement_pattern: string | null;
-          equipment_type: string | null;
+          movement_pattern: string;
+          equipment_type: string;
+          difficulty: string;
+          primary_muscles: string[];
+          secondary_muscles: string[];
+          tags: string[] | null;
+          form_checklist_before: string[] | null;
+          form_checklist_during: string[] | null;
+          form_checklist_after: string[] | null;
+          checklist_version: number;
           created_at: string;
         }[];
       };
