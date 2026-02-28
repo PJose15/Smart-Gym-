@@ -12,6 +12,7 @@ const navItems = [
   { href: '/members/discomfort', label: 'Safety Alerts' },
   { href: '/copilot', label: 'Co-Pilot' },
   { href: '/assignments', label: 'Assignments' },
+  { href: '/analytics', label: 'Analytics' },
   { href: '/settings', label: 'Settings' },
 ];
 

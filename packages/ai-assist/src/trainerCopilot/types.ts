@@ -7,7 +7,31 @@ import type {
   DraftSignals,
   WorkoutExerciseWithSets,
   WorkoutSet,
+  TrainerTone,
+  TrainerVerbosity,
 } from '@smartgym/types';
+
+// ─── Style Settings ──────────────────────────────────────
+
+export interface StyleSettings {
+  tone: TrainerTone;
+  verbosity: TrainerVerbosity;
+}
+
+// ─── Feedback Trends ─────────────────────────────────────
+
+export interface FeedbackTrends {
+  discomfort_count_7d: number;
+  unstable_count_7d: number;
+  top_body_areas: string[];
+}
+
+// ─── Adherence vs Plan ───────────────────────────────────
+
+export interface AdherenceVsPlan {
+  expected_workouts: number;
+  actual_workouts: number;
+}
 
 // ─── Workout Draft Input ────────────────────────────────
 
@@ -32,6 +56,12 @@ export interface WorkoutDraftInput {
   goal?: UserGoal;
   experience?: ExperienceLevel;
   units?: WeightUnit;
+  /** Feedback trends from set_feedback (Phase 2.5.4) */
+  feedbackTrends?: FeedbackTrends;
+  /** Adherence vs plan (Phase 2.5.4) */
+  adherenceVsPlan?: AdherenceVsPlan;
+  /** Trainer style settings (Phase 2.5.4) */
+  style?: StyleSettings;
 }
 
 // ─── Weekly Draft Input ─────────────────────────────────
@@ -62,6 +92,12 @@ export interface WeeklyDraftInput {
   /** Period date range */
   periodStart: string;
   periodEnd: string;
+  /** Feedback trends from set_feedback (Phase 2.5.4) */
+  feedbackTrends?: FeedbackTrends;
+  /** Adherence vs plan (Phase 2.5.4) */
+  adherenceVsPlan?: AdherenceVsPlan;
+  /** Trainer style settings (Phase 2.5.4) */
+  style?: StyleSettings;
 }
 
 // ─── Draft Output ───────────────────────────────────────
