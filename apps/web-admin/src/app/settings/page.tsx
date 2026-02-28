@@ -124,8 +124,8 @@ export default function SettingsPage() {
     <AnimatedPage>
     <div>
       <div style={headerStyle}>
-        <h1 style={titleStyle}>Settings</h1>
-        <p style={subtitleStyle}>Manage feature flags and gym-level settings.</p>
+        <h1 style={titleStyle} className="title-animate">Settings</h1>
+        <p style={subtitleStyle} className="subtitle-animate">Manage feature flags and gym-level settings.</p>
       </div>
 
       {error && (
@@ -134,7 +134,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div style={sectionStyle}>
+      <div style={sectionStyle} className="section-glow">
         <h2 style={sectionTitleStyle}>Feature Flags</h2>
         <p style={sectionDescStyle}>
           Enable or disable features per gym. Flags apply to all members in the gym.
@@ -202,7 +202,7 @@ export default function SettingsPage() {
         )}
       </div>
 
-      <div style={{ ...sectionStyle, marginTop: 32 }}>
+      <div style={{ ...sectionStyle, marginTop: 32 }} className="section-glow">
         <h2 style={sectionTitleStyle}>About Feature Flags</h2>
         {KNOWN_FLAGS.map((flag) => (
           <div key={flag.key} style={flagInfoStyle}>
@@ -238,9 +238,9 @@ const subtitleStyle: CSSProperties = {
 
 const sectionStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
+  borderRadius: 10,
   padding: 24,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  border: '1px solid rgba(0,0,0,0.06)',
 };
 
 const sectionTitleStyle: CSSProperties = {
@@ -314,10 +314,10 @@ const toggleKnobStyle: CSSProperties = {
 
 const centeredStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
+  borderRadius: 10,
   padding: 40,
   textAlign: 'center',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  border: '1px solid rgba(0,0,0,0.06)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',

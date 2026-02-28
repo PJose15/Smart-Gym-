@@ -8,9 +8,9 @@ const containerStyle: CSSProperties = {
   width: '100%',
   maxWidth: 400,
   backgroundColor: '#ffffff',
-  borderRadius: 12,
+  borderRadius: 14,
   padding: '40px 36px',
-  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.10)',
+  border: '1px solid rgba(79, 195, 247, 0.1)',
 };
 
 const logoStyle: CSSProperties = {

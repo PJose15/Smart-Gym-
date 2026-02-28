@@ -3,10 +3,12 @@
  * and generate safe training nudges. Fully deterministic.
  *
  * Signals:
- * A) Volume spike: >25% weekly increase for beginner/intermediate
+ * A) Volume spike: >20% weekly increase for beginner/intermediate
  * B) High RPE trend: >=3 sets at RPE>=9 in last 2 workouts
  * C) Rep collapse: >30% rep drop across sets, repeated across sessions
  * D) Recovery overlap: same muscle group trained hard 3 days in a row
+ *
+ * Phase 2.5.4: cooldown dedup via acknowledgements, low severity tier
  */
 
 import type {
@@ -14,6 +16,7 @@ import type {
   GuardrailType,
   GuardrailSeverity,
   GuardrailAction,
+  GuardrailAcknowledgement,
   WorkoutSet,
   ExperienceLevel,
 } from '@smartgym/types';
@@ -38,20 +41,32 @@ export interface GuardrailInput {
   experience: ExperienceLevel;
   /** Recent workouts, newest first (ideally last 14 days) */
   recentWorkouts: WorkoutRecord[];
+  /** Recent guardrail acknowledgements for cooldown dedup */
+  recentAcknowledgements?: GuardrailAcknowledgement[];
 }
 
 // ─── Constants ──────────────────────────────────────────
 
-const VOLUME_SPIKE_THRESHOLD = 0.25; // 25%
+const VOLUME_SPIKE_LOW = 0.20;     // 20%
+const VOLUME_SPIKE_MEDIUM = 0.25;  // 25%
+const VOLUME_SPIKE_HIGH = 0.40;    // 40%
 const HIGH_RPE = 9;
 const HIGH_RPE_SET_THRESHOLD = 3;
 const REP_COLLAPSE_THRESHOLD = 0.30; // 30%
 const RECOVERY_CONSECUTIVE_DAYS = 3;
+const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Severity ranking for comparison
+const SEVERITY_RANK: Record<GuardrailSeverity, number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
 
 // ─── Engine ─────────────────────────────────────────────
 
 export function computeGuardrails(input: GuardrailInput): GuardrailInsight[] {
-  const { experience, recentWorkouts } = input;
+  const { experience, recentWorkouts, recentAcknowledgements = [] } = input;
   const insights: GuardrailInsight[] = [];
 
   if (recentWorkouts.length === 0) return insights;
@@ -72,7 +87,35 @@ export function computeGuardrails(input: GuardrailInput): GuardrailInsight[] {
   const recoveryInsight = checkRecoveryOverlap(recentWorkouts);
   if (recoveryInsight) insights.push(recoveryInsight);
 
-  return insights;
+  // Apply cooldown dedup: suppress if acknowledged recently at same or higher severity
+  return applyCooldown(insights, recentAcknowledgements);
+}
+
+// ─── Cooldown/Dedup Filter ──────────────────────────────
+
+function applyCooldown(
+  insights: GuardrailInsight[],
+  acks: GuardrailAcknowledgement[],
+): GuardrailInsight[] {
+  if (acks.length === 0) return insights;
+
+  const now = Date.now();
+
+  return insights.filter((insight) => {
+    // Find the most recent acknowledgement for this insight type within 24h
+    const recentAck = acks.find((ack) => {
+      if (ack.insight_type !== insight.insight_type) return false;
+      const ackTime = new Date(ack.acknowledged_at).getTime();
+      return now - ackTime < COOLDOWN_MS;
+    });
+
+    if (!recentAck) return true; // No recent ack → keep
+
+    // If severity escalated beyond the ack'd severity, keep it
+    const ackRank = SEVERITY_RANK[recentAck.severity] ?? 0;
+    const insightRank = SEVERITY_RANK[insight.severity] ?? 0;
+    return insightRank > ackRank;
+  });
 }
 
 // ─── A) Volume Spike ────────────────────────────────────
@@ -106,9 +149,16 @@ function checkVolumeSpikeInsight(
 
   const change = (thisVolume - lastVolume) / lastVolume;
 
-  if (change > VOLUME_SPIKE_THRESHOLD) {
+  if (change > VOLUME_SPIKE_LOW) {
     const pct = Math.round(change * 100);
-    const severity: GuardrailSeverity = pct > 50 ? 'high' : 'medium';
+    let severity: GuardrailSeverity;
+    if (change > VOLUME_SPIKE_HIGH) {
+      severity = 'high';
+    } else if (change > VOLUME_SPIKE_MEDIUM) {
+      severity = 'medium';
+    } else {
+      severity = 'low';
+    }
     const confidence = computeConfidence(thisWeek.length + lastWeek.length);
 
     return {
