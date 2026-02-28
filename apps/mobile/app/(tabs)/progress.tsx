@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Animated,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
 import { estimate1RM, calculateVolume, formatWeight } from '@smartgym/utils';
+import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import type { WorkoutSet } from '@smartgym/types';
 
 // ─── Local Types ────────────────────────────────────────
@@ -278,16 +281,17 @@ export default function ProgressScreen() {
 
   // ─── Render: Exercise List ────────────────────────────
 
-  const renderExerciseCard = ({ item }: { item: ExerciseSummary }) => {
+  const renderExerciseCard = ({ item, index }: { item: ExerciseSummary; index: number }) => {
     const isExpanded = expandedExercise === item.exerciseName;
     const hasPR = item.bestWeightKg > 0;
 
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => toggleExpand(item.exerciseName)}
-        activeOpacity={0.7}
-      >
+      <StaggeredCard index={index}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => toggleExpand(item.exerciseName)}
+          activeOpacity={0.7}
+        >
         {/* Header Row */}
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
@@ -371,11 +375,13 @@ export default function ProgressScreen() {
             ))}
           </View>
         )}
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </StaggeredCard>
     );
   };
 
   return (
+    <AnimatedScreen>
     <View style={styles.container}>
       <Text style={styles.heading}>Your Progress</Text>
       <FlatList
@@ -393,6 +399,30 @@ export default function ProgressScreen() {
         }
       />
     </View>
+    </AnimatedScreen>
+  );
+}
+
+// ─── StaggeredCard helper ─────────────────────────────────
+
+function StaggeredCard({ children, index }: { children: React.ReactNode; index: number }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateX = useRef(new Animated.Value(-60)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    const delay = index * 120;
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 500, delay, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.spring(translateX, { toValue: 0, delay, tension: 45, friction: 7, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.spring(scale, { toValue: 1, delay, tension: 45, friction: 6, useNativeDriver: Platform.OS !== 'web' }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateX }, { scale }] }}>
+      {children}
+    </Animated.View>
   );
 }
 

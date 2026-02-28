@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +8,8 @@ import {
   Alert,
   TextInput,
   TouchableOpacity,
+  Animated as RNAnimated,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,6 +20,7 @@ import { getPointsSummary, formatPointsReason } from '../../src/lib/pointsServic
 import type { PointsEntry } from '../../src/lib/pointsService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { Button, Text, Card } from '../../src/components';
+import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import type { UserGoal, ExperienceLevel, WeightUnit } from '@smartgym/types';
@@ -72,6 +75,59 @@ const DEFAULT_TRAINING_PROFILE: TrainingProfileState = {
   preferred_rep_max: '',
   limitations: [],
 };
+
+// ─── Breathing Animation Card ───────────────────────────
+
+const ND = Platform.OS !== 'web';
+
+function BreathingCard({ children }: { children: React.ReactNode }) {
+  const scale = useRef(new RNAnimated.Value(0.9)).current;
+  const opacity = useRef(new RNAnimated.Value(0)).current;
+  const breathe = useRef(new RNAnimated.Value(1)).current;
+
+  useEffect(() => {
+    RNAnimated.parallel([
+      RNAnimated.spring(scale, {
+        toValue: 1,
+        tension: 40,
+        friction: 6,
+        useNativeDriver: ND,
+      }),
+      RNAnimated.timing(opacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: ND,
+      }),
+    ]).start();
+
+    RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(breathe, {
+          toValue: 1.02,
+          duration: 1800,
+          useNativeDriver: ND,
+        }),
+        RNAnimated.timing(breathe, {
+          toValue: 1,
+          duration: 1800,
+          useNativeDriver: ND,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  const combinedScale = RNAnimated.multiply(scale, breathe);
+
+  return (
+    <RNAnimated.View style={{
+      opacity,
+      transform: [{ scale: combinedScale }],
+      width: '100%',
+    }}>
+      {children}
+    </RNAnimated.View>
+  );
+}
 
 // ─── Screen ─────────────────────────────────────────────
 
@@ -356,22 +412,25 @@ export default function ProfileScreen() {
   if (!profile) {
     return (
       <View style={styles.centered}>
-        <Card style={styles.signInCard}>
-          <Text variant="heading" style={styles.signInTitle}>Sign In to SmartGym</Text>
-          <Text variant="body" color="textSecondary" style={styles.signInSubtitle}>
-            Sign in to track your workouts, view your progress, and manage your profile.
-          </Text>
-          <Button
-            title="Sign In / Sign Up"
-            onPress={() => router.push('/auth')}
-            style={styles.fullWidth}
-          />
-        </Card>
+        <BreathingCard>
+          <Card style={styles.signInCard}>
+            <Text variant="heading" style={styles.signInTitle}>Sign In to SmartGym</Text>
+            <Text variant="body" color="textSecondary" style={styles.signInSubtitle}>
+              Sign in to track your workouts, view your progress, and manage your profile.
+            </Text>
+            <Button
+              title="Sign In / Sign Up"
+              onPress={() => router.push('/auth')}
+              style={styles.fullWidth}
+            />
+          </Card>
+        </BreathingCard>
       </View>
     );
   }
 
   return (
+    <AnimatedScreen>
     <ScrollView
       style={styles.scrollContainer}
       contentContainerStyle={styles.scrollContent}
@@ -630,6 +689,7 @@ export default function ProfileScreen() {
         />
       </View>
     </ScrollView>
+    </AnimatedScreen>
   );
 }
 
