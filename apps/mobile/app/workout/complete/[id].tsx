@@ -32,6 +32,7 @@ import {
 } from '../../../src/lib/featureFlags';
 import { awardPoints } from '../../../src/lib/pointsService';
 import { checkAndAwardStreakBonus } from '../../../src/lib/streakService';
+import { checkAndUnlockBadges } from '../../../src/lib/badgeService';
 import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
 import { AnimatedNumber } from '../../../src/components/AnimatedNumber';
 
@@ -168,6 +169,7 @@ export default function WorkoutCompleteScreen() {
   const [aiEnabled, setAiEnabled] = useState(false);
   const [guardrails, setGuardrails] = useState<GuardrailInsight[]>([]);
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
+  const [newlyUnlockedBadges, setNewlyUnlockedBadges] = useState<string[]>([]);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -231,6 +233,16 @@ export default function WorkoutCompleteScreen() {
         await checkAndAwardStreakBonus(workout.profile_id, workout.gym_id);
       } catch {
         // Non-fatal
+      }
+
+      // Check and unlock badges
+      if (isFeatureEnabled('badges_enabled')) {
+        try {
+          const newSlugs = await checkAndUnlockBadges(workout.profile_id, workout.gym_id);
+          if (newSlugs.length > 0) setNewlyUnlockedBadges(newSlugs);
+        } catch {
+          // Non-fatal
+        }
       }
 
       // Track workout finished event
@@ -696,6 +708,18 @@ export default function WorkoutCompleteScreen() {
         </View>
       )}
 
+      {/* Badge Unlocks */}
+      {newlyUnlockedBadges.length > 0 && (
+        <View style={styles.badgeUnlockSection}>
+          <Text style={styles.badgeUnlockTitle}>Badge Unlocked!</Text>
+          {newlyUnlockedBadges.map((slug) => (
+            <View key={slug} style={styles.badgeUnlockCard}>
+              <Text style={styles.badgeUnlockName}>{slug.replace(/_/g, ' ')}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* Back to Home */}
       <TouchableOpacity
         style={styles.backToHomeButton}
@@ -1125,5 +1149,33 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#212529',
     lineHeight: 18,
+  },
+  // Badge unlock styles
+  badgeUnlockSection: {
+    width: '100%',
+    marginBottom: 24,
+    gap: 8,
+  },
+  badgeUnlockTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#b8860b',
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  badgeUnlockCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#ffd700',
+    alignItems: 'center',
+  },
+  badgeUnlockName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a2e',
+    textTransform: 'capitalize',
   },
 });
