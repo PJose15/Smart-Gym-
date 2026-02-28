@@ -9,6 +9,7 @@ const navItems = [
   { href: '/machines', label: 'Machines' },
   { href: '/programs', label: 'Programs' },
   { href: '/members', label: 'Members' },
+  { href: '/members/discomfort', label: 'Safety Alerts' },
   { href: '/copilot', label: 'Co-Pilot' },
   { href: '/assignments', label: 'Assignments' },
   { href: '/settings', label: 'Settings' },

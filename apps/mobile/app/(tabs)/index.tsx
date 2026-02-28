@@ -15,12 +15,13 @@ import { getTodaysProgramDay } from '@smartgym/utils';
 import { getTodayExplanation, computeGuardrails } from '@smartgym/ai-assist';
 import type { WorkoutRecord } from '@smartgym/ai-assist';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
+import { trackEvent } from '../../src/lib/events';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
-import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet } from '@smartgym/types';
+import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@smartgym/types';
 
 interface TodayWorkout {
   dayName: string;
@@ -101,6 +102,8 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [guardrails, setGuardrails] = useState<GuardrailInsight[]>([]);
   const [unreadNotes, setUnreadNotes] = useState(0);
+  const [sessionIntent, setSessionIntent] = useState<SessionIntent>('push');
+  const [gymId, setGymId] = useState<string | null>(null);
 
   const loadHome = useCallback(async () => {
     try {
@@ -151,6 +154,7 @@ export default function HomeScreen() {
       }
 
       const gymId = memberData.gym_id;
+      setGymId(gymId);
 
       // Load program assignment
       const { data: assignment } = await supabase
@@ -377,6 +381,39 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [loadHome]);
 
+  // ─── Phase 2.5.4: Guardrail acknowledgement ─────────
+  const handleGuardrailAck = useCallback(async () => {
+    if (guardrails.length === 0 || !gymId) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Acknowledge the highest-severity guardrail shown
+      const topGuardrail = guardrails[0];
+      await supabase.from('guardrail_acknowledgements').insert({
+        gym_id: gymId,
+        profile_id: user.id,
+        insight_type: topGuardrail.insight_type,
+        severity: topGuardrail.severity,
+      });
+
+      trackEvent('guardrail_acknowledged', {
+        insight_type: topGuardrail.insight_type,
+        severity: topGuardrail.severity,
+      });
+
+      setGuardrails([]);
+    } catch {
+      // Non-critical
+    }
+  }, [guardrails, gymId]);
+
+  const handleMakeLighter = useCallback(() => {
+    setSessionIntent('light');
+    trackEvent('session_intent_set', { intent: 'light' });
+    handleGuardrailAck();
+  }, [handleGuardrailAck]);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -420,6 +457,20 @@ export default function HomeScreen() {
                 <Text variant="body" style={styles.guardrailMessage}>{g.message}</Text>
               </View>
             ))}
+            <View style={styles.guardrailActions}>
+              <Button
+                title="Make today lighter"
+                onPress={handleMakeLighter}
+                variant="outline"
+                style={styles.guardrailActionBtn}
+              />
+              <Button
+                title="Got it"
+                onPress={handleGuardrailAck}
+                variant="outline"
+                style={styles.guardrailActionBtn}
+              />
+            </View>
           </AnimatedCard>
         )}
 
@@ -450,7 +501,7 @@ export default function HomeScreen() {
             </Text>
             <Button
               title="Continue Workout"
-              onPress={() => router.push(`/workout/${activeWorkout.id}`)}
+              onPress={() => router.push(`/workout/${activeWorkout.id}?intent=${sessionIntent}`)}
               style={styles.continueButton}
             />
           </AnimatedCard>
@@ -501,7 +552,7 @@ export default function HomeScreen() {
             {!activeWorkout && (
               <Button
                 title="Start Workout"
-                onPress={() => router.push('/workout/start')}
+                onPress={() => router.push(`/workout/start?intent=${sessionIntent}`)}
                 style={styles.startButton}
               />
             )}
@@ -666,6 +717,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: '#333',
+  },
+  guardrailActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  guardrailActionBtn: {
+    flex: 1,
+    paddingVertical: spacing.xs,
   },
   // Coach Notes styles
   coachNotesBanner: {
