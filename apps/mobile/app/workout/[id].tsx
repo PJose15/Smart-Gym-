@@ -22,7 +22,8 @@ import type {
   WorkoutSet,
   Machine,
 } from '@smartgym/types';
-import { getNextSetSuggestion, getFormChecklist } from '@smartgym/ai-assist';
+import { getNextSetSuggestion, getFormChecklist, getSafetyNudge } from '@smartgym/ai-assist';
+import type { SafetyNudge, SessionIntent } from '@smartgym/types';
 import type { NextSetSuggestion, WeightUnit, FormChecklist, SetFeedbackRating, BodyArea } from '@smartgym/types';
 import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
@@ -359,6 +360,7 @@ interface ExerciseCardProps {
   lastLoggedSetId: string | null;
   onSubmitFeedback: (setId: string, feedback: SetFeedbackRating, bodyArea?: BodyArea) => void;
   feedbackSubmitted: Set<string>;
+  safetyNudge?: SafetyNudge | null;
 }
 
 function ExerciseCard({
@@ -374,6 +376,7 @@ function ExerciseCard({
   lastLoggedSetId,
   onSubmitFeedback,
   feedbackSubmitted,
+  safetyNudge,
 }: ExerciseCardProps) {
   const sortedSets = [...exercise.sets].sort((a, b) => a.set_number - b.set_number);
   const lastSet = sortedSets[sortedSets.length - 1];
@@ -417,7 +420,18 @@ function ExerciseCard({
         <Text style={styles.noSetsText}>No sets logged yet</Text>
       )}
 
-      {aiEnabled && (
+      {safetyNudge && (
+        <View style={[
+          styles.safetyNudge,
+          safetyNudge.level === 'strong' ? styles.safetyNudgeStrong
+            : safetyNudge.level === 'moderate' ? styles.safetyNudgeModerate
+            : styles.safetyNudgeGentle,
+        ]}>
+          <Text style={styles.safetyNudgeText}>{safetyNudge.message}</Text>
+        </View>
+      )}
+
+      {aiEnabled && (!safetyNudge || !safetyNudge.should_suppress_suggestion) && (
         <SuggestionCard suggestion={suggestion} onApply={handleApply} />
       )}
 
@@ -616,8 +630,11 @@ function RestTimer({ secondsLeft, isRunning, onDismiss, onSetDuration }: RestTim
 // ─── Main Screen ────────────────────────────────────────
 
 export default function ActiveWorkoutScreen() {
-  const { id: workoutId } = useLocalSearchParams<{ id: string }>();
+  const { id: workoutId, intent: intentParam } = useLocalSearchParams<{ id: string; intent?: string }>();
   const router = useRouter();
+  const sessionIntent = (['light', 'maintain', 'push'].includes(intentParam ?? '')
+    ? intentParam as SessionIntent
+    : 'push') as SessionIntent;
 
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [exercises, setExercises] = useState<WorkoutExerciseWithSets[]>([]);
@@ -642,6 +659,9 @@ export default function ActiveWorkoutScreen() {
   const [checklists, setChecklists] = useState<Record<string, FormChecklist>>({});
   const [lastLoggedSetIds, setLastLoggedSetIds] = useState<Record<string, string>>({});
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
+
+  // Phase 2.5.4: Safety nudge state
+  const [safetyNudges, setSafetyNudges] = useState<Record<string, SafetyNudge>>({});
 
   // Rest timer state
   const [restTimerRunning, setRestTimerRunning] = useState(false);
@@ -738,8 +758,13 @@ export default function ActiveWorkoutScreen() {
           }
         }
 
-        // Call the AI suggestion engine
-        const result = await getNextSetSuggestion({ currentSets, previousSets, unit: weightUnit });
+        // Call the AI suggestion engine (pass session intent)
+        const result = await getNextSetSuggestion({
+          currentSets,
+          previousSets,
+          unit: weightUnit,
+          intent: sessionIntent,
+        });
 
         // Update suggestions state
         setSuggestions((prev) => ({
@@ -752,11 +777,60 @@ export default function ActiveWorkoutScreen() {
 
         // Audit log
         logAiDecision('next_set', { exerciseId, currentSets }, { ...result });
+
+        // ─── Phase 2.5.4: Safety nudge ────────────────
+        if (isFeatureEnabled('ai_safety_loop') && workout) {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+              const { data: feedbackData } = await supabase
+                .from('set_feedback')
+                .select('feedback, body_area')
+                .eq('profile_id', user.id)
+                .gte('created_at', sevenDaysAgo);
+
+              if (feedbackData && feedbackData.length > 0) {
+                const discomfortCount = feedbackData.filter(
+                  (f: { feedback: string }) => f.feedback === 'discomfort' || f.feedback === 'pain',
+                ).length;
+                const unstableCount = feedbackData.filter(
+                  (f: { feedback: string }) => f.feedback === 'unstable',
+                ).length;
+
+                // Get top body areas from discomfort/pain feedback
+                const bodyAreas = feedbackData
+                  .filter((f: { feedback: string; body_area: string | null }) =>
+                    (f.feedback === 'discomfort' || f.feedback === 'pain') && f.body_area,
+                  )
+                  .map((f: { body_area: string }) => f.body_area);
+                const uniqueAreas = [...new Set(bodyAreas)];
+
+                const nudge = getSafetyNudge({
+                  discomfortCount7d: discomfortCount,
+                  unstableCount7d: unstableCount,
+                  topBodyAreas: uniqueAreas,
+                  exerciseName: exercise.exercise_name,
+                });
+
+                if (nudge) {
+                  setSafetyNudges((prev) => ({ ...prev, [exerciseId]: nudge }));
+                  trackEvent('safety_nudge_shown', {
+                    exercise_id: exerciseId,
+                    level: nudge.level,
+                  });
+                }
+              }
+            }
+          } catch {
+            // Non-critical
+          }
+        }
       } catch {
         // Don't block UX if AI suggestion fails
       }
     },
-    [aiEnabled, exercises, workout],
+    [aiEnabled, exercises, workout, sessionIntent],
   );
 
   // ─── Fetch data ─────────────────────────────────────
@@ -1185,6 +1259,7 @@ export default function ActiveWorkoutScreen() {
             lastLoggedSetId={lastLoggedSetIds[exercise.id] ?? null}
             onSubmitFeedback={handleSubmitFeedback}
             feedbackSubmitted={feedbackSubmitted}
+            safetyNudge={safetyNudges[exercise.id] ?? null}
           />
         ))}
 
@@ -1834,5 +1909,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
     lineHeight: 18,
+  },
+  // Safety nudge styles
+  safetyNudge: {
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  safetyNudgeGentle: {
+    backgroundColor: '#e3f2fd',
+    borderLeftWidth: 3,
+    borderLeftColor: '#42a5f5',
+  },
+  safetyNudgeModerate: {
+    backgroundColor: '#fff8e1',
+    borderLeftWidth: 3,
+    borderLeftColor: '#ffa726',
+  },
+  safetyNudgeStrong: {
+    backgroundColor: '#fce4e6',
+    borderLeftWidth: 3,
+    borderLeftColor: '#e53935',
+  },
+  safetyNudgeText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#333',
+    fontWeight: '500',
   },
 });
