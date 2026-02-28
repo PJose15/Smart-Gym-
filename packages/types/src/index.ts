@@ -235,7 +235,7 @@ export interface AiAuditLog {
   id?: string;
   gym_id?: string | null;
   profile_id?: string | null;
-  context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails';
+  context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails' | 'coach_draft' | 'safety_nudge' | 'checklist';
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
   created_at?: string;
@@ -247,6 +247,7 @@ export interface AlternativeResult {
   machine: Machine;
   score: number;
   reasons: string[];
+  tradeoff_text?: string;
 }
 
 // ─── Set Feedback Types ─────────────────────────────────
@@ -433,4 +434,45 @@ export interface CoachNoteAction {
   action: CoachNoteActionType;
   meta: Record<string, unknown> | null;
   created_at: string;
+}
+
+// ============================================================================
+// Phase 2.5.4 — Session Intent, Style Settings, Acknowledgements
+// ============================================================================
+
+export type SessionIntent = 'push' | 'maintain' | 'light';
+
+// ─── Trainer Style Settings ────────────────────────────
+
+export type TrainerTone = 'strict' | 'supportive' | 'neutral';
+export type TrainerVerbosity = 'short' | 'standard' | 'detailed';
+
+export interface TrainerStyleSettings {
+  id: string;
+  gym_id: string;
+  trainer_profile_id: string;
+  tone: TrainerTone;
+  verbosity: TrainerVerbosity;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Guardrail Acknowledgement ─────────────────────────
+
+export interface GuardrailAcknowledgement {
+  id: string;
+  gym_id: string;
+  profile_id: string;
+  insight_type: GuardrailType;
+  severity: GuardrailSeverity;
+  acknowledged_at: string;
+}
+
+// ─── Member Note Acknowledgement ───────────────────────
+
+export interface MemberNoteAck {
+  id: string;
+  note_id: string;
+  profile_id: string;
+  acknowledged_at: string;
 }

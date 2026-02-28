@@ -15,6 +15,13 @@ export type { WorkoutRecord, GuardrailInput } from './rules/guardrails';
 export type { AlternativesInput } from './rules/alternatives';
 export type { ChecklistInput } from './rules/checklist';
 
+// Safety Nudge
+export { getSafetyNudge } from './rules/safetyNudge';
+export type { SafetyNudgeInput, SafetyNudge, NudgeLevel } from './rules/safetyNudge';
+
+// Progression input type
+export type { ProgressionInput } from './rules/progression';
+
 // Trainer Co-Pilot
 export { buildWorkoutDraft } from './trainerCopilot/buildWorkoutDraft';
 export { buildWeeklyDraft } from './trainerCopilot/buildWeeklyDraft';

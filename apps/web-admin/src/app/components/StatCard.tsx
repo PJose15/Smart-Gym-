@@ -13,12 +13,13 @@ interface StatCardProps {
 
 const cardStyle: CSSProperties = {
     backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: '20px 24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+    borderRadius: 10,
+    padding: '22px 24px',
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
+    cursor: 'default',
+    border: '1px solid rgba(79, 195, 247, 0.08)',
 };
 
 const titleStyle: CSSProperties = {

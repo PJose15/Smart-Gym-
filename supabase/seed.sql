@@ -172,6 +172,11 @@ INSERT INTO user_training_profiles (gym_id, profile_id, goal, experience, units,
 INSERT INTO trainer_assignments (gym_id, trainer_profile_id, member_profile_id, status) VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '22222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333', 'active');
 
+-- ─── TRAINER STYLE SETTINGS (Phase 2.5.4) ─────────────────
+
+INSERT INTO trainer_style_settings (gym_id, trainer_profile_id, tone, verbosity) VALUES
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '22222222-2222-2222-2222-222222222222', 'supportive', 'standard');
+
 -- ─── FEATURE FLAGS (Phase 2.5) ─────────────────────────────
 
 INSERT INTO feature_flags (gym_id, profile_id, key, enabled) VALUES

@@ -31,9 +31,9 @@ const sectionHeadingStyle: CSSProperties = {
 
 const tableContainerStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  borderRadius: 10,
   overflow: 'hidden',
+  border: '1px solid rgba(0,0,0,0.06)',
 };
 
 const tableStyle: CSSProperties = {
@@ -213,8 +213,8 @@ export default function DashboardPage() {
   return (
     <AnimatedPage>
       <div className={styles.container}>
-        <h1 className={styles.title}>Dashboard</h1>
-        <p className={styles.description}>
+        <h1 className={`${styles.title} title-animate`}>Dashboard</h1>
+        <p className={`${styles.description} subtitle-animate`}>
           Overview of gym operations, usage statistics, and key metrics.
         </p>
 
@@ -225,8 +225,8 @@ export default function DashboardPage() {
           <StatCard title="Sessions Today" value={metrics.sessionsToday ?? 0} change={15} trend="up" index={3} />
         </div>
 
-        <h2 style={sectionHeadingStyle}>Recent Workouts</h2>
-        <div style={tableContainerStyle}>
+        <h2 style={sectionHeadingStyle} className="title-animate">Recent Workouts</h2>
+        <div style={tableContainerStyle} className="section-glow">
           {recentWorkouts.length === 0 ? (
             <p style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 14 }} className="empty-breathe">
               No workouts recorded yet.
