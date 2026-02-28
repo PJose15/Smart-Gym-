@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { colors } from '../src/theme/colors';
+import { AnimatedScreen } from '../src/components/AnimatedScreen';
 
 type AuthMode = 'login' | 'signup';
 
@@ -75,6 +76,7 @@ export default function AuthScreen() {
   };
 
   return (
+    <AnimatedScreen>
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -173,6 +175,7 @@ export default function AuthScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </AnimatedScreen>
   );
 }
 
