@@ -4,6 +4,9 @@ import type {
   UserGoal,
   WeightUnit,
   UserTrainingProfile,
+  SessionIntent,
+  ExperienceLevel,
+  MovementPattern,
 } from '@smartgym/types';
 import { formatWeight } from '@smartgym/utils';
 
@@ -13,6 +16,10 @@ const MAX_SAME_SESSION_JUMP_PERCENT = 0.10; // 10%
 const FATIGUE_DROP_THRESHOLD = 0.30; // 30% rep drop
 const HIGH_RPE_THRESHOLD = 9;
 const LOW_RPE_THRESHOLD = 8;
+
+// Beginner requires more sets before overload trigger
+const BEGINNER_OVERLOAD_SETS = 3;
+const DEFAULT_OVERLOAD_SETS = 2;
 
 // Rep ranges by goal (spec: general = 6-10, endurance = 12-20)
 const REP_RANGES: Record<UserGoal, { min: number; max: number }> = {
@@ -36,6 +43,23 @@ const WEIGHT_INCREMENTS: Record<WeightUnit, { small: number; large: number }> = 
   lbs: { small: 2.5, large: 5 },
 };
 
+// Limitation-to-movement mapping: which movement patterns are risky for each limitation
+const LIMITATION_MOVEMENTS: Record<string, MovementPattern[]> = {
+  knee_sensitive: ['squat', 'hinge'],
+  shoulder_sensitive: ['push', 'pull'],
+  back_sensitive: ['hinge', 'squat'],
+  wrist_sensitive: ['push'],
+  neck_sensitive: ['core'],
+};
+
+const LIMITATION_NOTES: Record<string, string> = {
+  knee_sensitive: "You've noted knee sensitivity. Prioritize form and stop if you feel discomfort.",
+  shoulder_sensitive: "You've noted shoulder sensitivity. Keep weights conservative and stop if you feel pain.",
+  back_sensitive: "You've noted back sensitivity. Maintain strict form and avoid rounding.",
+  wrist_sensitive: "You've noted wrist sensitivity. Consider a neutral grip and lighter loads.",
+  neck_sensitive: "You've noted neck sensitivity. Avoid pulling on your neck and keep it neutral.",
+};
+
 // ─── Inputs ─────────────────────────────────────────────
 
 export interface ProgressionInput {
@@ -49,6 +73,14 @@ export interface ProgressionInput {
   unit?: WeightUnit;
   /** Optional training profile for preferred rep override */
   trainingProfile?: Pick<UserTrainingProfile, 'preferred_rep_min' | 'preferred_rep_max'>;
+  /** Session intent: push (default), maintain, or light */
+  intent?: SessionIntent;
+  /** User experience level (for beginner conservatism) */
+  experience?: ExperienceLevel;
+  /** User limitations from training profile */
+  limitations?: string[];
+  /** Movement pattern of the current machine/exercise */
+  movementPattern?: MovementPattern;
 }
 
 // ─── Engine ─────────────────────────────────────────────
@@ -60,6 +92,10 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
     goal = 'general',
     unit = 'kg',
     trainingProfile,
+    intent = 'push',
+    experience = 'intermediate',
+    limitations = [],
+    movementPattern,
   } = input;
 
   // Use preferred rep range if set, otherwise fall back to goal-based range
@@ -72,6 +108,9 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
   const inc = WEIGHT_INCREMENTS[unit];
   const goalLabel = GOAL_LABELS[goal];
 
+  // Check for limitation safety notes
+  const limitationNote = getLimitationNote(limitations, movementPattern);
+
   // ─── CASE: No data at all ──────────────────────────
   if (currentSets.length === 0 && previousSets.length === 0) {
     return {
@@ -81,6 +120,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       confidence: 0.2,
       reason_code: 'INSUFFICIENT_DATA',
       reason_text: `No history yet — log 2 sessions for ${goalLabel} suggestions.`,
+      safety_note: limitationNote || undefined,
       should_suggest_increase: false,
     };
   }
@@ -98,6 +138,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       confidence: 0.4,
       reason_code: 'REPS_ONLY',
       reason_text: `No weight recorded. Aim for ${range.min}-${range.max} reps (${goalLabel}).`,
+      safety_note: limitationNote || undefined,
       should_suggest_increase: false,
     };
   }
@@ -105,6 +146,20 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
   const lastWeight = lastSet.weight_kg;
   const lastReps = lastSet.reps;
   const lastRpe = lastSet.rpe ?? null;
+
+  // ─── INTENT: Light session — cap at current weight ────
+  if (intent === 'light') {
+    return {
+      suggested_weight: lastWeight,
+      suggested_reps: lastReps,
+      suggested_rpe: null,
+      confidence: computeConfidence(currentSets, previousSets, 'moderate'),
+      reason_code: 'REPEAT_LAST_SET',
+      reason_text: `Light session — maintaining current load at ${formatWeight(lastWeight, unit)}.`,
+      safety_note: limitationNote || 'Focus on form and controlled movement.',
+      should_suggest_increase: false,
+    };
+  }
 
   // ─── CASE: Fatigue detection ────────────────────────
   if (currentSets.length >= 2) {
@@ -124,7 +179,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
           reason_text: repDrop > FATIGUE_DROP_THRESHOLD
             ? `Reps dropped ${Math.round(repDrop * 100)}% — reducing weight to protect form.`
             : `RPE ${lastRpe} is very high — consider reducing weight.`,
-          safety_note: 'Prioritize form over load when fatigued.',
+          safety_note: limitationNote || 'Prioritize form over load when fatigued.',
           should_suggest_increase: false,
         };
       }
@@ -140,6 +195,22 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       confidence: computeConfidence(currentSets, previousSets, 'moderate'),
       reason_code: 'DECREASE_FATIGUE',
       reason_text: `RPE ${lastRpe} is high — keep weight and aim for similar reps.`,
+      safety_note: limitationNote || undefined,
+      should_suggest_increase: false,
+    };
+  }
+
+  // ─── INTENT: Maintain — skip progressive overload ─────
+  // (still allow fatigue detection above, but no weight increases)
+  if (intent === 'maintain') {
+    return {
+      suggested_weight: lastWeight,
+      suggested_reps: lastReps,
+      suggested_rpe: null,
+      confidence: computeConfidence(currentSets, previousSets, 'moderate'),
+      reason_code: 'REPEAT_LAST_SET',
+      reason_text: `Maintaining ${formatWeight(lastWeight, unit)} x ${lastReps} for ${goalLabel} consistency.`,
+      safety_note: limitationNote || undefined,
       should_suggest_increase: false,
     };
   }
@@ -150,10 +221,14 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
   );
   const setsHittingTopRange = setsAtWeight.filter((s) => s.reps >= range.max);
 
+  // Beginners need more sets before triggering overload
+  const requiredSets = experience === 'beginner' ? BEGINNER_OVERLOAD_SETS : DEFAULT_OVERLOAD_SETS;
+
   if (
-    setsHittingTopRange.length >= 2 &&
+    setsHittingTopRange.length >= requiredSets &&
     (lastRpe === null || lastRpe <= LOW_RPE_THRESHOLD)
   ) {
+    // Beginners only use small increments
     const increase = inc.small;
     const newWeight = roundWeight(lastWeight + increase, unit);
 
@@ -166,6 +241,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
         confidence: computeConfidence(currentSets, previousSets, 'strong'),
         reason_code: 'INCREASE_SMALL',
         reason_text: `Hit ${range.max} reps on ${setsHittingTopRange.length} sets at ${formatWeight(lastWeight, unit)} — time to go up for ${goalLabel}!`,
+        safety_note: limitationNote || undefined,
         should_suggest_increase: true,
       };
     }
@@ -180,6 +256,7 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
       confidence: computeConfidence(currentSets, previousSets, 'baseline'),
       reason_code: 'NEW_MACHINE_BASELINE',
       reason_text: `Based on your last session: ${formatWeight(lastWeight, unit)} x ${lastReps} (${goalLabel}).`,
+      safety_note: limitationNote || undefined,
       should_suggest_increase: false,
     };
   }
@@ -192,11 +269,27 @@ export function getNextSetSuggestion(input: ProgressionInput): NextSetSuggestion
     confidence: computeConfidence(currentSets, previousSets, 'moderate'),
     reason_code: 'REPEAT_LAST_SET',
     reason_text: `Repeat ${formatWeight(lastWeight, unit)} x ${lastReps} for ${goalLabel} consistency.`,
+    safety_note: limitationNote || undefined,
     should_suggest_increase: false,
   };
 }
 
 // ─── Helpers ────────────────────────────────────────────
+
+function getLimitationNote(
+  limitations: string[],
+  movementPattern?: MovementPattern,
+): string | null {
+  if (!movementPattern || limitations.length === 0) return null;
+
+  for (const limitation of limitations) {
+    const riskyMovements = LIMITATION_MOVEMENTS[limitation];
+    if (riskyMovements && riskyMovements.includes(movementPattern)) {
+      return LIMITATION_NOTES[limitation] ?? null;
+    }
+  }
+  return null;
+}
 
 function computeConfidence(
   currentSets: WorkoutSet[],

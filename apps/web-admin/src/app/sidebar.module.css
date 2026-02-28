@@ -44,16 +44,16 @@
   display: flex;
   align-items: center;
   position: relative;
-  padding: 10px 14px;
+  padding: 11px 14px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.55);
   text-decoration: none;
-  transition: background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
-              color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background-color 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              color 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
 }
 
@@ -68,41 +68,59 @@
   height: 60%;
   border-radius: 0 3px 3px 0;
   background: #4fc3f7;
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .link:hover {
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  transform: translateX(2px);
+  transform: translateX(3px);
 }
 
 .link:hover::before {
   transform: translateY(-50%) scaleY(0.5);
-  background: rgba(79, 195, 247, 0.5);
+  background: rgba(79, 195, 247, 0.6);
+  box-shadow: 0 0 6px rgba(79, 195, 247, 0.3);
 }
 
 .link:active {
-  transform: translateX(2px) scale(0.98);
+  transform: translateX(3px) scale(0.97);
 }
 
-/* Active link – full glow bar + accent color + subtle glow */
+/* Active link – full glow bar + accent color + visible glow */
 .linkActive {
-  background-color: rgba(79, 195, 247, 0.15);
+  background-color: rgba(79, 195, 247, 0.12);
   color: #4fc3f7;
-  box-shadow: inset 0 0 20px rgba(79, 195, 247, 0.05);
+  box-shadow: inset 0 0 24px rgba(79, 195, 247, 0.06);
 }
 
 .linkActive::before {
   transform: translateY(-50%) scaleY(1) !important;
+  width: 3px;
   background: #4fc3f7 !important;
-  box-shadow: 0 0 8px rgba(79, 195, 247, 0.6),
-              0 0 16px rgba(79, 195, 247, 0.3);
+  box-shadow: 0 0 10px rgba(79, 195, 247, 0.7),
+              0 0 20px rgba(79, 195, 247, 0.35),
+              0 0 30px rgba(79, 195, 247, 0.15);
+  animation: glowPulse 2.5s ease-in-out infinite;
 }
 
 .linkActive:hover {
-  background-color: rgba(79, 195, 247, 0.2);
+  background-color: rgba(79, 195, 247, 0.18);
   color: #4fc3f7;
-  transform: translateX(2px);
+  transform: translateX(3px);
+}
+
+/* Pulsing glow on active sidebar indicator */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(79, 195, 247, 0.5),
+                0 0 16px rgba(79, 195, 247, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(79, 195, 247, 0.8),
+                0 0 24px rgba(79, 195, 247, 0.4),
+                0 0 36px rgba(79, 195, 247, 0.15);
+  }
 }

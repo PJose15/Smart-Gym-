@@ -6,8 +6,26 @@ import { Platform } from 'react-native';
 // Supabase auth tokens can exceed this. We chunk large values.
 const CHUNK_SIZE = 1800;
 
+const memoryStore: Record<string, string> = {};
+const webStorage = {
+  getItem: (key: string) =>
+    typeof localStorage !== 'undefined' ? localStorage.getItem(key) : (memoryStore[key] ?? null),
+  setItem: (key: string, value: string) => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+    else memoryStore[key] = value;
+  },
+  removeItem: (key: string) => {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+    else delete memoryStore[key];
+  },
+};
+
 const LargeSecureStoreAdapter = {
   async getItem(key: string): Promise<string | null> {
+    if (Platform.OS === 'web') {
+      return webStorage.getItem(key);
+    }
+
     const value = await SecureStore.getItemAsync(key);
     if (value === null) return null;
 
@@ -29,10 +47,15 @@ const LargeSecureStoreAdapter = {
   },
 
   async setItem(key: string, value: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      webStorage.setItem(key, value);
+      return;
+    }
+
     // Clean up any existing chunks first
     await LargeSecureStoreAdapter.removeItem(key);
 
-    if (Platform.OS === 'web' || value.length <= CHUNK_SIZE) {
+    if (value.length <= CHUNK_SIZE) {
       await SecureStore.setItemAsync(key, value);
       return;
     }
@@ -50,6 +73,11 @@ const LargeSecureStoreAdapter = {
   },
 
   async removeItem(key: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      webStorage.removeItem(key);
+      return;
+    }
+
     const existing = await SecureStore.getItemAsync(key);
     if (existing?.startsWith('__chunked__:')) {
       const parts = existing.split(':');

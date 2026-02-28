@@ -140,10 +140,10 @@ const createButtonStyle: CSSProperties = {
 
 const centeredContainerStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
+  borderRadius: 10,
   padding: 40,
   textAlign: 'center',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  border: '1px solid rgba(0,0,0,0.06)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -170,13 +170,13 @@ const cardLinkStyle: CSSProperties = {
 
 const cardStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
+  borderRadius: 10,
   padding: 24,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
   cursor: 'pointer',
+  border: '1px solid rgba(0,0,0,0.06)',
 };
 
 const cardTitleStyle: CSSProperties = {

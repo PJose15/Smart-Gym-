@@ -50,11 +50,10 @@ const addButtonStyle: CSSProperties = {
 
 const formContainerStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
+  borderRadius: 10,
   padding: '24px',
   marginBottom: 24,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-  border: '1px solid #e0e0e0',
+  border: '1px solid rgba(79, 195, 247, 0.15)',
 };
 
 const formTitleStyle: CSSProperties = {
@@ -128,9 +127,9 @@ const cancelButtonStyle: CSSProperties = {
 
 const tableContainerStyle: CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 8,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  borderRadius: 10,
   overflow: 'hidden',
+  border: '1px solid rgba(0,0,0,0.06)',
 };
 
 const tableStyle: CSSProperties = {
@@ -488,7 +487,7 @@ export default function MembersPage() {
         )}
 
         {/* ── Members table ── */}
-        <div style={tableContainerStyle}>
+        <div style={tableContainerStyle} className="section-glow">
           {members.length === 0 ? (
             <p style={emptyStyle} className="empty-breathe">No members found. Add your first member above.</p>
           ) : (

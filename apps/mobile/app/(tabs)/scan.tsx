@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { parseQrCode } from '@smartgym/utils';
 import { Button, Text } from '../../src/components';
+import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 
@@ -46,6 +47,7 @@ export default function ScanScreen() {
 
   if (!permission.granted) {
     return (
+      <AnimatedScreen>
       <View style={styles.permissionContainer}>
         <Text variant="heading" style={styles.permissionTitle}>
           Camera Access Required
@@ -55,6 +57,7 @@ export default function ScanScreen() {
         </Text>
         <Button title="Grant Permission" onPress={requestPermission} />
       </View>
+      </AnimatedScreen>
     );
   }
 

@@ -622,6 +622,66 @@ export interface Database {
           meta?: Record<string, unknown> | null;
         };
       };
+      guardrail_acknowledgements: {
+        Row: {
+          id: string;
+          gym_id: string;
+          profile_id: string;
+          insight_type: 'volume_spike' | 'high_rpe' | 'rep_collapse' | 'recovery_overlap';
+          severity: 'low' | 'medium' | 'high';
+          acknowledged_at: string;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          profile_id: string;
+          insight_type: 'volume_spike' | 'high_rpe' | 'rep_collapse' | 'recovery_overlap';
+          severity: 'low' | 'medium' | 'high';
+          acknowledged_at?: string;
+        };
+        Update: {
+          severity?: 'low' | 'medium' | 'high';
+        };
+      };
+      trainer_style_settings: {
+        Row: {
+          id: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          tone: 'strict' | 'supportive' | 'neutral';
+          verbosity: 'short' | 'standard' | 'detailed';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          gym_id: string;
+          trainer_profile_id: string;
+          tone?: 'strict' | 'supportive' | 'neutral';
+          verbosity?: 'short' | 'standard' | 'detailed';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          tone?: 'strict' | 'supportive' | 'neutral';
+          verbosity?: 'short' | 'standard' | 'detailed';
+        };
+      };
+      member_note_ack: {
+        Row: {
+          id: string;
+          note_id: string;
+          profile_id: string;
+          acknowledged_at: string;
+        };
+        Insert: {
+          id?: string;
+          note_id: string;
+          profile_id: string;
+          acknowledged_at?: string;
+        };
+        Update: Record<string, never>;
+      };
     };
     Functions: {
       get_machine_by_slug: {

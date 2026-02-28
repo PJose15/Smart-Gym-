@@ -1,5 +1,8 @@
-import { TouchableOpacity, Text as RNText, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import { useRef } from 'react';
+import { Animated, Platform, Pressable, Text as RNText, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
 import { colors } from '../theme/colors';
+
+const USE_NATIVE = Platform.OS !== 'web';
 
 interface ButtonProps {
     title: string;
@@ -11,6 +14,26 @@ interface ButtonProps {
 }
 
 export function Button({ title, onPress, variant = 'primary', disabled, loading, style }: ButtonProps) {
+    const scale = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.spring(scale, {
+            toValue: 0.88,
+            tension: 150,
+            friction: 5,
+            useNativeDriver: USE_NATIVE,
+        }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scale, {
+            toValue: 1,
+            tension: 80,
+            friction: 4,
+            useNativeDriver: USE_NATIVE,
+        }).start();
+    };
+
     const containerStyle = [
         styles.base,
         variant === 'outline' && styles.outline,
@@ -26,13 +49,24 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
     };
 
     return (
-        <TouchableOpacity style={containerStyle} onPress={onPress} disabled={disabled || loading} activeOpacity={0.8}>
-            {loading ? (
-                <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />
-            ) : (
-                <RNText style={textStyle}>{title}</RNText>
-            )}
-        </TouchableOpacity>
+        <Animated.View style={{
+            transform: [{ scale }],
+            borderRadius: 10,
+        }}>
+            <Pressable
+                style={containerStyle}
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                disabled={disabled || loading}
+            >
+                {loading ? (
+                    <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />
+                ) : (
+                    <RNText style={textStyle}>{title}</RNText>
+                )}
+            </Pressable>
+        </Animated.View>
     );
 }
 
