@@ -19,7 +19,9 @@ import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/l
 import { trackEvent } from '../../src/lib/events';
 import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
+import { getRecentUnlocks } from '../../src/lib/badgeService';
 import { getUserRank } from '../../src/lib/leaderboardService';
+import type { BadgeWithStatus } from '@smartgym/types';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
@@ -111,6 +113,7 @@ export default function HomeScreen() {
   const [streak, setStreak] = useState<StreakResult | null>(null);
   const [userRank, setUserRank] = useState<{ rank: number; total: number } | null>(null);
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
+  const [recentBadges, setRecentBadges] = useState<BadgeWithStatus[]>([]);
 
   const loadHome = useCallback(async () => {
     try {
@@ -178,6 +181,16 @@ export default function HomeScreen() {
         try {
           const rank = await getUserRank(gymId, user.id, 'weekly');
           setUserRank(rank);
+        } catch {
+          // Non-critical
+        }
+      }
+
+      // Load recent badge unlocks
+      if (isFeatureEnabled('badges_enabled')) {
+        try {
+          const recent = await getRecentUnlocks(user.id, gymId);
+          setRecentBadges(recent);
         } catch {
           // Non-critical
         }
@@ -574,6 +587,22 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Recent Badge Unlock */}
+        {recentBadges.length > 0 && (
+          <TouchableOpacity
+            style={styles.recentBadgeCta}
+            onPress={() => router.push('/(tabs)/profile')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.recentBadgeEmoji}>{recentBadges[0].icon_emoji}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.recentBadgeTitle}>Badge Unlocked!</Text>
+              <Text style={styles.recentBadgeName}>{recentBadges[0].name}</Text>
+            </View>
+            <Text variant="caption" color="primary" style={{ fontWeight: '600' }}>View</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Phase 2.5.2: Guardrails Nudge Banner */}
         {guardrails.length > 0 && (
           <AnimatedCard index={0} style={styles.guardrailBanner}>
@@ -926,6 +955,33 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#ff6b35',
     fontStyle: 'italic',
+  },
+  // Recent Badge CTA
+  recentBadgeCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3e8ff',
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: '#7b2ff7' + '30',
+    gap: spacing.sm,
+  },
+  recentBadgeEmoji: {
+    fontSize: 28,
+  },
+  recentBadgeTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#7b2ff7',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  recentBadgeName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
   },
   // Leaderboard CTA
   leaderboardCta: {

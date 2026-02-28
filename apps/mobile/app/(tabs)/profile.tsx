@@ -1077,4 +1077,97 @@ const styles = StyleSheet.create({
     color: '#ff6b35',
     fontStyle: 'italic',
   },
+  // Badge styles
+  badgeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  badgeCell: {
+    width: '22%',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  badgeLocked: {
+    opacity: 0.4,
+  },
+  badgeEmoji: {
+    fontSize: 28,
+    marginBottom: 4,
+  },
+  badgeName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  badgeNameLocked: {
+    color: colors.textSecondary,
+  },
+  badgeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  badgeModalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: spacing.xl,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+  },
+  badgeModalEmoji: {
+    fontSize: 56,
+    marginBottom: spacing.md,
+  },
+  badgeModalName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  badgeRarityTag: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+  },
+  badgeRarityText: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  badgeModalDesc: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.md,
+  },
+  badgeModalDate: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  badgeModalLocked: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: spacing.md,
+  },
+  badgeModalClose: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+  },
+  badgeModalCloseText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
