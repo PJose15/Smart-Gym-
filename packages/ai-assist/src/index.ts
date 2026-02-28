@@ -25,4 +25,9 @@ export type { ProgressionInput } from './rules/progression';
 // Trainer Co-Pilot
 export { buildWorkoutDraft } from './trainerCopilot/buildWorkoutDraft';
 export { buildWeeklyDraft } from './trainerCopilot/buildWeeklyDraft';
-export type { WorkoutDraftInput, WeeklyDraftInput, DraftOutput } from './trainerCopilot/types';
+export { computeAtRiskMembers } from './trainerCopilot/atRiskBatch';
+export type { WorkoutDraftInput, WeeklyDraftInput, DraftOutput, StyleSettings, FeedbackTrends, AdherenceVsPlan } from './trainerCopilot/types';
+export type { AtRiskMember, AtRiskReason, MemberData } from './trainerCopilot/atRiskBatch';
+
+// Style templates
+export { applyTone, applyVerbosity, feedbackTrendNote, adherenceNote } from './trainerCopilot/templates';

@@ -194,8 +194,8 @@ describe('Limitation Safety Notes', () => {
       limitations: ['knee_sensitive'],
       movementPattern: 'push', // knee doesn't match push
     });
-    // Should not have a limitation-specific note
-    expect(result.safety_note).not.toContain('knee');
+    // Should not have a limitation-specific note (safety_note is undefined when no match)
+    expect(result.safety_note).toBeUndefined();
   });
 
   it('handles multiple limitations — first match wins', () => {

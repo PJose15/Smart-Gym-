@@ -123,6 +123,86 @@ export function weeklyTitle(workouts: number, prCount: number, hasGuardrails: bo
   return 'Weekly recap — solid week';
 }
 
+// ─── Feedback Trend Templates (Phase 2.5.4) ────────────
+
+export function feedbackTrendNote(
+  count: number,
+  bodyAreas: string[],
+  tone: string = 'supportive',
+): string {
+  if (count === 0) return '';
+  const areaText = bodyAreas.length > 0 ? bodyAreas.join(', ') : 'some areas';
+
+  if (tone === 'strict') {
+    return `${count} discomfort report${count > 1 ? 's' : ''} on ${areaText} in the last 7 days. Address this before progressing.`;
+  }
+  if (tone === 'neutral') {
+    return `${count} discomfort report${count > 1 ? 's' : ''} on ${areaText} in the last 7 days. Consider adjusting load or range of motion.`;
+  }
+  // supportive (default)
+  return `${count} discomfort report${count > 1 ? 's' : ''} on ${areaText} recently. Let's keep an eye on this and adjust if needed.`;
+}
+
+export function adherenceNote(
+  actual: number,
+  expected: number,
+  tone: string = 'supportive',
+): string {
+  const pct = expected > 0 ? Math.round((actual / expected) * 100) : 0;
+
+  if (actual >= expected) {
+    if (tone === 'strict') return `${actual}/${expected} sessions completed (${pct}%). On track.`;
+    if (tone === 'neutral') return `Completed ${actual} of ${expected} planned sessions (${pct}%).`;
+    return `Completed all ${actual} planned sessions — great consistency!`;
+  }
+
+  if (pct >= 60) {
+    if (tone === 'strict') return `${actual}/${expected} sessions (${pct}%). Need to hit the remaining sessions.`;
+    if (tone === 'neutral') return `${actual} of ${expected} planned sessions completed (${pct}%).`;
+    return `${actual} of ${expected} sessions completed (${pct}%) — solid effort, let's aim higher next week.`;
+  }
+
+  if (tone === 'strict') return `Only ${actual}/${expected} sessions (${pct}%). This needs improvement.`;
+  if (tone === 'neutral') return `${actual} of ${expected} planned sessions completed (${pct}%).`;
+  return `${actual} of ${expected} sessions this period (${pct}%). Life happens — let's plan for a stronger next week.`;
+}
+
+// ─── Style Application (Phase 2.5.4) ───────────────────
+
+export function applyVerbosity(text: string, verbosity: string): string {
+  if (verbosity === 'short') {
+    // Return only the first sentence
+    const firstSentence = text.match(/^[^.!?]+[.!?]/);
+    return firstSentence ? firstSentence[0].trim() : text;
+  }
+  // 'standard' and 'detailed' return full text
+  return text;
+}
+
+export function applyTone(text: string, tone: string): string {
+  if (tone === 'strict') {
+    return text
+      .replace(/Let's /g, 'You need to ')
+      .replace(/let's /g, 'you need to ')
+      .replace(/Consider /g, 'Do ')
+      .replace(/consider /g, 'do ')
+      .replace(/might be beneficial/g, 'is necessary')
+      .replace(/Great work!/g, 'Good.')
+      .replace(/That's strong progress\./g, 'Keep it up.');
+  }
+  if (tone === 'neutral') {
+    return text
+      .replace(/Great work!/g, '')
+      .replace(/That's strong progress\./g, '')
+      .replace(/Consistency is the real superpower\./g, 'Consistency is maintained.')
+      .replace(/excellent commitment\./g, 'a strong frequency.')
+      .replace(/The body is responding well\./g, '')
+      .trim();
+  }
+  // 'supportive' = default behavior, no transforms
+  return text;
+}
+
 // ─── Helpers ────────────────────────────────────────────
 
 function prTypeLabel(type: string): string {

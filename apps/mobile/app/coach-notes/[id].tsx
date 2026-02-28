@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { trackEvent } from '../../src/lib/events';
 
 interface CoachNoteDetail {
   id: string;
@@ -26,6 +28,8 @@ export default function CoachNoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [note, setNote] = useState<CoachNoteDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [acking, setAcking] = useState(false);
 
   useEffect(() => {
     fetchNote();
@@ -42,8 +46,43 @@ export default function CoachNoteDetailScreen() {
     if (!error && data) {
       setNote(data as unknown as CoachNoteDetail);
     }
+
+    // Check if already acknowledged
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && id) {
+      const { data: ackData } = await supabase
+        .from('member_note_ack')
+        .select('id')
+        .eq('note_id', id)
+        .eq('profile_id', user.id)
+        .limit(1);
+      if (ackData && ackData.length > 0) {
+        setAcknowledged(true);
+      }
+    }
     setLoading(false);
   }
+
+  const handleAcknowledge = useCallback(async () => {
+    if (!id || acknowledged || acking) return;
+    setAcking(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase.from('member_note_ack').insert({
+        note_id: id,
+        profile_id: user.id,
+      });
+
+      trackEvent('ai_cues_viewed', { action: 'note_acknowledged', note_id: id });
+      setAcknowledged(true);
+    } catch {
+      // Best-effort
+    } finally {
+      setAcking(false);
+    }
+  }, [id, acknowledged, acking]);
 
   function formatDate(dateStr: string | null): string {
     if (!dateStr) return '';
@@ -90,6 +129,26 @@ export default function CoachNoteDetailScreen() {
         {note.body.split('\n\n').map((paragraph, i) => (
           <Text key={i} style={styles.bodyText}>{paragraph}</Text>
         ))}
+      </View>
+
+      {/* Acknowledgement button */}
+      <View style={styles.ackContainer}>
+        {acknowledged ? (
+          <View style={styles.ackDone}>
+            <Text style={styles.ackDoneText}>Acknowledged</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.ackButton}
+            onPress={handleAcknowledge}
+            disabled={acking}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.ackButtonText}>
+              {acking ? 'Sending...' : 'Got it'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -182,5 +241,31 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     color: colors.textSecondary,
+  },
+  ackContainer: {
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+  },
+  ackButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  ackButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  ackDone: {
+    backgroundColor: colors.primary + '15',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  ackDoneText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

@@ -421,6 +421,8 @@ export interface DraftSignals {
   workouts_in_period?: number;
   goal?: string;
   experience?: string;
+  feedback_trends?: { discomfort_count_7d: number; unstable_count_7d: number; top_body_areas: string[] };
+  adherence_vs_plan?: { expected_workouts: number; actual_workouts: number };
 }
 
 export type CoachNoteActionType = 'generated' | 'edited' | 'approved' | 'sent' | 'discarded';

@@ -13,6 +13,10 @@ import {
   correctionGeneral,
   nextSessionDirection,
   workoutTitle,
+  feedbackTrendNote,
+  adherenceNote,
+  applyTone,
+  applyVerbosity,
 } from './templates';
 
 export function buildWorkoutDraft(input: WorkoutDraftInput): DraftOutput {
@@ -28,7 +32,13 @@ export function buildWorkoutDraft(input: WorkoutDraftInput): DraftOutput {
     goal,
     experience,
     units = 'kg',
+    feedbackTrends,
+    adherenceVsPlan,
+    style,
   } = input;
+
+  const tone = style?.tone ?? 'supportive';
+  const verbosity = style?.verbosity ?? 'standard';
 
   const unitLabel = units === 'lbs' ? 'lbs' : 'kg';
   const prSummaries = prs.map((pr) => ({
@@ -66,7 +76,21 @@ export function buildWorkoutDraft(input: WorkoutDraftInput): DraftOutput {
     sections.push(correctionGeneral(goal));
   }
 
-  // 4) Next session direction
+  // 4) Feedback trends (Phase 2.5.4)
+  if (feedbackTrends && feedbackTrends.discomfort_count_7d > 0) {
+    sections.push(
+      feedbackTrendNote(feedbackTrends.discomfort_count_7d, feedbackTrends.top_body_areas, tone),
+    );
+  }
+
+  // 5) Adherence (Phase 2.5.4)
+  if (adherenceVsPlan) {
+    sections.push(
+      adherenceNote(adherenceVsPlan.actual_workouts, adherenceVsPlan.expected_workouts, tone),
+    );
+  }
+
+  // 6) Next session direction
   sections.push(
     nextSessionDirection(goal, volumeChangePct, prs.length, guardrails.length > 0),
   );
@@ -90,11 +114,18 @@ export function buildWorkoutDraft(input: WorkoutDraftInput): DraftOutput {
     guardrails: guardrailSummaries,
     goal,
     experience,
+    feedback_trends: feedbackTrends,
+    adherence_vs_plan: adherenceVsPlan,
   };
+
+  // Apply style transforms
+  let body = sections.filter(Boolean).join('\n\n');
+  body = applyTone(body, tone);
+  body = applyVerbosity(body, verbosity);
 
   return {
     draft_title,
-    draft_body: sections.filter(Boolean).join('\n\n'),
+    draft_body: body,
     confidence,
     signals,
   };
