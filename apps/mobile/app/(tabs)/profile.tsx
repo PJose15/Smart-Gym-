@@ -25,6 +25,7 @@ import { getBadges, RARITY_COLORS, RARITY_LABELS } from '../../src/lib/badgeServ
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
+import { SkeletonGate, ProfileScreenSkeleton } from '../../src/components/skeleton';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import type { UserGoal, ExperienceLevel, WeightUnit, BadgeWithStatus } from '@smartgym/types';
@@ -428,12 +429,7 @@ export default function ProfileScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text variant="body" color="textSecondary" style={styles.loadingText}>Loading profile...</Text>
-      </View>
-    );
+    return <SkeletonGate loading={true} skeleton={<ProfileScreenSkeleton />}><View /></SkeletonGate>;
   }
 
   if (!profile) {

@@ -22,6 +22,7 @@ import {
 } from '@smartgym/utils';
 import type { TrendDataPoint, SessionForTrend } from '@smartgym/utils';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
+import { SkeletonGate, ProgressScreenSkeleton } from '../../src/components/skeleton';
 import { MiniChart } from '../../src/components/MiniChart';
 import type { WorkoutSet } from '@smartgym/types';
 
@@ -256,15 +257,6 @@ export default function ProgressScreen() {
 
   // ─── Render: Loading ──────────────────────────────────
 
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4361ee" />
-        <Text style={styles.loadingText}>Loading progress...</Text>
-      </View>
-    );
-  }
-
   // ─── Render: Error ────────────────────────────────────
 
   if (error) {
@@ -435,6 +427,7 @@ export default function ProgressScreen() {
   };
 
   return (
+    <SkeletonGate loading={loading} skeleton={<ProgressScreenSkeleton />}>
     <AnimatedScreen>
     <View style={styles.container}>
       <Text style={styles.heading}>Your Progress</Text>
@@ -454,6 +447,7 @@ export default function ProgressScreen() {
       />
     </View>
     </AnimatedScreen>
+    </SkeletonGate>
   );
 }
 
