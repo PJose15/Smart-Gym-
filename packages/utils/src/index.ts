@@ -46,6 +46,9 @@ export function parseQrCode(data: string): string | null {
 export function estimate1RM(weight: number, reps: number): number {
   if (reps <= 0 || weight <= 0) return 0;
   if (reps === 1) return weight;
+  // Brzycki formula breaks at reps >= 37 (division by zero / negative).
+  // Cap at 36 and use a simple 2x multiplier as a ceiling estimate.
+  if (reps >= 37) return Math.round(weight * 2 * 10) / 10;
   return Math.round(weight * (36 / (37 - reps)) * 10) / 10;
 }
 
@@ -220,6 +223,58 @@ export function computeTrendDirection(
   if (change > 0.05) return 'increasing';
   if (change < -0.05) return 'decreasing';
   return 'stable';
+}
+
+// ─── Strength Curve Analysis ─────────────────────────────
+
+export interface StrengthCurvePoint {
+  repRange: string;      // e.g., "1-3", "4-6", "7-10", "11-15", "16+"
+  bestWeight: number;    // heaviest weight lifted in this range
+  best1RM: number;       // best estimated 1RM from sets in this range
+  setCount: number;      // number of sets in this range
+}
+
+const REP_BUCKETS: Array<{ label: string; min: number; max: number }> = [
+  { label: '1-3', min: 1, max: 3 },
+  { label: '4-6', min: 4, max: 6 },
+  { label: '7-10', min: 7, max: 10 },
+  { label: '11-15', min: 11, max: 15 },
+  { label: '16+', min: 16, max: Infinity },
+];
+
+/**
+ * Computes a strength curve: best performance grouped by rep range.
+ * Shows how strong the user is at different rep ranges for a given exercise.
+ */
+export function computeStrengthCurve(
+  sets: Array<{ weight_kg: number; reps: number }>,
+): StrengthCurvePoint[] {
+  const buckets = new Map<string, { bestWeight: number; best1RM: number; setCount: number }>();
+
+  for (const set of sets) {
+    if (set.weight_kg <= 0 || set.reps <= 0) continue;
+
+    const bucket = REP_BUCKETS.find((b) => set.reps >= b.min && set.reps <= b.max);
+    if (!bucket) continue;
+
+    const e1rm = estimate1RM(set.weight_kg, set.reps);
+    const existing = buckets.get(bucket.label);
+
+    if (!existing) {
+      buckets.set(bucket.label, { bestWeight: set.weight_kg, best1RM: e1rm, setCount: 1 });
+    } else {
+      existing.bestWeight = Math.max(existing.bestWeight, set.weight_kg);
+      existing.best1RM = Math.max(existing.best1RM, e1rm);
+      existing.setCount++;
+    }
+  }
+
+  return REP_BUCKETS
+    .filter((b) => buckets.has(b.label))
+    .map((b) => {
+      const data = buckets.get(b.label)!;
+      return { repRange: b.label, ...data };
+    });
 }
 
 /** Returns ISO week key like "2026-W09" */

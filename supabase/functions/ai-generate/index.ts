@@ -9,6 +9,13 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// ─── CORS Headers ────────────────────────────────────────
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
@@ -16,6 +23,10 @@ const GEMINI_MODEL = 'gemini-1.5-flash';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // ─── Rate Limiting (in-memory sliding window) ────────────
+// NOTE: This map resets when the edge function cold-starts or restarts.
+// For MVP this is acceptable — the ai_audit_logs table tracks all calls
+// so abuse can be detected retroactively. TODO: migrate to persistent
+// rate limiting (e.g. Redis or DB-based) for production scale.
 
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -93,7 +104,12 @@ Rules:
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) return { message: '', action_items: [] };
 
-  const parsed = JSON.parse(match[0]);
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(match[0]);
+  } catch {
+    return { message: '', action_items: [] };
+  }
   if (
     typeof parsed === 'object' &&
     parsed !== null &&
@@ -156,7 +172,12 @@ Rules:
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) return { name: '', description: '', days: [], overall_rationale: '' };
 
-  const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(match[0]);
+  } catch {
+    return { name: '', description: '', days: [], overall_rationale: '' };
+  }
   if (!parsed.days || !Array.isArray(parsed.days)) {
     return { name: '', description: '', days: [], overall_rationale: '' };
   }
@@ -202,7 +223,12 @@ Rules:
   const match = raw.match(/\[[\s\S]*?\]/);
   if (!match) return [];
 
-  const parsed = JSON.parse(match[0]);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(match[0]);
+  } catch {
+    return [];
+  }
   if (!Array.isArray(parsed)) return [];
 
   return parsed
@@ -228,7 +254,12 @@ Output ONLY a JSON object with keys "insightText" and "suggestionText", no other
   const match = raw.match(/\{[\s\S]*?\}/);
   if (!match) return payload;
 
-  const parsed = JSON.parse(match[0]);
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(match[0]);
+  } catch {
+    return payload;
+  }
   if (
     typeof parsed === 'object' &&
     parsed !== null &&
@@ -256,20 +287,27 @@ const ACTION_FLAG_MAP: Record<string, string> = {
 // ─── Main Handler ────────────────────────────────────────
 
 Deno.serve(async (req: Request) => {
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { status: 204, headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
   try {
     // Auth
+    const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
     }
 
@@ -280,7 +318,7 @@ Deno.serve(async (req: Request) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
     }
 
@@ -289,7 +327,7 @@ Deno.serve(async (req: Request) => {
     if (!action || !payload) {
       return new Response(JSON.stringify({ error: 'action and payload are required' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
     }
 
@@ -297,7 +335,7 @@ Deno.serve(async (req: Request) => {
     if (!GEMINI_API_KEY) {
       return new Response(JSON.stringify({ error: 'AI service not configured', code: 'AI_DISABLED' }), {
         status: 503,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
     }
 
@@ -305,7 +343,7 @@ Deno.serve(async (req: Request) => {
     if (!checkRateLimit(user.id, action)) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded', code: 'RATE_LIMITED' }), {
         status: 429,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
     }
 
@@ -313,11 +351,19 @@ Deno.serve(async (req: Request) => {
     const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     const flagKey = ACTION_FLAG_MAP[action];
     if (flagKey) {
-      const { data: flags } = await serviceClient
+      const { data: flags, error: flagError } = await serviceClient
         .from('feature_flags')
         .select('enabled, profile_id')
         .eq('key', flagKey)
         .or(`profile_id.eq.${user.id},profile_id.is.null`);
+
+      // Issue 4: deny access if flag query itself errors
+      if (flagError) {
+        return new Response(JSON.stringify({ error: 'Service unavailable', code: 'FLAG_CHECK_FAILED' }), {
+          status: 503,
+          headers,
+        });
+      }
 
       if (flags && flags.length > 0) {
         // User-specific override takes precedence over global
@@ -327,10 +373,32 @@ Deno.serve(async (req: Request) => {
         if (flag && flag.enabled === false) {
           return new Response(JSON.stringify({ error: 'Feature disabled', code: 'FEATURE_DISABLED' }), {
             status: 403,
-            headers: { 'Content-Type': 'application/json' },
+            headers,
           });
         }
       }
+    }
+
+    // Per-action payload validation (check fields each handler accesses)
+    const missing = (field: string) =>
+      new Response(JSON.stringify({ error: `Missing required payload field: ${field}` }), {
+        status: 400,
+        headers,
+      });
+
+    if (action === 'coaching_insight' && (!payload.memberName || !payload.contextSummary)) {
+      return missing('memberName / contextSummary');
+    }
+    if (action === 'generate_program') {
+      if (!payload.goal || !payload.experience || !payload.daysPerWeek || !Array.isArray(payload.availableMachines)) {
+        return missing('goal / experience / daysPerWeek / availableMachines');
+      }
+    }
+    if (action === 'machine_mistakes' && (!payload.machineName || !Array.isArray(payload.targetMuscles))) {
+      return missing('machineName / targetMuscles');
+    }
+    if (action === 'rewrite_insight' && (!payload.insightText || !payload.suggestionText)) {
+      return missing('insightText / suggestionText');
     }
 
     // Dispatch to handler
@@ -351,11 +419,11 @@ Deno.serve(async (req: Request) => {
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers,
         });
     }
 
-    // Audit log (fire-and-forget)
+    // Audit log (fire-and-forget — Issue 11: log errors instead of swallowing)
     serviceClient
       .from('ai_audit_logs')
       .insert({
@@ -367,18 +435,18 @@ Deno.serve(async (req: Request) => {
         outputs: result,
       })
       .then(() => {})
-      .catch(() => {});
+      .catch((err: Error) => console.error('[audit] insert failed:', err.message));
 
     return new Response(JSON.stringify({ data: result }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     });
 
   } catch (err) {
     console.error('ai-generate error:', err);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
