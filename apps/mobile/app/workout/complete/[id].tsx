@@ -12,8 +12,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
 import { calculateVolume, formatDuration, formatWeight } from '@smartgym/utils';
-import { getWorkoutInsight, computeGuardrails, getCoachingInsight } from '@smartgym/ai-assist';
+import { getWorkoutInsight, computeGuardrails, getCoachingInsight, buildMemberContext } from '@smartgym/ai-assist';
 import type { WorkoutRecord, CoachingInsight } from '@smartgym/ai-assist';
+import { fetchCoachingInsight } from '../../../src/lib/aiService';
 import type {
   Workout,
   WorkoutExerciseWithSets,
@@ -457,15 +458,34 @@ export default function WorkoutCompleteScreen() {
             .eq('id', workout.profile_id)
             .maybeSingle();
 
-          const coaching = await getCoachingInsight({
+          const coachingInput = {
             memberName: profileData?.full_name || 'there',
             workouts: cMapped,
             prs: (insight?.prs ?? []).map((p: PRDetection) => ({ exercise_name: p.exercise_name })),
             feedbackTrends: { discomfort_count: 0, unstable_count: 0, ok_count: 0 },
             completedWorkoutDates: (allDates ?? []).map((d: { started_at: string }) => d.started_at),
+          };
+
+          // Try AI via edge function, fall back to deterministic rules
+          const ctx = buildMemberContext(coachingInput);
+          const aiResult = await fetchCoachingInsight({
+            memberName: coachingInput.memberName,
+            contextSummary: ctx.summaryText,
+            gaps: ctx.gaps,
+            risks: ctx.risks,
+            recentPRs: ctx.recentPRs,
           });
 
-          setCoachingInsight(coaching);
+          if (aiResult.ok && aiResult.data.message && aiResult.data.message.length > 10) {
+            setCoachingInsight({
+              message: aiResult.data.message,
+              action_items: aiResult.data.action_items,
+              source: 'ai',
+            });
+          } else {
+            const coaching = await getCoachingInsight(coachingInput);
+            setCoachingInsight(coaching);
+          }
         } catch {
           // Non-critical
         }

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { generateProgram } from '@smartgym/ai-assist';
 import type { GeneratedProgram, GeneratedProgramDay, ProgramGenerationInput } from '@smartgym/ai-assist';
+import { fetchGeneratedProgram } from '@/lib/aiService';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
 
@@ -179,8 +180,25 @@ export default function GenerateProgramPage() {
         limitations: limitations.split(',').map((l) => l.trim()).filter(Boolean),
         availableMachines: machines,
       };
-      const result = await generateProgram(input);
-      setProgram(result);
+      // Try AI via edge function, fall back to rules-based generation
+      const aiResult = await fetchGeneratedProgram({
+        goal: input.goal,
+        experience: input.experience,
+        daysPerWeek: input.daysPerWeek,
+        limitations: input.limitations,
+        availableMachines: input.availableMachines.map((m) => ({
+          id: m.id,
+          name: m.name,
+          target_muscles: m.target_muscles,
+        })),
+      });
+
+      if (aiResult.ok && aiResult.data.days.length > 0) {
+        setProgram({ ...aiResult.data, source: 'ai' as const });
+      } else {
+        const result = await generateProgram(input);
+        setProgram(result);
+      }
       setStep('preview');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to generate program');

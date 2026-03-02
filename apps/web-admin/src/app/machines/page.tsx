@@ -3,7 +3,8 @@
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { generateQrSlug } from '@smartgym/utils';
-import { generateMachineMistakes, GeminiProvider } from '@smartgym/ai-assist';
+import { generateMachineMistakes } from '@smartgym/ai-assist';
+import { fetchMachineMistakes } from '@/lib/aiService';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 
@@ -507,15 +508,15 @@ export default function MachinesPage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    // Generate common mistakes via Gemini (falls back to template if key absent)
+    // Generate common mistakes via edge function (falls back to template-based)
     let commonMistakes: string[] = [];
     try {
-      commonMistakes = await generateMachineMistakes({
-        machineName: formName,
-        targetMuscles,
-        setupSteps,
-        provider: new GeminiProvider(),
-      });
+      const aiResult = await fetchMachineMistakes({ machineName: formName, targetMuscles, setupSteps });
+      if (aiResult.ok && aiResult.data.length > 0) {
+        commonMistakes = aiResult.data;
+      } else {
+        commonMistakes = await generateMachineMistakes({ machineName: formName, targetMuscles, setupSteps });
+      }
     } catch {
       // Non-fatal — machine is created without AI mistakes
     }
