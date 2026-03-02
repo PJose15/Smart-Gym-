@@ -56,7 +56,7 @@ function PulsingGreeting({ name }: { name: string | null }) {
   const fadeIn = useRef(new RNAnimated.Value(0)).current;
 
   useEffect(() => {
-    RNAnimated.parallel([
+    const entryAnim = RNAnimated.parallel([
       RNAnimated.spring(slideIn, {
         toValue: 0,
         tension: 40,
@@ -68,9 +68,10 @@ function PulsingGreeting({ name }: { name: string | null }) {
         duration: 600,
         useNativeDriver: ND,
       }),
-    ]).start();
+    ]);
+    entryAnim.start();
 
-    RNAnimated.loop(
+    const loopAnim = RNAnimated.loop(
       RNAnimated.sequence([
         RNAnimated.timing(pulseAnim, {
           toValue: 1.03,
@@ -83,7 +84,13 @@ function PulsingGreeting({ name }: { name: string | null }) {
           useNativeDriver: ND,
         }),
       ]),
-    ).start();
+    );
+    loopAnim.start();
+
+    return () => {
+      entryAnim.stop();
+      loopAnim.stop();
+    };
   }, []);
 
   return (
@@ -117,12 +124,14 @@ export default function HomeScreen() {
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
   const [recentBadges, setRecentBadges] = useState<BadgeWithStatus[]>([]);
 
+  const mountedRef = useRef(true);
+
   const loadHome = useCallback(async () => {
     try {
       setError(null);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
         return;
       }
 
@@ -138,7 +147,7 @@ export default function HomeScreen() {
         .eq('id', user.id)
         .maybeSingle();
 
-      setUserName(profileData?.full_name || null);
+      if (mountedRef.current) setUserName(profileData?.full_name || null);
 
       // Check for active workout
       const { data: activeData } = await supabase
@@ -150,7 +159,7 @@ export default function HomeScreen() {
         .limit(1)
         .maybeSingle();
 
-      setActiveWorkout(activeData || null);
+      if (mountedRef.current) setActiveWorkout(activeData || null);
 
       // Load gym membership
       const { data: memberData } = await supabase
@@ -161,20 +170,23 @@ export default function HomeScreen() {
         .maybeSingle();
 
       if (!memberData?.gym_id) {
-        setLoading(false);
+        if (mountedRef.current) {
+          setError('You are not a member of any gym yet. Please ask your gym to add you.');
+          setLoading(false);
+        }
         return;
       }
 
       const gymId = memberData.gym_id;
-      setGymId(gymId);
+      if (mountedRef.current) setGymId(gymId);
 
       // Load streak
       if (isFeatureEnabled('streaks_enabled')) {
         try {
           const streakData = await getStreak(user.id, gymId);
-          setStreak(streakData);
-        } catch {
-          // Non-critical
+          if (mountedRef.current) setStreak(streakData);
+        } catch (err) {
+          console.warn('[home] streak load failed:', err instanceof Error ? err.message : err);
         }
       }
 
@@ -182,9 +194,9 @@ export default function HomeScreen() {
       if (isFeatureEnabled('leaderboard_enabled')) {
         try {
           const rank = await getUserRank(gymId, user.id, 'weekly');
-          setUserRank(rank);
-        } catch {
-          // Non-critical
+          if (mountedRef.current) setUserRank(rank);
+        } catch (err) {
+          console.warn('[home] rank load failed:', err instanceof Error ? err.message : err);
         }
       }
 
@@ -192,9 +204,9 @@ export default function HomeScreen() {
       if (isFeatureEnabled('badges_enabled')) {
         try {
           const recent = await getRecentUnlocks(user.id, gymId);
-          setRecentBadges(recent);
-        } catch {
-          // Non-critical
+          if (mountedRef.current) setRecentBadges(recent);
+        } catch (err) {
+          console.warn('[home] badges load failed:', err instanceof Error ? err.message : err);
         }
       }
 
@@ -208,7 +220,7 @@ export default function HomeScreen() {
         .maybeSingle();
 
       if (!assignment) {
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
         return;
       }
 
@@ -220,7 +232,7 @@ export default function HomeScreen() {
         .order('day_number');
 
       if (!days || days.length === 0) {
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
         return;
       }
 
@@ -236,10 +248,12 @@ export default function HomeScreen() {
 
       const todayExercises = exercises || [];
 
-      setTodayWorkout({
-        dayName: todayDay.name,
-        exercises: todayExercises,
-      });
+      if (mountedRef.current) {
+        setTodayWorkout({
+          dayName: todayDay.name,
+          exercises: todayExercises,
+        });
+      }
 
       // Load "Why This Today" explanation if feature enabled
       if (isFeatureEnabled('why_this_today_enabled') && todayExercises.length > 0) {
@@ -311,9 +325,9 @@ export default function HomeScreen() {
             goal: (trainingProfile?.goal as UserGoal | undefined) || 'general',
             lastMuscleWorkouts: Object.keys(muscleGaps).length > 0 ? muscleGaps : undefined,
           });
-          setExplanation(exp);
-        } catch {
-          // Non-critical — skip explanation
+          if (mountedRef.current) setExplanation(exp);
+        } catch (err) {
+          console.warn('[home] explanation load failed:', err instanceof Error ? err.message : err);
         }
       }
 
@@ -385,10 +399,10 @@ export default function HomeScreen() {
               recentWorkouts: workoutRecords,
             });
 
-            setGuardrails(insights);
+            if (mountedRef.current) setGuardrails(insights);
           }
-        } catch {
-          // Non-critical
+        } catch (err) {
+          console.warn('[home] guardrails load failed:', err instanceof Error ? err.message : err);
         }
       }
       // ─── Phase 3: AI Coaching Insight ─────────────
@@ -471,18 +485,20 @@ export default function HomeScreen() {
             recentPRs: ctx.recentPRs,
           });
 
-          if (aiResult.ok && aiResult.data.message && aiResult.data.message.length > 10) {
-            setCoachingInsight({
-              message: aiResult.data.message,
-              action_items: aiResult.data.action_items,
-              source: 'ai',
-            });
-          } else {
-            const coaching = await getCoachingInsight(coachingInput);
-            setCoachingInsight(coaching);
+          if (mountedRef.current) {
+            if (aiResult.ok && aiResult.data.message && aiResult.data.message.length > 10) {
+              setCoachingInsight({
+                message: aiResult.data.message,
+                action_items: aiResult.data.action_items,
+                source: 'ai',
+              });
+            } else {
+              const coaching = await getCoachingInsight(coachingInput);
+              setCoachingInsight(coaching);
+            }
           }
-        } catch {
-          // Non-critical
+        } catch (err) {
+          console.warn('[home] coaching insight failed:', err instanceof Error ? err.message : err);
         }
       }
 
@@ -494,21 +510,25 @@ export default function HomeScreen() {
             .select('id', { count: 'exact', head: true })
             .eq('member_profile_id', user.id)
             .eq('status', 'sent');
-          setUnreadNotes(count ?? 0);
-        } catch {
-          // Non-critical
+          if (mountedRef.current) setUnreadNotes(count ?? 0);
+        } catch (err) {
+          console.warn('[home] coach notes count failed:', err instanceof Error ? err.message : err);
         }
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load home');
+      if (mountedRef.current) setError(err instanceof Error ? err.message : 'Failed to load home');
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
+      mountedRef.current = true;
       loadHome();
+      return () => {
+        mountedRef.current = false;
+      };
     }, [loadHome]),
   );
 
@@ -527,12 +547,17 @@ export default function HomeScreen() {
 
       // Acknowledge the highest-severity guardrail shown
       const topGuardrail = guardrails[0];
-      await supabase.from('guardrail_acknowledgements').insert({
+      const { error: ackErr } = await supabase.from('guardrail_acknowledgements').insert({
         gym_id: gymId,
         profile_id: user.id,
         insight_type: topGuardrail.insight_type,
         severity: topGuardrail.severity,
       });
+
+      if (ackErr) {
+        console.warn('[guardrail] ack persist failed:', ackErr.message);
+        return;
+      }
 
       trackEvent('guardrail_acknowledged', {
         insight_type: topGuardrail.insight_type,
@@ -540,8 +565,8 @@ export default function HomeScreen() {
       });
 
       setGuardrails([]);
-    } catch {
-      // Non-critical
+    } catch (err) {
+      console.warn('[guardrail] ack failed:', err instanceof Error ? err.message : err);
     }
   }, [guardrails, gymId]);
 

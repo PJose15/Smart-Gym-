@@ -92,13 +92,13 @@ export default function ProgramsPage() {
               >
                 <div style={cardStyle} className={`card-stagger stagger-${Math.min(i, 19)} card-hover-lift`}>
                   <h3 style={cardTitleStyle}>{program.name}</h3>
-                  {program.description && (
+                  {program.description ? (
                     <p style={cardDescriptionStyle}>
                       {program.description.length > 120
                         ? program.description.slice(0, 120) + '...'
                         : program.description}
                     </p>
-                  )}
+                  ) : null}
                   <div style={cardFooterStyle}>
                     <span style={cardBadgeStyle}>
                       {program.program_days.length}{' '}

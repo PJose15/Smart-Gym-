@@ -309,7 +309,7 @@ export interface Database {
           gym_id: string;
           profile_id: string;
           points: number;
-          reason: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'manual';
+          reason: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'badge_unlocked' | 'manual';
           reference_id: string | null;
           created_at: string;
         };
@@ -318,13 +318,13 @@ export interface Database {
           gym_id: string;
           profile_id: string;
           points: number;
-          reason: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'manual';
+          reason: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'badge_unlocked' | 'manual';
           reference_id?: string | null;
           created_at?: string;
         };
         Update: {
           points?: number;
-          reason?: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'manual';
+          reason?: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'badge_unlocked' | 'manual';
           reference_id?: string | null;
         };
       };
@@ -719,7 +719,7 @@ export interface Database {
     Enums: {
       workout_status: 'in_progress' | 'completed' | 'cancelled';
       user_role: 'owner' | 'trainer' | 'member';
-      points_reason: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'manual';
+      points_reason: 'workout_completed' | 'set_logged' | 'streak_bonus' | 'badge_unlocked' | 'manual';
     };
   };
 }

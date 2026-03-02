@@ -489,6 +489,21 @@ export default function MachinesPage() {
   async function handleAdd(e: FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // Client-side validation
+    if (!formName.trim()) {
+      setError('Machine name is required.');
+      return;
+    }
+    if (formName.trim().length > 100) {
+      setError('Machine name must be 100 characters or less.');
+      return;
+    }
+    if (!formGymId) {
+      setError('Please select a gym.');
+      return;
+    }
+
     setSubmitting(true);
 
     const selectedGym = gyms.find((g) => g.id === formGymId);
@@ -517,8 +532,8 @@ export default function MachinesPage() {
       } else {
         commonMistakes = await generateMachineMistakes({ machineName: formName, targetMuscles, setupSteps });
       }
-    } catch {
-      // Non-fatal — machine is created without AI mistakes
+    } catch (err) {
+      console.warn('AI generation failed, using template fallback:', err);
     }
 
     const { error: insertError } = await supabase.from('machines').insert({
