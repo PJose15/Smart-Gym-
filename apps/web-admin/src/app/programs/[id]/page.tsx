@@ -242,12 +242,15 @@ export default function ProgramDetailPage() {
   }
 
   async function removeAssignment(assignmentId: string) {
+    if (!window.confirm('Are you sure you want to remove this member from the program?')) return;
     const { error: err } = await supabase
       .from('member_program_assignments')
       .delete()
       .eq('id', assignmentId);
     if (!err) {
       setAssignments(assignments.filter((a) => a.id !== assignmentId));
+    } else {
+      setError(err.message);
     }
   }
 

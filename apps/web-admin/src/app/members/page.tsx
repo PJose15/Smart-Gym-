@@ -287,7 +287,8 @@ export default function MembersPage() {
       const { data, error: fetchError } = await supabase
         .from('gym_members')
         .select('id, role, joined_at, gym_id, profile_id, profiles:profile_id(id, email, full_name), gyms(name)')
-        .order('joined_at', { ascending: false });
+        .order('joined_at', { ascending: false })
+        .limit(500);
       if (fetchError) { setError(fetchError.message); return; }
       setMembers((data as unknown as MemberRow[]) ?? []);
     } catch (err: unknown) {
@@ -296,20 +297,35 @@ export default function MembersPage() {
   }
 
   async function fetchGyms() {
-    const { data } = await supabase.from('gyms').select('id, name').order('name');
-    setGyms((data as GymOption[]) ?? []);
+    try {
+      const { data, error: err } = await supabase.from('gyms').select('id, name').order('name');
+      if (err) { setError(err.message); return; }
+      setGyms((data as GymOption[]) ?? []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load gyms');
+    }
   }
 
   async function fetchPrograms() {
-    const { data } = await supabase.from('programs').select('id, name, gym_id').order('name');
-    setPrograms((data as ProgramOption[]) ?? []);
+    try {
+      const { data, error: err } = await supabase.from('programs').select('id, name, gym_id').order('name');
+      if (err) { setError(err.message); return; }
+      setPrograms((data as ProgramOption[]) ?? []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load programs');
+    }
   }
 
   async function fetchAssignments() {
-    const { data } = await supabase
-      .from('member_program_assignments')
-      .select('id, profile_id, program_id, programs:program_id(name)');
-    setAssignments((data as unknown as AssignmentRow[]) ?? []);
+    try {
+      const { data, error: err } = await supabase
+        .from('member_program_assignments')
+        .select('id, profile_id, program_id, programs:program_id(name)');
+      if (err) { setError(err.message); return; }
+      setAssignments((data as unknown as AssignmentRow[]) ?? []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load assignments');
+    }
   }
 
   useEffect(() => {

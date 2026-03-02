@@ -70,6 +70,7 @@ export default function MemberDetailPage() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [stats, setStats] = useState<MemberStat | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMember();
@@ -116,8 +117,8 @@ export default function MemberDetailPage() {
         lastWorkout: lastWk?.started_at ?? null,
         currentProgram: programData?.name ?? null,
       });
-    } catch {
-      // Non-critical
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load member data');
     } finally {
       setLoading(false);
     }
@@ -145,6 +146,12 @@ export default function MemberDetailPage() {
           title={profile?.full_name ?? 'Unknown Member'}
           description={profile?.email ?? ''}
         />
+
+        {error && (
+          <div style={{ backgroundColor: '#fdecea', color: '#b71c1c', padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
 
         {stats && (
           <div style={statGridStyle}>

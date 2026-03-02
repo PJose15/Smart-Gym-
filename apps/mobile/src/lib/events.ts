@@ -38,8 +38,8 @@ export function trackEvent(
         event_name: eventName,
         event_props: props ?? {},
       });
-    } catch {
-      // Silently fail — events are best-effort
+    } catch (err) {
+      console.warn('[events]', err);
     }
   })();
 }

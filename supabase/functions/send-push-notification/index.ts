@@ -9,6 +9,13 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// ─── CORS Headers ────────────────────────────────────────
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -22,10 +29,17 @@ interface PushRequest {
 }
 
 Deno.serve(async (req: Request) => {
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { status: 204, headers: corsHeaders });
+  }
+
+  const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     });
   }
 
@@ -36,7 +50,7 @@ Deno.serve(async (req: Request) => {
     if (!profile_id || !type || !title || !body) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
+        { status: 400, headers },
       );
     }
 
@@ -52,7 +66,7 @@ Deno.serve(async (req: Request) => {
     if (prefs && prefs.enabled === false) {
       return new Response(
         JSON.stringify({ message: 'Notifications disabled by user' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        { status: 200, headers },
       );
     }
 
@@ -66,7 +80,7 @@ Deno.serve(async (req: Request) => {
     if (tokensErr || !tokens || tokens.length === 0) {
       return new Response(
         JSON.stringify({ message: 'No active tokens' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        { status: 200, headers },
       );
     }
 
@@ -89,6 +103,7 @@ Deno.serve(async (req: Request) => {
         Accept: 'application/json',
       },
       body: JSON.stringify(messages),
+      signal: AbortSignal.timeout(10_000),
     });
 
     const pushResult = await pushResponse.json();
@@ -109,12 +124,13 @@ Deno.serve(async (req: Request) => {
         sent: tokens.length,
         status: pushResponse.ok ? 'sent' : 'failed',
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+      { status: 200, headers },
     );
-  } catch {
+  } catch (err) {
+    console.error('send-push-notification error:', err);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }
 });

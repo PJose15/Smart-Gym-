@@ -105,7 +105,8 @@ export default function AssignmentsPage() {
     const { data, error: err } = await supabase
       .from('trainer_assignments')
       .select('*, trainer_profile:trainer_profile_id(full_name), member_profile:member_profile_id(full_name), gyms:gym_id(name)')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
     if (err) { setError(err.message); return; }
     setAssignments((data as unknown as AssignmentRow[]) ?? []);
   }
@@ -120,8 +121,15 @@ export default function AssignmentsPage() {
       .from('gym_members')
       .select('profile_id, role, gym_id, profiles:profile_id(full_name)')
       .order('role');
+    interface GymMemberJoin {
+      profile_id: string;
+      role: string;
+      gym_id: string;
+      profiles: { full_name: string } | null;
+    }
+
     setGymMembers(
-      (data ?? []).map((d: any) => ({
+      (data ?? []).map((d: GymMemberJoin) => ({
         id: d.profile_id,
         full_name: d.profiles?.full_name ?? 'Unknown',
         role: d.role,
@@ -164,8 +172,14 @@ export default function AssignmentsPage() {
   }
 
   async function handleDelete(id: string) {
-    await supabase.from('trainer_assignments').delete().eq('id', id);
-    await fetchAssignments();
+    if (!window.confirm('Are you sure you want to remove this assignment?')) return;
+    try {
+      const { error: err } = await supabase.from('trainer_assignments').delete().eq('id', id);
+      if (err) { setError(err.message); return; }
+      await fetchAssignments();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete assignment');
+    }
   }
 
   if (featureEnabled === false) {
@@ -248,9 +262,9 @@ export default function AssignmentsPage() {
               <tbody>
                 {assignments.map((a) => (
                   <tr key={a.id} className="table-row-hover">
-                    <td style={tdStyle}>{(a as any).gyms?.name ?? '--'}</td>
-                    <td style={{ ...tdStyle, fontWeight: 600 }}>{(a as any).trainer_profile?.full_name ?? '--'}</td>
-                    <td style={tdStyle}>{(a as any).member_profile?.full_name ?? '--'}</td>
+                    <td style={tdStyle}>{a.gyms?.name ?? '--'}</td>
+                    <td style={{ ...tdStyle, fontWeight: 600 }}>{a.trainer_profile?.full_name ?? '--'}</td>
+                    <td style={tdStyle}>{a.member_profile?.full_name ?? '--'}</td>
                     <td style={tdStyle}><span style={statusBadge(a.status)}>{a.status}</span></td>
                     <td style={tdStyle}>{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td style={tdStyle}>
