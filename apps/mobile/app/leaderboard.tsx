@@ -12,6 +12,7 @@ import { supabase } from '../src/lib/supabase';
 import { getLeaderboard } from '../src/lib/leaderboardService';
 import { Text, Card } from '../src/components';
 import { AnimatedScreen } from '../src/components/AnimatedScreen';
+import { SkeletonGate, LeaderboardScreenSkeleton } from '../src/components/skeleton';
 import { colors } from '../src/theme/colors';
 import { spacing } from '../src/theme/spacing';
 import type { LeaderboardEntry, LeaderboardPeriod } from '@smartgym/types';
@@ -89,18 +90,8 @@ export default function LeaderboardScreen() {
     </View>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text variant="body" color="textSecondary" style={{ marginTop: spacing.sm }}>
-          Loading leaderboard...
-        </Text>
-      </View>
-    );
-  }
-
   return (
+    <SkeletonGate loading={loading} skeleton={<LeaderboardScreenSkeleton />}>
     <AnimatedScreen>
       <View style={styles.container}>
         <View style={styles.header}>
@@ -154,6 +145,7 @@ export default function LeaderboardScreen() {
         />
       </View>
     </AnimatedScreen>
+    </SkeletonGate>
   );
 }
 

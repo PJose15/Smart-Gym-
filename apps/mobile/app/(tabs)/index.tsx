@@ -25,6 +25,7 @@ import type { BadgeWithStatus } from '@smartgym/types';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
+import { SkeletonGate, HomeScreenSkeleton } from '../../src/components/skeleton';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@smartgym/types';
@@ -530,18 +531,8 @@ export default function HomeScreen() {
     handleGuardrailAck();
   }, [handleGuardrailAck]);
 
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text variant="body" color="textSecondary" style={styles.loadingText}>
-          Loading...
-        </Text>
-      </View>
-    );
-  }
-
   return (
+    <SkeletonGate loading={loading} skeleton={<HomeScreenSkeleton />}>
     <AnimatedScreen>
       <ScrollView
         style={styles.scrollContainer}
@@ -749,6 +740,7 @@ export default function HomeScreen() {
         )}
       </ScrollView>
     </AnimatedScreen>
+    </SkeletonGate>
   );
 }
 

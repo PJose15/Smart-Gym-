@@ -16,6 +16,7 @@ import type { Machine, WorkoutStatus, AlternativeResult } from '@smartgym/types'
 import { getMachineAlternatives } from '@smartgym/ai-assist';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
+import { SkeletonGate, MachineDetailSkeleton } from '../../src/components/skeleton';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
@@ -230,14 +231,7 @@ export default function MachineDetailScreen() {
   }
 
   if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text variant="body" color="textSecondary" style={styles.loadingText}>
-          Loading machine...
-        </Text>
-      </View>
-    );
+    return <SkeletonGate loading={true} skeleton={<MachineDetailSkeleton />}><View /></SkeletonGate>;
   }
 
   if (error || !machine) {
