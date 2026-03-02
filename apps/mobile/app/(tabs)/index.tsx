@@ -447,14 +447,16 @@ export default function HomeScreen() {
             .from('workouts')
             .select('started_at')
             .eq('profile_id', user.id)
-            .eq('status', 'completed');
+            .eq('status', 'completed')
+            .limit(1000);
 
           // Get feedback trends
           const { data: feedbackData } = await supabase
             .from('set_feedback')
             .select('rating')
             .eq('profile_id', user.id)
-            .gte('created_at', thirtyDaysAgo);
+            .gte('created_at', thirtyDaysAgo)
+            .limit(1000);
 
           const feedbackTrends = {
             discomfort_count: 0,

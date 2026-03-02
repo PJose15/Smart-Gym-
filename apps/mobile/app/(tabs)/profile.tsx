@@ -268,8 +268,12 @@ export default function ProfileScreen() {
       // Try local cache first
       const cached = await AsyncStorage.getItem(TRAINING_PROFILE_CACHE_KEY);
       if (cached) {
-        const parsed = JSON.parse(cached) as TrainingProfileState;
-        setTrainingProfile(parsed);
+        try {
+          const parsed = JSON.parse(cached) as TrainingProfileState;
+          setTrainingProfile(parsed);
+        } catch {
+          await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
+        }
       }
 
       // Then fetch from server

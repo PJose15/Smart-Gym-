@@ -33,7 +33,7 @@ export default function OccupancyPage() {
         .from('gym_members')
         .select('gym_id')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!gyms) {
         setError('No gym found');

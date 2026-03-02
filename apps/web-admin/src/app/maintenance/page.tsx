@@ -27,7 +27,7 @@ export default function MaintenancePage() {
         .from('gym_members')
         .select('gym_id')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!gyms) {
         setError('No gym found');
@@ -54,7 +54,7 @@ export default function MaintenancePage() {
         .from('gym_members')
         .select('gym_id')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!gyms) throw new Error('No gym found');
 

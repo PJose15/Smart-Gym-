@@ -147,7 +147,8 @@ export default function ProgramDetailPage() {
 
   async function saveName() {
     if (!program || !nameValue.trim()) return;
-    await supabase.from('programs').update({ name: nameValue.trim() }).eq('id', program.id);
+    const { error: err } = await supabase.from('programs').update({ name: nameValue.trim() }).eq('id', program.id);
+    if (err) { setError(err.message); return; }
     setProgram({ ...program, name: nameValue.trim() });
     setEditingName(false);
   }
@@ -155,7 +156,8 @@ export default function ProgramDetailPage() {
   async function saveDescription() {
     if (!program) return;
     const val = descValue.trim() || null;
-    await supabase.from('programs').update({ description: val }).eq('id', program.id);
+    const { error: err } = await supabase.from('programs').update({ description: val }).eq('id', program.id);
+    if (err) { setError(err.message); return; }
     setProgram({ ...program, description: val });
     setEditingDesc(false);
   }
