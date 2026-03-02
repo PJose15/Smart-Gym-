@@ -1,9 +1,48 @@
+import { useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { colors } from '../src/theme/colors';
+import {
+  registerForPushNotifications,
+  setupNotificationListeners,
+  handleNotificationResponse,
+} from '../src/lib/notificationService';
+import {
+  isFeatureEnabled,
+  refreshFeatureFlags,
+  needsRefresh,
+} from '../src/lib/featureFlags';
 
 export default function RootLayout() {
+  const lastResponseHandled = useRef(false);
+
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
+    (async () => {
+      if (needsRefresh()) await refreshFeatureFlags();
+      if (!isFeatureEnabled('push_notifications')) return;
+
+      registerForPushNotifications();
+
+      cleanup = setupNotificationListeners();
+
+      // Handle cold-start: app opened from a notification tap
+      if (!lastResponseHandled.current) {
+        lastResponseHandled.current = true;
+        const lastResponse =
+          await Notifications.getLastNotificationResponseAsync();
+        if (lastResponse) {
+          handleNotificationResponse(lastResponse);
+        }
+      }
+    })();
+
+    return () => cleanup?.();
+  }, []);
+
   return (
     <ErrorBoundary>
       <StatusBar style="dark" />

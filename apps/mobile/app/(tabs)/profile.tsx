@@ -23,6 +23,7 @@ import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
 import { getBadges, RARITY_COLORS, RARITY_LABELS } from '../../src/lib/badgeService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
+import { unregisterPushToken } from '../../src/lib/notificationService';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { SkeletonGate, ProfileScreenSkeleton } from '../../src/components/skeleton';
@@ -155,6 +156,8 @@ export default function ProfileScreen() {
   const [streak, setStreak] = useState<StreakResult | null>(null);
   const [badges, setBadges] = useState<BadgeWithStatus[]>([]);
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -237,6 +240,21 @@ export default function ProfileScreen() {
         if (profileEnabled) {
           await loadTrainingProfile(user.id, memberData.gym_id);
         }
+
+        // Load notification preferences
+        if (isFeatureEnabled('push_notifications')) {
+          try {
+            const { data: prefData } = await supabase
+              .from('notification_preferences')
+              .select('enabled')
+              .eq('profile_id', user.id)
+              .maybeSingle();
+            setNotificationsEnabled(prefData?.enabled ?? true);
+          } catch {
+            // Non-critical
+          }
+          setNotificationsLoaded(true);
+        }
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -317,6 +335,23 @@ export default function ProfileScreen() {
   const handleToggleWeightUnit = async (newUnit: WeightUnit) => {
     setWeightUnit(newUnit);
     await saveWeightUnit(newUnit);
+  };
+
+  const handleToggleNotifications = async (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    if (!profile) return;
+    try {
+      await supabase.from('notification_preferences').upsert(
+        {
+          profile_id: profile.id,
+          enabled,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'profile_id' },
+      );
+    } catch {
+      setNotificationsEnabled(!enabled);
+    }
   };
 
   const handleSaveTrainingProfile = async () => {
@@ -402,6 +437,7 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
+          await unregisterPushToken();
           await supabase.auth.signOut();
           router.replace('/auth');
         },
@@ -655,6 +691,33 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
           </View>
+          {notificationsLoaded && (
+            <View style={[styles.preferenceRow, { marginTop: spacing.md }]}>
+              <Text variant="body" style={styles.preferenceLabel}>Notifications</Text>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity
+                  style={[styles.toggleOption, notificationsEnabled && styles.toggleOptionActive]}
+                  onPress={() => handleToggleNotifications(true)}
+                >
+                  <Text
+                    style={[styles.toggleOptionText, notificationsEnabled && styles.toggleOptionTextActive]}
+                  >
+                    On
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggleOption, !notificationsEnabled && styles.toggleOptionActive]}
+                  onPress={() => handleToggleNotifications(false)}
+                >
+                  <Text
+                    style={[styles.toggleOptionText, !notificationsEnabled && styles.toggleOptionTextActive]}
+                  >
+                    Off
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </Card>
       </View>
 

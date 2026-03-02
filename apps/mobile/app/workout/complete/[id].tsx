@@ -33,6 +33,7 @@ import {
 import { awardPoints } from '../../../src/lib/pointsService';
 import { checkAndAwardStreakBonus } from '../../../src/lib/streakService';
 import { checkAndUnlockBadges } from '../../../src/lib/badgeService';
+import { sendLocalNotification } from '../../../src/lib/notificationService';
 import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
 import { AnimatedNumber } from '../../../src/components/AnimatedNumber';
 
@@ -230,7 +231,14 @@ export default function WorkoutCompleteScreen() {
 
       // Award streak bonus if applicable
       try {
-        await checkAndAwardStreakBonus(workout.profile_id, workout.gym_id);
+        const streakResult = await checkAndAwardStreakBonus(workout.profile_id, workout.gym_id);
+        if (streakResult?.shouldAwardBonus && streakResult.bonusPoints > 0) {
+          sendLocalNotification({
+            type: 'streak_milestone',
+            title: 'Streak Milestone!',
+            body: `${streakResult.currentStreak}-week streak! +${streakResult.bonusPoints} bonus points`,
+          });
+        }
       } catch {
         // Non-fatal
       }
@@ -239,7 +247,17 @@ export default function WorkoutCompleteScreen() {
       if (isFeatureEnabled('badges_enabled')) {
         try {
           const newSlugs = await checkAndUnlockBadges(workout.profile_id, workout.gym_id);
-          if (newSlugs.length > 0) setNewlyUnlockedBadges(newSlugs);
+          if (newSlugs.length > 0) {
+            setNewlyUnlockedBadges(newSlugs);
+            sendLocalNotification({
+              type: 'badge_unlocked',
+              title: 'Badge Unlocked!',
+              body:
+                newSlugs.length === 1
+                  ? `You earned: ${newSlugs[0].replace(/_/g, ' ')}`
+                  : `You earned ${newSlugs.length} new badges!`,
+            });
+          }
         } catch {
           // Non-fatal
         }

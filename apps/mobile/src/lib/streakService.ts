@@ -33,11 +33,11 @@ export async function getStreak(
 export async function checkAndAwardStreakBonus(
   profileId: string,
   gymId: string,
-): Promise<void> {
+): Promise<StreakResult | null> {
   try {
     const streak = await getStreak(profileId, gymId);
 
-    if (!streak.shouldAwardBonus || streak.bonusPoints === 0) return;
+    if (!streak.shouldAwardBonus || streak.bonusPoints === 0) return streak;
 
     await awardPoints({
       profileId,
@@ -46,7 +46,10 @@ export async function checkAndAwardStreakBonus(
       reason: 'streak_bonus',
       referenceId: `streak-${streak.currentWeekKey}`,
     });
+
+    return streak;
   } catch {
     // Non-fatal — streak bonus is a nice-to-have
+    return null;
   }
 }

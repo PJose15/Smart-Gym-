@@ -141,6 +141,34 @@ Deno.serve(async (req: Request) => {
 
     await serviceClient.from('coach_note_actions').insert(actions);
 
+    // Send push notification to member (fire-and-forget)
+    try {
+      const { data: trainerProfile } = await serviceClient
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      const trainerName = trainerProfile?.full_name ?? 'Your Coach';
+
+      await fetch(`${SUPABASE_URL}/functions/v1/send-push-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        },
+        body: JSON.stringify({
+          profile_id: draft.member_profile_id,
+          type: 'coach_note',
+          title: `Note from ${trainerName}`,
+          body: finalTitle,
+          data: { note_id: note.id },
+        }),
+      });
+    } catch {
+      // Push notification failure is non-fatal — note is already sent
+    }
+
     return new Response(JSON.stringify({
       note_id: note.id,
       draft_id: draft.id,

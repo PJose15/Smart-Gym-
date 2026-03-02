@@ -13,7 +13,10 @@ export type EventName =
   | 'ai_next_set_shown'
   | 'ai_next_set_applied'
   | 'ai_summary_viewed'
-  | 'ai_cues_viewed';
+  | 'ai_cues_viewed'
+  | 'push_token_registered'
+  | 'push_notification_tapped'
+  | 'push_permission_denied';
 
 /**
  * Track an app event. Fire-and-forget (does not block UI).

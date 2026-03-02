@@ -623,3 +623,51 @@ export interface FranchiseTotals {
   total_workouts_30d: number;
   total_active_members_7d: number;
 }
+
+// ============================================================================
+// Push Notifications
+// ============================================================================
+
+export type NotificationType =
+  | 'coach_note'
+  | 'badge_unlocked'
+  | 'streak_milestone'
+  | 'leaderboard_rank';
+
+export interface DeviceToken {
+  id: string;
+  profile_id: string;
+  expo_push_token: string;
+  platform: 'ios' | 'android' | 'web';
+  device_id: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationPreferences {
+  id: string;
+  profile_id: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationPayload {
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}
+
+export interface NotificationLog {
+  id: string;
+  profile_id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  status: 'sent' | 'failed' | 'delivered';
+  expo_receipt_id: string | null;
+  created_at: string;
+}
