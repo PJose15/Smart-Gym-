@@ -129,6 +129,26 @@ export default function MaintenancePage() {
           <StatCard title="Overdue" value={overdue} index={2} />
         </div>
 
+        {/* Status breakdown strip */}
+        {machines.length > 0 && (() => {
+          const okCount = machines.filter((m) => m.maintenance_status === 'ok').length;
+          const inMaint = machines.filter((m) => m.maintenance_status === 'in_maintenance').length;
+          const avgDays = machines.length > 0
+            ? Math.round(machines.reduce((s, m) => s + m.days_since_maintenance, 0) / machines.length)
+            : 0;
+          const totalUsage = machines.reduce((s, m) => s + m.usage_since_maintenance, 0);
+          return (
+            <div style={statsStripStyle}>
+              <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{okCount} OK</span>
+              <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{dueSoon} due soon</span>
+              <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{overdue} overdue</span>
+              {inMaint > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{inMaint} in maintenance</span>}
+              <span style={statsChipStyle}>{avgDays}d avg since service</span>
+              <span style={statsChipStyle}>{totalUsage} total uses since service</span>
+            </div>
+          );
+        })()}
+
         <div style={sectionStyle} className="section-glow">
           <h2 style={sectionTitleStyle}>Equipment Status</h2>
 
@@ -304,4 +324,21 @@ const errorBannerStyle: CSSProperties = {
 
 const emptyStyle: CSSProperties = {
   color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };

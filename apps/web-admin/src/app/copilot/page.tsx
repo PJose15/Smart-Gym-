@@ -213,6 +213,23 @@ const errorStyle: CSSProperties = {
   marginBottom: 16,
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ────────────────────────────────────────────
 
 export default function CopilotInboxPage() {
@@ -422,6 +439,27 @@ export default function CopilotInboxPage() {
         <PageHeader title="Co-Pilot Inbox" description="Review, edit, and send AI-generated coach note drafts to your members." />
 
         {error && <div style={errorStyle}>{error}</div>}
+
+        {/* Stats strip */}
+        {!loading && drafts.length > 0 && (() => {
+          const pendingCount = drafts.filter((d) => d.status === 'pending').length;
+          const sentCount = drafts.filter((d) => d.status === 'sent').length;
+          const discardedCount = drafts.filter((d) => d.status === 'discarded').length;
+          const avgConfidence = drafts.length > 0
+            ? Math.round(drafts.reduce((s, d) => s + d.confidence, 0) / drafts.length * 100)
+            : 0;
+          const uniqueMembers = new Set(drafts.map((d) => d.member_profile_id)).size;
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</span>
+              {pendingCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{pendingCount} pending</span>}
+              {sentCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{sentCount} sent</span>}
+              {discardedCount > 0 && <span style={statsChipStyle}>{discardedCount} discarded</span>}
+              <span style={statsChipStyle}>{avgConfidence}% avg confidence</span>
+              <span style={statsChipStyle}>{uniqueMembers} member{uniqueMembers !== 1 ? 's' : ''}</span>
+            </div>
+          );
+        })()}
 
         <div style={filterBarStyle}>
           <label style={{ fontSize: 13, fontWeight: 600, color: '#555' }}>Status:</label>

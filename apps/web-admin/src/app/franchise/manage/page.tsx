@@ -164,6 +164,15 @@ export default function FranchiseManagePage() {
           </div>
         )}
 
+        {/* Stats strip */}
+        {ownedGyms.length > 0 && (
+          <div style={statsStripStyle}>
+            <span style={statsChipStyle}>{ownedGyms.length} owned gym{ownedGyms.length !== 1 ? 's' : ''}</span>
+            <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{franchiseGymIds.size} in franchise</span>
+            <span style={statsChipStyle}>{ownedGyms.length - franchiseGymIds.size} not added</span>
+          </div>
+        )}
+
         {/* Edit Name */}
         <div style={sectionStyle} className="section-glow">
           <h3 style={sectionTitleStyle}>Franchise Name</h3>
@@ -304,4 +313,21 @@ const errorBannerStyle: CSSProperties = {
 
 const emptyStyle: CSSProperties = {
   color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };

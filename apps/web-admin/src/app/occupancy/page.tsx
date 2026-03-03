@@ -95,6 +95,35 @@ export default function OccupancyPage() {
           </div>
         )}
 
+        {/* Stats strip */}
+        {(() => {
+          const totalSessions = heatData.reduce((s, c) => s + c.session_count, 0);
+          const busiestDay = (() => {
+            const daySums = new Map<number, number>();
+            for (const c of heatData) daySums.set(c.day_of_week, (daySums.get(c.day_of_week) ?? 0) + c.session_count);
+            let maxDay = -1, maxVal = 0;
+            for (const [d, v] of daySums) if (v > maxVal) { maxVal = v; maxDay = d; }
+            return maxDay >= 0 ? DAY_LABELS[maxDay] : '--';
+          })();
+          const busiestHour = (() => {
+            const hourSums = new Map<number, number>();
+            for (const c of heatData) hourSums.set(c.hour_of_day, (hourSums.get(c.hour_of_day) ?? 0) + c.session_count);
+            let maxHour = -1, maxVal = 0;
+            for (const [h, v] of hourSums) if (v > maxVal) { maxVal = v; maxHour = h; }
+            return maxHour >= 0 ? formatHour(maxHour) : '--';
+          })();
+          const topMachine = machineUsage.length > 0 ? machineUsage[0].machine_name : '--';
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{totalSessions.toLocaleString()} session{totalSessions !== 1 ? 's' : ''} ({period}d)</span>
+              <span style={statsChipStyle}>Busiest day: {busiestDay}</span>
+              <span style={statsChipStyle}>Peak hour: {busiestHour}</span>
+              <span style={statsChipStyle}>Top machine: {topMachine}</span>
+              <span style={statsChipStyle}>{machineUsage.length} machine{machineUsage.length !== 1 ? 's' : ''} tracked</span>
+            </div>
+          );
+        })()}
+
         {/* Period toggle */}
         <div style={periodToggleStyle}>
           {([7, 30, 90] as PeriodDays[]).map((d) => (
@@ -279,4 +308,21 @@ const errorBannerStyle: CSSProperties = {
 
 const emptyStyle: CSSProperties = {
   color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };

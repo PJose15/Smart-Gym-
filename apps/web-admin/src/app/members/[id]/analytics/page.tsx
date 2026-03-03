@@ -108,6 +108,23 @@ const trendBadgeStyle = (dir: string): CSSProperties => ({
     dir === 'increasing' ? '#2e7d32' : dir === 'decreasing' ? '#c62828' : '#888',
 });
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function MemberAnalyticsPage() {
@@ -268,6 +285,23 @@ export default function MemberAnalyticsPage() {
             padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16,
           }}>
             {error}
+          </div>
+        )}
+
+        {/* Stats strip */}
+        {!loading && (
+          <div style={statsStripStyle}>
+            <span style={statsChipStyle}>{totalWorkouts} workout{totalWorkouts !== 1 ? 's' : ''} ({period}d)</span>
+            <span style={statsChipStyle}>{avgDuration}m avg duration</span>
+            <span style={{
+              ...statsChipStyle,
+              backgroundColor: volumeTrend === 'increasing' ? '#e8f5e9' : volumeTrend === 'decreasing' ? '#fce4e6' : '#f5f5f5',
+              color: volumeTrend === 'increasing' ? '#2e7d32' : volumeTrend === 'decreasing' ? '#c62828' : '#888',
+            }}>
+              Volume: {volumeTrend}
+            </span>
+            <span style={statsChipStyle}>{exerciseProgressions.length} exercise{exerciseProgressions.length !== 1 ? 's' : ''} tracked</span>
+            <span style={statsChipStyle}>{weeklyVolume.length} week{weeklyVolume.length !== 1 ? 's' : ''} of data</span>
           </div>
         )}
 

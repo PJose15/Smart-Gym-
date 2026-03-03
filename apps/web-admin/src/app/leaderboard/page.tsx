@@ -77,6 +77,23 @@ const rankMedals: Record<number, string> = {
   3: '\uD83E\uDD49',
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function LeaderboardPage() {
@@ -194,6 +211,21 @@ export default function LeaderboardPage() {
             {error}
           </div>
         )}
+
+        {/* Stats strip */}
+        {!loading && rows.length > 0 && (() => {
+          const totalPts = rows.reduce((s, r) => s + r.total_points, 0);
+          const avgPts = rows.length > 0 ? Math.round(totalPts / rows.length) : 0;
+          const topScore = rows.length > 0 ? rows[0].total_points : 0;
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{rows.length} participant{rows.length !== 1 ? 's' : ''}</span>
+              <span style={statsChipStyle}>{totalPts.toLocaleString()} total pts</span>
+              <span style={statsChipStyle}>{avgPts.toLocaleString()} avg pts</span>
+              <span style={statsChipStyle}>Top: {topScore.toLocaleString()} pts</span>
+            </div>
+          );
+        })()}
 
         <div style={cardStyle} className="section-glow">
           {loading ? (

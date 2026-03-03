@@ -62,6 +62,21 @@ export default function ProgramsPage() {
           </div>
         </div>
 
+        {/* Stats strip */}
+        {!loading && !error && programs.length > 0 && (() => {
+          const totalDays = programs.reduce((s, p) => s + p.program_days.length, 0);
+          const totalEx = programs.reduce((s, p) => s + totalExercises(p), 0);
+          const avgDays = programs.length > 0 ? Math.round(totalDays / programs.length * 10) / 10 : 0;
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{programs.length} program{programs.length !== 1 ? 's' : ''}</span>
+              <span style={statsChipStyle}>{totalDays} total days</span>
+              <span style={statsChipStyle}>{totalEx} total exercises</span>
+              <span style={statsChipStyle}>{avgDays} avg days/program</span>
+            </div>
+          );
+        })()}
+
         {loading ? (
           <div style={centeredContainerStyle}>
             <div style={spinnerStyle} className="spinner-enhanced" />
@@ -210,4 +225,21 @@ const cardBadgeStyle: CSSProperties = {
   fontSize: 13,
   color: '#888',
   fontWeight: 500,
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };

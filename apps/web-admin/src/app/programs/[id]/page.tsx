@@ -373,6 +373,17 @@ export default function ProgramDetailPage() {
         )}
       </div>
 
+      {/* ── Stats Strip ──────────────────────────────── */}
+      <div style={statsStripStyle}>
+        <span style={statsChipStyle}>{program.program_days.length} day{program.program_days.length !== 1 ? 's' : ''}</span>
+        <span style={statsChipStyle}>
+          {program.program_days.reduce((s, d) => s + d.program_exercises.length, 0)} exercise{program.program_days.reduce((s, d) => s + d.program_exercises.length, 0) !== 1 ? 's' : ''}
+        </span>
+        <span style={statsChipStyle}>{assignments.length} assigned member{assignments.length !== 1 ? 's' : ''}</span>
+        <span style={statsChipStyle}>{unassignedMembers.length} unassigned</span>
+        <span style={statsChipStyle}>{machines.length} machine{machines.length !== 1 ? 's' : ''} available</span>
+      </div>
+
       {/* ── Days Section ───────────────────────────────── */}
       <div style={{ marginTop: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -764,6 +775,23 @@ const tdStyle: CSSProperties = {
   fontSize: 14,
   color: '#333',
   borderBottom: '1px solid #f5f5f5',
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };
 
 const removeBtnStyle: CSSProperties = {

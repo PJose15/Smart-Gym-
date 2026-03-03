@@ -243,6 +243,23 @@ const emptyStyle: CSSProperties = {
   fontSize: 15,
 };
 
+const machineStatsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const machineStatsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 const sectionDividerStyle: CSSProperties = {
   borderTop: '1px solid #eee',
   marginTop: 16,
@@ -612,6 +629,31 @@ export default function MachinesPage() {
         </div>
 
         {error && <div style={errorBoxStyle} className="error-shake">{error}</div>}
+
+        {/* ── Stats strip ── */}
+        {machines.length > 0 && (() => {
+          const byType = new Map<string, number>();
+          const byDiff = new Map<string, number>();
+          for (const m of machines) {
+            if (m.equipment_type && m.equipment_type !== 'unknown') {
+              byType.set(m.equipment_type, (byType.get(m.equipment_type) ?? 0) + 1);
+            }
+            if (m.difficulty) {
+              byDiff.set(m.difficulty, (byDiff.get(m.difficulty) ?? 0) + 1);
+            }
+          }
+          const topType = [...byType.entries()].sort((a, b) => b[1] - a[1])[0];
+          return (
+            <div style={machineStatsStripStyle}>
+              <span style={machineStatsChipStyle}>{machines.length} machines</span>
+              {topType && <span style={{ ...machineStatsChipStyle, backgroundColor: '#f3e5f5', color: '#7b1fa2' }}>{topType[1]} {topType[0]}</span>}
+              {byDiff.get('beginner') && <span style={{ ...machineStatsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{byDiff.get('beginner')} beginner</span>}
+              {byDiff.get('intermediate') && <span style={{ ...machineStatsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{byDiff.get('intermediate')} intermediate</span>}
+              {byDiff.get('advanced') && <span style={{ ...machineStatsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{byDiff.get('advanced')} advanced</span>}
+              <span style={{ ...machineStatsChipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{new Set(machines.map(m => m.gym_id)).size} gym{new Set(machines.map(m => m.gym_id)).size !== 1 ? 's' : ''}</span>
+            </div>
+          );
+        })()}
 
         {showForm && (
           <div style={formContainerStyle} className="form-slide-down">

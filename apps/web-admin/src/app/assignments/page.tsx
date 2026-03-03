@@ -65,6 +65,23 @@ const actionBtnStyle: CSSProperties = {
 const emptyStyle: CSSProperties = { padding: 40, textAlign: 'center', color: '#999', fontSize: 15 };
 const errorStyle: CSSProperties = { backgroundColor: '#fdecea', color: '#b71c1c', padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ────────────────────────────────────────────
 
 export default function AssignmentsPage() {
@@ -195,6 +212,25 @@ export default function AssignmentsPage() {
         </div>
 
         {error && <div style={errorStyle}>{error}</div>}
+
+        {/* Stats strip */}
+        {!loading && assignments.length > 0 && (() => {
+          const activeCount = assignments.filter((a) => a.status === 'active').length;
+          const pausedCount = assignments.filter((a) => a.status === 'paused').length;
+          const uniqueTrainers = new Set(assignments.map((a) => a.trainer_profile_id)).size;
+          const uniqueMembers = new Set(assignments.map((a) => a.member_profile_id)).size;
+          const uniqueGyms = new Set(assignments.map((a) => a.gym_id)).size;
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{assignments.length} assignment{assignments.length !== 1 ? 's' : ''}</span>
+              <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{activeCount} active</span>
+              {pausedCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{pausedCount} paused</span>}
+              <span style={statsChipStyle}>{uniqueTrainers} trainer{uniqueTrainers !== 1 ? 's' : ''}</span>
+              <span style={statsChipStyle}>{uniqueMembers} member{uniqueMembers !== 1 ? 's' : ''}</span>
+              {uniqueGyms > 1 && <span style={statsChipStyle}>{uniqueGyms} gyms</span>}
+            </div>
+          );
+        })()}
 
         {showForm && (
           <div style={formContainerStyle} className="form-slide-down">

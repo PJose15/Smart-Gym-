@@ -235,6 +235,23 @@ export default function FranchisePage() {
           </div>
         )}
 
+        {/* Stats strip */}
+        {gymOverviews.length > 0 && (() => {
+          const avgMembers = gymOverviews.length > 0
+            ? Math.round(gymOverviews.reduce((s, g) => s + g.total_members, 0) / gymOverviews.length)
+            : 0;
+          const bestGym7d = gymOverviews.reduce((best, g) => g.workouts_7d > (best?.workouts_7d ?? 0) ? g : best, gymOverviews[0]);
+          const totalMachines = gymOverviews.reduce((s, g) => s + g.total_machines, 0);
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{gymOverviews.length} gym{gymOverviews.length !== 1 ? 's' : ''}</span>
+              <span style={statsChipStyle}>{avgMembers} avg members/gym</span>
+              <span style={statsChipStyle}>{totalMachines} total machines</span>
+              {bestGym7d && <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>Top gym (7d): {bestGym7d.gym_name}</span>}
+            </div>
+          );
+        })()}
+
         {/* Stat Cards */}
         {totals && (
           <div style={gridStyle}>
@@ -386,4 +403,21 @@ const errorBannerStyle: CSSProperties = {
 
 const emptyStyle: CSSProperties = {
   color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };

@@ -149,6 +149,21 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Stats strip */}
+      {gyms.length > 0 && (() => {
+        const totalCombinations = gyms.length * KNOWN_FLAGS.length;
+        const enabledCount = gyms.reduce((sum, gym) =>
+          sum + KNOWN_FLAGS.filter((f) => isFlagEnabled(gym.id, f.key)).length, 0);
+        return (
+          <div style={statsStripStyle}>
+            <span style={statsChipStyle}>{gyms.length} gym{gyms.length !== 1 ? 's' : ''}</span>
+            <span style={statsChipStyle}>{KNOWN_FLAGS.length} feature flag{KNOWN_FLAGS.length !== 1 ? 's' : ''}</span>
+            <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{enabledCount} enabled</span>
+            <span style={statsChipStyle}>{totalCombinations - enabledCount} disabled</span>
+          </div>
+        );
+      })()}
+
       <div style={sectionStyle} className="section-glow">
         <h2 style={sectionTitleStyle}>Feature Flags</h2>
         <p style={sectionDescStyle}>
@@ -373,4 +388,21 @@ const flagDescStyle: CSSProperties = {
   margin: '4px 0 0 0',
   color: '#666',
   fontSize: 13,
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };

@@ -116,6 +116,23 @@ const rationaleStyle: CSSProperties = {
   borderLeft: '4px solid #4361ee',
 };
 
+const previewStatsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const previewStatsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function GenerateProgramPage() {
@@ -392,6 +409,24 @@ export default function GenerateProgramPage() {
         {/* ── Step 2: Preview & Edit ── */}
         {step === 'preview' && program && (
           <>
+            {/* Preview stats strip */}
+            {(() => {
+              const totalEx = program.days.reduce((s, d) => s + d.exercises.length, 0);
+              const avgSets = totalEx > 0
+                ? Math.round(program.days.reduce((s, d) => s + d.exercises.reduce((es, e) => es + e.default_sets, 0), 0) / totalEx * 10) / 10
+                : 0;
+              return (
+                <div style={previewStatsStripStyle}>
+                  <span style={previewStatsChipStyle}>{program.days.length} day{program.days.length !== 1 ? 's' : ''}</span>
+                  <span style={previewStatsChipStyle}>{totalEx} exercise{totalEx !== 1 ? 's' : ''}</span>
+                  <span style={previewStatsChipStyle}>{avgSets} avg sets/exercise</span>
+                  <span style={{ ...previewStatsChipStyle, backgroundColor: program.source === 'ai' ? '#e3f2fd' : '#f0f0f0', color: program.source === 'ai' ? '#1565c0' : '#555' }}>
+                    {program.source === 'ai' ? 'AI-generated' : 'Rules-based'}
+                  </span>
+                </div>
+              );
+            })()}
+
             {/* Rationale */}
             <div style={rationaleStyle}>
               <strong>

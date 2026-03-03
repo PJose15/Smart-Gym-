@@ -241,6 +241,23 @@ const emptyStyle: CSSProperties = {
   fontSize: 15,
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Helpers ─────────────────────────────────────────────
 
 function getRoleBadgeStyle(role: string): CSSProperties {
@@ -445,6 +462,26 @@ export default function MembersPage() {
         </div>
 
         {error && <div style={errorBoxStyle} className="error-shake">{error}</div>}
+
+        {/* ── Stats strip ── */}
+        {members.length > 0 && (() => {
+          const owners = members.filter(m => m.role === 'owner').length;
+          const trainers = members.filter(m => m.role === 'trainer').length;
+          const regularMembers = members.length - owners - trainers;
+          const assignedCount = new Set(assignments.map(a => a.profile_id)).size;
+          const assignmentRate = members.length > 0 ? Math.round((assignedCount / members.length) * 100) : 0;
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{members.length} total</span>
+              {owners > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#f3e5f5', color: '#7b1fa2' }}>{owners} owner{owners !== 1 ? 's' : ''}</span>}
+              {trainers > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{trainers} trainer{trainers !== 1 ? 's' : ''}</span>}
+              <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{regularMembers} member{regularMembers !== 1 ? 's' : ''}</span>
+              <span style={{ ...statsChipStyle, backgroundColor: assignmentRate >= 50 ? '#e8f5e9' : '#fff3e0', color: assignmentRate >= 50 ? '#2e7d32' : '#e65100' }}>
+                {assignmentRate}% with programs
+              </span>
+            </div>
+          );
+        })()}
 
         {/* ── Add-member form ── */}
         {showForm && (

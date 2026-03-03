@@ -91,6 +91,23 @@ const errorStyle: CSSProperties = {
   marginBottom: 16,
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function AnalyticsPage() {
@@ -200,6 +217,23 @@ export default function AnalyticsPage() {
         />
 
         {error && <div style={errorStyle}>{error}</div>}
+
+        {/* Stats strip */}
+        {!loading && (() => {
+          const avgDaily = dailyCounts.length > 0
+            ? Math.round(dailyCounts.reduce((s, d) => s + d.count, 0) / dailyCounts.length)
+            : 0;
+          const topFeature = contextCounts.length > 0 ? contextLabel(contextCounts[0].context) : '--';
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{totalEvents} AI call{totalEvents !== 1 ? 's' : ''} (7d)</span>
+              <span style={statsChipStyle}>{contextCounts.length} feature{contextCounts.length !== 1 ? 's' : ''} used</span>
+              <span style={statsChipStyle}>{avgDaily} avg calls/day</span>
+              <span style={statsChipStyle}>Top: {topFeature}</span>
+              {conversion && <span style={{ ...statsChipStyle, backgroundColor: parseFloat(conversion.rate) >= 50 ? '#e8f5e9' : '#fff3e0', color: parseFloat(conversion.rate) >= 50 ? '#2e7d32' : '#e65100' }}>{conversion.rate}% adoption</span>}
+            </div>
+          );
+        })()}
 
         {/* Summary stats */}
         <div style={gridStyle}>

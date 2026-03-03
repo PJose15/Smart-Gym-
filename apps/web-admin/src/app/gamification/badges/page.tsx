@@ -76,6 +76,23 @@ const expandedRowStyle: CSSProperties = {
   padding: '12px 16px',
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function BadgesPage() {
@@ -179,6 +196,26 @@ export default function BadgesPage() {
             {error}
           </div>
         )}
+
+        {/* Stats strip */}
+        {!loading && badges.length > 0 && (() => {
+          const totalUnlocks = badges.reduce((s, b) => s + b.member_count, 0);
+          const rarities = badges.reduce<Record<string, number>>((acc, b) => {
+            acc[b.rarity] = (acc[b.rarity] ?? 0) + 1;
+            return acc;
+          }, {});
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{badges.length} badge{badges.length !== 1 ? 's' : ''}</span>
+              <span style={statsChipStyle}>{totalUnlocks} total unlock{totalUnlocks !== 1 ? 's' : ''}</span>
+              {Object.entries(rarities).map(([rarity, count]) => (
+                <span key={rarity} style={{ ...statsChipStyle, backgroundColor: (RARITY_COLORS[rarity] ?? '#666') + '18', color: RARITY_COLORS[rarity] ?? '#666' }}>
+                  {count} {rarity}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
 
         <div style={cardStyle} className="section-glow">
           {loading ? (

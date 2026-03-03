@@ -64,6 +64,23 @@ const backLinkStyle: CSSProperties = {
   fontWeight: 600,
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 export default function MemberDetailPage() {
   const params = useParams();
   const memberId = params.id as string;
@@ -150,6 +167,33 @@ export default function MemberDetailPage() {
         {error && (
           <div style={{ backgroundColor: '#fdecea', color: '#b71c1c', padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16 }}>
             {error}
+          </div>
+        )}
+
+        {/* Stats strip */}
+        {stats && (
+          <div style={statsStripStyle}>
+            <span style={statsChipStyle}>{stats.totalWorkouts} workout{stats.totalWorkouts !== 1 ? 's' : ''}</span>
+            <span style={{
+              ...statsChipStyle,
+              backgroundColor: stats.lastWorkout
+                ? (Date.now() - new Date(stats.lastWorkout).getTime() < 7 * 86400000 ? '#e8f5e9' : '#fff3e0')
+                : '#fce4e6',
+              color: stats.lastWorkout
+                ? (Date.now() - new Date(stats.lastWorkout).getTime() < 7 * 86400000 ? '#2e7d32' : '#e65100')
+                : '#c62828',
+            }}>
+              {stats.lastWorkout
+                ? `Last active ${Math.floor((Date.now() - new Date(stats.lastWorkout).getTime()) / 86400000)}d ago`
+                : 'Never active'}
+            </span>
+            <span style={{
+              ...statsChipStyle,
+              backgroundColor: stats.currentProgram ? '#e3f2fd' : '#f5f5f5',
+              color: stats.currentProgram ? '#1565c0' : '#999',
+            }}>
+              {stats.currentProgram ? `Program: ${stats.currentProgram}` : 'No program'}
+            </span>
           </div>
         )}
 

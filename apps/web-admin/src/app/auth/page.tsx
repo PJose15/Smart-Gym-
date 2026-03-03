@@ -160,6 +160,16 @@ export default function AuthPage() {
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
+
+      <p style={footerStyle}>SmartGym Admin v0.1.0</p>
     </div>
   );
 }
+
+const footerStyle: CSSProperties = {
+  textAlign: 'center',
+  color: '#bbb',
+  fontSize: 12,
+  marginTop: 24,
+  marginBottom: 0,
+};

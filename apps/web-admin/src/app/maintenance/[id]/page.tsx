@@ -130,6 +130,22 @@ export default function MachineMaintenanceDetailPage() {
           </div>
         )}
 
+        {/* Stats strip */}
+        <div style={statsStripStyle}>
+          <span style={{
+            ...statsChipStyle,
+            backgroundColor: machine.maintenance_status === 'ok' ? '#e8f5e9' : machine.maintenance_status === 'overdue' ? '#fce4e6' : machine.maintenance_status === 'due_soon' ? '#fff3e0' : '#e3f2fd',
+            color: machine.maintenance_status === 'ok' ? '#2e7d32' : machine.maintenance_status === 'overdue' ? '#c62828' : machine.maintenance_status === 'due_soon' ? '#e65100' : '#1565c0',
+          }}>
+            {formatStatus(machine.maintenance_status)}
+          </span>
+          <span style={statsChipStyle}>{machine.equipment_type}</span>
+          <span style={statsChipStyle}>{daysSinceMaintenance !== null ? `${daysSinceMaintenance}d since service` : 'Never serviced'}</span>
+          <span style={statsChipStyle}>{usageSinceMaintenance} use{usageSinceMaintenance !== 1 ? 's' : ''} since service</span>
+          <span style={statsChipStyle}>{logs.length} log entr{logs.length !== 1 ? 'ies' : 'y'}</span>
+          <span style={statsChipStyle}>Interval: {machine.maintenance_interval_days}d</span>
+        </div>
+
         {/* Machine Info Card */}
         <div style={cardStyle} className="section-glow">
           <h3 style={cardTitleStyle}>Current Status</h3>
@@ -316,4 +332,21 @@ const errorBannerStyle: CSSProperties = {
 
 const emptyStyle: CSSProperties = {
   color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+};
+
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
 };

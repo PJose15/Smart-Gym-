@@ -97,6 +97,23 @@ const successStyle: CSSProperties = {
   marginBottom: 16,
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function StyleSettingsPage() {
@@ -227,6 +244,19 @@ export default function StyleSettingsPage() {
 
         {error && <div style={errorStyle}>{error}</div>}
         {success && <div style={successStyle}>{success}</div>}
+
+        {/* Settings summary strip */}
+        <div style={statsStripStyle}>
+          <span style={{ ...statsChipStyle, backgroundColor: tone === 'supportive' ? '#e8f5e9' : tone === 'strict' ? '#fce4e6' : '#f5f5f5', color: tone === 'supportive' ? '#2e7d32' : tone === 'strict' ? '#c62828' : '#555' }}>
+            Tone: {tone}
+          </span>
+          <span style={{ ...statsChipStyle, backgroundColor: verbosity === 'detailed' ? '#e3f2fd' : verbosity === 'short' ? '#fff3e0' : '#f5f5f5', color: verbosity === 'detailed' ? '#1565c0' : verbosity === 'short' ? '#e65100' : '#555' }}>
+            Verbosity: {verbosity}
+          </span>
+          <span style={statsChipStyle}>
+            Preview confidence: {Math.round(previewDraft.confidence * 100)}%
+          </span>
+        </div>
 
         <div style={formContainerStyle}>
           {/* Settings form */}

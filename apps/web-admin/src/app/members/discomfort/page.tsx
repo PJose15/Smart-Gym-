@@ -74,6 +74,23 @@ const emptyStateStyle: CSSProperties = {
   fontSize: 15,
 };
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function DiscomfortPage() {
@@ -148,6 +165,23 @@ export default function DiscomfortPage() {
           title="Safety Alerts"
           description="Members with 2+ discomfort reports in the last 7 days"
         />
+
+        {/* Stats strip */}
+        {rows.length > 0 && (() => {
+          const totalDiscomfort = rows.reduce((s, r) => s + r.discomfort_count_7d, 0);
+          const totalUnstable = rows.reduce((s, r) => s + r.unstable_count_7d, 0);
+          const allAreas = new Set(rows.flatMap((r) => r.top_body_areas_7d ?? []));
+          const highRisk = rows.filter((r) => r.discomfort_count_7d >= 4).length;
+          return (
+            <div style={statsStripStyle}>
+              <span style={statsChipStyle}>{rows.length} member{rows.length !== 1 ? 's' : ''} flagged</span>
+              <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{totalDiscomfort} discomfort reports</span>
+              <span style={statsChipStyle}>{totalUnstable} instability reports</span>
+              <span style={statsChipStyle}>{allAreas.size} body area{allAreas.size !== 1 ? 's' : ''} affected</span>
+              {highRisk > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{highRisk} high-risk (4+)</span>}
+            </div>
+          );
+        })()}
 
         {rows.length === 0 ? (
           <div style={tableContainerStyle}>

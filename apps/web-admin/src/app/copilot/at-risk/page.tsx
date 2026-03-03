@@ -89,6 +89,23 @@ function reasonLabel(reason: AtRiskMember['reasons'][0]): string {
   }
 }
 
+const statsStripStyle: CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 16,
+};
+
+const statsChipStyle: CSSProperties = {
+  display: 'inline-block',
+  padding: '4px 12px',
+  borderRadius: 14,
+  fontSize: 12,
+  fontWeight: 600,
+  backgroundColor: '#f0f0f0',
+  color: '#555',
+};
+
 // ─── Component ──────────────────────────────────────────
 
 export default function AtRiskPage() {
@@ -185,6 +202,23 @@ export default function AtRiskPage() {
         />
 
         {error && <div style={errorStyle}>{error}</div>}
+
+        {/* Stats strip */}
+        {members.length > 0 && (() => {
+          const allReasons = members.flatMap((m) => m.reasons);
+          const inactiveCount = allReasons.filter((r) => r.type === 'no_workouts_7d').length;
+          const discomfortCount = allReasons.filter((r) => r.type === 'repeated_discomfort').length;
+          const plateauCount = allReasons.filter((r) => r.type === 'plateauing').length;
+          return (
+            <div style={statsStripStyle}>
+              <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{members.length} at-risk member{members.length !== 1 ? 's' : ''}</span>
+              {inactiveCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{inactiveCount} inactive</span>}
+              {discomfortCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{discomfortCount} discomfort</span>}
+              {plateauCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e8eaf6', color: '#283593' }}>{plateauCount} plateauing</span>}
+              <span style={statsChipStyle}>{allReasons.length} total flag{allReasons.length !== 1 ? 's' : ''}</span>
+            </div>
+          );
+        })()}
 
         {members.length === 0 ? (
           <div style={tableContainerStyle}>

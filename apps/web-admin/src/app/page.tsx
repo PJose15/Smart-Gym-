@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
+import Link from 'next/link';
 import styles from './page.module.css';
 import { StatCard } from './components/StatCard';
 import { AnimatedPage } from './components/AnimatedPage';
@@ -12,6 +13,56 @@ interface DashboardMetrics {
   members: number | null;
   sessionsToday: number | null;
 }
+
+const quickActionStyle: CSSProperties = {
+  display: 'flex',
+  gap: 10,
+  flexWrap: 'wrap',
+  marginBottom: 24,
+};
+
+const quickActionBtnStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '8px 16px',
+  backgroundColor: '#edf2ff',
+  color: '#4361ee',
+  borderRadius: 8,
+  fontSize: 13,
+  fontWeight: 600,
+  textDecoration: 'none',
+  border: '1px solid #d0dafe',
+  cursor: 'pointer',
+  transition: 'background-color 0.15s',
+};
+
+const timestampStyle: CSSProperties = {
+  fontSize: 12,
+  color: '#999',
+  textAlign: 'right',
+  marginBottom: 8,
+};
+
+const activeWorkoutsBannerStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  backgroundColor: '#e3f2fd',
+  borderRadius: 8,
+  padding: '10px 16px',
+  marginBottom: 20,
+  fontSize: 14,
+  fontWeight: 500,
+  color: '#1565c0',
+};
+
+const activeDotStyle: CSSProperties = {
+  width: 8,
+  height: 8,
+  borderRadius: '50%',
+  backgroundColor: '#1565c0',
+};
 
 interface RecentWorkout {
   id: string;
@@ -121,6 +172,8 @@ export default function DashboardPage() {
   const [recentWorkouts, setRecentWorkouts] = useState<RecentWorkout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [activeWorkouts, setActiveWorkouts] = useState(0);
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -174,6 +227,13 @@ export default function DashboardPage() {
         setRecentWorkouts(
           (workoutsRes.data as unknown as RecentWorkout[]) ?? []
         );
+
+        // Count active (in_progress) workouts
+        const activeCount = ((workoutsRes.data ?? []) as unknown as RecentWorkout[])
+          .filter(w => w.status === 'in_progress').length;
+        setActiveWorkouts(activeCount);
+
+        setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
@@ -217,6 +277,27 @@ export default function DashboardPage() {
         <p className={`${styles.description} subtitle-animate`}>
           Overview of gym operations, usage statistics, and key metrics.
         </p>
+
+        {/* Last Updated */}
+        {lastUpdated && (
+          <p style={timestampStyle}>Updated at {lastUpdated}</p>
+        )}
+
+        {/* Quick Actions */}
+        <div style={quickActionStyle}>
+          <Link href="/machines" style={quickActionBtnStyle}>Machines</Link>
+          <Link href="/programs/create" style={quickActionBtnStyle}>+ New Program</Link>
+          <Link href="/members" style={quickActionBtnStyle}>Members</Link>
+          <Link href="/analytics" style={quickActionBtnStyle}>Analytics</Link>
+        </div>
+
+        {/* Active Workouts Banner */}
+        {activeWorkouts > 0 && (
+          <div style={activeWorkoutsBannerStyle} className="status-pulse">
+            <div style={activeDotStyle} />
+            {activeWorkouts} workout{activeWorkouts !== 1 ? 's' : ''} in progress right now
+          </div>
+        )}
 
         <div className={styles.grid}>
           <StatCard title="Total Machines" value={metrics.totalMachines ?? 0} change={12} trend="up" index={0} />
