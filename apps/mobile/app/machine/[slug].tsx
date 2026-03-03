@@ -30,7 +30,46 @@ interface MachineWithGym extends Machine {
   common_mistakes: string[];
   cue_version: number;
   cue_source: string;
+  maintenance_status?: string;
 }
+
+// ─── Enrichment Types ─────────────────────────────────
+interface MachineHistory {
+  totalSessions: number;
+  lastUsed: string | null;
+  bestWeightKg: number;
+  bestReps: number;
+  bestEst1RM: number;
+  totalVolumeKg: number;
+  recentSets: Array<{ weight_kg: number; reps: number; logged_at: string }>;
+}
+
+// ─── Difficulty labels ────────────────────────────────
+const DIFFICULTY_CONFIG: Record<string, { label: string; color: string }> = {
+  beginner: { label: 'Beginner', color: colors.success },
+  intermediate: { label: 'Intermediate', color: '#e9c46a' },
+  advanced: { label: 'Advanced', color: colors.error },
+};
+
+const EQUIPMENT_LABELS: Record<string, string> = {
+  machine: 'Machine',
+  cable: 'Cable',
+  dumbbell: 'Dumbbell',
+  barbell: 'Barbell',
+  bodyweight: 'Bodyweight',
+  smith: 'Smith Machine',
+  cardio: 'Cardio',
+};
+
+const MOVEMENT_LABELS: Record<string, string> = {
+  push: 'Push',
+  pull: 'Pull',
+  squat: 'Squat',
+  hinge: 'Hinge',
+  carry: 'Carry',
+  core: 'Core',
+  isolation: 'Isolation',
+};
 
 const GYM_MACHINES_CACHE_KEY = '@smartgym:gym_machines';
 const GYM_MACHINES_CACHE_VERSION_KEY = '@smartgym:gym_machines_version';
@@ -48,6 +87,9 @@ export default function MachineDetailScreen() {
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [alternatives, setAlternatives] = useState<AlternativeResult[]>([]);
   const [loadingAlternatives, setLoadingAlternatives] = useState(false);
+
+  // Enrichment state
+  const [history, setHistory] = useState<MachineHistory | null>(null);
 
   const handleStartWorkout = async () => {
     if (!machine) return;
@@ -153,8 +195,77 @@ export default function MachineDetailScreen() {
       if (isFeatureEnabled('ai_assist')) {
         trackEvent('ai_cues_viewed', { machine_id: machine.id });
       }
+
+      // Load personal history for this machine
+      await loadMachineHistory(machine.id);
     })();
   }, [machine]);
+
+  async function loadMachineHistory(machineId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get all workout exercises for this machine by this user
+      const { data: exercises } = await supabase
+        .from('workout_exercises')
+        .select(`
+          id,
+          workouts!inner(profile_id, started_at, status),
+          sets(weight_kg, reps, logged_at)
+        `)
+        .eq('machine_id', machineId)
+        .eq('workouts.profile_id', user.id)
+        .eq('workouts.status', 'completed')
+        .order('workouts(started_at)', { ascending: false })
+        .limit(50);
+
+      if (!exercises || exercises.length === 0) {
+        setHistory(null);
+        return;
+      }
+
+      const rows = exercises as any[];
+      let bestWeightKg = 0;
+      let bestReps = 0;
+      let bestEst1RM = 0;
+      let totalVolumeKg = 0;
+      const recentSets: MachineHistory['recentSets'] = [];
+
+      for (const ex of rows) {
+        for (const s of (ex.sets ?? [])) {
+          const w = s.weight_kg ?? 0;
+          const r = s.reps ?? 0;
+          totalVolumeKg += w * r;
+          if (w > bestWeightKg) bestWeightKg = w;
+          if (r > bestReps) bestReps = r;
+          // Brzycki 1RM estimate
+          if (r > 0 && r <= 12 && w > 0) {
+            const est = w * (36 / (37 - r));
+            if (est > bestEst1RM) bestEst1RM = est;
+          }
+          if (recentSets.length < 5) {
+            recentSets.push({ weight_kg: w, reps: r, logged_at: s.logged_at });
+          }
+        }
+      }
+
+      // Unique sessions = unique workout dates
+      const sessionDates = new Set(rows.map((e: any) => e.workouts?.started_at?.split('T')[0]).filter(Boolean));
+
+      setHistory({
+        totalSessions: sessionDates.size,
+        lastUsed: rows[0]?.workouts?.started_at ?? null,
+        bestWeightKg,
+        bestReps,
+        bestEst1RM: Math.round(bestEst1RM * 10) / 10,
+        totalVolumeKg: Math.round(totalVolumeKg),
+        recentSets,
+      });
+    } catch (err) {
+      console.warn('[machine] history load failed:', err);
+    }
+  }
 
   // ─── Alternatives Logic ────────────────────────────────
 
@@ -230,6 +341,16 @@ export default function MachineDetailScreen() {
     }
   }
 
+  function formatTimeSince(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? 's' : ''} ago`;
+  }
+
   if (loading) {
     return <SkeletonGate loading={true} skeleton={<MachineDetailSkeleton />}><View /></SkeletonGate>;
   }
@@ -272,6 +393,40 @@ export default function MachineDetailScreen() {
               </Text>
             </View>
           ))}
+        </View>
+      )}
+
+      {/* ─── Machine Metadata Badges ──────────────── */}
+      {(machine.difficulty || machine.equipment_type || machine.movement_pattern) && (
+        <View style={styles.metadataRow}>
+          {machine.difficulty && DIFFICULTY_CONFIG[machine.difficulty] && (
+            <View style={[styles.metaBadge, { backgroundColor: DIFFICULTY_CONFIG[machine.difficulty].color + '18' }]}>
+              <Text style={[styles.metaBadgeText, { color: DIFFICULTY_CONFIG[machine.difficulty].color }]}>
+                {DIFFICULTY_CONFIG[machine.difficulty].label}
+              </Text>
+            </View>
+          )}
+          {machine.equipment_type && EQUIPMENT_LABELS[machine.equipment_type] && (
+            <View style={styles.metaBadge}>
+              <Text style={styles.metaBadgeText}>
+                {EQUIPMENT_LABELS[machine.equipment_type]}
+              </Text>
+            </View>
+          )}
+          {machine.movement_pattern && MOVEMENT_LABELS[machine.movement_pattern] && (
+            <View style={styles.metaBadge}>
+              <Text style={styles.metaBadgeText}>
+                {MOVEMENT_LABELS[machine.movement_pattern]}
+              </Text>
+            </View>
+          )}
+          {machine.maintenance_status === 'in_maintenance' && (
+            <View style={[styles.metaBadge, { backgroundColor: colors.error + '18' }]}>
+              <Text style={[styles.metaBadgeText, { color: colors.error }]}>
+                In Maintenance
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -325,6 +480,57 @@ export default function MachineDetailScreen() {
             </View>
           ))}
         </View>
+      )}
+
+      {/* ─── Personal History on This Machine ──── */}
+      {history && (
+        <AnimatedCard index={0} style={styles.historyCard}>
+          <Text variant="subheading" style={styles.historySectionTitle}>
+            Your History
+          </Text>
+          <View style={styles.historyGrid}>
+            <View style={styles.historyPill}>
+              <Text style={styles.historyValue}>{history.totalSessions}</Text>
+              <Text variant="caption" color="textSecondary">sessions</Text>
+            </View>
+            <View style={styles.historyPill}>
+              <Text style={styles.historyValue}>{history.bestWeightKg}kg</Text>
+              <Text variant="caption" color="textSecondary">best weight</Text>
+            </View>
+            <View style={styles.historyPill}>
+              <Text style={styles.historyValue}>{history.bestReps}</Text>
+              <Text variant="caption" color="textSecondary">best reps</Text>
+            </View>
+            {history.bestEst1RM > 0 && (
+              <View style={styles.historyPill}>
+                <Text style={styles.historyValue}>{history.bestEst1RM}kg</Text>
+                <Text variant="caption" color="textSecondary">est. 1RM</Text>
+              </View>
+            )}
+          </View>
+          {history.lastUsed && (
+            <Text variant="caption" color="textSecondary" style={styles.historyLastUsed}>
+              Last used {formatTimeSince(history.lastUsed)}
+              {'  '}|{'  '}{history.totalVolumeKg.toLocaleString()}kg total volume
+            </Text>
+          )}
+          {history.recentSets.length > 0 && (
+            <View style={styles.recentSetsContainer}>
+              <Text variant="caption" color="textSecondary" style={styles.recentSetsLabel}>
+                Recent sets
+              </Text>
+              <View style={styles.recentSetsRow}>
+                {history.recentSets.map((s, i) => (
+                  <View key={i} style={styles.recentSetChip}>
+                    <Text style={styles.recentSetText}>
+                      {s.weight_kg}kg x {s.reps}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+        </AnimatedCard>
       )}
 
       {/* Machine Busy? — Alternatives Button */}
@@ -517,6 +723,79 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 17,
     fontWeight: '700',
+  },
+
+  // Metadata badges
+  metadataRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  metaBadge: {
+    backgroundColor: colors.primary + '12',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  metaBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+
+  // Personal history card
+  historyCard: {
+    marginBottom: spacing.lg,
+  },
+  historySectionTitle: {
+    marginBottom: spacing.sm,
+  },
+  historyGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  historyPill: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  historyValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  historyLastUsed: {
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  recentSetsContainer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+  },
+  recentSetsLabel: {
+    fontWeight: '600',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
+  },
+  recentSetsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  recentSetChip: {
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  recentSetText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
   },
 
   // Alternatives button
