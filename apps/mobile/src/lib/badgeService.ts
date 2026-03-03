@@ -36,7 +36,8 @@ export async function getBadges(
     supabase
       .from('member_badges')
       .select('badge_id, unlocked_at')
-      .eq('profile_id', profileId),
+      .eq('profile_id', profileId)
+      .limit(500),
   ]);
 
   if (badgesErr) throw badgesErr;

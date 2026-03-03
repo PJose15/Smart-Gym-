@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import {
   estimate1RM,
@@ -60,10 +61,19 @@ interface ExerciseSummary {
 }
 
 type ChartMetric = '1rm' | 'volume' | 'weight';
+type PeriodDays = 0 | 30 | 60 | 90;
+
+const PERIOD_OPTIONS: Array<{ label: string; value: PeriodDays }> = [
+  { label: 'All', value: 0 },
+  { label: '30d', value: 30 },
+  { label: '60d', value: 60 },
+  { label: '90d', value: 90 },
+];
 
 // ─── Component ──────────────────────────────────────────
 
 export default function ProgressScreen() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<ExerciseSummary[]>([]);
@@ -71,6 +81,7 @@ export default function ProgressScreen() {
   const [chartMetric, setChartMetric] = useState<ChartMetric>('1rm');
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<PeriodDays>(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -90,13 +101,21 @@ export default function ProgressScreen() {
 
       setUserId(user.id);
 
-      // Step 1: Fetch all completed workout IDs for this user
-      const { data: workouts, error: workoutsErr } = await supabase
+      // Step 1: Fetch completed workout IDs, optionally filtered by period
+      let query = supabase
         .from('workouts')
         .select('id, started_at')
         .eq('profile_id', user.id)
         .eq('status', 'completed')
         .order('started_at', { ascending: false });
+
+      if (period > 0) {
+        const since = new Date();
+        since.setDate(since.getDate() - period);
+        query = query.gte('started_at', since.toISOString());
+      }
+
+      const { data: workouts, error: workoutsErr } = await query.limit(500);
 
       if (workoutsErr) throw workoutsErr;
 
@@ -119,7 +138,7 @@ export default function ProgressScreen() {
       const { data: exerciseData, error: exercisesErr } = await supabase
         .from('workout_exercises')
         .select('id, workout_id, machine_id, exercise_name, order_index, sets(*)')
-        .in('workout_id', workoutIds);
+        .in('workout_id', workoutIds.slice(0, 100));
 
       if (exercisesErr) throw exercisesErr;
 
@@ -222,7 +241,7 @@ export default function ProgressScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [period]);
 
   useFocusEffect(
     useCallback(() => {
@@ -336,6 +355,14 @@ export default function ProgressScreen() {
           </View>
         )}
 
+        {/* Drill-down link */}
+        <TouchableOpacity
+          style={styles.drillDownLink}
+          onPress={() => router.push(`/exercise/${encodeURIComponent(item.exerciseName)}`)}
+        >
+          <Text style={styles.drillDownText}>View full history ›</Text>
+        </TouchableOpacity>
+
         {/* Expand indicator */}
         <Text style={styles.expandIndicator}>
           {isExpanded ? 'Hide details' : 'Tap for details'}
@@ -431,6 +458,19 @@ export default function ProgressScreen() {
     <AnimatedScreen>
     <View style={styles.container}>
       <Text style={styles.heading}>Your Progress</Text>
+      <View style={styles.periodRow}>
+        {PERIOD_OPTIONS.map((opt) => (
+          <TouchableOpacity
+            key={opt.value}
+            style={[styles.periodBtn, period === opt.value && styles.periodBtnActive]}
+            onPress={() => setPeriod(opt.value)}
+          >
+            <Text style={[styles.periodBtnText, period === opt.value && styles.periodBtnTextActive]}>
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       <FlatList
         data={exercises}
         keyExtractor={(item) => item.exerciseName}
@@ -488,6 +528,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 4,
+  },
+  periodRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 4,
+    gap: 8,
+  },
+  periodBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#e9ecef',
+  },
+  periodBtnActive: {
+    backgroundColor: '#4361ee',
+  },
+  periodBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6c757d',
+  },
+  periodBtnTextActive: {
+    color: '#ffffff',
   },
   listContent: {
     padding: 20,
@@ -603,6 +667,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#212529',
+  },
+  // ─── Drill-down ────────────────────────────────────────
+  drillDownLink: {
+    marginTop: 10,
+    alignSelf: 'flex-end',
+  },
+  drillDownText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4361ee',
   },
   // ─── Expand ─────────────────────────────────────────────
   expandIndicator: {

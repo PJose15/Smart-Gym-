@@ -55,7 +55,8 @@ export default function CoachNotesScreen() {
       .select('id, source, status, title, body, created_at, sent_at, trainer_profile:trainer_profile_id(full_name)')
       .eq('member_profile_id', user.id)
       .eq('status', 'sent')
-      .order('sent_at', { ascending: false });
+      .order('sent_at', { ascending: false })
+      .limit(100);
 
     if (error) {
       setError(error.message);
