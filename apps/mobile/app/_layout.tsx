@@ -71,6 +71,10 @@ export default function RootLayout() {
           options={{ title: 'Workout Complete', headerShown: false }}
         />
         <Stack.Screen
+          name="exercise/[name]"
+          options={{ title: 'Exercise Details' }}
+        />
+        <Stack.Screen
           name="coach-notes/index"
           options={{ title: 'Coach Notes' }}
         />

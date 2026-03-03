@@ -129,8 +129,8 @@ export async function checkAndUnlockBadges(
   const totalPRs = prCountResult.count ?? 0;
 
   const alreadyUnlockedSlugs = (existingBadgesResult.data ?? [])
-    .map((mb: { badges: { slug: string } | null }) => mb.badges?.slug)
-    .filter(Boolean) as string[];
+    .map((mb: any) => mb.badges?.slug as string | undefined)
+    .filter((s): s is string => Boolean(s));
 
   // Run the pure badge engine
   const newSlugs = checkBadgeUnlocks({
@@ -187,7 +187,7 @@ export async function getRecentUnlocks(
 
   if (error) throw error;
 
-  return (data ?? []).map((mb) => ({
+  return (data ?? []).map((mb: any) => ({
     ...(mb.badges as Record<string, unknown>),
     unlocked: true,
     unlocked_at: mb.unlocked_at,

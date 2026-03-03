@@ -23,7 +23,8 @@ import type {
   Machine,
 } from '@smartgym/types';
 import { getNextSetSuggestion, getFormChecklist, getSafetyNudge } from '@smartgym/ai-assist';
-import type { SafetyNudge, SessionIntent } from '@smartgym/types';
+import type { SafetyNudge } from '@smartgym/ai-assist';
+import type { SessionIntent } from '@smartgym/types';
 import type { NextSetSuggestion, WeightUnit, FormChecklist, SetFeedbackRating, BodyArea } from '@smartgym/types';
 import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';

@@ -121,15 +121,8 @@ export default function AssignmentsPage() {
       .from('gym_members')
       .select('profile_id, role, gym_id, profiles:profile_id(full_name)')
       .order('role');
-    interface GymMemberJoin {
-      profile_id: string;
-      role: string;
-      gym_id: string;
-      profiles: { full_name: string } | null;
-    }
-
     setGymMembers(
-      (data ?? []).map((d: GymMemberJoin) => ({
+      (data ?? []).map((d: any) => ({
         id: d.profile_id,
         full_name: d.profiles?.full_name ?? 'Unknown',
         role: d.role,

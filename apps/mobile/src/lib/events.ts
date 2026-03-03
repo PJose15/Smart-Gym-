@@ -16,7 +16,12 @@ export type EventName =
   | 'ai_cues_viewed'
   | 'push_token_registered'
   | 'push_notification_tapped'
-  | 'push_permission_denied';
+  | 'push_permission_denied'
+  | 'guardrail_acknowledged'
+  | 'session_intent_set'
+  | 'alternatives_viewed'
+  | 'safety_nudge_shown'
+  | 'set_feedback_submitted';
 
 /**
  * Track an app event. Fire-and-forget (does not block UI).

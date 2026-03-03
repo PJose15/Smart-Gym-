@@ -36,8 +36,8 @@ export default function CreateProgramPage() {
       } else {
         const gymList = (data as Pick<Gym, 'id' | 'name'>[]) ?? [];
         setGyms(gymList);
-        // Auto-select the first gym for MVP
-        if (gymList.length > 0) {
+        // Auto-select only if single gym; multi-gym requires manual selection
+        if (gymList.length === 1) {
           setGymId(gymList[0].id);
         }
       }
@@ -48,10 +48,28 @@ export default function CreateProgramPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !gymId) return;
+    setError(null);
+
+    // Client-side validation
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError('Program name is required.');
+      return;
+    }
+    if (trimmedName.length > 100) {
+      setError('Program name must be 100 characters or less.');
+      return;
+    }
+    if (description.trim().length > 500) {
+      setError('Description must be 500 characters or less.');
+      return;
+    }
+    if (!gymId) {
+      setError('Please select a gym.');
+      return;
+    }
 
     setSubmitting(true);
-    setError(null);
 
     // Get current user
     const {
@@ -166,6 +184,9 @@ export default function CreateProgramPage() {
                 style={inputStyle}
                 className="input-animate"
               >
+                {gyms.length > 1 && (
+                  <option value="">Select gym...</option>
+                )}
                 {gyms.map((gym) => (
                   <option key={gym.id} value={gym.id}>
                     {gym.name}

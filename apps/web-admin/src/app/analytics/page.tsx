@@ -111,11 +111,12 @@ export default function AnalyticsPage() {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const since = sevenDaysAgo.toISOString();
 
-      // Fetch AI audit logs grouped by context
+      // Fetch AI audit logs grouped by context (limit to prevent unbounded fetch)
       const { data: auditLogs, error: auditErr } = await supabase
         .from('ai_audit_logs')
         .select('context, created_at')
-        .gte('created_at', since);
+        .gte('created_at', since)
+        .limit(500);
 
       if (auditErr) throw auditErr;
 
@@ -141,12 +142,13 @@ export default function AnalyticsPage() {
       setDailyCounts(sortedDaily);
       setTotalEvents(auditLogs?.length ?? 0);
 
-      // Fetch conversion: next_set shown vs applied
+      // Fetch conversion: next_set shown vs applied (limit to prevent unbounded fetch)
       const { data: events, error: eventsErr } = await supabase
         .from('app_events')
         .select('event_name')
         .in('event_name', ['ai_next_set_shown', 'ai_next_set_applied'])
-        .gte('created_at', since);
+        .gte('created_at', since)
+        .limit(500);
 
       if (eventsErr) throw eventsErr;
 

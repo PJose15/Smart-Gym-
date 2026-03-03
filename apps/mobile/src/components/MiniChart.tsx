@@ -9,6 +9,7 @@ interface MiniChartProps {
   unit?: string;
   color?: string;
   height?: number;
+  maxPoints?: number;
 }
 
 const CHART_WIDTH = Dimensions.get('window').width - 80; // card padding
@@ -19,6 +20,7 @@ export function MiniChart({
   unit = '',
   color = colors.primary,
   height = 160,
+  maxPoints = 10,
 }: MiniChartProps) {
   if (data.length < 2) {
     return (
@@ -30,8 +32,7 @@ export function MiniChart({
     );
   }
 
-  // Show last 10 data points max
-  const sliced = data.slice(-10);
+  const sliced = data.slice(-maxPoints);
 
   const labels = sliced.map((d) => {
     const parts = d.date.split('-');

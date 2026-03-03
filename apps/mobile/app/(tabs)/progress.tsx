@@ -643,7 +643,7 @@ export default function ProgressScreen() {
         {/* Drill-down link */}
         <TouchableOpacity
           style={styles.drillDownLink}
-          onPress={() => router.push(`/exercise/${encodeURIComponent(item.exerciseName)}`)}
+          onPress={() => router.push(`/exercise/${encodeURIComponent(item.exerciseName)}` as any)}
         >
           <Text style={styles.drillDownText}>View full history ›</Text>
         </TouchableOpacity>

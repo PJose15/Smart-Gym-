@@ -566,7 +566,7 @@ export default function WorkoutCompleteScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => router.replace('/(tabs)/')}
+          onPress={() => router.replace('/(tabs)' as const)}
         >
           <Text style={styles.homeButtonOutlineText}>Back to Home</Text>
         </TouchableOpacity>
@@ -774,7 +774,7 @@ export default function WorkoutCompleteScreen() {
       {/* Back to Home */}
       <TouchableOpacity
         style={styles.backToHomeButton}
-        onPress={() => router.replace('/(tabs)/')}
+        onPress={() => router.replace('/(tabs)' as const)}
       >
         <Text style={styles.backToHomeText}>Back to Home</Text>
       </TouchableOpacity>

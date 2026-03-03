@@ -62,7 +62,7 @@ export default function AuthScreen() {
         if (signUpError) throw signUpError;
       }
 
-      router.replace('/(tabs)/');
+      router.replace('/(tabs)' as const);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {

@@ -172,14 +172,31 @@ export default function StyleSettingsPage() {
     }
   }
 
-  // Generate preview draft
+  // Generate preview draft with mock data
   const previewDraft = buildWorkoutDraft({
     memberName: 'Jane Doe',
     exercises: [
-      { exerciseName: 'Bench Press', sets: 4, reps: 10, avgWeightKg: 50 },
-      { exerciseName: 'Lat Pulldown', sets: 3, reps: 12, avgWeightKg: 40 },
-    ],
-    prs: [{ exercise: 'Bench Press', type: 'PR_WEIGHT', value: 52.5 }],
+      {
+        id: 'preview-ex-1', workout_id: 'preview', exercise_name: 'Bench Press',
+        machine_id: null, order_index: 0,
+        sets: [
+          { id: 's1', workout_exercise_id: 'preview-ex-1', set_number: 1, reps: 10, weight_kg: 50, rpe: null, logged_at: new Date().toISOString() },
+          { id: 's2', workout_exercise_id: 'preview-ex-1', set_number: 2, reps: 10, weight_kg: 50, rpe: null, logged_at: new Date().toISOString() },
+          { id: 's3', workout_exercise_id: 'preview-ex-1', set_number: 3, reps: 10, weight_kg: 50, rpe: null, logged_at: new Date().toISOString() },
+          { id: 's4', workout_exercise_id: 'preview-ex-1', set_number: 4, reps: 10, weight_kg: 50, rpe: null, logged_at: new Date().toISOString() },
+        ],
+      },
+      {
+        id: 'preview-ex-2', workout_id: 'preview', exercise_name: 'Lat Pulldown',
+        machine_id: null, order_index: 1,
+        sets: [
+          { id: 's5', workout_exercise_id: 'preview-ex-2', set_number: 1, reps: 12, weight_kg: 40, rpe: null, logged_at: new Date().toISOString() },
+          { id: 's6', workout_exercise_id: 'preview-ex-2', set_number: 2, reps: 12, weight_kg: 40, rpe: null, logged_at: new Date().toISOString() },
+          { id: 's7', workout_exercise_id: 'preview-ex-2', set_number: 3, reps: 12, weight_kg: 40, rpe: null, logged_at: new Date().toISOString() },
+        ],
+      },
+    ] as any,
+    prs: [{ exercise_name: 'Bench Press', type: 'PR_WEIGHT' as const, value: 52.5, previous_value: 50 }],
     volumeChangePct: 12,
     totalVolumeKg: 3200,
     totalSets: 7,

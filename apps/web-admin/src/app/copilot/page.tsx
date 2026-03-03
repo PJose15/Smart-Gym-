@@ -454,7 +454,7 @@ export default function CopilotInboxPage() {
                 >
                   <div style={cardTitleStyle}>{draft.draft_title}</div>
                   <div style={memberNameStyle}>
-                    {(draft as any).member_profile?.full_name ?? 'Member'}
+                    {draft.member_profile?.full_name ?? 'Member'}
                     {' · '}
                     {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>

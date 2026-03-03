@@ -87,7 +87,7 @@ export async function cacheFirst<T>(
     // Background refresh (fire-and-forget)
     fetchFn()
       .then((fresh) => setCache(key, fresh))
-      .catch(() => {});
+      .catch((err) => console.warn('[cache] refresh failed:', key, err instanceof Error ? err.message : err));
     return cached;
   }
 
