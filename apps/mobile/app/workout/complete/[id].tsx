@@ -159,6 +159,40 @@ function prTypeLabel(type: PRDetection['type']): string {
   }
 }
 
+// ─── Time of Day Label ──────────────────────────────────
+
+function getTimeOfDayLabel(finishedAt: string | null): { label: string; emoji: string } {
+  if (!finishedAt) return { label: 'Completed', emoji: '\u2713' };
+  const hour = new Date(finishedAt).getHours();
+  if (hour >= 5 && hour < 12) return { label: 'Morning Warrior', emoji: '\uD83C\uDF05' };
+  if (hour >= 12 && hour < 17) return { label: 'Afternoon Grinder', emoji: '\u2600\uFE0F' };
+  if (hour >= 17 && hour < 21) return { label: 'Evening Champion', emoji: '\uD83C\uDF19' };
+  return { label: 'Night Owl', emoji: '\uD83E\uDD89' };
+}
+
+// ─── Intensity Level ────────────────────────────────────
+
+function getIntensityLevel(volumeKg: number, durationMin: number): { level: string; color: string; ratio: number } {
+  if (durationMin <= 0) return { level: 'N/A', color: '#6c757d', ratio: 0 };
+  const vpm = volumeKg / durationMin;
+  if (vpm < 20) return { level: 'Light', color: '#2a9d8f', ratio: 0.25 };
+  if (vpm < 50) return { level: 'Moderate', color: '#e9c46a', ratio: 0.5 };
+  if (vpm < 100) return { level: 'High', color: '#e76f51', ratio: 0.75 };
+  return { level: 'Beast Mode', color: '#e63946', ratio: 1.0 };
+}
+
+// ─── Motivational Messages ──────────────────────────────
+
+const MOTIVATIONAL_MESSAGES = [
+  'Every rep counts. You showed up and that matters.',
+  'Consistency beats perfection. Great work today.',
+  'Stronger than yesterday, building for tomorrow.',
+  'The only bad workout is the one that didn\'t happen.',
+  'Progress is progress, no matter how small.',
+  'Your future self will thank you for today.',
+  'Discipline is choosing what you want most over what you want now.',
+];
+
 // ─── Main Screen ────────────────────────────────────────
 
 export default function WorkoutCompleteScreen() {
@@ -173,6 +207,8 @@ export default function WorkoutCompleteScreen() {
   const [guardrails, setGuardrails] = useState<GuardrailInsight[]>([]);
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
   const [newlyUnlockedBadges, setNewlyUnlockedBadges] = useState<string[]>([]);
+  const [workoutNumber, setWorkoutNumber] = useState<number | null>(null);
+  const [workoutFinishedAt, setWorkoutFinishedAt] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -217,6 +253,19 @@ export default function WorkoutCompleteScreen() {
 
       const exercises = (exercisesData ?? []) as WorkoutExerciseWithSets[];
       setSummary(computeSummary(workout, exercises));
+      setWorkoutFinishedAt(workout.finished_at ?? null);
+
+      // Fetch total completed workout count for this user
+      try {
+        const { count } = await supabase
+          .from('workouts')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', workout.profile_id)
+          .eq('status', 'completed');
+        if (count !== null) setWorkoutNumber(count);
+      } catch {
+        // Non-critical
+      }
 
       // Auto-award points for completing a workout
       try {
@@ -591,6 +640,25 @@ export default function WorkoutCompleteScreen() {
 
       <Text style={styles.heading}>Workout Complete!</Text>
 
+      {/* Time of Day Badge */}
+      <View style={styles.timeOfDayBadge}>
+        <Text style={styles.timeOfDayEmoji}>
+          {getTimeOfDayLabel(workoutFinishedAt).emoji}
+        </Text>
+        <Text style={styles.timeOfDayText}>
+          {getTimeOfDayLabel(workoutFinishedAt).label}
+        </Text>
+      </View>
+
+      {/* Workout Number */}
+      {workoutNumber !== null && (
+        <View style={styles.workoutNumberBadge}>
+          <Text style={styles.workoutNumberText}>
+            Workout #{workoutNumber}
+          </Text>
+        </View>
+      )}
+
       {/* 2x2 Stats Grid */}
       <View style={styles.statsGrid}>
         <StatCard
@@ -627,6 +695,55 @@ export default function WorkoutCompleteScreen() {
           {formatDuration(summary.duration_minutes)}
         </Text>
       </View>
+
+      {/* Intensity Meter */}
+      {summary.duration_minutes > 0 && (
+        <View style={styles.intensityContainer}>
+          <View style={styles.intensityHeader}>
+            <Text style={styles.intensityLabel}>Intensity</Text>
+            <Text style={[styles.intensityLevel, { color: getIntensityLevel(summary.total_volume_kg, summary.duration_minutes).color }]}>
+              {getIntensityLevel(summary.total_volume_kg, summary.duration_minutes).level}
+            </Text>
+          </View>
+          <View style={styles.intensityBarBg}>
+            <View style={[
+              styles.intensityBarFill,
+              {
+                width: `${getIntensityLevel(summary.total_volume_kg, summary.duration_minutes).ratio * 100}%` as unknown as number,
+                backgroundColor: getIntensityLevel(summary.total_volume_kg, summary.duration_minutes).color,
+              },
+            ]} />
+          </View>
+        </View>
+      )}
+
+      {/* Per-Exercise Averages */}
+      {summary.total_exercises > 0 && (
+        <View style={styles.averagesRow}>
+          <View style={styles.averageChip}>
+            <Text style={styles.averageValue}>
+              {(summary.total_sets / summary.total_exercises).toFixed(1)}
+            </Text>
+            <Text style={styles.averageLabel}>sets/exercise</Text>
+          </View>
+          {summary.total_sets > 0 && (
+            <View style={styles.averageChip}>
+              <Text style={styles.averageValue}>
+                {(summary.total_reps / summary.total_sets).toFixed(1)}
+              </Text>
+              <Text style={styles.averageLabel}>reps/set</Text>
+            </View>
+          )}
+          {summary.total_sets > 0 && summary.total_volume_kg > 0 && (
+            <View style={styles.averageChip}>
+              <Text style={styles.averageValue}>
+                {(summary.total_volume_kg / summary.total_sets).toFixed(1)}
+              </Text>
+              <Text style={styles.averageLabel}>kg/set</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* ─── Phase 2.5: AI Insight Section (gated) ──────── */}
       {aiEnabled && insight && (
@@ -770,6 +887,15 @@ export default function WorkoutCompleteScreen() {
           ))}
         </View>
       )}
+
+      {/* Motivational Closer */}
+      <View style={styles.motivationalContainer}>
+        <Text style={styles.motivationalText}>
+          {MOTIVATIONAL_MESSAGES[
+            (workoutId ?? '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % MOTIVATIONAL_MESSAGES.length
+          ]}
+        </Text>
+      </View>
 
       {/* Back to Home */}
       <TouchableOpacity
@@ -1228,5 +1354,119 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1a1a2e',
     textTransform: 'capitalize',
+  },
+
+  // Time of Day Badge
+  timeOfDayBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#edf2ff',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 8,
+    gap: 6,
+  },
+  timeOfDayEmoji: {
+    fontSize: 18,
+  },
+  timeOfDayText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4361ee',
+  },
+
+  // Workout Number
+  workoutNumberBadge: {
+    marginBottom: 20,
+  },
+  workoutNumberText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6c757d',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // Intensity Meter
+  intensityContainer: {
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    marginBottom: 16,
+  },
+  intensityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  intensityLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6c757d',
+    textTransform: 'uppercase',
+  },
+  intensityLevel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  intensityBarBg: {
+    height: 8,
+    backgroundColor: '#f1f3f5',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  intensityBarFill: {
+    height: 8,
+    borderRadius: 4,
+  },
+
+  // Per-Exercise Averages
+  averagesRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    width: '100%',
+    marginBottom: 24,
+  },
+  averageChip: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  averageValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#3a0ca3',
+    marginBottom: 2,
+  },
+  averageLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6c757d',
+    textTransform: 'uppercase',
+  },
+
+  // Motivational Closer
+  motivationalContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 20,
+  },
+  motivationalText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#6c757d',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
