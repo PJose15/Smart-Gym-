@@ -35,6 +35,7 @@ import { awardPoints } from '../../../src/lib/pointsService';
 import { checkAndAwardStreakBonus } from '../../../src/lib/streakService';
 import { checkAndUnlockBadges } from '../../../src/lib/badgeService';
 import { sendLocalNotification } from '../../../src/lib/notificationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
 import { AnimatedNumber } from '../../../src/components/AnimatedNumber';
 
@@ -335,6 +336,18 @@ export default function WorkoutCompleteScreen() {
 
           setInsight(result);
           trackEvent('ai_summary_viewed', { workout_id: workoutId });
+
+          // Persist PRs for home screen celebration banner
+          if (result.prs && result.prs.length > 0) {
+            try {
+              await AsyncStorage.setItem(
+                '@smartgym/unseen_prs',
+                JSON.stringify(result.prs),
+              );
+            } catch (e) {
+              console.warn('[complete] PR persist failed:', e);
+            }
+          }
         } catch {
           // AI insight is non-critical; silently swallow errors
         }

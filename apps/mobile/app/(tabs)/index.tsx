@@ -23,6 +23,8 @@ import type { StreakResult } from '../../src/lib/streakService';
 import { getRecentUnlocks } from '../../src/lib/badgeService';
 import { getUserRank } from '../../src/lib/leaderboardService';
 import type { BadgeWithStatus } from '@smartgym/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { PRDetection } from '@smartgym/types';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
@@ -124,6 +126,9 @@ export default function HomeScreen() {
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
   const [recentBadges, setRecentBadges] = useState<BadgeWithStatus[]>([]);
 
+  // PR Celebration Banner
+  const [unseenPRs, setUnseenPRs] = useState<PRDetection[]>([]);
+
   // Weekly Progress Summary
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
   const [weeklyGoal, setWeeklyGoal] = useState(0);
@@ -153,6 +158,19 @@ export default function HomeScreen() {
         .maybeSingle();
 
       if (mountedRef.current) setUserName(profileData?.full_name || null);
+
+      // Load unseen PRs from local storage
+      try {
+        const prData = await AsyncStorage.getItem('@smartgym/unseen_prs');
+        if (prData && mountedRef.current) {
+          const parsed = JSON.parse(prData) as PRDetection[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setUnseenPRs(parsed);
+          }
+        }
+      } catch {
+        await AsyncStorage.removeItem('@smartgym/unseen_prs');
+      }
 
       // Check for active workout
       const { data: activeData } = await supabase
@@ -627,6 +645,15 @@ export default function HomeScreen() {
     handleGuardrailAck();
   }, [handleGuardrailAck]);
 
+  const dismissPRs = useCallback(async () => {
+    setUnseenPRs([]);
+    try {
+      await AsyncStorage.removeItem('@smartgym/unseen_prs');
+    } catch (err) {
+      console.warn('[home] PR dismiss failed:', err);
+    }
+  }, []);
+
   return (
     <SkeletonGate loading={loading} skeleton={<HomeScreenSkeleton />}>
     <AnimatedScreen>
@@ -656,6 +683,41 @@ export default function HomeScreen() {
               <Text style={styles.streakBadgeNudge}> — keep it going!</Text>
             )}
           </View>
+        )}
+
+        {/* PR Celebration Banner */}
+        {unseenPRs.length > 0 && (
+          <AnimatedCard index={0} style={styles.prBanner}>
+            <View style={styles.prBannerHeader}>
+              <Text style={styles.prBannerTrophy}>{'\uD83C\uDFC6'}</Text>
+              <Text style={styles.prBannerTitle}>
+                New PR{unseenPRs.length > 1 ? 's' : ''}!
+              </Text>
+              <TouchableOpacity onPress={dismissPRs} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Text style={styles.prBannerDismiss}>{'\u2715'}</Text>
+              </TouchableOpacity>
+            </View>
+            {unseenPRs.slice(0, 3).map((pr, i) => (
+              <View key={i} style={styles.prBannerRow}>
+                <View style={styles.prBannerTypeBadge}>
+                  <Text style={styles.prBannerTypeText}>
+                    {pr.type === 'PR_WEIGHT' ? 'Weight' : pr.type === 'PR_REPS' ? 'Reps' : '1RM'}
+                  </Text>
+                </View>
+                <Text style={styles.prBannerExercise} numberOfLines={1}>
+                  {pr.exercise_name}
+                </Text>
+                <Text style={styles.prBannerValue}>
+                  {pr.type === 'PR_REPS' ? `${pr.value} reps` : `${pr.value}kg`}
+                </Text>
+              </View>
+            ))}
+            {unseenPRs.length > 3 && (
+              <Text variant="caption" color="textSecondary" style={{ textAlign: 'center', marginTop: 4 }}>
+                +{unseenPRs.length - 3} more
+              </Text>
+            )}
+          </AnimatedCard>
         )}
 
         {/* Phase 2.6: Leaderboard CTA */}
@@ -985,6 +1047,64 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
+  },
+  // PR Celebration Banner
+  prBanner: {
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    backgroundColor: '#fffbeb',
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+  },
+  prBannerHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: spacing.sm,
+  },
+  prBannerTrophy: {
+    fontSize: 20,
+    marginRight: spacing.xs,
+  },
+  prBannerTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#92400e',
+  },
+  prBannerDismiss: {
+    fontSize: 16,
+    color: '#92400e',
+    opacity: 0.6,
+    padding: 4,
+  },
+  prBannerRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: 6,
+    gap: spacing.sm,
+  },
+  prBannerTypeBadge: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  prBannerTypeText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#92400e',
+    textTransform: 'uppercase' as const,
+  },
+  prBannerExercise: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  prBannerValue: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#92400e',
   },
   // Weekly Progress Summary
   weeklyCard: {
