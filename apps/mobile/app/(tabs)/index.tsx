@@ -124,6 +124,11 @@ export default function HomeScreen() {
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
   const [recentBadges, setRecentBadges] = useState<BadgeWithStatus[]>([]);
 
+  // Weekly Progress Summary
+  const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
+  const [weeklyGoal, setWeeklyGoal] = useState(0);
+  const [weeklyVolume, setWeeklyVolume] = useState(0);
+
   const mountedRef = useRef(true);
 
   const loadHome = useCallback(async () => {
@@ -234,6 +239,50 @@ export default function HomeScreen() {
       if (!days || days.length === 0) {
         if (mountedRef.current) setLoading(false);
         return;
+      }
+
+      // ─── Weekly Progress Summary ─────────────────────
+      if (mountedRef.current) setWeeklyGoal(days.length);
+
+      try {
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0 = Sunday
+        const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - diffToMonday);
+        monday.setHours(0, 0, 0, 0);
+        const mondayISO = monday.toISOString();
+
+        const { data: weekWorkouts } = await supabase
+          .from('workouts')
+          .select('id, started_at')
+          .eq('profile_id', user.id)
+          .eq('status', 'completed')
+          .gte('started_at', mondayISO)
+          .limit(50);
+
+        const wkList = weekWorkouts ?? [];
+        if (mountedRef.current) setWeeklyWorkouts(wkList.length);
+
+        if (wkList.length > 0) {
+          const wkIds = wkList.map((w) => w.id);
+          const { data: wkExercises } = await supabase
+            .from('workout_exercises')
+            .select('workout_id, sets(*)')
+            .in('workout_id', wkIds);
+
+          let totalVol = 0;
+          for (const ex of wkExercises ?? []) {
+            for (const s of (ex.sets ?? []) as Array<{ weight_kg: number; reps: number }>) {
+              totalVol += (Number(s.weight_kg) || 0) * (Number(s.reps) || 0);
+            }
+          }
+          if (mountedRef.current) setWeeklyVolume(Math.round(totalVol));
+        } else {
+          if (mountedRef.current) setWeeklyVolume(0);
+        }
+      } catch (err) {
+        console.warn('[home] weekly progress load failed:', err instanceof Error ? err.message : err);
       }
 
       const todayDayNumber = getTodaysProgramDay(assignment.assigned_at, days.length);
@@ -641,6 +690,43 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Weekly Progress Summary */}
+        {weeklyGoal > 0 && (
+          <AnimatedCard index={0} style={styles.weeklyCard}>
+            <Text variant="label" style={styles.weeklyTitle}>This Week</Text>
+            <View style={styles.weeklyStatsRow}>
+              <View style={styles.weeklyStat}>
+                <Text style={styles.weeklyStatValue}>
+                  {weeklyWorkouts}<Text style={styles.weeklyStatGoal}>/{weeklyGoal}</Text>
+                </Text>
+                <Text variant="caption" color="textSecondary">Sessions</Text>
+              </View>
+              <View style={styles.weeklyDivider} />
+              <View style={styles.weeklyStat}>
+                <Text style={styles.weeklyStatValue}>
+                  {weeklyVolume >= 1000
+                    ? `${(weeklyVolume / 1000).toFixed(1)}t`
+                    : `${weeklyVolume}kg`}
+                </Text>
+                <Text variant="caption" color="textSecondary">Volume</Text>
+              </View>
+            </View>
+            <View style={styles.weeklyBarBg}>
+              <View
+                style={[
+                  styles.weeklyBarFill,
+                  { width: `${Math.min((weeklyWorkouts / weeklyGoal) * 100, 100)}%` },
+                ]}
+              />
+            </View>
+            <Text variant="caption" color="textSecondary" style={styles.weeklyBarLabel}>
+              {weeklyWorkouts >= weeklyGoal
+                ? 'Weekly goal reached!'
+                : `${weeklyGoal - weeklyWorkouts} session${weeklyGoal - weeklyWorkouts !== 1 ? 's' : ''} to go`}
+            </Text>
+          </AnimatedCard>
+        )}
+
         {/* Phase 2.5.2: Guardrails Nudge Banner */}
         {guardrails.length > 0 && (
           <AnimatedCard index={0} style={styles.guardrailBanner}>
@@ -899,6 +985,62 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
+  },
+  // Weekly Progress Summary
+  weeklyCard: {
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    backgroundColor: '#f0faf7',
+    borderLeftWidth: 4,
+    borderLeftColor: '#2a9d8f',
+  },
+  weeklyTitle: {
+    fontWeight: '700',
+    color: '#2a9d8f',
+    marginBottom: spacing.sm,
+    fontSize: 13,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  weeklyStatsRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: spacing.sm,
+  },
+  weeklyStat: {
+    flex: 1,
+    alignItems: 'center' as const,
+  },
+  weeklyStatValue: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: '#1a1a2e',
+  },
+  weeklyStatGoal: {
+    fontSize: 16,
+    fontWeight: '400' as const,
+    color: '#999',
+  },
+  weeklyDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: '#e0e0e0',
+  },
+  weeklyBarBg: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#e0e0e0',
+    overflow: 'hidden' as const,
+    marginBottom: spacing.xs,
+  },
+  weeklyBarFill: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#2a9d8f',
+  },
+  weeklyBarLabel: {
+    textAlign: 'center' as const,
+    fontSize: 12,
   },
   // Guardrail styles
   guardrailBanner: {
