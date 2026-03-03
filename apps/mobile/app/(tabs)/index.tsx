@@ -69,6 +69,30 @@ function getTodayTip(): string {
   return RECOVERY_TIPS[dayOfYear % RECOVERY_TIPS.length];
 }
 
+const TRAINING_TIPS = [
+  'Warm up with 5 minutes of light cardio before lifting — it primes your muscles and reduces injury risk.',
+  'Focus on controlled negatives: lowering the weight slowly builds more strength than rushing.',
+  'Breathe out on the effort, in on the release. Proper breathing stabilises your core.',
+  'Track your weights — even small weekly increases add up to big gains over months.',
+  'Compound lifts (squat, deadlift, bench) give you the most bang for your time.',
+  'Rest 60–90s between sets for hypertrophy, 2–3 min for strength work.',
+  'Keep your phone in your bag during sets — distraction kills intensity.',
+  'Good form at a lighter weight always beats bad form at a heavier weight.',
+  'Eat protein within a couple of hours post-workout to support recovery.',
+  'Consistency beats perfection — showing up 3× a week is better than one perfect session.',
+  'Superset opposing muscles (e.g. biceps + triceps) to save time without losing quality.',
+  'If a movement feels off, try a slight grip or stance adjustment before adding more weight.',
+  'Progressive overload doesn\'t just mean more weight — more reps or slower tempo counts too.',
+  'Deload weeks every 4–6 weeks let your joints and tendons catch up to your muscles.',
+];
+
+function getTodayTrainingTip(): string {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24),
+  );
+  return TRAINING_TIPS[dayOfYear % TRAINING_TIPS.length];
+}
+
 function PulsingGreeting({ name }: { name: string | null }) {
   const pulseAnim = useRef(new RNAnimated.Value(1)).current;
   const slideIn = useRef(new RNAnimated.Value(-40)).current;
@@ -142,6 +166,11 @@ export default function HomeScreen() {
   const [userRank, setUserRank] = useState<{ rank: number; total: number } | null>(null);
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
   const [recentBadges, setRecentBadges] = useState<BadgeWithStatus[]>([]);
+
+  // Always-visible elements
+  const [programDayContext, setProgramDayContext] = useState<{ dayNumber: number; totalDays: number } | null>(null);
+  const [totalWorkoutCount, setTotalWorkoutCount] = useState(0);
+  const [userGoal, setUserGoal] = useState<UserGoal | null>(null);
 
   // PR Celebration Banner
   const [unseenPRs, setUnseenPRs] = useState<PRDetection[]>([]);
@@ -223,6 +252,31 @@ export default function HomeScreen() {
 
       const gymId = memberData.gym_id;
       if (mountedRef.current) setGymId(gymId);
+
+      // Load total workout count (always-visible quick stat)
+      try {
+        const { count: totalCount } = await supabase
+          .from('workouts')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', user.id)
+          .eq('status', 'completed');
+        if (mountedRef.current) setTotalWorkoutCount(totalCount ?? 0);
+      } catch (err) {
+        console.warn('[home] total workout count failed:', err instanceof Error ? err.message : err);
+      }
+
+      // Load training goal (always-visible)
+      try {
+        const { data: trainingGoalData } = await supabase
+          .from('user_training_profiles')
+          .select('goal')
+          .eq('profile_id', user.id)
+          .eq('gym_id', gymId)
+          .maybeSingle();
+        if (mountedRef.current) setUserGoal((trainingGoalData?.goal as UserGoal | undefined) ?? null);
+      } catch (err) {
+        console.warn('[home] training goal load failed:', err instanceof Error ? err.message : err);
+      }
 
       // Load streak
       if (isFeatureEnabled('streaks_enabled')) {
@@ -326,6 +380,9 @@ export default function HomeScreen() {
 
       const todayDayNumber = getTodaysProgramDay(assignment.assigned_at, days.length);
       const todayDay = days.find((d) => d.day_number === todayDayNumber) || days[0];
+
+      // Set program day context (always-visible)
+      if (mountedRef.current) setProgramDayContext({ dayNumber: todayDayNumber, totalDays: days.length });
 
       // Load exercises for today
       const { data: exercises } = await supabase
@@ -728,6 +785,15 @@ export default function HomeScreen() {
 
         <PulsingGreeting name={userName} />
 
+        {/* Date + Program Day Context */}
+        {programDayContext && (
+          <Text variant="caption" color="textSecondary" style={styles.dayContext}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            {' — Day '}
+            {programDayContext.dayNumber} of {programDayContext.totalDays}
+          </Text>
+        )}
+
         {/* Phase 2.6: Streak Badge */}
         {streak && streak.currentStreak > 0 && (
           <View style={styles.streakBadge}>
@@ -740,6 +806,53 @@ export default function HomeScreen() {
             )}
           </View>
         )}
+
+        {/* Quick Stats Row */}
+        <View style={styles.quickStatsRow}>
+          <View style={styles.quickStatCard}>
+            <Text style={styles.quickStatValue}>{totalWorkoutCount}</Text>
+            <Text variant="caption" color="textSecondary" style={styles.quickStatLabel}>
+              Total Workouts
+            </Text>
+          </View>
+          <View style={styles.quickStatCard}>
+            <Text style={styles.quickStatValue}>{streak?.longestStreak ?? 0}</Text>
+            <Text variant="caption" color="textSecondary" style={styles.quickStatLabel}>
+              Best Streak
+            </Text>
+          </View>
+          <View style={styles.quickStatCard}>
+            <Text style={styles.quickStatValue}>
+              {weeklyVolume >= 1000
+                ? `${(weeklyVolume / 1000).toFixed(1)}t`
+                : `${weeklyVolume}kg`}
+            </Text>
+            <Text variant="caption" color="textSecondary" style={styles.quickStatLabel}>
+              This Week Vol
+            </Text>
+          </View>
+        </View>
+
+        {/* Training Goal Banner */}
+        {userGoal ? (
+          <View style={styles.goalBanner}>
+            <Text style={styles.goalIcon}>
+              {userGoal === 'strength' ? '\uD83C\uDFCB\uFE0F' : userGoal === 'hypertrophy' ? '\uD83D\uDCAA' : userGoal === 'endurance' ? '\uD83C\uDFC3' : '\uD83C\uDFAF'}
+            </Text>
+            <Text style={styles.goalText}>
+              Goal: {userGoal.charAt(0).toUpperCase() + userGoal.slice(1)}
+            </Text>
+          </View>
+        ) : gymId ? (
+          <TouchableOpacity
+            style={styles.goalBannerCta}
+            onPress={() => router.push('/(tabs)/profile')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.goalCtaText}>Set your training goal</Text>
+            <Text style={styles.goalCtaArrow}>{'\u2192'}</Text>
+          </TouchableOpacity>
+        ) : null}
 
         {/* PR Celebration Banner */}
         {unseenPRs.length > 0 && (
@@ -957,6 +1070,15 @@ export default function HomeScreen() {
             <Text variant="label" style={styles.sectionTitle}>
               Today: {todayWorkout.dayName}
             </Text>
+            {todayWorkout.exercises.length > 0 && (
+              <Text variant="caption" color="textSecondary" style={styles.durationEstimate}>
+                ~{(() => {
+                  const totalSets = todayWorkout.exercises.reduce((sum, e) => sum + e.default_sets, 0);
+                  const mins = Math.round(totalSets * 2.5);
+                  return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}min` : `${mins} min`;
+                })()} estimated
+              </Text>
+            )}
 
             {todayWorkout.exercises.map((exercise, i) => (
               <AnimatedCard key={exercise.id} index={i + 1} style={styles.exerciseCard}>
@@ -1016,6 +1138,14 @@ export default function HomeScreen() {
               </AnimatedCard>
             )}
 
+            {/* Tip of the Day */}
+            <View style={styles.trainingTipCard}>
+              <Text style={styles.trainingTipIcon}>{'\uD83D\uDCA1'}</Text>
+              <Text variant="caption" style={styles.trainingTipText}>
+                {getTodayTrainingTip()}
+              </Text>
+            </View>
+
             {!activeWorkout && (
               <Button
                 title="Start Workout"
@@ -1058,6 +1188,101 @@ const styles = StyleSheet.create({
   },
   greeting: {
     marginBottom: 0,
+  },
+  dayContext: {
+    marginBottom: spacing.md,
+    fontSize: 13,
+  },
+  quickStatsRow: {
+    flexDirection: 'row' as const,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  quickStatCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: spacing.sm,
+    alignItems: 'center' as const,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  quickStatValue: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: colors.text,
+    marginBottom: 2,
+  },
+  quickStatLabel: {
+    fontSize: 11,
+    textAlign: 'center' as const,
+  },
+  goalBanner: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: '#eef2ff',
+    borderRadius: 20,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    alignSelf: 'flex-start' as const,
+    marginBottom: spacing.md,
+    gap: 6,
+  },
+  goalIcon: {
+    fontSize: 14,
+  },
+  goalText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#4338ca',
+  },
+  goalBannerCta: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: '#f5f3ff',
+    borderRadius: 20,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    alignSelf: 'flex-start' as const,
+    marginBottom: spacing.md,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#e0e7ff',
+  },
+  goalCtaText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#6366f1',
+  },
+  goalCtaArrow: {
+    fontSize: 14,
+    color: '#6366f1',
+  },
+  durationEstimate: {
+    marginTop: -2,
+    marginBottom: spacing.xs,
+    fontSize: 13,
+  },
+  trainingTipCard: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    backgroundColor: '#fffbeb',
+    borderRadius: 12,
+    padding: spacing.sm,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#fef3c7',
+  },
+  trainingTipIcon: {
+    fontSize: 16,
+    marginTop: 1,
+  },
+  trainingTipText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#92400e',
+    lineHeight: 18,
   },
   errorBanner: {
     backgroundColor: '#fce4e6',
