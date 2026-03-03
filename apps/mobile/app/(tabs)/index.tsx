@@ -52,6 +52,23 @@ interface ActiveWorkout {
 const WEB = Platform.OS === 'web';
 const ND = !WEB;
 
+const RECOVERY_TIPS = [
+  'Hydrate well — aim for at least 2L of water today.',
+  'Light stretching or a short walk helps with recovery.',
+  'Sleep 7–9 hours for optimal muscle repair.',
+  'A protein-rich meal within 2 hours post-workout boosts recovery.',
+  'Foam rolling can reduce soreness and improve mobility.',
+  'Take a moment to breathe — mental recovery matters too.',
+  'Try to keep moving lightly; total rest can increase stiffness.',
+];
+
+function getTodayTip(): string {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24),
+  );
+  return RECOVERY_TIPS[dayOfYear % RECOVERY_TIPS.length];
+}
+
 function PulsingGreeting({ name }: { name: string | null }) {
   const pulseAnim = useRef(new RNAnimated.Value(1)).current;
   const slideIn = useRef(new RNAnimated.Value(-40)).current;
@@ -128,6 +145,10 @@ export default function HomeScreen() {
 
   // PR Celebration Banner
   const [unseenPRs, setUnseenPRs] = useState<PRDetection[]>([]);
+
+  // Smart Rest Day
+  const [todayDone, setTodayDone] = useState(false);
+  const [nextDayPreview, setNextDayPreview] = useState<{ name: string; exerciseCount: number } | null>(null);
 
   // Weekly Progress Summary
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
@@ -320,6 +341,41 @@ export default function HomeScreen() {
           dayName: todayDay.name,
           exercises: todayExercises,
         });
+      }
+
+      // ─── Smart Rest Day: check if today's workout is done ──
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const { count: completedToday } = await supabase
+          .from('workouts')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', user.id)
+          .eq('status', 'completed')
+          .gte('started_at', todayStart.toISOString());
+
+        const done = (completedToday ?? 0) > 0;
+        if (mountedRef.current) setTodayDone(done);
+
+        if (done) {
+          // Load tomorrow's program day preview
+          const tomorrowDayNumber = (todayDayNumber % days.length) + 1;
+          const tomorrowDay = days.find((d) => d.day_number === tomorrowDayNumber) || days[0];
+
+          const { count: nextExCount } = await supabase
+            .from('program_exercises')
+            .select('id', { count: 'exact', head: true })
+            .eq('program_day_id', tomorrowDay.id);
+
+          if (mountedRef.current) {
+            setNextDayPreview({
+              name: tomorrowDay.name,
+              exerciseCount: nextExCount ?? 0,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[home] rest day check failed:', err instanceof Error ? err.message : err);
       }
 
       // Load "Why This Today" explanation if feature enabled
@@ -854,7 +910,49 @@ export default function HomeScreen() {
           </AnimatedCard>
         )}
 
-        {todayWorkout ? (
+        {/* Smart Rest Day: show rest card when today's workout is done */}
+        {todayWorkout && todayDone && !activeWorkout ? (
+          <AnimatedCard index={0} style={styles.restDayCard}>
+            <Text style={styles.restDayEmoji}>{'\u2705'}</Text>
+            <Text variant="label" style={styles.restDayTitle}>
+              All done for today!
+            </Text>
+            <Text variant="body" color="textSecondary" style={styles.restDaySubtitle}>
+              Great work completing {todayWorkout.dayName}. Time to recover.
+            </Text>
+
+            {nextDayPreview && (
+              <View style={styles.restDayNextPreview}>
+                <Text variant="caption" style={styles.restDayNextLabel}>NEXT UP</Text>
+                <Text variant="body" style={styles.restDayNextName}>
+                  {nextDayPreview.name}
+                </Text>
+                <Text variant="caption" color="textSecondary">
+                  {nextDayPreview.exerciseCount} exercise{nextDayPreview.exerciseCount !== 1 ? 's' : ''}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.restDayTipBox}>
+              <Text style={styles.restDayTipIcon}>{'\uD83D\uDCA1'}</Text>
+              <Text variant="caption" style={styles.restDayTipText}>
+                {getTodayTip()}
+              </Text>
+            </View>
+
+            {/* Still show coaching insight on rest state */}
+            {coachingInsight && (
+              <View style={styles.restDayCoaching}>
+                <Text variant="label" style={styles.coachingTitle}>
+                  {coachingInsight.source === 'ai' ? 'AI Coach' : 'Coach Tip'}
+                </Text>
+                <Text variant="body" color="textSecondary" style={styles.coachingMessage}>
+                  {coachingInsight.message}
+                </Text>
+              </View>
+            )}
+          </AnimatedCard>
+        ) : todayWorkout ? (
           <View style={styles.todaySection}>
             <Text variant="label" style={styles.sectionTitle}>
               Today: {todayWorkout.dayName}
@@ -1047,6 +1145,80 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
+  },
+  // Smart Rest Day
+  restDayCard: {
+    padding: spacing.lg,
+    alignItems: 'center' as const,
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  restDayEmoji: {
+    fontSize: 36,
+    marginBottom: spacing.sm,
+  },
+  restDayTitle: {
+    fontWeight: '700' as const,
+    fontSize: 18,
+    color: '#166534',
+    marginBottom: spacing.xs,
+  },
+  restDaySubtitle: {
+    textAlign: 'center' as const,
+    marginBottom: spacing.md,
+    lineHeight: 20,
+  },
+  restDayNextPreview: {
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: spacing.md,
+    width: '100%' as const,
+    alignItems: 'center' as const,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  restDayNextLabel: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#9ca3af',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  restDayNextName: {
+    fontWeight: '600' as const,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 2,
+  },
+  restDayTipBox: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    backgroundColor: '#ecfdf5',
+    borderRadius: 10,
+    padding: spacing.sm,
+    width: '100%' as const,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  restDayTipIcon: {
+    fontSize: 16,
+    marginTop: 1,
+  },
+  restDayTipText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#166534',
+    lineHeight: 18,
+  },
+  restDayCoaching: {
+    width: '100%' as const,
+    backgroundColor: '#f0f4ff',
+    borderRadius: 10,
+    padding: spacing.md,
+    marginTop: spacing.xs,
   },
   // PR Celebration Banner
   prBanner: {
