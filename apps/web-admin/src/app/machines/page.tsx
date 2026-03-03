@@ -454,10 +454,11 @@ export default function MachinesPage() {
   }
 
   async function fetchGyms() {
-    const { data } = await supabase
+    const { data, error: err } = await supabase
       .from('gyms')
       .select('id, name, slug')
       .order('name', { ascending: true });
+    if (err) { console.warn('[machines] fetchGyms failed:', err.message); }
     setGyms((data as GymOption[]) ?? []);
   }
 

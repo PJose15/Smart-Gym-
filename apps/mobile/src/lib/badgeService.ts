@@ -108,6 +108,14 @@ export async function checkAndUnlockBadges(
       .eq('profile_id', profileId),
   ]);
 
+  // Bail out if any critical query failed
+  const queryError = workoutCountResult.error ?? volumeResult.error ?? pointsResult.error
+    ?? workoutDatesResult.error ?? prCountResult.error ?? existingBadgesResult.error;
+  if (queryError) {
+    console.warn('[badges] stat query failed:', queryError.message);
+    return [];
+  }
+
   const completedWorkouts = workoutCountResult.count ?? 0;
   const totalVolumeKg = Number(volumeResult.data ?? 0);
   const totalPoints = (pointsResult.data ?? []).reduce(

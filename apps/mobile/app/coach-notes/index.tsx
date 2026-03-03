@@ -31,6 +31,7 @@ export default function CoachNotesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [enabled, setEnabled] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadNotes();
@@ -56,7 +57,9 @@ export default function CoachNotesScreen() {
       .eq('status', 'sent')
       .order('sent_at', { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      setError(error.message);
+    } else if (data) {
       setNotes(data as unknown as CoachNoteRow[]);
     }
     setLoading(false);
@@ -83,6 +86,14 @@ export default function CoachNotesScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyText}>Failed to load notes. Pull down to retry.</Text>
       </View>
     );
   }

@@ -401,6 +401,7 @@ export default function MembersPage() {
   }
 
   async function handleRemoveAssignment(assignmentId: string) {
+    if (!window.confirm('Remove this program assignment?')) return;
     const { error: err } = await supabase
       .from('member_program_assignments')
       .delete()

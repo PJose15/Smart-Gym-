@@ -172,7 +172,7 @@ export default function MachineDetailScreen() {
         localCache.set(cacheKey, parsed, 10 * 60 * 1000); // 10 min in-memory
         return parsed;
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.warn('[machine] cache read failed:', err); }
 
     // Fetch from Supabase
     const { data, error: fetchErr } = await supabase
@@ -188,7 +188,7 @@ export default function MachineDetailScreen() {
     localCache.set(cacheKey, machines, 10 * 60 * 1000);
     try {
       await AsyncStorage.setItem(`${GYM_MACHINES_CACHE_KEY}:${gymId}`, JSON.stringify(machines));
-    } catch { /* ignore */ }
+    } catch (err) { console.warn('[machine] cache write failed:', err); }
 
     return machines;
   }

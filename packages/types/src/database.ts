@@ -377,7 +377,7 @@ export interface Database {
           id: string;
           gym_id: string | null;
           profile_id: string | null;
-          context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation';
+          context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails' | 'coach_draft' | 'safety_nudge' | 'checklist' | 'coaching' | 'program_gen';
           inputs: Record<string, unknown>;
           outputs: Record<string, unknown>;
           created_at: string;
@@ -386,13 +386,13 @@ export interface Database {
           id?: string;
           gym_id?: string | null;
           profile_id?: string | null;
-          context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation';
+          context: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails' | 'coach_draft' | 'safety_nudge' | 'checklist' | 'coaching' | 'program_gen';
           inputs: Record<string, unknown>;
           outputs: Record<string, unknown>;
           created_at?: string;
         };
         Update: {
-          context?: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation';
+          context?: 'next_set' | 'summary' | 'machine_mistakes' | 'today_explanation' | 'alternatives' | 'guardrails' | 'coach_draft' | 'safety_nudge' | 'checklist' | 'coaching' | 'program_gen';
           inputs?: Record<string, unknown>;
           outputs?: Record<string, unknown>;
         };
