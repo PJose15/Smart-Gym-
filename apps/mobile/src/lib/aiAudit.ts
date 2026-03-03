@@ -19,15 +19,16 @@ export function logAiDecision(
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await supabase.from('ai_audit_logs').insert({
+      const { error: insertErr } = await supabase.from('ai_audit_logs').insert({
         gym_id: gymId ?? null,
         profile_id: user.id,
         context,
         inputs,
         outputs,
       });
-    } catch {
-      // Silently fail
+      if (insertErr) console.warn('[aiAudit] insert failed:', insertErr.message);
+    } catch (err) {
+      console.warn('[aiAudit]', err);
     }
   })();
 }

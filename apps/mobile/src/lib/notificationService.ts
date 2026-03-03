@@ -7,7 +7,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { supabase } from './supabase';
 import { isFeatureEnabled } from './featureFlags';
 import { trackEvent } from './events';
@@ -70,7 +70,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('device_tokens').upsert(
+      const { error: upsertErr } = await supabase.from('device_tokens').upsert(
         {
           profile_id: user.id,
           expo_push_token: token,
@@ -80,6 +80,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
         },
         { onConflict: 'profile_id,expo_push_token' },
       );
+      if (upsertErr) console.warn('[pushToken] upsert failed:', upsertErr.message);
       trackEvent('push_token_registered');
     }
 
@@ -119,7 +120,10 @@ const NOTIFICATION_ROUTES: Record<
   NotificationType,
   (data: Record<string, string>) => string
 > = {
-  coach_note: (data) => `/coach-notes/${data.note_id ?? ''}`,
+  coach_note: (data) => {
+    const noteId = data.note_id?.trim();
+    return noteId ? `/coach-notes/${noteId}` : '/(tabs)/profile';
+  },
   badge_unlocked: () => '/(tabs)/profile',
   streak_milestone: () => '/(tabs)/profile',
   leaderboard_rank: () => '/leaderboard',
@@ -139,7 +143,7 @@ export function handleNotificationResponse(
   if (type && NOTIFICATION_ROUTES[type]) {
     const path = NOTIFICATION_ROUTES[type](data ?? {});
     trackEvent('push_notification_tapped', { type });
-    router.push(path as any);
+    router.push(path as Href);
   }
 }
 
