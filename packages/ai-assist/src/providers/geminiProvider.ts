@@ -76,7 +76,12 @@ Rules:
         const match = raw.match(/\[[\s\S]*?\]/);
         if (!match) return [];
 
-        const parsed = JSON.parse(match[0]) as unknown;
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(match[0]);
+        } catch {
+            return [];
+        }
         if (!Array.isArray(parsed)) return [];
 
         return parsed

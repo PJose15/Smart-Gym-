@@ -712,7 +712,7 @@ export default function ActiveWorkoutScreen() {
         clearInterval(restIntervalRef.current);
       }
     };
-  }, [restTimerRunning, restSecondsLeft]);
+  }, [restTimerRunning]);
 
   const startRestTimer = useCallback(() => {
     setRestSecondsLeft(restDuration);
