@@ -8,18 +8,30 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { status: 204, headers: corsHeaders });
+  }
+
+  const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
   }
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401, headers });
     }
 
     const userClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
@@ -29,12 +41,12 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
     }
 
     const { draft_id, edited_title, edited_body } = await req.json();
     if (!draft_id) {
-      return new Response(JSON.stringify({ error: 'draft_id is required' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'draft_id is required' }), { status: 400, headers });
     }
 
     // Fetch draft
@@ -45,12 +57,12 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (draftError || !draft) {
-      return new Response(JSON.stringify({ error: 'Draft not found' }), { status: 404 });
+      return new Response(JSON.stringify({ error: 'Draft not found' }), { status: 404, headers });
     }
 
     // Verify caller owns the draft
     if (draft.trainer_profile_id !== user.id) {
-      return new Response(JSON.stringify({ error: 'Not authorized to send this draft' }), { status: 403 });
+      return new Response(JSON.stringify({ error: 'Not authorized to send this draft' }), { status: 403, headers });
     }
 
     // Idempotency: prevent double-send
@@ -59,11 +71,11 @@ Deno.serve(async (req: Request) => {
         message: 'Draft already sent',
         draft_id: draft.id,
         status: 'sent',
-      }), { status: 200 });
+      }), { status: 200, headers });
     }
 
     if (draft.status === 'discarded') {
-      return new Response(JSON.stringify({ error: 'Cannot send a discarded draft' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Cannot send a discarded draft' }), { status: 400, headers });
     }
 
     const finalTitle = edited_title ?? draft.draft_title;
@@ -91,7 +103,8 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (noteError) {
-      return new Response(JSON.stringify({ error: noteError.message }), { status: 500 });
+      console.error('Failed to create coach note:', noteError);
+      return new Response(JSON.stringify({ error: 'Failed to send note' }), { status: 500, headers });
     }
 
     // Update draft status to sent
@@ -139,7 +152,8 @@ Deno.serve(async (req: Request) => {
       meta: null,
     });
 
-    await serviceClient.from('coach_note_actions').insert(actions);
+    const { error: actionErr } = await serviceClient.from('coach_note_actions').insert(actions);
+    if (actionErr) console.error('Failed to log actions:', actionErr);
 
     // Send push notification to member (fire-and-forget)
     try {
@@ -166,17 +180,18 @@ Deno.serve(async (req: Request) => {
         }),
         signal: AbortSignal.timeout(10_000),
       });
-    } catch {
-      // Push notification failure is non-fatal — note is already sent
+    } catch (pushErr) {
+      console.error('Push notification failed (non-fatal):', pushErr);
     }
 
     return new Response(JSON.stringify({
       note_id: note.id,
       draft_id: draft.id,
       message: 'Note sent to member',
-    }), { status: 200 });
+    }), { status: 200, headers });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    console.error('approve-and-send error:', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers });
   }
 });

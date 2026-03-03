@@ -8,18 +8,30 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { status: 204, headers: corsHeaders });
+  }
+
+  const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
   }
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401, headers });
     }
 
     // Create client with caller's JWT for RLS
@@ -33,12 +45,12 @@ Deno.serve(async (req: Request) => {
     // Get caller identity
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
     }
 
     const { workout_id } = await req.json();
     if (!workout_id) {
-      return new Response(JSON.stringify({ error: 'workout_id is required' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'workout_id is required' }), { status: 400, headers });
     }
 
     // Fetch workout with member info
@@ -49,7 +61,7 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (workoutError || !workout) {
-      return new Response(JSON.stringify({ error: 'Workout not found' }), { status: 404 });
+      return new Response(JSON.stringify({ error: 'Workout not found' }), { status: 404, headers });
     }
 
     // Verify caller is trainer/owner in this gym
@@ -62,7 +74,7 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (!membership) {
-      return new Response(JSON.stringify({ error: 'Not authorized for this gym' }), { status: 403 });
+      return new Response(JSON.stringify({ error: 'Not authorized for this gym' }), { status: 403, headers });
     }
 
     // Find trainer assignment for this member
@@ -73,7 +85,7 @@ Deno.serve(async (req: Request) => {
       .eq('member_profile_id', workout.profile_id)
       .eq('status', 'active')
       .limit(1)
-      .single();
+      .maybeSingle();
 
     const trainerProfileId = assignment?.trainer_profile_id ?? user.id;
 
@@ -85,14 +97,14 @@ Deno.serve(async (req: Request) => {
       .eq('member_profile_id', workout.profile_id)
       .eq('workout_id', workout_id)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (existingDraft) {
       return new Response(JSON.stringify({
         draft_id: existingDraft.id,
         status: existingDraft.status,
         message: 'Draft already exists for this workout',
-      }), { status: 200 });
+      }), { status: 200, headers });
     }
 
     // Fetch member profile name
@@ -126,8 +138,10 @@ Deno.serve(async (req: Request) => {
       const exSets = sets ?? [];
       totalSets += exSets.length;
       for (const s of exSets) {
-        totalVolume += s.weight_kg * s.reps;
-        totalReps += s.reps;
+        const wkg = Number(s.weight_kg) || 0;
+        const reps = Number(s.reps) || 0;
+        totalVolume += wkg * reps;
+        totalReps += reps;
       }
       exercisesWithSets.push({ ...ex, sets: exSets });
     }
@@ -139,7 +153,7 @@ Deno.serve(async (req: Request) => {
       .eq('profile_id', workout.profile_id)
       .eq('gym_id', workout.gym_id)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     // Fetch guardrails (latest)
     const { data: guardrailRows } = await serviceClient
@@ -236,33 +250,36 @@ Deno.serve(async (req: Request) => {
           .select('id, status')
           .eq('workout_id', workout_id)
           .eq('member_profile_id', workout.profile_id)
-          .single();
+          .maybeSingle();
         return new Response(JSON.stringify({
           draft_id: existing?.id,
           status: existing?.status,
           message: 'Draft already exists',
-        }), { status: 200 });
+        }), { status: 200, headers });
       }
-      return new Response(JSON.stringify({ error: draftError.message }), { status: 500 });
+      console.error('Failed to create draft:', draftError);
+      return new Response(JSON.stringify({ error: 'Failed to create draft' }), { status: 500, headers });
     }
 
     // Log action
-    await serviceClient.from('coach_note_actions').insert({
+    const { error: actionErr } = await serviceClient.from('coach_note_actions').insert({
       gym_id: workout.gym_id,
       draft_id: draft.id,
       actor_profile_id: user.id,
       action: 'generated',
       meta: { workout_id, source: 'api' },
     });
+    if (actionErr) console.error('Failed to log generate action:', actionErr);
 
     return new Response(JSON.stringify({
       draft_id: draft.id,
       draft_title,
       confidence,
       message: 'Draft generated successfully',
-    }), { status: 201 });
+    }), { status: 201, headers });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    console.error('generate-workout-draft error:', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

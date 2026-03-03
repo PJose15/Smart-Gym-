@@ -238,7 +238,8 @@ export default function ProgramDetailPage() {
       })
       .select('*, profiles:profile_id(id, email, full_name)')
       .single();
-    if (!err && data) {
+    if (err) { setError(err.message); return; }
+    if (data) {
       setAssignments([...assignments, data as AssignmentWithProfile]);
       setAssignMemberId('');
     }

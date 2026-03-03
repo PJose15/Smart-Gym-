@@ -7,18 +7,30 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { status: 204, headers: corsHeaders });
+  }
+
+  const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
   }
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401, headers });
     }
 
     const userClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
@@ -28,12 +40,12 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
     }
 
     const { gym_id, period_start, period_end } = await req.json();
     if (!gym_id || !period_start || !period_end) {
-      return new Response(JSON.stringify({ error: 'gym_id, period_start, and period_end are required' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'gym_id, period_start, and period_end are required' }), { status: 400, headers });
     }
 
     // Verify caller is trainer/owner in this gym
@@ -46,7 +58,7 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (!membership) {
-      return new Response(JSON.stringify({ error: 'Not authorized for this gym' }), { status: 403 });
+      return new Response(JSON.stringify({ error: 'Not authorized for this gym' }), { status: 403, headers });
     }
 
     // Fetch all active assignments in this gym
@@ -58,7 +70,7 @@ Deno.serve(async (req: Request) => {
       .limit(500);
 
     if (!assignments || assignments.length === 0) {
-      return new Response(JSON.stringify({ generated: 0, message: 'No active assignments' }), { status: 200 });
+      return new Response(JSON.stringify({ generated: 0, message: 'No active assignments' }), { status: 200, headers });
     }
 
     let generated = 0;
@@ -73,7 +85,7 @@ Deno.serve(async (req: Request) => {
         .eq('period_start', period_start)
         .eq('period_end', period_end)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (existingDraft) continue;
 
@@ -110,7 +122,7 @@ Deno.serve(async (req: Request) => {
         .eq('profile_id', assignment.member_profile_id)
         .eq('gym_id', gym_id)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       // Build simple weekly draft
       const unitLabel = trainingProfile?.units === 'lbs' ? 'lbs' : 'kg';
@@ -173,20 +185,22 @@ Deno.serve(async (req: Request) => {
       }
 
       // Log action
-      await serviceClient.from('coach_note_actions').insert({
+      const { error: actionErr } = await serviceClient.from('coach_note_actions').insert({
         gym_id,
         draft_id: draft.id,
         actor_profile_id: user.id,
         action: 'generated',
         meta: { period_start, period_end, source: 'weekly_batch' },
       });
+      if (actionErr) console.error('Failed to log generate action:', actionErr);
 
       generated++;
     }
 
-    return new Response(JSON.stringify({ generated, total_assignments: assignments.length }), { status: 200 });
+    return new Response(JSON.stringify({ generated, total_assignments: assignments.length }), { status: 200, headers });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    console.error('generate-weekly-drafts error:', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

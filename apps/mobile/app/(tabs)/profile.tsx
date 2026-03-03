@@ -345,7 +345,7 @@ export default function ProfileScreen() {
     setNotificationsEnabled(enabled);
     if (!profile) return;
     try {
-      await supabase.from('notification_preferences').upsert(
+      const { error: upsertErr } = await supabase.from('notification_preferences').upsert(
         {
           profile_id: profile.id,
           enabled,
@@ -353,7 +353,9 @@ export default function ProfileScreen() {
         },
         { onConflict: 'profile_id' },
       );
-    } catch {
+      if (upsertErr) throw upsertErr;
+    } catch (err) {
+      console.warn('[profile] notification toggle failed:', err);
       setNotificationsEnabled(!enabled);
     }
   };
