@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Animated,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -20,12 +21,18 @@ import {
   computeVolumeTrend,
   compute1RMTrend,
   computeWeightTrend,
+  computeWeeklyVolume,
+  computeWeeklyFrequency,
+  computeTrendDirection,
 } from '@smartgym/utils';
 import type { TrendDataPoint, SessionForTrend } from '@smartgym/utils';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { SkeletonGate, ProgressScreenSkeleton } from '../../src/components/skeleton';
 import { MiniChart } from '../../src/components/MiniChart';
 import type { WorkoutSet } from '@smartgym/types';
+import { getStreak } from '../../src/lib/streakService';
+import type { StreakResult } from '../../src/lib/streakService';
+import { isFeatureEnabled } from '../../src/lib/featureFlags';
 
 // ─── Local Types ────────────────────────────────────────
 
@@ -63,6 +70,15 @@ interface ExerciseSummary {
 type ChartMetric = '1rm' | 'volume' | 'weight';
 type PeriodDays = 0 | 30 | 60 | 90;
 
+interface MuscleGroupData { muscle: string; sessionCount: number }
+interface CalendarDay { date: string; hasWorkout: boolean; dayOfWeek: number; weekIndex: number }
+
+function formatVolumeShort(kg: number): string {
+  return kg >= 1000 ? `${(kg / 1000).toFixed(1)}t` : `${Math.round(kg)}kg`;
+}
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 const PERIOD_OPTIONS: Array<{ label: string; value: PeriodDays }> = [
   { label: 'All', value: 0 },
   { label: '30d', value: 30 },
@@ -82,6 +98,12 @@ export default function ProgressScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodDays>(0);
+  const [completedWorkouts, setCompletedWorkouts] = useState<CompletedWorkout[]>([]);
+  const [gymId, setGymId] = useState<string | null>(null);
+  const [streak, setStreak] = useState<StreakResult | null>(null);
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroupData[]>([]);
+  const [calendarDates, setCalendarDates] = useState<string[]>([]);
+  const [trendsExpanded, setTrendsExpanded] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
@@ -100,6 +122,21 @@ export default function ProgressScreen() {
       }
 
       setUserId(user.id);
+
+      // Fetch gym membership (for streak)
+      const { data: memberData } = await supabase
+        .from('gym_members').select('gym_id').eq('profile_id', user.id).limit(1).maybeSingle();
+      const resolvedGymId = memberData?.gym_id ?? null;
+      setGymId(resolvedGymId);
+
+      // Fetch calendar dates (always, last 28 days, independent of period filter)
+      const fourWeeksAgo = new Date();
+      fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+      const { data: calDates } = await supabase
+        .from('workouts').select('started_at')
+        .eq('profile_id', user.id).eq('status', 'completed')
+        .gte('started_at', fourWeeksAgo.toISOString());
+      setCalendarDates((calDates ?? []).map(d => d.started_at));
 
       // Step 1: Fetch completed workout IDs, optionally filtered by period
       let query = supabase
@@ -121,11 +158,17 @@ export default function ProgressScreen() {
 
       if (!workouts || workouts.length === 0) {
         setExercises([]);
+        setCompletedWorkouts([]);
+        // Still run streak in background even with no period-filtered workouts
+        if (resolvedGymId && isFeatureEnabled('streaks_enabled')) {
+          getStreak(user.id, resolvedGymId).then(s => setStreak(s)).catch(() => {});
+        }
         setLoading(false);
         return;
       }
 
       const completedWorkouts = workouts as CompletedWorkout[];
+      setCompletedWorkouts(completedWorkouts);
       const workoutIds = completedWorkouts.map((w) => w.id);
 
       // Build a lookup from workout ID to started_at
@@ -236,6 +279,49 @@ export default function ProgressScreen() {
       summaries.sort((a, b) => b.sessionCount - a.sessionCount);
 
       setExercises(summaries);
+
+      // --- Background: Streak + Muscle Groups ---
+      const backgroundTasks: Promise<unknown>[] = [];
+
+      // Streak
+      if (resolvedGymId && isFeatureEnabled('streaks_enabled')) {
+        backgroundTasks.push(
+          getStreak(user.id, resolvedGymId).then(s => setStreak(s))
+        );
+      }
+
+      // Muscle groups from machine target_muscles
+      const uniqueMachineIds = [...new Set(
+        fetched.filter(e => e.machine_id).map(e => e.machine_id!)
+      )];
+      if (uniqueMachineIds.length > 0) {
+        backgroundTasks.push(
+          Promise.resolve(supabase.from('machines').select('id, target_muscles')
+            .in('id', uniqueMachineIds))
+            .then(({ data: machineData }) => {
+              if (!machineData) return;
+              const machineMap = new Map<string, string[]>();
+              for (const m of machineData as Array<{ id: string; target_muscles: string[] }>) {
+                machineMap.set(m.id, m.target_muscles || []);
+              }
+              const muscleCountMap = new Map<string, Set<string>>();
+              for (const ex of fetched) {
+                if (!ex.machine_id) continue;
+                const muscles = machineMap.get(ex.machine_id) || [];
+                for (const muscle of muscles) {
+                  if (!muscleCountMap.has(muscle)) muscleCountMap.set(muscle, new Set());
+                  muscleCountMap.get(muscle)!.add(ex.workout_id);
+                }
+              }
+              const groups: MuscleGroupData[] = Array.from(muscleCountMap.entries())
+                .map(([muscle, wkIds]) => ({ muscle, sessionCount: wkIds.size }))
+                .sort((a, b) => b.sessionCount - a.sessionCount);
+              setMuscleGroups(groups);
+            })
+        );
+      }
+
+      await Promise.allSettled(backgroundTasks);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load progress data');
     } finally {
@@ -261,6 +347,218 @@ export default function ProgressScreen() {
     );
   };
 
+  // ─── Computed Data ───────────────────────────────────
+
+  const overallStats = useMemo(() => {
+    const totalWorkouts = completedWorkouts.length;
+    const totalVolume = exercises.reduce((sum, e) => sum + e.totalVolume, 0);
+    const avgVolume = totalWorkouts > 0 ? totalVolume / totalWorkouts : 0;
+    const exerciseCount = exercises.length;
+    return { totalWorkouts, totalVolume, avgVolume, exerciseCount };
+  }, [exercises, completedWorkouts]);
+
+  const weeklyVolumeTrend = useMemo(() => {
+    const allSessions: SessionForTrend[] = exercises.flatMap(e =>
+      e.sessions.map(s => ({ startedAt: s.startedAt, sets: s.sets }))
+    );
+    return computeWeeklyVolume(allSessions);
+  }, [exercises]);
+
+  const weeklyFrequencyTrend = useMemo(() => {
+    const dates = completedWorkouts.map(w => w.started_at);
+    return computeWeeklyFrequency(dates);
+  }, [completedWorkouts]);
+
+  const volumeDirection = useMemo(() => computeTrendDirection(weeklyVolumeTrend), [weeklyVolumeTrend]);
+  const freqDirection = useMemo(() => computeTrendDirection(weeklyFrequencyTrend), [weeklyFrequencyTrend]);
+
+  const topPerformers = useMemo(() => {
+    return exercises
+      .filter(e => e.estimated1RM > 0)
+      .sort((a, b) => b.estimated1RM - a.estimated1RM)
+      .slice(0, 5);
+  }, [exercises]);
+
+  const calendarGrid = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const workoutDateSet = new Set(
+      calendarDates.map(d => {
+        const dt = new Date(d);
+        return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+      })
+    );
+
+    const weeks: CalendarDay[][] = [[], [], [], []];
+    for (let i = 27; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const dayOfWeek = date.getDay();
+      const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const weekIndex = Math.floor((27 - i) / 7);
+      weeks[weekIndex].push({
+        date: dateStr,
+        hasWorkout: workoutDateSet.has(dateStr),
+        dayOfWeek: adjustedDay,
+        weekIndex,
+      });
+    }
+    return weeks;
+  }, [calendarDates]);
+
+  const trendBadgeColor = (dir: 'increasing' | 'decreasing' | 'stable') =>
+    dir === 'increasing' ? '#2a9d8f' : dir === 'decreasing' ? '#e63946' : '#6c757d';
+  const trendArrow = (dir: 'increasing' | 'decreasing' | 'stable') =>
+    dir === 'increasing' ? '↑' : dir === 'decreasing' ? '↓' : '→';
+
+  // ─── List Header (6 enrichments) ────────────────────────
+
+  const renderListHeader = useCallback(() => (
+    <View>
+      {/* 1. Overall Stats Summary */}
+      <View style={styles.statsRow}>
+        <View style={styles.statPill}>
+          <Text style={styles.statPillValue}>{overallStats.totalWorkouts}</Text>
+          <Text style={styles.statPillLabel}>Workouts</Text>
+        </View>
+        <View style={styles.statPill}>
+          <Text style={styles.statPillValue}>{formatVolumeShort(overallStats.totalVolume)}</Text>
+          <Text style={styles.statPillLabel}>Total Vol</Text>
+        </View>
+        <View style={styles.statPill}>
+          <Text style={styles.statPillValue}>{formatVolumeShort(overallStats.avgVolume)}</Text>
+          <Text style={styles.statPillLabel}>Avg/Session</Text>
+        </View>
+        <View style={styles.statPill}>
+          <Text style={styles.statPillValue}>{overallStats.exerciseCount}</Text>
+          <Text style={styles.statPillLabel}>Exercises</Text>
+        </View>
+      </View>
+
+      {/* 2. Volume / Frequency Trends */}
+      <TouchableOpacity
+        style={styles.trendsSectionHeader}
+        onPress={() => setTrendsExpanded(prev => !prev)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.sectionTitle}>Trends</Text>
+        <Text style={styles.trendsToggle}>{trendsExpanded ? '▼' : '▶'}</Text>
+      </TouchableOpacity>
+      {trendsExpanded && (
+        <View style={styles.trendsContent}>
+          <View style={styles.trendCard}>
+            <View style={styles.trendHeader}>
+              <Text style={styles.trendLabel}>Weekly Volume</Text>
+              <View style={[styles.trendBadge, { backgroundColor: trendBadgeColor(volumeDirection) }]}>
+                <Text style={styles.trendBadgeText}>{trendArrow(volumeDirection)}</Text>
+              </View>
+            </View>
+            <MiniChart data={weeklyVolumeTrend} label="Weekly Volume" unit="kg" color="#4361ee" />
+          </View>
+          <View style={styles.trendCard}>
+            <View style={styles.trendHeader}>
+              <Text style={styles.trendLabel}>Weekly Frequency</Text>
+              <View style={[styles.trendBadge, { backgroundColor: trendBadgeColor(freqDirection) }]}>
+                <Text style={styles.trendBadgeText}>{trendArrow(freqDirection)}</Text>
+              </View>
+            </View>
+            <MiniChart data={weeklyFrequencyTrend} label="Weekly Frequency" unit="sessions" color="#2a9d8f" />
+          </View>
+        </View>
+      )}
+
+      {/* 3. Streak Visualization */}
+      {streak && streak.currentStreak > 0 && (
+        <View style={styles.streakCard}>
+          <Text style={styles.sectionTitle}>Streak</Text>
+          <View style={styles.streakRow}>
+            <View style={styles.streakItem}>
+              <Text style={styles.streakValue}>{streak.currentStreak}</Text>
+              <Text style={styles.streakLabel}>Current{'\n'}Weeks</Text>
+            </View>
+            <View style={styles.streakDivider} />
+            <View style={styles.streakItem}>
+              <Text style={styles.streakValue}>{streak.longestStreak}</Text>
+              <Text style={styles.streakLabel}>Longest{'\n'}Weeks</Text>
+            </View>
+            <View style={styles.streakDivider} />
+            <View style={styles.streakItem}>
+              <Text style={[styles.streakValue, { color: streak.currentWeekActive ? '#2a9d8f' : '#f4a261' }]}>
+                {streak.currentWeekActive ? '✓' : '○'}
+              </Text>
+              <Text style={styles.streakLabel}>This{'\n'}Week</Text>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 4. Muscle Group Coverage */}
+      {muscleGroups.length > 0 && (
+        <View style={styles.muscleCard}>
+          <Text style={styles.sectionTitle}>Muscle Groups</Text>
+          {muscleGroups.map(mg => {
+            const maxCount = muscleGroups[0].sessionCount;
+            const barWidth = maxCount > 0 ? (mg.sessionCount / maxCount) * 100 : 0;
+            return (
+              <View key={mg.muscle} style={styles.muscleRow}>
+                <Text style={styles.muscleName}>{mg.muscle}</Text>
+                <View style={styles.muscleBarBg}>
+                  <View style={[styles.muscleBarFill, { width: `${barWidth}%` }]} />
+                </View>
+                <Text style={styles.muscleCount}>{mg.sessionCount}</Text>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* 5. Personal Records Showcase */}
+      {topPerformers.length > 0 && (
+        <View style={styles.prShowcaseCard}>
+          <Text style={styles.sectionTitle}>Top Performers</Text>
+          {topPerformers.map((ex, i) => (
+            <View key={ex.exerciseName} style={styles.prShowcaseRow}>
+              <View style={styles.prShowcaseRank}>
+                <Text style={styles.prShowcaseRankText}>{i + 1}</Text>
+              </View>
+              <View style={styles.prShowcaseInfo}>
+                <Text style={styles.prShowcaseName} numberOfLines={1}>{ex.exerciseName}</Text>
+                <Text style={styles.prShowcaseDetail}>Est. 1RM</Text>
+              </View>
+              <Text style={styles.prShowcaseValue}>{formatWeight(ex.estimated1RM)}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* 6. Consistency Calendar */}
+      <View style={styles.calendarCard}>
+        <Text style={styles.sectionTitle}>Last 4 Weeks</Text>
+        <View style={styles.calendarDayLabels}>
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+            <Text key={i} style={styles.calendarDayLabel}>{d}</Text>
+          ))}
+        </View>
+        {calendarGrid.map((week, wi) => (
+          <View key={wi} style={styles.calendarWeekRow}>
+            {week.map((day, di) => (
+              <View
+                key={di}
+                style={[styles.calendarDot, day.hasWorkout && styles.calendarDotActive]}
+              />
+            ))}
+          </View>
+        ))}
+      </View>
+
+      {/* Exercise Breakdown label */}
+      {exercises.length > 0 && (
+        <Text style={styles.breakdownLabel}>Exercise Breakdown</Text>
+      )}
+    </View>
+  ), [overallStats, trendsExpanded, weeklyVolumeTrend, weeklyFrequencyTrend, volumeDirection, freqDirection, streak, muscleGroups, topPerformers, calendarGrid, exercises.length]);
+
   // ─── Render: Not Signed In ────────────────────────────
 
   if (!loading && !userId) {
@@ -285,19 +583,6 @@ export default function ProgressScreen() {
         <TouchableOpacity style={styles.retryButton} onPress={loadData}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // ─── Render: Empty State ──────────────────────────────
-
-  if (exercises.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>No Workouts Yet</Text>
-        <Text style={styles.emptySubtitle}>
-          Complete your first workout to see progress
-        </Text>
       </View>
     );
   }
@@ -475,6 +760,15 @@ export default function ProgressScreen() {
         data={exercises}
         keyExtractor={(item) => item.exerciseName}
         renderItem={renderExerciseCard}
+        ListHeaderComponent={renderListHeader}
+        ListEmptyComponent={
+          <View style={styles.emptyListMsg}>
+            <Text style={styles.emptyTitle}>No Workouts Yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Complete your first workout to see progress
+            </Text>
+          </View>
+        }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -773,5 +1067,273 @@ const styles = StyleSheet.create({
   },
   chartToggleTextActive: {
     color: '#ffffff',
+  },
+  // ─── Stats Summary ────────────────────────────────────────
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  statPill: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  statPillValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#212529',
+  },
+  statPillLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6c757d',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    marginTop: 2,
+  },
+  // ─── Trends ───────────────────────────────────────────────
+  trendsSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#212529',
+    marginBottom: 8,
+  },
+  trendsToggle: {
+    fontSize: 14,
+    color: '#6c757d',
+  },
+  trendsContent: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  trendCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  trendHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  trendLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  trendBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  trendBadgeText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  // ─── Streak ───────────────────────────────────────────────
+  streakCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  streakItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  streakValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#4361ee',
+  },
+  streakLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#6c757d',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 15,
+  },
+  streakDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#dee2e6',
+  },
+  // ─── Muscle Groups ────────────────────────────────────────
+  muscleCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  muscleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  muscleName: {
+    width: 80,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#495057',
+    textTransform: 'capitalize',
+  },
+  muscleBarBg: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#e9ecef',
+    borderRadius: 4,
+    marginHorizontal: 8,
+    overflow: 'hidden',
+  },
+  muscleBarFill: {
+    height: '100%',
+    backgroundColor: '#4361ee',
+    borderRadius: 4,
+  },
+  muscleCount: {
+    width: 28,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#212529',
+    textAlign: 'right',
+  },
+  // ─── PR Showcase ──────────────────────────────────────────
+  prShowcaseCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  prShowcaseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#dee2e6',
+  },
+  prShowcaseRank: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#4361ee',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  prShowcaseRankText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  prShowcaseInfo: {
+    flex: 1,
+  },
+  prShowcaseName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  prShowcaseDetail: {
+    fontSize: 11,
+    color: '#6c757d',
+    marginTop: 1,
+  },
+  prShowcaseValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#2a9d8f',
+  },
+  // ─── Consistency Calendar ─────────────────────────────────
+  calendarCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  calendarDayLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 8,
+  },
+  calendarDayLabel: {
+    width: 28,
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6c757d',
+  },
+  calendarWeekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 6,
+  },
+  calendarDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#e9ecef',
+  },
+  calendarDotActive: {
+    backgroundColor: '#4361ee',
+  },
+  // ─── Breakdown Label ──────────────────────────────────────
+  breakdownLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#212529',
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  // ─── Empty List ───────────────────────────────────────────
+  emptyListMsg: {
+    alignItems: 'center',
+    paddingVertical: 32,
   },
 });
