@@ -283,6 +283,45 @@ export default function ExerciseDetailScreen() {
   // Strength curve max for bar scaling
   const curveMax = data.strengthCurve.reduce((m, p) => Math.max(m, p.best1RM), 0);
 
+  // ─── Enrichment: computed stats ─────────────────────────
+  const avgVolumePerSession = data.sessionCount > 0
+    ? Math.round(data.totalVolume / data.sessionCount)
+    : 0;
+
+  const firstSessionTime = data.sessions.length > 0
+    ? new Date(data.sessions[data.sessions.length - 1].startedAt).getTime()
+    : 0;
+  const lastSessionTime = data.sessions.length > 0
+    ? new Date(data.sessions[0].startedAt).getTime()
+    : 0;
+  const spanDays = Math.max(1, (lastSessionTime - firstSessionTime) / (1000 * 60 * 60 * 24));
+
+  const frequencyText = data.sessionCount <= 1
+    ? '1 session'
+    : spanDays < 7
+      ? `${data.sessionCount} sessions this week`
+      : `~${(data.sessionCount / (spanDays / 7)).toFixed(1)}x / week`;
+
+  const firstSession = data.sessions[data.sessions.length - 1];
+  const latestSession = data.sessions[0];
+  const firstBestWeight = firstSession
+    ? Math.max(...firstSession.sets.map(s => s.weight_kg), 0)
+    : 0;
+  const latestBestWeight = latestSession
+    ? Math.max(...latestSession.sets.map(s => s.weight_kg), 0)
+    : 0;
+  const progressPercent = firstBestWeight > 0 && data.sessionCount > 1
+    ? ((latestBestWeight - firstBestWeight) / firstBestWeight) * 100
+    : null;
+
+  const latestSessionVolume = latestSession
+    ? latestSession.sets.reduce((sum, s) => sum + s.weight_kg * s.reps, 0)
+    : 0;
+  const latestSessionSets = latestSession ? latestSession.sets.length : 0;
+  const latestSessionDateStr = latestSession
+    ? new Date(latestSession.startedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : '';
+
   return (
     <>
       <Stack.Screen options={{ title: exerciseName }} />
@@ -332,6 +371,33 @@ export default function ExerciseDetailScreen() {
           </Text>
         </View>
 
+        {/* Quick Stats */}
+        <View style={styles.quickStatsRow}>
+          <View style={styles.quickStatChip}>
+            <Text style={styles.quickStatValue}>{frequencyText}</Text>
+            <Text style={styles.quickStatLabel}>Frequency</Text>
+          </View>
+          <View style={styles.quickStatChip}>
+            <Text style={styles.quickStatValue}>{formatWeight(avgVolumePerSession)}</Text>
+            <Text style={styles.quickStatLabel}>Avg Vol / Session</Text>
+          </View>
+        </View>
+
+        {/* Progress Callout */}
+        {progressPercent !== null && Math.abs(progressPercent) >= 1 && (
+          <View style={[
+            styles.progressCallout,
+            { backgroundColor: progressPercent >= 0 ? '#d4edda' : '#f8d7da' },
+          ]}>
+            <Text style={[
+              styles.progressText,
+              { color: progressPercent >= 0 ? '#155724' : '#721c24' },
+            ]}>
+              {progressPercent >= 0 ? '+' : ''}{Math.round(progressPercent)}% weight improvement since first session
+            </Text>
+          </View>
+        )}
+
         {/* Charts */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Trends</Text>
@@ -380,6 +446,31 @@ export default function ExerciseDetailScreen() {
                 <Text style={styles.curveValue}>{formatWeight(point.best1RM)}</Text>
               </View>
             ))}
+          </View>
+        )}
+
+        {/* Last Session Recap */}
+        {latestSession && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Last Session</Text>
+            <View style={styles.lastSessionRow}>
+              <View style={styles.lastSessionStat}>
+                <Text style={styles.lastSessionValue}>{latestSessionDateStr}</Text>
+                <Text style={styles.lastSessionLabel}>Date</Text>
+              </View>
+              <View style={styles.lastSessionStat}>
+                <Text style={styles.lastSessionValue}>{latestSessionSets}</Text>
+                <Text style={styles.lastSessionLabel}>Sets</Text>
+              </View>
+              <View style={styles.lastSessionStat}>
+                <Text style={styles.lastSessionValue}>{formatWeight(latestBestWeight)}</Text>
+                <Text style={styles.lastSessionLabel}>Best Weight</Text>
+              </View>
+              <View style={styles.lastSessionStat}>
+                <Text style={styles.lastSessionValue}>{formatWeight(Math.round(latestSessionVolume))}</Text>
+                <Text style={styles.lastSessionLabel}>Volume</Text>
+              </View>
+            </View>
           </View>
         )}
 
@@ -630,5 +721,72 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     fontWeight: '500',
+  },
+
+  // ─── Quick Stats ───────────────────────────────────────
+  quickStatsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 14,
+  },
+  quickStatChip: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  quickStatValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 2,
+  },
+  quickStatLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+
+  // ─── Progress Callout ─────────────────────────────────
+  progressCallout: {
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 14,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // ─── Last Session ─────────────────────────────────────
+  lastSessionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  lastSessionStat: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  lastSessionValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  lastSessionLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
 });
