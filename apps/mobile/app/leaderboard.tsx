@@ -121,6 +121,57 @@ export default function LeaderboardScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Enrichment: Your Position + Stats */}
+        {entries.length > 0 && (() => {
+          const currentUser = entries.find(e => e.is_current_user);
+          const leader = entries[0];
+          const aboveUser = currentUser && currentUser.rank > 1
+            ? entries.find(e => e.rank === currentUser.rank - 1)
+            : null;
+          const gapToNext = aboveUser && currentUser
+            ? aboveUser.total_points - currentUser.total_points
+            : null;
+          const gapToFirst = currentUser && leader && currentUser.rank > 1
+            ? leader.total_points - currentUser.total_points
+            : null;
+          return (
+            <>
+              <View style={styles.positionCard}>
+                <View style={styles.positionRow}>
+                  <View style={styles.positionStat}>
+                    <Text variant="body" style={styles.positionRank}>
+                      #{currentUser?.rank ?? '-'}
+                    </Text>
+                    <Text variant="caption" color="textSecondary">Your Rank</Text>
+                  </View>
+                  <View style={styles.positionStat}>
+                    <Text variant="body" style={styles.positionPoints}>
+                      {currentUser?.total_points.toLocaleString() ?? '0'}
+                    </Text>
+                    <Text variant="caption" color="textSecondary">Points</Text>
+                  </View>
+                  {gapToNext !== null && gapToNext > 0 && (
+                    <View style={styles.positionStat}>
+                      <Text variant="body" style={styles.positionGap}>
+                        {gapToNext.toLocaleString()}
+                      </Text>
+                      <Text variant="caption" color="textSecondary">To Next</Text>
+                    </View>
+                  )}
+                </View>
+                {gapToFirst !== null && gapToFirst > 0 && (
+                  <Text variant="caption" color="textSecondary" style={styles.gapToLeaderText}>
+                    {gapToFirst.toLocaleString()} points behind the leader
+                  </Text>
+                )}
+              </View>
+              <Text variant="caption" color="textSecondary" style={styles.participantCount}>
+                {entries.length} member{entries.length !== 1 ? 's' : ''} competing
+              </Text>
+            </>
+          );
+        })()}
+
         {error && (
           <View style={styles.errorBanner}>
             <Text variant="caption" style={{ color: colors.error, textAlign: 'center' }}>{error}</Text>
@@ -273,5 +324,51 @@ const styles = StyleSheet.create({
   emptyContainer: {
     paddingVertical: spacing.xxl,
     alignItems: 'center',
+  },
+
+  // ─── Your Position Card ─────────────────────────────────
+  positionCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: spacing.md,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
+  },
+  positionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  positionStat: {
+    alignItems: 'center',
+  },
+  positionRank: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 2,
+  },
+  positionPoints: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#3a0ca3',
+    marginBottom: 2,
+  },
+  positionGap: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.warning,
+    marginBottom: 2,
+  },
+  gapToLeaderText: {
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    fontSize: 12,
+  },
+  participantCount: {
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+    fontSize: 12,
   },
 });

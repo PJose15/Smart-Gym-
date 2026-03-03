@@ -107,12 +107,43 @@ export default function CoachNotesScreen() {
     );
   }
 
+  // ─── Enrichment: computed stats ─────────────────────
+  const postWorkoutCount = notes.filter(n => n.source === 'workout').length;
+  const weeklyCount = notes.filter(n => n.source === 'weekly').length;
+
+  const daysSinceLastNote = notes.length > 0
+    ? Math.floor((Date.now() - new Date(notes[0].sent_at ?? notes[0].created_at).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
   return (
     <View style={styles.container}>
       {notes.length > 0 && (
-        <Text style={styles.sectionLabel}>
-          {notes.length} note{notes.length !== 1 ? 's' : ''} from your coach
-        </Text>
+        <View style={styles.statsHeader}>
+          <Text style={styles.sectionLabel}>
+            {notes.length} note{notes.length !== 1 ? 's' : ''} from your coach
+          </Text>
+          <View style={styles.statsChipsRow}>
+            {postWorkoutCount > 0 && (
+              <View style={styles.statsChip}>
+                <Text style={styles.statsChipText}>{postWorkoutCount} Post-Workout</Text>
+              </View>
+            )}
+            {weeklyCount > 0 && (
+              <View style={[styles.statsChip, { backgroundColor: colors.success + '15' }]}>
+                <Text style={[styles.statsChipText, { color: colors.success }]}>{weeklyCount} Weekly</Text>
+              </View>
+            )}
+          </View>
+          {daysSinceLastNote !== null && (
+            <Text style={styles.lastNoteText}>
+              {daysSinceLastNote === 0
+                ? 'Last note: today'
+                : daysSinceLastNote === 1
+                  ? 'Last note: yesterday'
+                  : `Last note: ${daysSinceLastNote} days ago`}
+            </Text>
+          )}
+        </View>
       )}
       <FlatList
         data={notes}
@@ -122,14 +153,17 @@ export default function CoachNotesScreen() {
         ListEmptyComponent={
           <Text style={styles.emptyText}>No coach notes yet. Your trainer will send notes after your workouts.</Text>
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, index === 0 && styles.cardLatest]}
             activeOpacity={0.7}
             onPress={() => router.push(`/coach-notes/${item.id}`)}
           >
             <View style={styles.cardHeader}>
-              <Text style={styles.sourceChip}>{sourceLabel(item.source)}</Text>
+              <View style={styles.cardHeaderLeft}>
+                <Text style={styles.sourceChip}>{sourceLabel(item.source)}</Text>
+                {index === 0 && <Text style={styles.latestBadge}>Latest</Text>}
+              </View>
               <Text style={styles.dateText}>{formatDate(item.sent_at ?? item.created_at)}</Text>
             </View>
             <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
@@ -213,5 +247,53 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 32,
+  },
+
+  // ─── Stats Header ─────────────────────────────────────
+  statsHeader: {
+    marginBottom: spacing.sm,
+  },
+  statsChipsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  statsChip: {
+    backgroundColor: colors.primary + '15',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  statsChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  lastNoteText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+
+  // ─── Latest Card Highlight ─────────────────────────────
+  cardLatest: {
+    borderColor: colors.primary,
+    borderWidth: 1.5,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  latestBadge: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.primary,
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    overflow: 'hidden',
   },
 });

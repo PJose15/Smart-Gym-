@@ -116,11 +116,40 @@ export default function CoachNoteDetailScreen() {
     );
   }
 
+  // ─── Enrichment: computed values ─────────────────────
+  const sentDate = new Date(note.sent_at ?? note.created_at);
+  const daysSinceSent = Math.floor((Date.now() - sentDate.getTime()) / (1000 * 60 * 60 * 24));
+  const timeSinceText = daysSinceSent === 0
+    ? 'Today'
+    : daysSinceSent === 1
+      ? 'Yesterday'
+      : daysSinceSent < 7
+        ? `${daysSinceSent} days ago`
+        : daysSinceSent < 30
+          ? `${Math.floor(daysSinceSent / 7)} week${Math.floor(daysSinceSent / 7) > 1 ? 's' : ''} ago`
+          : `${Math.floor(daysSinceSent / 30)} month${Math.floor(daysSinceSent / 30) > 1 ? 's' : ''} ago`;
+
+  const wordCount = note.body.split(/\s+/).length;
+  const readingTimeMin = Math.max(1, Math.ceil(wordCount / 200));
+
+  const metaActionItems = Array.isArray((note.meta as Record<string, unknown>)?.action_items)
+    ? (note.meta as Record<string, unknown>).action_items as string[]
+    : [];
+  const metaTips = Array.isArray((note.meta as Record<string, unknown>)?.tips)
+    ? (note.meta as Record<string, unknown>).tips as string[]
+    : [];
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.sourceChip}>{sourceLabel(note.source)}</Text>
         <Text style={styles.dateText}>{formatDate(note.sent_at ?? note.created_at)}</Text>
+      </View>
+
+      {/* Enrichment: time-since + reading time */}
+      <View style={styles.metaRow}>
+        <Text style={styles.metaChip}>{timeSinceText}</Text>
+        <Text style={styles.metaChip}>~{readingTimeMin} min read</Text>
       </View>
 
       <Text style={styles.title}>{note.title}</Text>
@@ -130,6 +159,29 @@ export default function CoachNoteDetailScreen() {
           <Text key={i} style={styles.bodyText}>{paragraph}</Text>
         ))}
       </View>
+
+      {/* Action Items from meta */}
+      {metaActionItems.length > 0 && (
+        <View style={styles.actionItemsContainer}>
+          <Text style={styles.actionItemsTitle}>Action Items</Text>
+          {metaActionItems.map((item, i) => (
+            <View key={i} style={styles.actionItemRow}>
+              <View style={styles.actionDot} />
+              <Text style={styles.actionItemText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Tips from meta */}
+      {metaTips.length > 0 && (
+        <View style={styles.tipsContainer}>
+          <Text style={styles.tipsTitle}>Tips</Text>
+          {metaTips.map((tip, i) => (
+            <Text key={i} style={styles.tipText}>{tip}</Text>
+          ))}
+        </View>
+      )}
 
       {/* Acknowledgement button */}
       <View style={styles.ackContainer}>
@@ -267,5 +319,79 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // ─── Enrichment Styles ────────────────────────────────
+  metaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: spacing.sm,
+  },
+  metaChip: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    backgroundColor: colors.background,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  actionItemsContainer: {
+    backgroundColor: colors.primary + '10',
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  actionItemsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    marginBottom: 8,
+  },
+  actionItemRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 6,
+  },
+  actionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginTop: 6,
+  },
+  actionItemText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  tipsContainer: {
+    backgroundColor: colors.success + '10',
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.success,
+  },
+  tipsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.success,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    marginBottom: 8,
+  },
+  tipText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+    marginBottom: 4,
   },
 });
