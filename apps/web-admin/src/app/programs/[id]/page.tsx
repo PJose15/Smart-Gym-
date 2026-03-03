@@ -208,7 +208,8 @@ export default function ProgramDetailPage() {
       .select()
       .single();
 
-    if (!err && data) {
+    if (err) { setError(err.message); return; }
+    if (data) {
       const exercise = data as ProgramExercise;
       setProgram({
         ...program,

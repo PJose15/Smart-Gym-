@@ -164,6 +164,7 @@ Deno.serve(async (req: Request) => {
           body: finalTitle,
           data: { note_id: note.id },
         }),
+        signal: AbortSignal.timeout(10_000),
       });
     } catch {
       // Push notification failure is non-fatal — note is already sent

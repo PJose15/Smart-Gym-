@@ -82,7 +82,7 @@ export default function MemberDetailPage() {
         .from('profiles')
         .select('full_name, email')
         .eq('id', memberId)
-        .single();
+        .maybeSingle();
 
       setProfile(profileData);
 

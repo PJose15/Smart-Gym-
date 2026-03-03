@@ -54,7 +54,8 @@ Deno.serve(async (req: Request) => {
       .from('trainer_assignments')
       .select('trainer_profile_id, member_profile_id')
       .eq('gym_id', gym_id)
-      .eq('status', 'active');
+      .eq('status', 'active')
+      .limit(500);
 
     if (!assignments || assignments.length === 0) {
       return new Response(JSON.stringify({ generated: 0, message: 'No active assignments' }), { status: 200 });
