@@ -106,11 +106,13 @@ export default function AtRiskPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const { data: assignments } = await supabase
+      const { data: assignments, error: assignErr } = await supabase
         .from('trainer_assignments')
         .select('member_profile_id')
         .eq('trainer_profile_id', user.id)
         .eq('status', 'active');
+
+      if (assignErr) throw assignErr;
 
       if (!assignments || assignments.length === 0) {
         setMembers([]);
@@ -120,38 +122,36 @@ export default function AtRiskPage() {
 
       const memberIds = assignments.map((a) => a.member_profile_id);
 
-      // Fetch profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', memberIds);
+      // Fetch profiles, workouts, and discomfort in parallel
+      const [profilesRes, workoutsRes, discomfortRes] = await Promise.all([
+        supabase.from('profiles').select('id, full_name').in('id', memberIds),
+        supabase.from('workouts').select('profile_id, finished_at').in('profile_id', memberIds).eq('status', 'completed').order('finished_at', { ascending: false }),
+        supabase.from('feedback_discomfort_summary').select('*').in('profile_id', memberIds),
+      ]);
 
-      // Fetch last workout per member
-      const { data: workouts } = await supabase
-        .from('workouts')
-        .select('profile_id, finished_at')
-        .in('profile_id', memberIds)
-        .eq('status', 'completed')
-        .order('finished_at', { ascending: false });
-
-      // Fetch discomfort data
-      const { data: discomfortData } = await supabase
-        .from('feedback_discomfort_summary')
-        .select('*')
-        .in('profile_id', memberIds);
+      if (profilesRes.error) throw profilesRes.error;
+      const profiles = profilesRes.data;
+      const workouts = workoutsRes.data;
+      const discomfortData = discomfortRes.data;
 
       // Build MemberData array
+      interface DiscomfortSummary {
+        profile_id: string;
+        discomfort_count_7d?: number;
+        top_body_areas_7d?: string[];
+      }
+
       const memberDataList: MemberData[] = memberIds.map((pid) => {
         const profile = profiles?.find((p) => p.id === pid);
         const lastWorkout = workouts?.find((w) => w.profile_id === pid);
-        const discomfort = discomfortData?.find((d) => d.profile_id === pid);
+        const discomfort = discomfortData?.find((d) => d.profile_id === pid) as DiscomfortSummary | undefined;
 
         return {
           profileId: pid,
           memberName: profile?.full_name ?? 'Unknown',
           lastWorkoutAt: lastWorkout?.finished_at ?? null,
-          discomfortCount7d: (discomfort as any)?.discomfort_count_7d ?? 0,
-          discomfortBodyAreas: (discomfort as any)?.top_body_areas_7d ?? [],
+          discomfortCount7d: discomfort?.discomfort_count_7d ?? 0,
+          discomfortBodyAreas: discomfort?.top_body_areas_7d ?? [],
           plateauExercises: [], // Plateau detection requires additional query logic
         };
       });

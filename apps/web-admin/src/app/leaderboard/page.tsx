@@ -130,10 +130,11 @@ export default function LeaderboardPage() {
       }
 
       const profileIds = rankings.map((r: { profile_id: string }) => r.profile_id);
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesErr } = await supabase
         .from('profiles')
         .select('id, full_name, email')
         .in('id', profileIds);
+      if (profilesErr) throw profilesErr;
 
       const profileMap = new Map<string, { full_name: string; email: string }>();
       for (const p of profiles ?? []) {

@@ -281,7 +281,7 @@ export default function WorkoutCompleteScreen() {
             .order('finished_at', { ascending: false })
             .limit(1)
             .abortSignal(controller.signal)
-            .single();
+            .maybeSingle();
 
           let previousExercises: WorkoutExerciseWithSets[] = [];
           if (prevWorkoutData) {

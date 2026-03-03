@@ -142,7 +142,7 @@ export default function MemberAnalyticsPage() {
         .from('profiles')
         .select('full_name')
         .eq('id', memberId)
-        .single();
+        .maybeSingle();
       setMemberName(profile?.full_name ?? 'Unknown');
 
       const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
