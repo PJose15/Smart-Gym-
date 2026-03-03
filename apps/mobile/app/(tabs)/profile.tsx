@@ -24,7 +24,9 @@ import type { StreakResult } from '../../src/lib/streakService';
 import { getBadges, RARITY_COLORS, RARITY_LABELS } from '../../src/lib/badgeService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { unregisterPushToken } from '../../src/lib/notificationService';
+import { formatWeight } from '@smartgym/utils';
 import { Button, Text, Card } from '../../src/components';
+import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { SkeletonGate, ProfileScreenSkeleton } from '../../src/components/skeleton';
 import { colors } from '../../src/theme/colors';
@@ -80,6 +82,28 @@ const DEFAULT_TRAINING_PROFILE: TrainingProfileState = {
   preferred_rep_min: '',
   preferred_rep_max: '',
   limitations: [],
+};
+
+// ─── Enrichment Types ───────────────────────────────────
+
+interface LifetimeStats {
+  totalWorkouts: number;
+  totalVolumeKg: number;
+  totalSets: number;
+  totalTimeMinutes: number;
+}
+
+interface FavoriteMachine {
+  name: string;
+  count: number;
+  slug: string;
+}
+
+const GOAL_EMOJI: Record<string, string> = {
+  strength: '\uD83C\uDFCB\uFE0F',
+  hypertrophy: '\uD83D\uDCAA',
+  endurance: '\uD83C\uDFC3',
+  general: '\uD83E\uDD38',
 };
 
 // ─── Breathing Animation Card ───────────────────────────
@@ -158,6 +182,12 @@ export default function ProfileScreen() {
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationsLoaded, setNotificationsLoaded] = useState(false);
+
+  // Enrichment state
+  const [lifetimeStats, setLifetimeStats] = useState<LifetimeStats | null>(null);
+  const [memberSince, setMemberSince] = useState<string | null>(null);
+  const [favoriteMachines, setFavoriteMachines] = useState<FavoriteMachine[]>([]);
+  const [avgWorkoutsPerWeek, setAvgWorkoutsPerWeek] = useState<number | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -255,6 +285,9 @@ export default function ProfileScreen() {
           }
           setNotificationsLoaded(true);
         }
+
+        // ─── Enrichment data ─────────────────────────────
+        await loadEnrichmentData(user.id, memberData.gym_id);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -298,6 +331,106 @@ export default function ProfileScreen() {
       }
     } catch {
       // Non-critical
+    }
+  };
+
+  const loadEnrichmentData = async (userId: string, currentGymId: string) => {
+    try {
+      const [workoutsResult, exercisesResult, memberResult] = await Promise.all([
+        // Completed workouts with timing
+        supabase
+          .from('workouts')
+          .select('id, started_at, finished_at')
+          .eq('profile_id', userId)
+          .eq('status', 'completed')
+          .order('started_at', { ascending: false })
+          .limit(500),
+
+        // Exercises with sets for volume + favorite machine calculation
+        supabase
+          .from('workout_exercises')
+          .select(`
+            exercise_name,
+            machine_id,
+            machines(name, qr_slug),
+            sets(weight_kg, reps)
+          `)
+          .eq('workouts.profile_id', userId)
+          .limit(500),
+
+        // Member since date
+        supabase
+          .from('gym_members')
+          .select('created_at')
+          .eq('profile_id', userId)
+          .eq('gym_id', currentGymId)
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      // Member since
+      if (memberResult.data?.created_at) {
+        setMemberSince(memberResult.data.created_at);
+      }
+
+      // Lifetime stats from workouts
+      const workouts = workoutsResult.data ?? [];
+      let totalTimeMinutes = 0;
+      for (const w of workouts) {
+        if (w.started_at && w.finished_at) {
+          const mins = (new Date(w.finished_at).getTime() - new Date(w.started_at).getTime()) / 60000;
+          if (mins > 0 && mins < 300) totalTimeMinutes += mins; // cap at 5h per session
+        }
+      }
+
+      // Calculate volume and sets from exercises, plus machine frequency
+      const exercises = (exercisesResult.data ?? []) as any[];
+      let totalVolumeKg = 0;
+      let totalSets = 0;
+      const machineFreq = new Map<string, { name: string; count: number; slug: string }>();
+
+      for (const ex of exercises) {
+        const sets = ex.sets ?? [];
+        for (const s of sets) {
+          totalSets++;
+          totalVolumeKg += (s.weight_kg ?? 0) * (s.reps ?? 0);
+        }
+        if (ex.machine_id && ex.machines?.name) {
+          const existing = machineFreq.get(ex.machine_id);
+          if (existing) {
+            existing.count++;
+          } else {
+            machineFreq.set(ex.machine_id, {
+              name: ex.machines.name,
+              count: 1,
+              slug: ex.machines.qr_slug ?? ex.machine_id,
+            });
+          }
+        }
+      }
+
+      setLifetimeStats({
+        totalWorkouts: workouts.length,
+        totalVolumeKg: Math.round(totalVolumeKg),
+        totalSets,
+        totalTimeMinutes: Math.round(totalTimeMinutes),
+      });
+
+      // Top 3 favorite machines
+      const sorted = Array.from(machineFreq.values()).sort((a, b) => b.count - a.count);
+      setFavoriteMachines(sorted.slice(0, 3));
+
+      // Average workouts per week
+      if (workouts.length >= 2) {
+        const oldest = new Date(workouts[workouts.length - 1].started_at);
+        const newest = new Date(workouts[0].started_at);
+        const weeks = Math.max(1, (newest.getTime() - oldest.getTime()) / (7 * 24 * 60 * 60 * 1000));
+        setAvgWorkoutsPerWeek(Math.round((workouts.length / weeks) * 10) / 10);
+      } else if (workouts.length === 1) {
+        setAvgWorkoutsPerWeek(workouts.length);
+      }
+    } catch (err) {
+      console.warn('[profile] enrichment load failed:', err);
     }
   };
 
@@ -517,7 +650,119 @@ export default function ProfileScreen() {
           {profile.full_name || 'No Name Set'}
         </Text>
         <Text variant="body" color="textSecondary">{profile.email}</Text>
+        {memberSince && (
+          <Text variant="caption" color="textSecondary" style={styles.memberSince}>
+            Member since {new Date(memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </Text>
+        )}
       </View>
+
+      {/* ─── Lifetime Stats ──────────────────────────── */}
+      {lifetimeStats && lifetimeStats.totalWorkouts > 0 && (
+        <AnimatedCard index={0} style={styles.lifetimeCard}>
+          <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
+            Lifetime Stats
+          </Text>
+          <View style={styles.lifetimeGrid}>
+            <View style={styles.lifetimePill}>
+              <Text style={styles.lifetimeValue}>{lifetimeStats.totalWorkouts}</Text>
+              <Text variant="caption" color="textSecondary">workouts</Text>
+            </View>
+            <View style={styles.lifetimePill}>
+              <Text style={styles.lifetimeValue}>
+                {lifetimeStats.totalVolumeKg >= 1000
+                  ? `${(lifetimeStats.totalVolumeKg / 1000).toFixed(1)}t`
+                  : formatWeight(lifetimeStats.totalVolumeKg, weightUnit)}
+              </Text>
+              <Text variant="caption" color="textSecondary">volume</Text>
+            </View>
+            <View style={styles.lifetimePill}>
+              <Text style={styles.lifetimeValue}>{lifetimeStats.totalSets}</Text>
+              <Text variant="caption" color="textSecondary">sets</Text>
+            </View>
+            <View style={styles.lifetimePill}>
+              <Text style={styles.lifetimeValue}>
+                {lifetimeStats.totalTimeMinutes >= 60
+                  ? `${Math.floor(lifetimeStats.totalTimeMinutes / 60)}h`
+                  : `${lifetimeStats.totalTimeMinutes}m`}
+              </Text>
+              <Text variant="caption" color="textSecondary">time in gym</Text>
+            </View>
+          </View>
+        </AnimatedCard>
+      )}
+
+      {/* ─── Training Consistency ─────────────────────── */}
+      {avgWorkoutsPerWeek !== null && (
+        <AnimatedCard index={1} style={styles.consistencyCard}>
+          <View style={styles.consistencyRow}>
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
+                Training Consistency
+              </Text>
+              <Text style={styles.consistencyValue}>
+                {avgWorkoutsPerWeek} workouts / week
+              </Text>
+            </View>
+            <View style={styles.consistencyBarBg}>
+              <View
+                style={[
+                  styles.consistencyBarFill,
+                  { width: `${Math.min(100, (avgWorkoutsPerWeek / 5) * 100)}%` },
+                ]}
+              />
+            </View>
+          </View>
+          <Text variant="caption" color="textSecondary">
+            {avgWorkoutsPerWeek >= 4
+              ? 'Elite consistency — you rarely miss a week.'
+              : avgWorkoutsPerWeek >= 3
+                ? 'Strong habit — keep this rhythm going.'
+                : avgWorkoutsPerWeek >= 2
+                  ? 'Solid foundation — an extra day would accelerate gains.'
+                  : 'Building momentum — consistency is the #1 factor for results.'}
+          </Text>
+        </AnimatedCard>
+      )}
+
+      {/* ─── Favorite Machines ────────────────────────── */}
+      {favoriteMachines.length > 0 && (
+        <AnimatedCard index={2} style={styles.favoritesCard}>
+          <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
+            Most Used Machines
+          </Text>
+          {favoriteMachines.map((m, i) => (
+            <TouchableOpacity
+              key={m.slug}
+              style={styles.favoriteRow}
+              onPress={() => router.push(`/machine/${m.slug}` as any)}
+            >
+              <Text style={styles.favoriteRank}>#{i + 1}</Text>
+              <Text variant="body" style={styles.favoriteName}>{m.name}</Text>
+              <Text variant="caption" color="textSecondary">{m.count}x</Text>
+            </TouchableOpacity>
+          ))}
+        </AnimatedCard>
+      )}
+
+      {/* ─── Goal Alignment ───────────────────────────── */}
+      {showTrainingProfile && trainingProfile.goal !== 'general' && (
+        <AnimatedCard index={3} style={styles.goalCard}>
+          <View style={styles.goalRow}>
+            <Text style={styles.goalEmoji}>{GOAL_EMOJI[trainingProfile.goal] ?? '\uD83C\uDFAF'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
+                Your Focus
+              </Text>
+              <Text variant="body" style={styles.goalText}>
+                {trainingProfile.goal === 'strength' && 'Training for strength — heavy loads, lower reps.'}
+                {trainingProfile.goal === 'hypertrophy' && 'Training for muscle growth — moderate loads, volume-focused.'}
+                {trainingProfile.goal === 'endurance' && 'Training for endurance — lighter loads, higher reps.'}
+              </Text>
+            </View>
+          </View>
+        </AnimatedCard>
+      )}
 
       {streak && streak.currentStreak > 0 && (
         <View style={styles.section}>
@@ -1105,6 +1350,95 @@ const styles = StyleSheet.create({
     color: colors.text,
     width: 70,
     textAlign: 'center',
+  },
+  // Enrichment styles
+  memberSince: {
+    marginTop: spacing.xs,
+    fontStyle: 'italic',
+  },
+  enrichSectionTitle: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: '600',
+    fontSize: 11,
+    marginBottom: spacing.xs,
+  },
+  lifetimeCard: {
+    marginBottom: spacing.md,
+  },
+  lifetimeGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  lifetimePill: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  lifetimeValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  consistencyCard: {
+    marginBottom: spacing.md,
+  },
+  consistencyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  consistencyValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  consistencyBarBg: {
+    width: 60,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+    overflow: 'hidden',
+  },
+  consistencyBarFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  favoritesCard: {
+    marginBottom: spacing.md,
+  },
+  favoriteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  favoriteRank: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary,
+    width: 30,
+  },
+  favoriteName: {
+    flex: 1,
+    fontWeight: '500',
+  },
+  goalCard: {
+    marginBottom: spacing.md,
+  },
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  goalEmoji: {
+    fontSize: 32,
+  },
+  goalText: {
+    fontWeight: '500',
+    lineHeight: 20,
   },
   // Streak styles
   streakCard: {
