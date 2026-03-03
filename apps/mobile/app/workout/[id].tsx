@@ -49,6 +49,14 @@ function getConfidenceColor(confidence: number): string {
   return '#adb5bd';
 }
 
+// ─── Session intent config ─────────────────────────────
+
+const INTENT_CONFIG: Record<string, { label: string; color: string; emoji: string }> = {
+  light: { label: 'Light', color: '#2a9d8f', emoji: '\uD83C\uDF3F' },
+  maintain: { label: 'Maintain', color: '#e9c46a', emoji: '\u2696\uFE0F' },
+  push: { label: 'Push', color: '#e63946', emoji: '\uD83D\uDD25' },
+};
+
 // ─── Sub-components ─────────────────────────────────────
 
 interface SetRowProps {
@@ -672,6 +680,9 @@ export default function ActiveWorkoutScreen() {
 
   const abortRef = useRef<AbortController | null>(null);
 
+  // Enrichment: live elapsed time
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
   // ─── Initialize feature flags + weight unit ──────────
   useEffect(() => {
     const initFlags = async () => {
@@ -714,6 +725,18 @@ export default function ActiveWorkoutScreen() {
       }
     };
   }, [restTimerRunning]);
+
+  // ─── Live elapsed time ──────────────────────────────
+  useEffect(() => {
+    if (!workout) return;
+    const startTime = new Date(workout.started_at).getTime();
+    const tick = () => {
+      setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [workout]);
 
   const startRestTimer = useCallback(() => {
     setRestSecondsLeft(restDuration);
@@ -1220,6 +1243,21 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
+  // ─── Computed enrichment values ─────────────────────
+  const totalSetsLogged = exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+  const totalVolumeKg = exercises.reduce((sum, ex) => {
+    return sum + ex.sets.reduce((sSum, s) => sSum + s.weight_kg * s.reps, 0);
+  }, 0);
+  const exercisesWithSets = exercises.filter((ex) => ex.sets.length > 0).length;
+
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  const elapsedDisplay = elapsedHours > 0
+    ? `${elapsedHours}h ${elapsedMinutes % 60}m`
+    : `${elapsedMinutes}m ${elapsedSeconds % 60}s`;
+
+  const intentCfg = INTENT_CONFIG[sessionIntent] ?? INTENT_CONFIG.push;
+
   // ─── Render: Active Workout ─────────────────────────
   return (
     <View style={styles.screen}>
@@ -1228,14 +1266,72 @@ export default function ActiveWorkoutScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Active Workout</Text>
-        <Text style={styles.subtitle}>
-          Started at{' '}
-          {new Date(workout.started_at).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </Text>
+        {/* ─── Header with elapsed time ─────────────── */}
+        <View style={styles.workoutHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>Active Workout</Text>
+            <Text style={styles.subtitle}>
+              Started at{' '}
+              {new Date(workout.started_at).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </View>
+          <View style={styles.elapsedContainer}>
+            <Text style={styles.elapsedTime}>{elapsedDisplay}</Text>
+            <Text style={styles.elapsedLabel}>elapsed</Text>
+          </View>
+        </View>
+
+        {/* ─── Session Intent Badge ─────────────────── */}
+        <View style={[styles.intentBadge, { backgroundColor: intentCfg.color + '18' }]}>
+          <Text style={styles.intentEmoji}>{intentCfg.emoji}</Text>
+          <Text style={[styles.intentLabel, { color: intentCfg.color }]}>
+            {intentCfg.label} session
+          </Text>
+        </View>
+
+        {/* ─── Live Stats Strip ─────────────────────── */}
+        <View style={styles.liveStatsStrip}>
+          <View style={styles.liveStatPill}>
+            <Text style={styles.liveStatValue}>{totalSetsLogged}</Text>
+            <Text style={styles.liveStatLabel}>sets</Text>
+          </View>
+          <View style={styles.liveStatDivider} />
+          <View style={styles.liveStatPill}>
+            <Text style={styles.liveStatValue}>
+              {totalVolumeKg >= 1000
+                ? `${(totalVolumeKg / 1000).toFixed(1)}t`
+                : `${Math.round(totalVolumeKg)}kg`}
+            </Text>
+            <Text style={styles.liveStatLabel}>volume</Text>
+          </View>
+          <View style={styles.liveStatDivider} />
+          <View style={styles.liveStatPill}>
+            <Text style={styles.liveStatValue}>{exercises.length}</Text>
+            <Text style={styles.liveStatLabel}>exercises</Text>
+          </View>
+        </View>
+
+        {/* ─── Session Progress Bar ─────────────────── */}
+        {exercises.length > 0 && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressRow}>
+              <Text style={styles.progressText}>
+                {exercisesWithSets} of {exercises.length} exercises started
+              </Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${(exercisesWithSets / exercises.length) * 100}%` },
+                ]}
+              />
+            </View>
+          </View>
+        )}
 
         {exercises.length === 0 && (
           <View style={styles.emptyState}>
@@ -1323,6 +1419,11 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#f8f9fa',
   },
+  workoutHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -1332,7 +1433,102 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#6c757d',
-    marginBottom: 20,
+    marginBottom: 0,
+  },
+  elapsedContainer: {
+    alignItems: 'center',
+    backgroundColor: '#4361ee15',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  elapsedTime: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#4361ee',
+  },
+  elapsedLabel: {
+    fontSize: 10,
+    color: '#6c757d',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  // Session intent badge
+  intentBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    gap: 4,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  intentEmoji: {
+    fontSize: 14,
+  },
+  intentLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  // Live stats strip
+  liveStatsStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  liveStatPill: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  liveStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a2e',
+  },
+  liveStatLabel: {
+    fontSize: 11,
+    color: '#6c757d',
+  },
+  liveStatDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#dee2e6',
+  },
+  // Session progress bar
+  progressContainer: {
+    marginBottom: 16,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#6c757d',
+    fontWeight: '500',
+  },
+  progressBarBg: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#dee2e6',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: '#4361ee',
   },
 
   // Loading / Error
