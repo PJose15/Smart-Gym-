@@ -9,7 +9,7 @@ import type {
   FormChecklist,
   MovementPattern,
   EquipmentType,
-} from '@smartgym/types';
+} from '@nexera/types';
 
 // ─── Template Banks ─────────────────────────────────────
 

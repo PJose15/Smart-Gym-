@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getMachineAlternatives } from '../rules/alternatives';
-import type { Machine } from '@smartgym/types';
+import type { Machine } from '@nexera/types';
 
 function makeMachine(overrides: Partial<Machine> & { id: string; name: string }): Machine {
   return {

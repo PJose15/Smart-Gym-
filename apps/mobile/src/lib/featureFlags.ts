@@ -3,7 +3,7 @@
  * caches locally, and provides a simple isEnabled check.
  */
 import { supabase } from './supabase';
-import type { FeatureFlag } from '@smartgym/types';
+import type { FeatureFlag } from '@nexera/types';
 
 // Local in-memory cache
 let flagCache: Map<string, boolean> = new Map();

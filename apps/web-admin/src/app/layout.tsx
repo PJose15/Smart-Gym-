@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { Sidebar } from './sidebar';
-import { AuthGate } from '@/components/AuthGate';
+import { AppShell } from '@/components/AppShell';
+import '@/styles/tokens.css';
+import '@/styles/animations.css';
+import '@/styles/scan-flow.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SmartGym Admin',
-  description: 'SmartGym administration dashboard',
+  title: 'Nexera Admin',
+  description: 'Nexera AI-powered gym fitness platform',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -16,14 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-        <AuthGate>
-          <div style={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar />
-            <main style={{ flex: 1, padding: '32px', backgroundColor: '#f5f5f5' }}>
-              {children}
-            </main>
-          </div>
-        </AuthGate>
+        <AppShell>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

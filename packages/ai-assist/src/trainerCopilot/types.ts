@@ -9,7 +9,7 @@ import type {
   WorkoutSet,
   TrainerTone,
   TrainerVerbosity,
-} from '@smartgym/types';
+} from '@nexera/types';
 
 // ─── Style Settings ──────────────────────────────────────
 

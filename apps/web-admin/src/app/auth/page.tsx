@@ -104,7 +104,8 @@ export default function AuthPage() {
       return;
     }
 
-    router.replace('/');
+    // Full reload so AuthGate picks up the new session
+    window.location.href = '/';
   }
 
   return (
@@ -128,7 +129,7 @@ export default function AuthPage() {
             onChange={(e) => setEmail(e.target.value)}
             style={inputStyle}
             className="input-animate"
-            placeholder="admin@smartgym.com"
+            placeholder="admin@nexera.com"
             required
             autoComplete="email"
           />
@@ -161,7 +162,7 @@ export default function AuthPage() {
         </button>
       </form>
 
-      <p style={footerStyle}>SmartGym Admin v0.1.0</p>
+      <p style={footerStyle}>Nexera Admin v0.1.0</p>
     </div>
   );
 }

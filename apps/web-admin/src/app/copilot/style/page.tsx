@@ -8,8 +8,8 @@ import {
   buildWorkoutDraft,
   applyTone,
   applyVerbosity,
-} from '@smartgym/ai-assist';
-import type { TrainerTone, TrainerVerbosity } from '@smartgym/types';
+} from '@nexera/ai-assist';
+import type { TrainerTone, TrainerVerbosity } from '@nexera/types';
 
 // ─── Styles ─────────────────────────────────────────────
 

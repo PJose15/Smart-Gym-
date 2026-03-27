@@ -1,5 +1,5 @@
 {
-  "name": "@smartgym/ai-assist",
+  "name": "@nexera/ai-assist",
   "version": "0.1.0",
   "private": true,
   "main": "./src/index.ts",
@@ -10,8 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smartgym/types": "workspace:*",
-    "@smartgym/utils": "workspace:*"
+    "@nexera/types": "workspace:*",
+    "@nexera/utils": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",

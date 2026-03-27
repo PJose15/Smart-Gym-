@@ -1,5 +1,5 @@
-import type { PRDetection, WorkoutSet, WorkoutExerciseWithSets } from '@smartgym/types';
-import { estimate1RM } from '@smartgym/utils';
+import type { PRDetection, WorkoutSet, WorkoutExerciseWithSets } from '@nexera/types';
+import { estimate1RM } from '@nexera/utils';
 
 export interface PRInput {
   /** Current workout exercises with sets */

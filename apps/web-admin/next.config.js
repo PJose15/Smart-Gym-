@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@smartgym/types', '@smartgym/utils'],
+  transpilePackages: ['@nexera/types', '@nexera/utils', '@nexera/ai-assist'],
 };
 
 module.exports = nextConfig;

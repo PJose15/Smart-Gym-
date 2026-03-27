@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getWorkoutInsight, SummaryInput } from '../rules/summary';
-import type { WorkoutExerciseWithSets, WorkoutSet } from '@smartgym/types';
+import type { WorkoutExerciseWithSets, WorkoutSet } from '@nexera/types';
 
 function makeExercise(
   name: string,

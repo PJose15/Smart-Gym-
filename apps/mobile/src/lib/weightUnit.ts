@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { WeightUnit } from '@smartgym/types';
+import type { WeightUnit } from '@nexera/types';
 
-const WEIGHT_UNIT_KEY = 'smartgym_weight_unit';
+const WEIGHT_UNIT_KEY = 'nexera_weight_unit';
 
 /**
  * Reads the user's preferred weight unit from AsyncStorage.

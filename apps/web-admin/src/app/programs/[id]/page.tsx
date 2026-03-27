@@ -13,7 +13,7 @@ import type {
   MemberProgramAssignment,
   Profile,
   GymMember,
-} from '@smartgym/types';
+} from '@nexera/types';
 
 /* ── Joined types ──────────────────────────────────────── */
 

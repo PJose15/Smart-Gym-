@@ -4,8 +4,8 @@ import { useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
-import { computeAtRiskMembers } from '@smartgym/ai-assist';
-import type { MemberData, AtRiskMember } from '@smartgym/ai-assist';
+import { computeAtRiskMembers } from '@nexera/ai-assist';
+import type { MemberData, AtRiskMember } from '@nexera/ai-assist';
 
 // ─── Styles ─────────────────────────────────────────────
 

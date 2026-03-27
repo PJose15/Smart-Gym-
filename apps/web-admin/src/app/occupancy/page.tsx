@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { AnimatedPage } from '../components/AnimatedPage';
-import type { HourlyUsageCell, MachineUsageFrequency } from '@smartgym/types';
+import type { HourlyUsageCell, MachineUsageFrequency } from '@nexera/types';
 
 type PeriodDays = 7 | 30 | 90;
 

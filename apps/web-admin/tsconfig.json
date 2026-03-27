@@ -20,13 +20,25 @@
       "@/*": [
         "./src/*"
       ],
-      "@smartgym/types": [
+      "@/styles/*": [
+        "./src/styles/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@nexera/types": [
         "../../packages/types/src"
       ],
-      "@smartgym/utils": [
+      "@nexera/utils": [
         "../../packages/utils/src"
       ],
-      "@smartgym/ai-assist": [
+      "@nexera/ai-assist": [
         "../../packages/ai-assist/src"
       ]
     },

@@ -3,7 +3,7 @@
  * Generates a coach note draft summarizing a member's week.
  */
 
-import type { DraftSignals } from '@smartgym/types';
+import type { DraftSignals } from '@nexera/types';
 import type { WeeklyDraftInput, DraftOutput } from './types';
 import {
   ackWeekly,

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import type { TrendDataPoint } from '@smartgym/utils';
+import type { TrendDataPoint } from '@nexera/utils';
 import { colors } from '../theme/colors';
 
 interface MiniChartProps {

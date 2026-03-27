@@ -11,7 +11,7 @@ import { router, type Href } from 'expo-router';
 import { supabase } from './supabase';
 import { isFeatureEnabled } from './featureFlags';
 import { trackEvent } from './events';
-import type { NotificationType } from '@smartgym/types';
+import type { NotificationType } from '@nexera/types';
 
 // ─── Configuration ───────────────────────────────────────
 
@@ -52,7 +52,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     // Android requires a notification channel
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'SmartGym',
+        name: 'Nexera',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4361ee',

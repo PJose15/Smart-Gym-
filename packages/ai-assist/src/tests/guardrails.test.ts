@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { computeGuardrails, WorkoutRecord, GuardrailInput } from '../rules/guardrails';
-import type { WorkoutSet } from '@smartgym/types';
+import type { WorkoutSet } from '@nexera/types';
 
 // ─── Helpers ────────────────────────────────────────────
 

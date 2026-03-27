@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
-import { calculateVolume, formatDuration, formatWeight } from '@smartgym/utils';
-import { getWorkoutInsight, computeGuardrails, getCoachingInsight, buildMemberContext } from '@smartgym/ai-assist';
-import type { WorkoutRecord, CoachingInsight } from '@smartgym/ai-assist';
+import { calculateVolume, formatDuration, formatWeight } from '@nexera/utils';
+import { getWorkoutInsight, computeGuardrails, getCoachingInsight, buildMemberContext } from '@nexera/ai-assist';
+import type { WorkoutRecord, CoachingInsight } from '@nexera/ai-assist';
 import { fetchCoachingInsight } from '../../../src/lib/aiService';
 import type {
   Workout,
@@ -24,7 +24,7 @@ import type {
   WorkoutSet,
   GuardrailInsight,
   ExperienceLevel,
-} from '@smartgym/types';
+} from '@nexera/types';
 import { trackEvent } from '../../../src/lib/events';
 import {
   isFeatureEnabled,
@@ -390,7 +390,7 @@ export default function WorkoutCompleteScreen() {
           if (result.prs && result.prs.length > 0) {
             try {
               await AsyncStorage.setItem(
-                '@smartgym/unseen_prs',
+                '@nexera/unseen_prs',
                 JSON.stringify(result.prs),
               );
             } catch (e) {

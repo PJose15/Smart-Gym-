@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { AnimatedPage } from '../../components/AnimatedPage';
 import { PageHeader } from '../../components/PageHeader';
-import type { Franchise, FranchiseGym } from '@smartgym/types';
+import type { Franchise, FranchiseGym } from '@nexera/types';
 
 interface OwnedGym {
   gym_id: string;

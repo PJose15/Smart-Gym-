@@ -12,9 +12,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
-import { getTodaysProgramDay } from '@smartgym/utils';
-import { getTodayExplanation, computeGuardrails, getCoachingInsight, buildMemberContext } from '@smartgym/ai-assist';
-import type { WorkoutRecord, CoachingInsight } from '@smartgym/ai-assist';
+import { getTodaysProgramDay } from '@nexera/utils';
+import { getTodayExplanation, computeGuardrails, getCoachingInsight, buildMemberContext } from '@nexera/ai-assist';
+import type { WorkoutRecord, CoachingInsight } from '@nexera/ai-assist';
 import { fetchCoachingInsight } from '../../src/lib/aiService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
@@ -22,16 +22,16 @@ import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
 import { getRecentUnlocks } from '../../src/lib/badgeService';
 import { getUserRank } from '../../src/lib/leaderboardService';
-import type { BadgeWithStatus } from '@smartgym/types';
+import type { BadgeWithStatus } from '@nexera/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { PRDetection } from '@smartgym/types';
+import type { PRDetection } from '@nexera/types';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { SkeletonGate, HomeScreenSkeleton } from '../../src/components/skeleton';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
-import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@smartgym/types';
+import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@nexera/types';
 
 interface TodayWorkout {
   dayName: string;
@@ -211,7 +211,7 @@ export default function HomeScreen() {
 
       // Load unseen PRs from local storage
       try {
-        const prData = await AsyncStorage.getItem('@smartgym/unseen_prs');
+        const prData = await AsyncStorage.getItem('@nexera/unseen_prs');
         if (prData && mountedRef.current) {
           const parsed = JSON.parse(prData) as PRDetection[];
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -219,7 +219,7 @@ export default function HomeScreen() {
           }
         }
       } catch {
-        await AsyncStorage.removeItem('@smartgym/unseen_prs');
+        await AsyncStorage.removeItem('@nexera/unseen_prs');
       }
 
       // Check for active workout
@@ -761,7 +761,7 @@ export default function HomeScreen() {
   const dismissPRs = useCallback(async () => {
     setUnseenPRs([]);
     try {
-      await AsyncStorage.removeItem('@smartgym/unseen_prs');
+      await AsyncStorage.removeItem('@nexera/unseen_prs');
     } catch (err) {
       console.warn('[home] PR dismiss failed:', err);
     }

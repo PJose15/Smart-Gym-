@@ -2,8 +2,8 @@
 
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
-import { generateQrSlug } from '@smartgym/utils';
-import { generateMachineMistakes } from '@smartgym/ai-assist';
+import { generateQrSlug } from '@nexera/utils';
+import { generateMachineMistakes } from '@nexera/ai-assist';
 import { fetchMachineMistakes } from '@/lib/aiService';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';

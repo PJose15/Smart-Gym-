@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { AnimatedPage } from '../../components/AnimatedPage';
 import { PageHeader } from '../../components/PageHeader';
-import type { MaintenanceLog, MaintenanceStatus } from '@smartgym/types';
+import type { MaintenanceLog, MaintenanceStatus } from '@nexera/types';
 
 interface MachineDetail {
   id: string;

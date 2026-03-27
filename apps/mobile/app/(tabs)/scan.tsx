@@ -10,7 +10,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { parseQrCode } from '@smartgym/utils';
+import { parseQrCode } from '@nexera/utils';
 import { Button, Text } from '../../src/components';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
@@ -42,7 +42,7 @@ const SCAN_TIPS = [
   'Scanning logs which machines you use, building your training profile over time.',
   'After scanning, you\'ll see setup steps, safety cues, and your personal history.',
   'Can\'t find the QR code? Check the front panel or the weight stack frame.',
-  'Scanning before your set helps SmartGym suggest your next weight and reps.',
+  'Scanning before your set helps Nexera suggest your next weight and reps.',
   'Your scan history powers smarter rest-day and recovery recommendations.',
 ];
 
@@ -238,7 +238,7 @@ export default function ScanScreen() {
       trackEvent('qr_scanned', { slug });
       router.push(`/machine/${slug}`);
     } else {
-      setError('Invalid QR code. Please scan a SmartGym machine QR code.');
+      setError('Invalid QR code. Please scan a Nexera machine QR code.');
     }
   };
 
@@ -282,7 +282,7 @@ export default function ScanScreen() {
               Camera Access Required
             </Text>
             <Text variant="body" color="textSecondary" style={styles.message}>
-              SmartGym needs your camera to scan QR codes on gym machines.
+              Nexera needs your camera to scan QR codes on gym machines.
             </Text>
             <Button title="Grant Permission" onPress={requestPermission} />
           </View>

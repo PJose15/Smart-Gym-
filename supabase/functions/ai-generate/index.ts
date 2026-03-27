@@ -1,9 +1,9 @@
 /**
  * Edge Function: POST /ai-generate
- * Body: { action: 'coaching_insight' | 'generate_program' | 'machine_mistakes' | 'rewrite_insight', payload: {...} }
+ * Body: { action: 'coaching_insight' | 'coaching_tip' | 'generate_program' | 'machine_mistakes' | 'rewrite_insight', payload: {...} }
  *
  * Proxies all LLM (Gemini) calls so the API key stays server-side.
- * Each action mirrors a method from GeminiProvider in @smartgym/ai-assist.
+ * Each action mirrors a method from GeminiProvider in @nexera/ai-assist.
  * Feature-flagged and rate-limited per user.
  */
 
@@ -32,6 +32,7 @@ const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX: Record<string, number> = {
   coaching_insight: 5,
+  coaching_tip: 10,
   generate_program: 3,
   machine_mistakes: 10,
   rewrite_insight: 10,
@@ -275,10 +276,80 @@ Output ONLY a JSON object with keys "insightText" and "suggestionText", no other
   return payload;
 }
 
+async function handleCoachingTip(
+  payload: {
+    member_id: string;
+    gym_id: string;
+    machine_id: string;
+    machine_name: string;
+    muscle_groups: string[];
+    category: string;
+    experience_level: string;
+    sets_logged: number;
+  },
+  serviceClient: ReturnType<typeof createClient>,
+): Promise<{ tip_text: string; cached: boolean }> {
+  const { member_id, machine_id, machine_name, muscle_groups, category, experience_level, sets_logged } = payload;
+  const today = new Date().toISOString().split('T')[0];
+
+  // Check cache first
+  const { data: cached } = await serviceClient
+    .from('ai_tip_cache')
+    .select('tip_text')
+    .eq('member_id', member_id)
+    .eq('machine_id', machine_id)
+    .eq('cache_date', today)
+    .maybeSingle();
+
+  if (cached?.tip_text) {
+    return { tip_text: cached.tip_text, cached: true };
+  }
+
+  // Generate via Gemini
+  const prompt = `You are a friendly gym coach. Write ONE short post-set tip for a member using the "${machine_name}" machine.
+
+Context:
+- Machine category: ${category}
+- Target muscles: ${muscle_groups.join(', ')}
+- Member experience: ${experience_level}
+- Sets logged today: ${sets_logged}
+
+Rules:
+- Max 60 words
+- Be specific to this machine and muscles
+- Actionable and encouraging
+- Do NOT start with "As an AI" or similar phrases
+- Output ONLY the tip text, nothing else`;
+
+  let tipText = await complete(prompt, 150);
+
+  // Strip "as an AI" type phrases
+  tipText = tipText.replace(/\b(as an ai|as a language model|as an artificial)\b[^.]*[.,]?\s*/gi, '').trim();
+
+  // Enforce 60-word max
+  const words = tipText.split(/\s+/);
+  if (words.length > 60) {
+    tipText = words.slice(0, 60).join(' ') + '.';
+  }
+
+  // Cache result (fire-and-forget)
+  serviceClient
+    .from('ai_tip_cache')
+    .upsert(
+      { member_id, machine_id, cache_date: today, tip_text: tipText, tip_source: 'ai' },
+      { onConflict: 'member_id,machine_id,cache_date' },
+    )
+    .then(() => {})
+    .catch((err: Error) => console.error('[tip-cache] upsert failed:', err.message));
+
+  return { tip_text: tipText, cached: false };
+}
+
 // ─── Feature flag → action mapping ───────────────────────
 
 const ACTION_FLAG_MAP: Record<string, string> = {
   coaching_insight: 'ai_coaching',
+  coaching_tip: 'ai_coaching',
   generate_program: 'ai_program_gen',
   machine_mistakes: 'ai_coaching',
   rewrite_insight: 'ai_coaching',
@@ -351,13 +422,13 @@ Deno.serve(async (req: Request) => {
     const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     const flagKey = ACTION_FLAG_MAP[action];
     if (flagKey) {
-      const { data: flags, error: flagError } = await serviceClient
+      const { data: flag, error: flagError } = await serviceClient
         .from('feature_flags')
-        .select('enabled, profile_id')
-        .eq('key', flagKey)
-        .or(`profile_id.eq.${user.id},profile_id.is.null`);
+        .select('is_enabled')
+        .eq('flag_key', flagKey)
+        .maybeSingle();
 
-      // Issue 4: deny access if flag query itself errors
+      // Deny access if flag query itself errors
       if (flagError) {
         return new Response(JSON.stringify({ error: 'Service unavailable', code: 'FLAG_CHECK_FAILED' }), {
           status: 503,
@@ -365,17 +436,11 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      if (flags && flags.length > 0) {
-        // User-specific override takes precedence over global
-        const userFlag = flags.find((f: { profile_id: string | null }) => f.profile_id === user.id);
-        const globalFlag = flags.find((f: { profile_id: string | null }) => f.profile_id === null);
-        const flag = userFlag ?? globalFlag;
-        if (flag && flag.enabled === false) {
-          return new Response(JSON.stringify({ error: 'Feature disabled', code: 'FEATURE_DISABLED' }), {
-            status: 403,
-            headers,
-          });
-        }
+      if (flag && flag.is_enabled === false) {
+        return new Response(JSON.stringify({ error: 'Feature disabled', code: 'FEATURE_DISABLED' }), {
+          status: 403,
+          headers,
+        });
       }
     }
 
@@ -397,6 +462,9 @@ Deno.serve(async (req: Request) => {
     if (action === 'machine_mistakes' && (!payload.machineName || !Array.isArray(payload.targetMuscles))) {
       return missing('machineName / targetMuscles');
     }
+    if (action === 'coaching_tip' && (!payload.member_id || !payload.machine_id || !payload.machine_name)) {
+      return missing('member_id / machine_id / machine_name');
+    }
     if (action === 'rewrite_insight' && (!payload.insightText || !payload.suggestionText)) {
       return missing('insightText / suggestionText');
     }
@@ -406,6 +474,9 @@ Deno.serve(async (req: Request) => {
     switch (action) {
       case 'coaching_insight':
         result = await handleCoachingInsight(payload);
+        break;
+      case 'coaching_tip':
+        result = await handleCoachingTip(payload, serviceClient);
         break;
       case 'generate_program':
         result = await handleGenerateProgram(payload);

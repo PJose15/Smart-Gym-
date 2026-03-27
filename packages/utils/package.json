@@ -1,5 +1,5 @@
 {
-  "name": "@smartgym/utils",
+  "name": "@nexera/utils",
   "version": "0.1.0",
   "private": true,
   "main": "./src/index.ts",
@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smartgym/types": "workspace:*"
+    "@nexera/types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

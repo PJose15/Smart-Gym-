@@ -1,4 +1,4 @@
-import type { WeightUnit } from '@smartgym/types';
+import type { WeightUnit } from '@nexera/types';
 
 const KG_TO_LBS = 2.20462;
 

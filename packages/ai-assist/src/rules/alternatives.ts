@@ -13,7 +13,7 @@ import type {
   ExperienceLevel,
   MovementPattern,
   EquipmentType,
-} from '@smartgym/types';
+} from '@nexera/types';
 
 // ─── Scoring Constants ──────────────────────────────────
 

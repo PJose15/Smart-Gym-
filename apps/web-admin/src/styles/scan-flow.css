@@ -1,0 +1,129 @@
+/* ═══════════════════════════════════════════════════════════
+   Nexera – Scan Flow Animations
+   PR celebration, set transitions, screen transitions
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── PR Celebration ────────────────────────────────────────── */
+
+@keyframes prBurst {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes prGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 159, 39, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(239, 159, 39, 0.6);
+  }
+}
+
+@keyframes prShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.pr-icon-burst {
+  animation: prBurst 0.6s var(--ease-celebration) both;
+}
+
+.pr-glow {
+  animation: prGlow 2s ease-in-out infinite;
+}
+
+.pr-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(239, 159, 39, 0.08) 45%,
+    rgba(239, 159, 39, 0.15) 50%,
+    rgba(239, 159, 39, 0.08) 55%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: prShimmer 3s ease-in-out infinite;
+}
+
+/* ── Set Logged Transition ─────────────────────────────────── */
+
+@keyframes setSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 80px;
+  }
+}
+
+.set-logged-enter {
+  animation: setSlideDown 0.35s var(--ease-out) both;
+  overflow: hidden;
+}
+
+/* ── Screen Slide Transitions ──────────────────────────────── */
+
+@keyframes screenSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes screenSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+.screen-enter {
+  animation: screenSlideIn 0.3s var(--ease-out) both;
+}
+
+.screen-exit {
+  animation: screenSlideOut 0.2s var(--ease-in) both;
+}
+
+/* ── Number Input Pulse ────────────────────────────────────── */
+
+@keyframes inputPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 139, 212, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(59, 139, 212, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 139, 212, 0);
+  }
+}
+
+.input-pulse {
+  animation: inputPulse 0.4s var(--ease-out);
+}

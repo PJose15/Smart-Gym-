@@ -21,11 +21,11 @@ import type {
   WorkoutExerciseWithSets,
   WorkoutSet,
   Machine,
-} from '@smartgym/types';
-import { getNextSetSuggestion, getFormChecklist, getSafetyNudge } from '@smartgym/ai-assist';
-import type { SafetyNudge } from '@smartgym/ai-assist';
-import type { SessionIntent } from '@smartgym/types';
-import type { NextSetSuggestion, WeightUnit, FormChecklist, SetFeedbackRating, BodyArea } from '@smartgym/types';
+} from '@nexera/types';
+import { getNextSetSuggestion, getFormChecklist, getSafetyNudge } from '@nexera/ai-assist';
+import type { SafetyNudge } from '@nexera/ai-assist';
+import type { SessionIntent } from '@nexera/types';
+import type { NextSetSuggestion, WeightUnit, FormChecklist, SetFeedbackRating, BodyArea } from '@nexera/types';
 import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
 import { logAiDecision } from '../../src/lib/aiAudit';

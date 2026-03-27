@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeGuardrails } from '../rules/guardrails';
 import type { GuardrailInput, WorkoutRecord } from '../rules/guardrails';
-import type { WorkoutSet, GuardrailAcknowledgement } from '@smartgym/types';
+import type { WorkoutSet, GuardrailAcknowledgement } from '@nexera/types';
 
 function makeSet(overrides: Partial<WorkoutSet> & { weight_kg: number; reps: number }): WorkoutSet {
   return {

@@ -7,8 +7,8 @@ import type {
   SessionIntent,
   ExperienceLevel,
   MovementPattern,
-} from '@smartgym/types';
-import { formatWeight } from '@smartgym/utils';
+} from '@nexera/types';
+import { formatWeight } from '@nexera/utils';
 
 // ─── Constants ──────────────────────────────────────────
 

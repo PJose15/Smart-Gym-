@@ -5,7 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const QUEUE_KEY = '@smartgym/offline_queue';
+const QUEUE_KEY = '@nexera/offline_queue';
 
 export interface QueuedItem {
   table: string;

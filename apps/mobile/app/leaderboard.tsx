@@ -15,7 +15,7 @@ import { AnimatedScreen } from '../src/components/AnimatedScreen';
 import { SkeletonGate, LeaderboardScreenSkeleton } from '../src/components/skeleton';
 import { colors } from '../src/theme/colors';
 import { spacing } from '../src/theme/spacing';
-import type { LeaderboardEntry, LeaderboardPeriod } from '@smartgym/types';
+import type { LeaderboardEntry, LeaderboardPeriod } from '@nexera/types';
 
 export default function LeaderboardScreen() {
   const router = useRouter();

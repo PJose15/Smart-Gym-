@@ -170,7 +170,7 @@ export default function AuthScreen() {
           <Animated.View style={[styles.brandIcon, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
             <Text style={styles.brandEmoji}>{'\uD83C\uDFCB\uFE0F'}</Text>
           </Animated.View>
-          <Text style={styles.title}>SmartGym</Text>
+          <Text style={styles.title}>Nexera</Text>
           <Text style={styles.tagline}>
             {mode === 'login' ? loginMsg : signupMsg}
           </Text>

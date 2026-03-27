@@ -5,7 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CACHE_PREFIX = '@smartgym/cache/';
+const CACHE_PREFIX = '@nexera/cache/';
 const CACHE_VERSION = 1;
 
 interface CacheEntry<T> {
@@ -63,7 +63,7 @@ export async function clearCache(key: CacheKey): Promise<void> {
   await AsyncStorage.removeItem(storageKey(key));
 }
 
-/** Remove all SmartGym cache entries. */
+/** Remove all Nexera cache entries. */
 export async function clearAllCaches(): Promise<void> {
   const keys = await AsyncStorage.getAllKeys();
   const cacheKeys = keys.filter((k) => k.startsWith(CACHE_PREFIX));

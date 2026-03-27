@@ -4,7 +4,7 @@ import { useEffect, useState, FormEvent, CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { Gym } from '@smartgym/types';
+import type { Gym } from '@nexera/types';
 import { AnimatedPage } from '../../components/AnimatedPage';
 
 export default function CreateProgramPage() {

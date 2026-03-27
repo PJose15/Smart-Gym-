@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
-import { checkBadgeUnlocks, computeStreak } from '@smartgym/ai-assist';
-import type { BadgeWithStatus } from '@smartgym/types';
+import { checkBadgeUnlocks, computeStreak } from '@nexera/ai-assist';
+import type { BadgeWithStatus } from '@nexera/types';
 
 // ─── Rarity Display Constants ───────────────────────────
 

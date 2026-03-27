@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { AnimatedPage } from '../components/AnimatedPage';
 import { StatCard } from '../components/StatCard';
-import type { MachineMaintenanceOverview, MaintenanceStatus } from '@smartgym/types';
+import type { MachineMaintenanceOverview, MaintenanceStatus } from '@nexera/types';
 
 export default function MaintenancePage() {
   const [machines, setMachines] = useState<MachineMaintenanceOverview[]>([]);

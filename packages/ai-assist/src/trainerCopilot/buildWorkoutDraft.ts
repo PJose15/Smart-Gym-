@@ -3,7 +3,7 @@
  * Generates a coach note draft based on a completed workout.
  */
 
-import type { DraftSignals } from '@smartgym/types';
+import type { DraftSignals } from '@nexera/types';
 import type { WorkoutDraftInput, DraftOutput } from './types';
 import {
   ackWorkout,

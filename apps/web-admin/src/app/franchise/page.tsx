@@ -8,7 +8,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { AnimatedPage } from '../components/AnimatedPage';
 import { StatCard } from '../components/StatCard';
-import type { Franchise, FranchiseGymOverview, FranchiseTotals } from '@smartgym/types';
+import type { Franchise, FranchiseGymOverview, FranchiseTotals } from '@nexera/types';
 
 interface OwnedGym {
   gym_id: string;

@@ -3,7 +3,7 @@
 import { useEffect, useState, CSSProperties } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { Program, ProgramDay, ProgramExercise } from '@smartgym/types';
+import type { Program, ProgramDay, ProgramExercise } from '@nexera/types';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 

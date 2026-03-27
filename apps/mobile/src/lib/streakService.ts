@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
-import { computeStreak } from '@smartgym/ai-assist';
+import { computeStreak } from '@nexera/ai-assist';
 import { awardPoints } from './pointsService';
-import type { StreakResult } from '@smartgym/ai-assist';
+import type { StreakResult } from '@nexera/ai-assist';
 
 export type { StreakResult };
 

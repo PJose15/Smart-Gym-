@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import type { Machine, WorkoutStatus, AlternativeResult } from '@smartgym/types';
-import { getMachineAlternatives } from '@smartgym/ai-assist';
+import type { Machine, WorkoutStatus, AlternativeResult } from '@nexera/types';
+import { getMachineAlternatives } from '@nexera/ai-assist';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { SkeletonGate, MachineDetailSkeleton } from '../../src/components/skeleton';
@@ -22,7 +22,7 @@ import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import { trackEvent } from '../../src/lib/events';
 import { isFeatureEnabled, refreshFeatureFlags, needsRefresh } from '../../src/lib/featureFlags';
-import { generateMachineMistakes, localCache } from '@smartgym/ai-assist';
+import { generateMachineMistakes, localCache } from '@nexera/ai-assist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface MachineWithGym extends Machine {
@@ -71,8 +71,8 @@ const MOVEMENT_LABELS: Record<string, string> = {
   isolation: 'Isolation',
 };
 
-const GYM_MACHINES_CACHE_KEY = '@smartgym:gym_machines';
-const GYM_MACHINES_CACHE_VERSION_KEY = '@smartgym:gym_machines_version';
+const GYM_MACHINES_CACHE_KEY = '@nexera:gym_machines';
+const GYM_MACHINES_CACHE_VERSION_KEY = '@nexera:gym_machines_version';
 
 export default function MachineDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();

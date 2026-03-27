@@ -3,7 +3,7 @@ import type {
   ProgramDay,
   ProgramExercise,
   UserGoal,
-} from '@smartgym/types';
+} from '@nexera/types';
 import type { LLMProvider } from '../providers/llmProvider';
 
 // ─── Inputs ─────────────────────────────────────────────

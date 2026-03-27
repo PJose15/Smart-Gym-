@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { LeaderboardEntry, LeaderboardPeriod } from '@smartgym/types';
+import type { LeaderboardEntry, LeaderboardPeriod } from '@nexera/types';
 
 /**
  * Fetches the leaderboard for a gym using the get_leaderboard RPC.

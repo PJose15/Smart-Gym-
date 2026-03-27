@@ -24,18 +24,18 @@ import type { StreakResult } from '../../src/lib/streakService';
 import { getBadges, RARITY_COLORS, RARITY_LABELS } from '../../src/lib/badgeService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { unregisterPushToken } from '../../src/lib/notificationService';
-import { formatWeight } from '@smartgym/utils';
+import { formatWeight } from '@nexera/utils';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { SkeletonGate, ProfileScreenSkeleton } from '../../src/components/skeleton';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
-import type { UserGoal, ExperienceLevel, WeightUnit, BadgeWithStatus } from '@smartgym/types';
+import type { UserGoal, ExperienceLevel, WeightUnit, BadgeWithStatus } from '@nexera/types';
 
 // ─── Constants ──────────────────────────────────────────
 
-const TRAINING_PROFILE_CACHE_KEY = '@smartgym:training_profile';
+const TRAINING_PROFILE_CACHE_KEY = '@nexera:training_profile';
 
 const GOAL_OPTIONS: { value: UserGoal; label: string }[] = [
   { value: 'strength', label: 'Strength' },
@@ -612,7 +612,7 @@ export default function ProfileScreen() {
       <View style={styles.centered}>
         <BreathingCard>
           <Card style={styles.signInCard}>
-            <Text variant="heading" style={styles.signInTitle}>Sign In to SmartGym</Text>
+            <Text variant="heading" style={styles.signInTitle}>Sign In to Nexera</Text>
             <Text variant="body" color="textSecondary" style={styles.signInSubtitle}>
               Sign in to track your workouts, view your progress, and manage your profile.
             </Text>

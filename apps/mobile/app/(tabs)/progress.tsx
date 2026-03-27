@@ -24,12 +24,12 @@ import {
   computeWeeklyVolume,
   computeWeeklyFrequency,
   computeTrendDirection,
-} from '@smartgym/utils';
-import type { TrendDataPoint, SessionForTrend } from '@smartgym/utils';
+} from '@nexera/utils';
+import type { TrendDataPoint, SessionForTrend } from '@nexera/utils';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { SkeletonGate, ProgressScreenSkeleton } from '../../src/components/skeleton';
 import { MiniChart } from '../../src/components/MiniChart';
-import type { WorkoutSet } from '@smartgym/types';
+import type { WorkoutSet } from '@nexera/types';
 import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
 import { isFeatureEnabled } from '../../src/lib/featureFlags';

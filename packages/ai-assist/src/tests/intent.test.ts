@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getNextSetSuggestion } from '../rules/progression';
 import type { ProgressionInput } from '../rules/progression';
-import type { WorkoutSet } from '@smartgym/types';
+import type { WorkoutSet } from '@nexera/types';
 
 function makeSet(overrides: Partial<WorkoutSet> & { weight_kg: number; reps: number }): WorkoutSet {
   return {

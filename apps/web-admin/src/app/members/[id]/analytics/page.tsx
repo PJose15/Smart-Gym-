@@ -15,8 +15,8 @@ import {
   computeWeeklyVolume,
   computeWeeklyFrequency,
   computeTrendDirection,
-} from '@smartgym/utils';
-import type { SessionForTrend, TrendDataPoint } from '@smartgym/utils';
+} from '@nexera/utils';
+import type { SessionForTrend, TrendDataPoint } from '@nexera/utils';
 
 // ─── Types ──────────────────────────────────────────────
 

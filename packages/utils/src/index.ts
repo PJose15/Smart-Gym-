@@ -24,10 +24,10 @@ export function formatStatValue(value: number, showPlus = false): string {
  * @returns Machine slug or null if invalid
  */
 export function parseQrCode(data: string): string | null {
-  // Expected format: "smartgym://machine/{slug}" or just the slug
+  // Expected format: "nexera://machine/{slug}" or just the slug
   try {
-    if (data.startsWith('smartgym://machine/')) {
-      return data.replace('smartgym://machine/', '');
+    if (data.startsWith('nexera://machine/')) {
+      return data.replace('nexera://machine/', '');
     }
     // Assume it's just a slug if it doesn't match the URL format
     // Validate it's alphanumeric with hyphens/underscores

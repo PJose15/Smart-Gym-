@@ -19,7 +19,7 @@ import type {
   GuardrailAcknowledgement,
   WorkoutSet,
   ExperienceLevel,
-} from '@smartgym/types';
+} from '@nexera/types';
 
 // ─── Input Types ────────────────────────────────────────
 

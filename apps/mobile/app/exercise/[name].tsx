@@ -19,10 +19,10 @@ import {
   compute1RMTrend,
   computeWeightTrend,
   computeStrengthCurve,
-} from '@smartgym/utils';
-import type { TrendDataPoint, SessionForTrend, StrengthCurvePoint } from '@smartgym/utils';
+} from '@nexera/utils';
+import type { TrendDataPoint, SessionForTrend, StrengthCurvePoint } from '@nexera/utils';
 import { MiniChart } from '../../src/components/MiniChart';
-import type { WorkoutSet } from '@smartgym/types';
+import type { WorkoutSet } from '@nexera/types';
 import { colors } from '../../src/theme/colors';
 
 // ─── Types ──────────────────────────────────────────────

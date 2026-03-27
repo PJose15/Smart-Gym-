@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildWorkoutDraft } from '../trainerCopilot/buildWorkoutDraft';
 import { buildWeeklyDraft } from '../trainerCopilot/buildWeeklyDraft';
 import type { WorkoutDraftInput, WeeklyDraftInput } from '../trainerCopilot/types';
-import type { PRDetection, GuardrailInsight } from '@smartgym/types';
+import type { PRDetection, GuardrailInsight } from '@nexera/types';
 
 // ─── Helpers ────────────────────────────────────────────
 

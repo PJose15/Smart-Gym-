@@ -2,8 +2,8 @@ import type {
   WorkoutInsight,
   WorkoutExerciseWithSets,
   WorkoutSet,
-} from '@smartgym/types';
-import { calculateVolume } from '@smartgym/utils';
+} from '@nexera/types';
+import { calculateVolume } from '@nexera/utils';
 import { detectPRs } from './prs';
 
 export interface SummaryInput {
