@@ -36,16 +36,17 @@ export function DNAMiniPentagon({
   animated = false,
   className = '',
 }: DNAMiniPentagonProps) {
+  const color = archetypeColor || '#94A3B8';
   const cx = size / 2;
   const cy = size / 2;
   const maxRadius = size * 0.42;
-  const minRadius = size * 0.08;
   const trackRadius = size * 0.44;
 
   // Calculate polygon points
   const points = DNA_AXES.map((axis) => {
     const value = Math.max(0, Math.min(100, scores[axis.key]));
-    const r = minRadius + (value / 100) * (maxRadius - minRadius);
+    const minR = size * 0.08;
+    const r = minR + (value / 100) * (maxRadius - minR);
     return polarToXY(axis.angle, r, cx, cy);
   });
 
@@ -80,7 +81,7 @@ export function DNAMiniPentagon({
       {/* Filled polygon */}
       <path
         d={polygonPath}
-        fill={archetypeColor + '1A'}
+        fill={color + '1A'}
         className="pentagon-fill"
       />
 
@@ -88,7 +89,7 @@ export function DNAMiniPentagon({
       <path
         d={polygonPath}
         fill="none"
-        stroke={archetypeColor}
+        stroke={color}
         strokeWidth={strokeWidth}
         strokeLinejoin="round"
         className="pentagon-stroke"
@@ -101,7 +102,7 @@ export function DNAMiniPentagon({
           cx={p.x}
           cy={p.y}
           r={size >= 56 ? 2.5 : 1.5}
-          fill={archetypeColor}
+          fill={color}
           className="pentagon-dot"
           style={
             animated

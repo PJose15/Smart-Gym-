@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
+import { ScanPulse } from '@/components/scan/ScanPulse';
 import { MusclePill } from './MusclePill';
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -13,6 +15,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export function MachineLanding() {
   const { machine, goTo } = useScanFlowStore();
+  const [showPulse, setShowPulse] = useState(true);
 
   if (!machine) {
     return (
@@ -94,49 +97,58 @@ export function MachineLanding() {
         </p>
       </div>
 
-      {/* Machine image or placeholder */}
-      <div
-        style={{
-          width: '100%',
-          aspectRatio: '16/10',
-          borderRadius: 'var(--radius-lg)',
-          backgroundColor: 'var(--color-bg-raised)',
-          border: '1px solid var(--color-border-subtle)',
-          overflow: 'hidden',
-          marginBottom: 'var(--space-6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {machine.demo_image_url ? (
-          <img
-            src={machine.demo_image_url}
-            alt={machine.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      {/* Machine image with scan pulse */}
+      <div style={{ position: 'relative', marginBottom: 'var(--space-6)' }}>
+        {showPulse && (
+          <ScanPulse
+            color="var(--gym-primary)"
+            size="md"
+            onComplete={() => setShowPulse(false)}
           />
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 'var(--space-2)',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            <span style={{ fontSize: 40, opacity: 0.4 }}>
-              {CATEGORY_ICONS[machine.category] === 'heart' ? '\u2764' : '\uD83C\uDFCB'}
-            </span>
-            <span style={{ fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)' }}>
-              {machine.category}
-            </span>
-          </div>
         )}
+        <div
+          style={{
+            width: '100%',
+            aspectRatio: '16/10',
+            borderRadius: 'var(--radius-lg)',
+            backgroundColor: 'var(--color-bg-raised)',
+            border: '1px solid var(--color-border-subtle)',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {machine.demo_image_url ? (
+            <img
+              src={machine.demo_image_url}
+              alt={machine.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 'var(--space-2)',
+                color: 'var(--color-text-muted)',
+              }}
+            >
+              <span style={{ fontSize: 40, opacity: 0.4 }}>
+                {CATEGORY_ICONS[machine.category] === 'heart' ? '\u2764' : '\uD83C\uDFCB'}
+              </span>
+              <span style={{ fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)' }}>
+                {machine.category}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Machine name */}
+      {/* Machine name — slides up during pulse */}
       <h1
+        className="machine-name-enter"
         style={{
           margin: 0,
           fontSize: 'var(--text-2xl)',
@@ -163,9 +175,10 @@ export function MachineLanding() {
         </p>
       )}
 
-      {/* Muscle group pills */}
+      {/* Muscle group pills — fades in during pulse */}
       {machine.muscle_groups.length > 0 && (
         <div
+          className="machine-muscles-enter"
           style={{
             display: 'flex',
             flexWrap: 'wrap',

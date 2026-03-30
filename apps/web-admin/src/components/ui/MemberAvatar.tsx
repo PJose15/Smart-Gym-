@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 import type { DNAResult } from '@nexera/types';
 import { DNAMiniPentagon } from '../dna/DNAMiniPentagon';
 
@@ -56,6 +56,10 @@ export function MemberAvatar({
   onPentagonTap,
 }: MemberAvatarProps) {
   const [imgError, setImgError] = useState(false);
+
+  // Reset error state when src changes (e.g. user uploads new avatar)
+  useEffect(() => { setImgError(false); }, [src]);
+
   const avatarPx = AVATAR_SIZE[size];
   const pentagonPx = PENTAGON_SIZE[size];
   const fontSize = FONT_SIZE[size];

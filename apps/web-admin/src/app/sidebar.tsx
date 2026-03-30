@@ -18,6 +18,7 @@ const navItems = [
   { href: '/gamification/badges', label: 'Badges' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/franchise', label: 'Franchise' },
+  { href: '/owner/dashboard', label: 'Owner Dashboard' },
   { href: '/settings', label: 'Settings' },
 ];
 

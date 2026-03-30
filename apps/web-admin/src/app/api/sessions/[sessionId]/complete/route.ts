@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { checkAchievementsForMember } from '@/lib/achievements';
+import { generateSessionFeedEvents } from '@/lib/feedGenerator';
+import { updateChallengeScores } from '@/lib/challengeScoring';
+import { invalidateAndRefreshReadiness } from '@/lib/readiness/readinessCache';
+import { invalidateAndRefreshMuscleMap } from '@/lib/muscleMap/muscleMapCache';
+import { verifyMember } from '@/lib/auth/verifyMember';
 
 const completeSchema = z.object({
   member_id: z.string().uuid(),
@@ -34,7 +31,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const { member_id } = parsed.data;
-    const admin = getAdminClient();
+
+    // Verify the authenticated user owns this member_id
+    const authResult = await verifyMember(member_id);
+    if (authResult instanceof NextResponse) return authResult;
+    const { admin } = authResult;
 
     // Get the session
     const { data: session, error: sessionError } = await admin
@@ -54,63 +55,74 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .update({ completed_at: new Date().toISOString() })
       .eq('id', sessionId);
 
-    // Award points (50 for workout_completed)
+    // Fetch member data + recent sessions + total session count in parallel
     const points = 50;
-    const { data: currentMember } = await admin
-      .from('members')
-      .select('smartgym_score')
-      .eq('id', member_id)
-      .single();
+    const [memberResult, recentSessionsResult, sessionCountResult] = await Promise.all([
+      admin.from('members').select('smartgym_score, best_streak, display_name').eq('id', member_id).single(),
+      admin.from('workout_sessions').select('session_date').eq('member_id', member_id)
+        .not('completed_at', 'is', null).order('session_date', { ascending: false }).limit(30),
+      admin.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('member_id', member_id)
+        .not('completed_at', 'is', null),
+    ]);
 
-    await admin
-      .from('members')
-      .update({
-        smartgym_score: (currentMember?.smartgym_score || 0) + points,
-        last_session_date: session.session_date,
-        last_seen_at: new Date().toISOString(),
-      })
-      .eq('id', member_id);
+    const scoreBeforeSession = memberResult.data?.smartgym_score || 0;
+    const bestStreak = memberResult.data?.best_streak || 0;
+    const displayName = memberResult.data?.display_name || 'Member';
+    const totalSessions = sessionCountResult.count || 0;
 
     // Compute streak
-    const { data: recentSessions } = await admin
-      .from('workout_sessions')
-      .select('session_date')
-      .eq('member_id', member_id)
-      .not('completed_at', 'is', null)
-      .order('session_date', { ascending: false })
-      .limit(30);
-
     let streak = 1;
+    const recentSessions = recentSessionsResult.data;
     if (recentSessions && recentSessions.length > 1) {
       const dates = [...new Set(recentSessions.map((s) => s.session_date))].sort().reverse();
       for (let i = 1; i < dates.length; i++) {
         const curr = new Date(dates[i - 1]);
         const prev = new Date(dates[i]);
         const diffDays = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 3) {
-          streak++;
-        } else {
-          break;
-        }
+        if (diffDays <= 3) { streak++; } else { break; }
       }
     }
 
-    // Update streak on member
-    const { data: memberData } = await admin
-      .from('members')
-      .select('best_streak')
-      .eq('id', member_id)
-      .single();
-
+    // Single combined member update
     await admin
       .from('members')
       .update({
+        smartgym_score: scoreBeforeSession + points,
         current_streak: streak,
-        best_streak: Math.max(streak, memberData?.best_streak || 0),
+        best_streak: Math.max(streak, bestStreak),
         streak_last_updated: session.session_date,
         last_session_date: session.session_date,
+        last_seen_at: new Date().toISOString(),
       })
       .eq('id', member_id);
+
+    // Check achievements and level-ups (pass original score for accurate level-up detection)
+    const achievements = await checkAchievementsForMember(admin, member_id, session.gym_id, scoreBeforeSession);
+
+    // Generate feed events (fire-and-forget)
+    generateSessionFeedEvents(admin, {
+      member_id,
+      gym_id: session.gym_id,
+      display_name: displayName,
+      is_personal_best: session.is_personal_best ?? false,
+      best_weight_lbs: session.best_weight_lbs,
+      streak,
+      total_sessions: totalSessions,
+      leveled_up: achievements.leveledUp,
+      new_level: achievements.newLevel?.level ?? null,
+    });
+
+    // Update challenge scores (fire-and-forget)
+    updateChallengeScores(admin, member_id, session.gym_id, {
+      total_volume_lbs: session.total_volume_lbs || 0,
+      is_personal_best: session.is_personal_best ?? false,
+      machine_id: null,
+      session_id: session.id,
+    });
+
+    // Invalidate and refresh readiness score + muscle map (fire-and-forget)
+    invalidateAndRefreshReadiness(member_id, session.gym_id, admin).catch(() => {});
+    invalidateAndRefreshMuscleMap(member_id, session.gym_id, admin).catch(() => {});
 
     return NextResponse.json({
       success: true,
@@ -123,6 +135,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         points_awarded: points,
         streak,
       },
+      new_achievements: achievements.newAchievements,
+      leveled_up: achievements.leveledUp,
+      new_level: achievements.newLevel,
     });
   } catch {
     return NextResponse.json(

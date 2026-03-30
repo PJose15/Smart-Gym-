@@ -16,6 +16,18 @@ export function AppShell({ children }: AppShellProps) {
     return <>{children}</>;
   }
 
+  // Member routes → handled by (member) layout (dark theme, BottomNav, MemberAuthGate)
+  const memberPaths = ['/home', '/program', '/progress', '/gym', '/profile'];
+  if (memberPaths.some((p) => pathname === p || pathname?.startsWith(p + '/'))) {
+    return <>{children}</>;
+  }
+
+  // Staff routes → handled by their own layouts (trainer layout, owner pages, staff login)
+  const staffPaths = ['/trainer', '/staff', '/owner', '/admin'];
+  if (staffPaths.some((p) => pathname === p || pathname?.startsWith(p + '/'))) {
+    return <>{children}</>;
+  }
+
   // /auth/* routes → centered card, no sidebar (AuthGate handles bypass)
   // Everything else → sidebar + AuthGate (existing admin behavior)
   return (

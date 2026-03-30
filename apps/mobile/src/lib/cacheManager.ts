@@ -24,7 +24,7 @@ export const CacheTTL = {
   todayExplanation: 30 * 60 * 1000,   // 30 minutes
 } as const;
 
-export type CacheKey = keyof typeof CacheTTL | (string & {});
+export type CacheKey = keyof typeof CacheTTL | (string & Record<string, never>);
 
 function storageKey(key: string): string {
   return `${CACHE_PREFIX}${key}`;

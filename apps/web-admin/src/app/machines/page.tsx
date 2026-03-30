@@ -623,9 +623,19 @@ export default function MachinesPage() {
             title="Machines"
             description="Manage gym machines, monitor status, and configure settings for each piece of equipment."
           />
-          <button style={addButtonStyle} className="btn-primary" onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Cancel' : 'Add Machine'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              style={{ ...addButtonStyle, backgroundColor: '#334155' }}
+              onClick={() => {
+                window.open('/api/machines/qr-pdf', '_blank');
+              }}
+            >
+              Export QR PDF
+            </button>
+            <button style={addButtonStyle} className="btn-primary" onClick={() => setShowForm(!showForm)}>
+              {showForm ? 'Cancel' : 'Add Machine'}
+            </button>
+          </div>
         </div>
 
         {error && <div style={errorBoxStyle} className="error-shake">{error}</div>}

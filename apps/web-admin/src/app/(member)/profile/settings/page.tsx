@@ -1,0 +1,145 @@
+'use client';
+
+import { useEffect, useState, FormEvent, CSSProperties } from 'react';
+import type { MemberSettingsData } from '@nexera/types';
+
+const cardStyle: CSSProperties = {
+  backgroundColor: '#1E293B',
+  borderRadius: 10,
+  padding: 20,
+  marginBottom: 16,
+};
+
+const labelStyle: CSSProperties = {
+  display: 'block',
+  marginBottom: 6,
+  fontSize: 12,
+  color: '#94A3B8',
+  fontWeight: 500,
+};
+
+const selectStyle: CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
+  backgroundColor: '#0F172A',
+  border: '1px solid #334155',
+  borderRadius: 8,
+  color: '#F1F5F9',
+  fontSize: 14,
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, fontSize: 13, cursor: 'pointer' }}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span style={{ color: '#F1F5F9' }}>{label}</span>
+    </label>
+  );
+}
+
+export default function MemberSettingsPage() {
+  const [settings, setSettings] = useState<MemberSettingsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    fetch('/api/member/settings')
+      .then((r) => r.json())
+      .then((d) => { setSettings(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  function update(key: keyof MemberSettingsData, value: string | boolean) {
+    if (!settings) return;
+    setSettings({ ...settings, [key]: value });
+  }
+
+  async function handleSave(e: FormEvent) {
+    e.preventDefault();
+    if (!settings) return;
+    setSaving(true);
+    setMsg('');
+
+    const res = await fetch('/api/member/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+
+    if (res.ok) {
+      setMsg('Settings saved!');
+    } else {
+      setMsg('Failed to save.');
+    }
+    setSaving(false);
+  }
+
+  if (loading) return <p style={{ color: '#94A3B8', padding: 20 }}>Loading...</p>;
+  if (!settings) return <p style={{ color: '#EF4444', padding: 20 }}>Failed to load settings.</p>;
+
+  return (
+    <div style={{ padding: '20px 16px' }}>
+      <h1 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Settings</h1>
+
+      <form onSubmit={handleSave}>
+        {/* Units */}
+        <div style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: '#94A3B8' }}>Units & Format</h2>
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>Weight Unit</label>
+            <select value={settings.weight_unit} onChange={(e) => update('weight_unit', e.target.value)} style={selectStyle}>
+              <option value="lbs">lbs</option>
+              <option value="kg">kg</option>
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Date Format</label>
+            <select value={settings.date_format} onChange={(e) => update('date_format', e.target.value)} style={selectStyle}>
+              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Privacy */}
+        <div style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: '#94A3B8' }}>Privacy</h2>
+          <Toggle label="Profile visible to others" checked={settings.profile_visible} onChange={(v) => update('profile_visible', v)} />
+          <Toggle label="Show on leaderboard" checked={settings.show_on_leaderboard} onChange={(v) => update('show_on_leaderboard', v)} />
+          <Toggle label="Share achievements to feed" checked={settings.share_achievements} onChange={(v) => update('share_achievements', v)} />
+          <Toggle label="Share PRs to feed" checked={settings.share_prs_to_feed} onChange={(v) => update('share_prs_to_feed', v)} />
+          <Toggle label="Show streak publicly" checked={settings.show_streak_publicly} onChange={(v) => update('show_streak_publicly', v)} />
+        </div>
+
+        {/* Trainer Sharing */}
+        <div style={cardStyle}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: '#94A3B8' }}>Trainer Sharing</h2>
+          <Toggle label="Share body weight with trainer" checked={settings.share_weight_with_trainer} onChange={(v) => update('share_weight_with_trainer', v)} />
+          <Toggle label="Share workouts with trainer" checked={settings.share_workout_with_trainer} onChange={(v) => update('share_workout_with_trainer', v)} />
+          <Toggle label="Show body weight on profile" checked={settings.show_body_weight} onChange={(v) => update('show_body_weight', v)} />
+        </div>
+
+        {msg && <p style={{ color: msg.includes('saved') ? '#22C55E' : '#EF4444', fontSize: 13, marginBottom: 8 }}>{msg}</p>}
+
+        <button type="submit" disabled={saving} style={{
+          width: '100%',
+          padding: '12px 0',
+          backgroundColor: '#3B82F6',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 8,
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: 'pointer',
+          opacity: saving ? 0.6 : 1,
+        }}>
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
+      </form>
+    </div>
+  );
+}

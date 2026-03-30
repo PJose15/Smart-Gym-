@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
     const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
 
-    // Run 9 queries in parallel (7 original + readiness + muscle map)
+    // Run 10 queries in parallel (7 original + readiness + muscle map + unread check-in)
     const [
       memberResult,
       lastSessionResult,
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       statsResult,
       readinessResult,
       muscleMapResult,
+      unreadCheckInResult,
     ] = await Promise.all([
       // 1. Member data
       admin
@@ -129,6 +130,17 @@ export async function GET(request: NextRequest) {
 
       // 9. Muscle map (cached daily)
       getMuscleMap(member_id, gym_id, admin).catch(() => null),
+
+      // 10. Unread check-in (UI_009)
+      admin
+        .from('weekly_checkins')
+        .select('id')
+        .eq('member_id', member_id)
+        .not('sent_at', 'is', null)
+        .is('read_at', null)
+        .order('sent_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     const member = memberResult.data as {
@@ -174,6 +186,8 @@ export async function GET(request: NextRequest) {
       ? (Date.now() - new Date(lastSession.completed_at).getTime()) < 86400000
       : false;
 
+    const hasUnreadCheckIn = !!unreadCheckInResult.data;
+
     const hero = computeHeroState({
       firstName: member.first_name || member.display_name || 'there',
       leveledUp: leveledUpRecently,
@@ -190,6 +204,7 @@ export async function GET(request: NextRequest) {
       programTotalWeeks: aiProgram?.total_weeks || null,
       trainedToday,
       todaySessions: todaySessions.length,
+      hasUnreadCheckIn,
     });
 
     // Build program context

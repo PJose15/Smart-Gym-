@@ -115,9 +115,9 @@ export default function LeaderboardPage() {
       if (!user) throw new Error('Not authenticated');
 
       const { data: memberData } = await supabase
-        .from('gym_members')
+        .from('members')
         .select('gym_id')
-        .eq('profile_id', user.id)
+        .eq('user_id', user.id)
         .limit(1)
         .maybeSingle();
 
@@ -147,15 +147,17 @@ export default function LeaderboardPage() {
       }
 
       const profileIds = rankings.map((r: { profile_id: string }) => r.profile_id);
-      const { data: profiles, error: profilesErr } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', profileIds);
-      if (profilesErr) throw profilesErr;
+      const { data: members, error: membersErr } = await supabase
+        .from('members')
+        .select('user_id, display_name, email')
+        .in('user_id', profileIds);
+      if (membersErr) throw membersErr;
 
       const profileMap = new Map<string, { full_name: string; email: string }>();
-      for (const p of profiles ?? []) {
-        profileMap.set(p.id, { full_name: p.full_name || 'Unknown', email: p.email || '' });
+      for (const m of members ?? []) {
+        if (m.user_id) {
+          profileMap.set(m.user_id, { full_name: m.display_name || 'Unknown', email: m.email || '' });
+        }
       }
 
       const result: LeaderboardRow[] = rankings.map(

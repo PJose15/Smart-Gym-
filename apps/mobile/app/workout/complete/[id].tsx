@@ -427,7 +427,7 @@ export default function WorkoutCompleteScreen() {
               .map((e: { machine_id: string | null }) => e.machine_id)
               .filter(Boolean))] as string[];
 
-            let machineMap = new Map<string, string[]>();
+            const machineMap = new Map<string, string[]>();
             if (machineIds.length > 0) {
               const { data: machData } = await supabase
                 .from('machines')

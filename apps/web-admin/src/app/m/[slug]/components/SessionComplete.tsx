@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
+import { useCelebrationStore } from '@/lib/stores/celebrationStore';
+import { DayCompleteRitual, type DayCompleteRitualProps } from '@/components/scan/DayCompleteRitual';
 
 interface SessionSummary {
   sets_count: number;
@@ -12,22 +14,28 @@ interface SessionSummary {
   streak: number;
 }
 
+type DayRitualData = Omit<DayCompleteRitualProps, 'onComplete'>;
+
 export function SessionComplete() {
-  const { machine, member, sessionId, scanTimestamp, scanEventId, reset } = useScanFlowStore();
+  const { machine, member, sessionId, scanTimestamp, scanEventId, programContext, reset } = useScanFlowStore();
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [tip, setTip] = useState('');
   const [loading, setLoading] = useState(true);
   const [programReady, setProgramReady] = useState(false);
+  const [dayRitualData, setDayRitualData] = useState<DayRitualData | null>(null);
+  const hasCompleted = useRef(false);
 
-  // Compute session duration
-  const durationSeconds = scanTimestamp ? Math.round((Date.now() - scanTimestamp) / 1000) : null;
+  // Capture duration once at mount
+  const durationRef = useRef(scanTimestamp ? Math.round((Date.now() - scanTimestamp) / 1000) : null);
+  const durationSeconds = durationRef.current;
 
   // Finalize session + fetch tip on mount
   useEffect(() => {
-    if (!sessionId || !member) {
+    if (!sessionId || !member || hasCompleted.current) {
       setLoading(false);
       return;
     }
+    hasCompleted.current = true;
 
     (async () => {
       // Complete session
@@ -40,8 +48,49 @@ export function SessionComplete() {
         if (res.ok) {
           const data = await res.json();
           setSummary(data.summary);
+
+          // Trigger celebrations
+          const { addAchievement, addLevelUp } = useCelebrationStore.getState();
+          if (data.leveled_up && data.new_level) {
+            addLevelUp(data.new_level.level, data.new_level.name, data.new_level.color);
+          }
+          if (data.new_achievements) {
+            for (const a of data.new_achievements) {
+              addAchievement(a.code, a.title, a.points);
+            }
+          }
+
+          // Check if program day is complete
+          if (programContext && member && machine) {
+            try {
+              const dcParams = new URLSearchParams({
+                member_id: member.id,
+                gym_id: machine.gym_id,
+                program_id: programContext.program_id,
+                week_number: String(programContext.week_number),
+                day_number: String(programContext.day_number),
+              });
+              const dcRes = await fetch(`/api/programs/day-complete?${dcParams.toString()}`);
+              if (dcRes.ok) {
+                const dcData = await dcRes.json();
+                if (dcData.complete) {
+                  setDayRitualData({
+                    dayNumber: programContext.day_number,
+                    weekNumber: programContext.week_number,
+                    stats: {
+                      machinesCount: dcData.stats.machines_count,
+                      totalVolumeLbs: dcData.stats.total_volume_lbs,
+                      prsHit: dcData.stats.prs_hit,
+                    },
+                    nextSessionDay: dcData.next_session_day,
+                    isRestDay: dcData.is_rest_day,
+                  });
+                }
+              }
+            } catch (err) { console.warn('day-complete check failed', err); }
+          }
         }
-      } catch { /* non-critical */ }
+      } catch (err) { console.warn('session complete failed', err); }
 
       // Mark scan event as led_to_log
       if (scanEventId) {
@@ -49,7 +98,7 @@ export function SessionComplete() {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ scan_event_id: scanEventId, led_to_log: true }),
-        }).catch(() => { /* non-critical analytics */ });
+        }).catch((err) => { console.warn('scan event patch failed', err); });
       }
 
       // Fetch tip (pass member_id + machine_id for AI-powered tips)
@@ -64,7 +113,7 @@ export function SessionComplete() {
           const data = await tipRes.json();
           setTip(data.tip);
         }
-      } catch { /* non-critical */ }
+      } catch (err) { console.warn('tip fetch failed', err); }
 
       // Fire-and-forget: check if member qualifies for AI program generation
       if (member?.id && machine?.gym_id) {
@@ -73,16 +122,16 @@ export function SessionComplete() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ member_id: member.id, gym_id: machine.gym_id }),
         })
-          .then((r) => r.json())
+          .then((r) => { if (r.ok) return r.json(); })
           .then((data) => {
-            if (data.program_id) setProgramReady(true);
+            if (data?.program_id) setProgramReady(true);
           })
-          .catch(() => { /* non-critical */ });
+          .catch((err) => { console.warn('auto-generate check failed', err); });
       }
 
       setLoading(false);
     })();
-  }, [sessionId, member, machine, scanEventId]);
+  }, [sessionId, member, machine, scanEventId, programContext]);
 
   const handleScanNext = () => {
     // Reset flow state so user can scan a new machine QR code
@@ -92,7 +141,7 @@ export function SessionComplete() {
 
   const handleDoneForToday = () => {
     reset();
-    window.location.href = '/';
+    window.location.href = '/home';
   };
 
   if (loading) {
@@ -113,6 +162,12 @@ export function SessionComplete() {
         paddingTop: 'var(--space-10)',
       }}
     >
+      {dayRitualData && (
+        <DayCompleteRitual
+          {...dayRitualData}
+          onComplete={() => setDayRitualData(null)}
+        />
+      )}
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
         <div style={{ fontSize: 48, marginBottom: 'var(--space-3)' }}>
@@ -147,6 +202,7 @@ export function SessionComplete() {
         >
           <StatBox label="Sets" value={String(summary.sets_count)} />
           <StatBox label="Best" value={`${summary.best_weight_lbs} lbs`} />
+          {/* Full locale-formatted number for detailed stats view (vs ritual's abbreviated "k" format for celebratory splash) */}
           <StatBox label="Volume" value={`${Math.round(summary.total_volume_lbs).toLocaleString()}`} sub="lbs" />
           {durationSeconds !== null && (
             <StatBox label="Duration" value={formatDuration(durationSeconds)} />
