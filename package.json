@@ -10,7 +10,11 @@
     "typecheck": "pnpm -r typecheck",
     "mobile:dev": "pnpm --filter mobile start",
     "mobile:build:android": "pnpm --filter mobile build:android",
-    "mobile:build:ios": "pnpm --filter mobile build:ios"
+    "mobile:build:ios": "pnpm --filter mobile build:ios",
+    "test": "pnpm -F @nexera/ai-assist test -- --run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "preflight": "pnpm lint && pnpm typecheck && pnpm test && pnpm build:web"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
