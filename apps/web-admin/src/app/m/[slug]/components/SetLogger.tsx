@@ -4,9 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
 import { useSessionManager } from '@/lib/hooks/useSessionManager';
 import { usePRDetection } from '@/lib/hooks/usePRDetection';
+import { getPRCelebrationTier, type PRCelebrationTier } from '@/lib/pr/getPRCelebrationTier';
+import { launchBottomConfetti } from '@/lib/ui/confetti';
 import { SetSummaryRow } from './SetSummaryRow';
 import { RPESelector } from './RPESelector';
 import { PRCelebration } from './PRCelebration';
+import { PRBottomSheet } from '@/components/scan/PRBottomSheet';
 
 export function SetLogger() {
   const { machine, member, goTo, programContext, setProgramContext } = useScanFlowStore();
@@ -18,6 +21,7 @@ export function SetLogger() {
   const [rpe, setRpe] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
+  const [activeTier, setActiveTier] = useState<PRCelebrationTier>('none');
 
   const weightRef = useRef<HTMLInputElement>(null);
 
@@ -69,15 +73,21 @@ export function SetLogger() {
     });
 
     if (result) {
-      // Check for PR
+      // Check for PR and decide celebration tier
       if (machine && member) {
-        prDetection.checkPR({
+        const pr = await prDetection.checkPR({
           session_id: result.session_id,
           member_id: member.id,
           machine_id: machine.id,
           weight_lbs: weight,
           reps,
         });
+
+        const tier = getPRCelebrationTier(pr);
+        setActiveTier(tier);
+        if (tier === 'sheet') {
+          launchBottomConfetti();
+        }
       }
 
       // Reset form for next set (keep weight, suggestion will adjust)
@@ -377,12 +387,21 @@ export function SetLogger() {
         </button>
       )}
 
-      {/* PR Celebration Overlay */}
-      {prDetection.activePR && machine && (
+      {/* PR Celebration — Tier 1: full-screen overlay */}
+      {prDetection.activePR && activeTier === 'full' && machine && (
         <PRCelebration
           pr={prDetection.activePR}
           machineName={machine.name}
-          onDismiss={prDetection.dismissPR}
+          onDismiss={() => { prDetection.dismissPR(); setActiveTier('none'); }}
+        />
+      )}
+
+      {/* PR Celebration — Tier 2: bottom sheet */}
+      {prDetection.activePR && activeTier === 'sheet' && machine && (
+        <PRBottomSheet
+          prResult={prDetection.activePR}
+          machineName={machine.name}
+          onDismiss={() => { prDetection.dismissPR(); setActiveTier('none'); }}
         />
       )}
     </div>
