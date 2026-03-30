@@ -123,6 +123,40 @@
     transform-origin: left;
     animation: prTimerDrain 5s linear both;
   }
+
+  /* ── Hero Muscle Ambient — body silhouette behind hero ── */
+
+  @keyframes ambientBreathe {
+    0%, 100% { opacity: var(--ambient-opacity, 0.12); }
+    50%      { opacity: calc(var(--ambient-opacity, 0.12) * 1.5); }
+  }
+
+  .hero-ambient-svg .dominant-region {
+    animation: ambientBreathe 4s ease-in-out infinite;
+  }
+}
+
+/* ── Hero Muscle Ambient positioning ────────────────── */
+
+.hero-muscle-ambient {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+  mask-image: linear-gradient(
+    to right,
+    rgba(0,0,0,0.8) 0%,
+    rgba(0,0,0,1) 60%,
+    rgba(0,0,0,0) 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgba(0,0,0,0.8) 0%,
+    rgba(0,0,0,1) 60%,
+    rgba(0,0,0,0) 100%
+  );
 }
 
 .skeleton {

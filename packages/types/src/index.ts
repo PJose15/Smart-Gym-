@@ -1,4 +1,124 @@
 // ============================================================================
+// Phase 9 — Super Admin Types
+// ============================================================================
+
+export type {
+  AdminSession,
+  PlatformFeatureFlag,
+  PlatformDailyMetrics,
+  PlatformOverviewData,
+  PlatformFlagKey,
+} from './admin';
+
+export { PLATFORM_FLAG_KEYS, CRITICAL_FLAGS } from './admin';
+
+// ============================================================================
+// Phase 8.5 — Performance DNA Types
+// ============================================================================
+
+export type {
+  DNADimension,
+  DNAScores,
+  DNADimensionScore,
+  DNAArchetype,
+  DNASnapshot,
+  DNAResult,
+  DNASignals,
+} from './dna';
+
+// ============================================================================
+// Phase 8.4 — Social Graph Types
+// ============================================================================
+
+export type {
+  GoalType,
+  MemberGoal,
+  MachineLeaderboardEntry,
+  WorkoutShareStatus,
+  WorkoutShareContext,
+  WorkoutShareResults,
+} from './socialGraph';
+
+// ============================================================================
+// Phase 8.3 — Weekly Check-In Types
+// ============================================================================
+
+export type {
+  CheckInSentBy,
+  PRDetail,
+  CheckInWeekData,
+  CheckInRecord,
+} from './checkIn';
+
+// ============================================================================
+// Phase 8.2 — Muscle Map Types
+// ============================================================================
+
+export type {
+  MuscleGroupKey,
+  MuscleRecoveryStateLabel,
+  BodySide,
+  MuscleGroupInfo,
+  MachineMuscleMappings,
+  MuscleRecoveryState,
+  MuscleMapRecommendations,
+  MuscleMapResult,
+} from './muscleMap';
+
+// ============================================================================
+// Phase 8.1 — Training Readiness Score Types
+// ============================================================================
+
+export type {
+  ReadinessZone,
+  ReadinessInputs,
+  ReadinessSignalBreakdown,
+  ReadinessResult,
+} from './readiness';
+
+// ============================================================================
+// Phase 7 — Billing & Feature Gating Types
+// ============================================================================
+
+export type {
+  SubscriptionTier,
+  SubscriptionStatus,
+  BillingInterval,
+  TierFeatures,
+  TierDefinition,
+  BillingInfo,
+  FeatureAccessResult,
+} from './billing';
+
+// ============================================================================
+// Phase 6 — Staff / Trainer / Owner Types
+// ============================================================================
+
+export type {
+  StaffRole,
+  StaffSession,
+  TrainerNoteType,
+  TrainerNote,
+  MessageSenderType,
+  TrainerMessage,
+  ConversationPreview,
+  OwnerDashboardMetrics,
+  MachinePerformance,
+  PeakHourCell,
+  ActivityFeedItem,
+  GymSettings,
+  MemberSettingsData,
+  InvitationStatus,
+  TrainerInvitation,
+  TrainerTodayData,
+  AttentionItem,
+  TrainingNowMember,
+  TodaySessionSummary,
+  RecentPR,
+  TrainerMemberListItem,
+} from './staff';
+
+// ============================================================================
 // Equipment Types
 // ============================================================================
 
@@ -670,4 +790,166 @@ export interface NotificationLog {
   status: 'sent' | 'failed' | 'delivered';
   expo_receipt_id: string | null;
   created_at: string;
+}
+
+// ============================================================================
+// Phase 4 — Member Home Screen Types
+// ============================================================================
+
+export interface HeroStateData {
+  variant: string;
+  greeting: string;
+  headline: string;
+  subline: string;
+  metric: string | null;
+  gradient: string;
+  accent: string;
+}
+
+export interface LevelInfoData {
+  level: number;
+  name: string;
+  color: string;
+  progressPct: number;
+  pointsToNext: number;
+  score: number;
+}
+
+export interface TodaySessionData {
+  id: string;
+  machine_name: string;
+  sets_count: number;
+  total_volume_lbs: number;
+  completed_at: string | null;
+}
+
+export interface ProgramContextData {
+  program_id: string;
+  program_name: string;
+  week_number: number;
+  total_weeks: number;
+  sessions_completed: number;
+  sessions_total: number;
+  today_exercises: Array<{ name: string; sets: number; reps: number }>;
+  progress_pct: number;
+  is_complete: boolean;
+}
+
+export interface ChallengeData {
+  challenge_id: string;
+  title: string;
+  rank: number;
+  total_participants: number;
+  progress_pct: number;
+  days_left: number;
+}
+
+export interface FeedEventData {
+  id: string;
+  event_type: string;
+  member_name: string;
+  description: string;
+  created_at: string;
+  reaction_count: number;
+}
+
+export interface WeeklyStatsData {
+  sessions_this_week: number;
+  volume_this_week_lbs: number;
+  prs_this_month: number;
+  all_time_sessions: number;
+  all_time_volume_lbs: number;
+}
+
+export interface HomeScreenData {
+  hero: HeroStateData;
+  level: LevelInfoData;
+  today_sessions: TodaySessionData[];
+  program: ProgramContextData | null;
+  challenge: ChallengeData | null;
+  feed: FeedEventData[];
+  stats: WeeklyStatsData;
+  readiness: import('./readiness').ReadinessResult | null;
+  muscleMap: import('./muscleMap').MuscleMapResult | null;
+}
+
+// ============================================================================
+// Phase 5 — Social and Community Types
+// ============================================================================
+
+export type FeedEventType =
+  | 'pr_weight' | 'pr_volume' | 'streak_milestone'
+  | 'program_complete' | 'session_milestone' | 'level_up'
+  | 'achievement_earned' | 'challenge_launched' | 'challenge_joined'
+  | 'challenge_rank_1' | 'challenge_podium' | 'challenge_complete'
+  | 'member_spotlight' | 'gym_announcement' | 'new_member' | 'goal_reached'
+  | 'archetype_change' | 'workout_share';
+
+export type ReactionType = 'strength' | 'fire' | 'champion' | 'letsgo';
+
+export interface FeedReactionCounts {
+  strength: number;
+  fire: number;
+  champion: number;
+  letsgo: number;
+}
+
+export interface FeedEventFull extends FeedEventData {
+  member_id: string | null;
+  avatar_url: string | null;
+  context_data: Record<string, unknown>;
+  priority: string;
+  is_pinned: boolean;
+  comment_count: number;
+  reactions: FeedReactionCounts;
+  my_reactions: ReactionType[];
+}
+
+export interface FeedComment {
+  id: string;
+  member_id: string;
+  member_name: string;
+  avatar_url: string | null;
+  comment_text: string;
+  mentioned_member_ids: string[];
+  created_at: string;
+}
+
+export type ChallengeType = 'volume' | 'sessions' | 'machine_explorer' | 'pr' | 'streak' | 'team' | 'custom';
+export type ChallengeEntryMode = 'open' | 'opt-in' | 'invite';
+
+export interface ChallengeListItem extends ChallengeData {
+  description: string | null;
+  challenge_type: ChallengeType;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  is_joined: boolean;
+  my_score: number | null;
+  top_score: number;
+}
+
+export interface ChallengeParticipant {
+  member_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  current_score: number;
+  current_rank: number;
+  joined_at: string;
+}
+
+export interface ChallengeDetail extends ChallengeListItem {
+  entry_mode: ChallengeEntryMode;
+  prize_type: string | null;
+  prize_description: string | null;
+  participants: ChallengeParticipant[];
+  my_participation: ChallengeParticipant | null;
+}
+
+export type LeaderboardType = 'volume-weekly' | 'sessions-weekly' | 'prs-monthly' | 'streak-live' | 'score-alltime';
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  my_rank: number | null;
+  total_participants: number;
 }

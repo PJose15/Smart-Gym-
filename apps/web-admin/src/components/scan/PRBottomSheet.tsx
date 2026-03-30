@@ -26,13 +26,14 @@ export function PRBottomSheet({ prResult, machineName, onDismiss }: PRBottomShee
 
   // Swipe tracking
   const touchStartY = useRef<number | null>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const exitingRef = useRef(false);
 
   const dismiss = useCallback(() => {
-    if (exiting) return;
+    if (exitingRef.current) return;
+    exitingRef.current = true;
     setExiting(true);
     setTimeout(() => onDismissRef.current(), EXIT_ANIM_MS);
-  }, [exiting]);
+  }, []);
 
   // Haptic on mount + auto-dismiss
   useEffect(() => {
@@ -40,6 +41,15 @@ export function PRBottomSheet({ prResult, machineName, onDismiss }: PRBottomShee
 
     const timer = setTimeout(dismiss, AUTO_DISMISS_MS);
     return () => clearTimeout(timer);
+  }, [dismiss]);
+
+  // Escape key dismiss
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismiss();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, [dismiss]);
 
   // Swipe-down to dismiss
@@ -66,6 +76,7 @@ export function PRBottomSheet({ prResult, machineName, onDismiss }: PRBottomShee
       {/* Backdrop */}
       <div
         onClick={dismiss}
+        role="presentation"
         style={{
           position: 'fixed',
           inset: 0,
@@ -78,7 +89,6 @@ export function PRBottomSheet({ prResult, machineName, onDismiss }: PRBottomShee
 
       {/* Sheet */}
       <div
-        ref={sheetRef}
         className={exiting ? 'pr-bottom-sheet--exiting' : 'pr-bottom-sheet'}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
