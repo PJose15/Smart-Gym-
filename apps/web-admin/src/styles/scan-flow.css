@@ -127,3 +127,343 @@
 .input-pulse {
   animation: inputPulse 0.4s var(--ease-out);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Progressive Set Form — UI_004
+   Step-by-step set log: weight → reps → rpe → confirm
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Step slide-in animation ──────────────────────────────── */
+
+@keyframes stepSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.progressive-step-enter {
+  animation: stepSlideIn 0.2s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressive-step-enter,
+  .previous-set-row {
+    animation: none;
+  }
+  .step-dot {
+    transition: none;
+  }
+}
+
+/* ── Form layout ──────────────────────────────────────────── */
+
+.progressive-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--page-padding-x);
+  flex: 1;
+}
+
+/* ── Step indicator dots ──────────────────────────────────── */
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  transition: background var(--duration-fast) var(--ease-default),
+              transform var(--duration-fast) var(--ease-default);
+}
+
+.step-dot.active {
+  background: var(--gym-primary);
+  transform: scale(1.4);
+}
+
+.step-dot.complete {
+  background: var(--color-green);
+}
+
+/* ── Form step container ──────────────────────────────────── */
+
+.form-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: 280px;
+  justify-content: center;
+}
+
+.form-step-actions {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.form-step-actions .pf-btn {
+  flex: 1;
+}
+
+/* ── Step label ───────────────────────────────────────────── */
+
+.step-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  font-weight: var(--weight-medium);
+}
+
+/* ── Hints ────────────────────────────────────────────────── */
+
+.suggestion-hint,
+.target-hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.rpe-hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ── Rolling number stepper ───────────────────────────────── */
+
+.rolling-number-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stepper-btn {
+  width: var(--tap-target-pref);
+  height: var(--tap-target-pref);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border-default);
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default);
+}
+
+.stepper-btn:hover:not(:disabled) {
+  border-color: var(--gym-primary);
+  background: var(--color-blue-subtle);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.number-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.number-input {
+  width: 120px;
+  height: var(--tap-target-lg);
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-bold);
+  font-family: var(--font-mono);
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-unit {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+/* ── RPE grid ─────────────────────────────────────────────── */
+
+.rpe-grid {
+  display: flex;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.rpe-chip {
+  flex: 1;
+  height: var(--tap-target-min);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border-default);
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.rpe-chip:hover {
+  border-color: var(--gym-primary);
+}
+
+.rpe-chip-selected {
+  border-color: var(--color-blue);
+  background: var(--color-blue-subtle);
+  color: var(--color-blue);
+}
+
+/* ── Confirm summary ──────────────────────────────────────── */
+
+.set-summary-preview {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.summary-divider {
+  color: var(--color-text-disabled);
+}
+
+.summary-rpe {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+
+.pf-btn {
+  width: 100%;
+  height: var(--tap-target-lg);
+  border-radius: var(--radius-lg);
+  border: none;
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.pf-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pf-btn-primary {
+  background: var(--gym-primary);
+  color: var(--gym-text-on-primary);
+  box-shadow: var(--shadow-blue);
+}
+
+.pf-btn-ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+  height: var(--tap-target-min);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.pf-btn-outline {
+  background: transparent;
+  border: 2px solid var(--color-border-default);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  height: var(--tap-target-min);
+}
+
+/* ── Previous sets list ───────────────────────────────────── */
+
+.previous-sets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.previous-set-row {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-subtle);
+  animation: setSlideDown 0.35s var(--ease-out) both;
+}
+
+.previous-set-num {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-blue-subtle);
+  color: var(--color-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  font-family: var(--font-mono);
+  margin-right: var(--space-3);
+  flex-shrink: 0;
+}
+
+.previous-set-detail {
+  flex: 1;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.previous-set-x {
+  color: var(--color-text-muted);
+  margin: 0 var(--space-1);
+}
+
+.previous-set-rpe {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* ── Error ────────────────────────────────────────────────── */
+
+.form-error {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-red-subtle);
+  font-size: var(--text-sm);
+  color: var(--color-red-light);
+  text-align: center;
+  width: 100%;
+}
