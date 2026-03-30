@@ -1,17 +1,19 @@
 'use client';
 
-import type { HeroStateData, LevelInfoData, MuscleMapResult } from '@nexera/types';
+import type { HeroStateData, LevelInfoData, MuscleMapResult, DNAResult } from '@nexera/types';
 import { CSSProperties } from 'react';
 import { HeroMuscleAmbient } from './HeroMuscleAmbient';
+import { MemberAvatar } from '@/components/ui/MemberAvatar';
 
 interface HeroZoneProps {
   hero: HeroStateData;
   level: LevelInfoData;
   avatarUrl?: string | null;
   muscleMap?: MuscleMapResult | null;
+  dna?: DNAResult | null;
 }
 
-export function HeroZone({ hero, level, avatarUrl, muscleMap }: HeroZoneProps) {
+export function HeroZone({ hero, level, avatarUrl, muscleMap, dna }: HeroZoneProps) {
   const containerStyle: CSSProperties = {
     background: hero.gradient,
     borderRadius: 'var(--radius-lg, 16px)',
@@ -30,22 +32,14 @@ export function HeroZone({ hero, level, avatarUrl, muscleMap }: HeroZoneProps) {
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Avatar + Greeting row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <div style={{
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            backgroundImage: avatarUrl ? `url(${avatarUrl})` : undefined,
-            backgroundSize: 'cover',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 18,
-            color: '#fff',
-          }}>
-            {!avatarUrl && hero.greeting.charAt(hero.greeting.lastIndexOf(' ') + 1)}
-          </div>
+          <MemberAvatar
+            src={avatarUrl}
+            name={hero.greeting.split(' ').pop() || ''}
+            size="medium"
+            level={level.level}
+            levelColor={level.color}
+            dna={dna}
+          />
           <div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
               {hero.greeting}
