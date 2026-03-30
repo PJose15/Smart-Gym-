@@ -49,3 +49,29 @@ export type { CoachingInsight, CoachingInput } from './rules/coaching';
 // Program Generation
 export { generateProgram } from './generators/programGenerator';
 export type { GeneratedProgram, GeneratedProgramDay, GeneratedExercise, ProgramGenerationInput } from './generators/programGenerator';
+
+// Hero State (Phase 4)
+export { computeHeroState } from './rules/heroState';
+export type { HeroInput, HeroState, HeroVariant } from './rules/heroState';
+
+// Sunday Anticipation (UI_009)
+export { isSundayAnticipation, getMinutesUntilSixPM, checkSundayAnticipation } from './rules/sundayAnticipation';
+
+// Levels (Phase 4)
+export { computeLevel, computeLevelProgress, ALL_LEVELS } from './rules/levels';
+export type { LevelInfo, LevelProgress } from './rules/levels';
+
+// Readiness Score (Phase 8.1)
+export { calculateReadinessScore, ZONE_COLORS } from './rules/readiness';
+
+// Muscle Recovery (Phase 8.2)
+export { MUSCLE_GROUPS, MUSCLE_GROUP_MAP, MACHINE_MUSCLE_MAP, normalizeMachineName, getMachineMuscleMappings } from './rules/muscleGroups';
+export { getRecoveryHoursRequired, calculateMuscleState, buildMuscleRecommendations, calculateBalanceScore } from './rules/muscleRecovery';
+
+// Performance DNA (Phase 8.5)
+export { calculatePowerScore } from './rules/dna/calculatePowerScore';
+export { calculateConsistencyScore } from './rules/dna/calculateConsistencyScore';
+export { calculateProgressionScore, calculateWeightSlope } from './rules/dna/calculateProgressionScore';
+export { calculateMindsetScore } from './rules/dna/calculateMindsetScore';
+export { determineArchetype } from './rules/dna/determineArchetype';
+export { ARCHETYPES, ARCHETYPE_PRESTIGE, DIMENSION_CONFIG, DNA_AXES } from './rules/dnaConstants';

@@ -796,8 +796,20 @@ export interface NotificationLog {
 // Phase 4 — Member Home Screen Types
 // ============================================================================
 
+export type HeroVariant =
+  | 'checkin-coming'
+  | 'level-up'
+  | 'program-complete'
+  | 'pr-recent'
+  | 'streak-milestone'
+  | 'comeback'
+  | 'program-week'
+  | 'today-trained'
+  | 'no-program'
+  | 'today-fresh';
+
 export interface HeroStateData {
-  variant: string;
+  variant: HeroVariant;
   greeting: string;
   headline: string;
   subline: string;
