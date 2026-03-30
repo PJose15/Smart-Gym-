@@ -66,27 +66,12 @@ export function SetLogger() {
   const targetReps = programContext?.target_exercise?.default_reps ?? null;
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="set-logger-wrapper">
       {/* Header */}
-      <div style={{ padding: 'var(--space-6) var(--page-padding-x) 0' }}>
-        <h2
-          style={{
-            margin: 0,
-            fontSize: 'var(--text-lg)',
-            fontWeight: 'var(--weight-bold)',
-            color: 'var(--color-text-primary)',
-          }}
-        >
-          {machine.name}
-        </h2>
+      <div className="set-logger-header">
+        <h2 className="set-logger-machine-name">{machine.name}</h2>
         {member && (
-          <p style={{ margin: 0, marginTop: 2, fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+          <p className="set-logger-member-info">
             {member.first_name || member.display_name} — Set {session.setsCount + 1}
           </p>
         )}
@@ -94,25 +79,15 @@ export function SetLogger() {
 
       {/* Program context banner */}
       {programContext?.machine_in_plan && programContext.target_exercise && (
-        <div
-          style={{
-            margin: 'var(--space-3) var(--page-padding-x) 0',
-            padding: 'var(--space-2) var(--space-3)',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'var(--color-green-subtle)',
-            border: '1px solid color-mix(in srgb, var(--color-green) 20%, transparent)',
-            fontSize: 'var(--text-xs)',
-            color: 'var(--color-green-light)',
-          }}
-        >
-          <span style={{ fontWeight: 'var(--weight-bold)' }}>
+        <div className="set-logger-program-banner">
+          <span className="set-logger-program-title">
             Program: {programContext.title}
           </span>
           {' — '}
           {programContext.target_exercise.exercise_name}
           {': '}
           {programContext.target_exercise.default_sets}x{programContext.target_exercise.default_reps}
-          <span style={{ marginLeft: 'var(--space-2)', opacity: 0.7 }}>
+          <span className="set-logger-program-week">
             Week {programContext.week_number}, Day {programContext.day_number}
           </span>
         </div>

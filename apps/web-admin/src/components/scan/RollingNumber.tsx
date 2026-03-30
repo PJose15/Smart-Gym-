@@ -41,7 +41,7 @@ export function RollingNumber({
       onChange(min);
       return;
     }
-    const parsed = parseInt(raw, 10);
+    const parsed = Math.floor(Number(raw));
     if (!isNaN(parsed)) {
       onChange(Math.max(min, Math.min(max, parsed)));
     }

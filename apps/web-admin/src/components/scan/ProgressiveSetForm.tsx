@@ -198,6 +198,7 @@ export function ProgressiveSetForm({
                 type="button"
                 className="pf-btn pf-btn-ghost"
                 onClick={() => dispatch({ type: 'GO_BACK' })}
+                aria-label="Back to weight step"
               >
                 Back
               </button>
@@ -247,6 +248,7 @@ export function ProgressiveSetForm({
                 type="button"
                 className="pf-btn pf-btn-ghost"
                 onClick={() => dispatch({ type: 'GO_BACK' })}
+                aria-label="Back to reps step"
               >
                 Back
               </button>
@@ -257,6 +259,7 @@ export function ProgressiveSetForm({
                   dispatch({ type: 'SKIP_RPE' });
                   haptics.light();
                 }}
+                aria-label="Skip effort rating"
               >
                 Skip
               </button>
@@ -293,6 +296,7 @@ export function ProgressiveSetForm({
               className="pf-btn pf-btn-ghost"
               onClick={() => dispatch({ type: 'GO_BACK' })}
               disabled={state.isSubmitting}
+              aria-label="Edit set details"
             >
               Edit
             </button>
@@ -323,7 +327,7 @@ export function ProgressiveSetForm({
       {previousSets.length > 0 && (
         <button
           type="button"
-          className="pf-btn pf-btn-outline pf-btn-done"
+          className="pf-btn pf-btn-outline"
           onClick={onDone}
           disabled={loading || state.isSubmitting}
         >
