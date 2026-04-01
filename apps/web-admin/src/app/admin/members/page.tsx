@@ -126,8 +126,7 @@ export default function AdminMembersPage() {
   if (loading && members.length === 0) {
     return (
       <div style={spinnerStyle}>
-        <style>{`@keyframes mspin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-elevated)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'mspin 0.7s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-elevated)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       </div>
     );
   }

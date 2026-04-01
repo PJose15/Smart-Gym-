@@ -48,7 +48,8 @@ export async function GET() {
       const tier = row.tier ?? 'starter';
       if (byTier[tier]) byTier[tier].count += 1;
 
-      const st = row.subscription_status ?? 'unknown';
+      const validStatuses = ['active', 'trialing', 'past_due', 'cancelled'];
+      const st = validStatuses.includes(row.subscription_status) ? row.subscription_status : 'unknown';
       byStatus[st] = (byStatus[st] ?? 0) + 1;
 
       if (st === 'active' || st === 'trialing') {
@@ -78,8 +79,9 @@ export async function GET() {
     }));
 
     // MRR trend from platform_daily_metrics
-    const lastMonthMrr = (metricsRes.data ?? []).length > 0
-      ? Number((metricsRes.data ?? [])[(metricsRes.data ?? []).length - 1]?.mrr_usd ?? 0)
+    const metrics = metricsRes.data ?? [];
+    const lastMonthMrr = metrics.length > 0
+      ? Number(metrics[metrics.length - 1]?.mrr_usd ?? 0)
       : 0;
 
     return NextResponse.json({
@@ -90,7 +92,7 @@ export async function GET() {
       past_due_count: pastDueRes.data?.length ?? 0,
       revenue_by_plan: revenueByPlan,
       by_status: byStatus,
-      mrr_trend: (metricsRes.data ?? []).map((m: { date: string; mrr_usd: number }) => ({
+      mrr_trend: metrics.map((m: { date: string; mrr_usd: number }) => ({
         date: m.date,
         mrr: Number(m.mrr_usd),
       })),

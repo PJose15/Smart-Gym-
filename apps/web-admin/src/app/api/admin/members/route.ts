@@ -9,10 +9,11 @@ export async function GET(request: Request) {
     const { admin } = result;
     const { searchParams } = new URL(request.url);
 
-    const search = searchParams.get('search') ?? '';
-    const status = searchParams.get('status') ?? 'all';
-    const limit = Math.min(Number(searchParams.get('limit') ?? 50), 100);
-    const offset = Number(searchParams.get('offset') ?? 0);
+    const search = (searchParams.get('search') ?? '').slice(0, 256);
+    const statusParam = searchParams.get('status') ?? 'all';
+    const status = ['all', 'active', 'inactive', 'suspended'].includes(statusParam) ? statusParam : 'all';
+    const limit = Math.min(Math.max(1, Number(searchParams.get('limit') ?? 50) || 50), 100);
+    const offset = Math.max(0, Number(searchParams.get('offset') ?? 0) || 0);
 
     let query = admin
       .from('members')

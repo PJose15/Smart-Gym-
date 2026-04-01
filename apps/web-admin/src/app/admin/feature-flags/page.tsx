@@ -93,9 +93,12 @@ export default function AdminFeatureFlagsPage() {
     setToggling(flag.flag_key);
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (isCritical && !newEnabled) headers['x-confirm-critical'] = '1';
+
       const res = await fetch(`/api/admin/feature-flags/${flag.flag_key}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ is_enabled: newEnabled }),
       });
 
@@ -126,8 +129,7 @@ export default function AdminFeatureFlagsPage() {
   if (loading) {
     return (
       <div style={spinnerStyle}>
-        <style>{`@keyframes ffspin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-highest)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'ffspin 0.7s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-highest)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       </div>
     );
   }

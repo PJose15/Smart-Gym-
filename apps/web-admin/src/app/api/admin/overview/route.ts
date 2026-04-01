@@ -26,7 +26,7 @@ export async function GET() {
         gyms: gymsRes.error, members: membersRes.error, sessions: sessionsRes.error,
         metrics: metricsRes.error, newRegs: newRegsRes.error,
       });
-      throw new Error('Failed to fetch metrics');
+      return NextResponse.json({ error: 'Not Found' }, { status: 404 });
     }
 
     const metrics = metricsRes.data ?? [];

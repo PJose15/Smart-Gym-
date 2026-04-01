@@ -25,7 +25,7 @@ export async function PATCH(
 
     // Log admin action
     await admin.from('admin_actions_log').insert({
-      admin_id: result.user_id,
+      admin_user_id: result.user_id,
       action_type: 'resolve_error',
       target_type: 'error_log',
       target_id: errorId,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySuperAdmin } from '@/lib/auth/verifySuperAdmin';
 import { toggleFlag } from '@/lib/featureFlags';
-import { PLATFORM_FLAG_KEYS } from '@nexera/types';
+import { PLATFORM_FLAG_KEYS, CRITICAL_FLAGS } from '@nexera/types';
 
 export async function PATCH(
   request: NextRequest,
@@ -22,6 +22,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Not Found' }, { status: 404 });
     }
     const isEnabled = body.is_enabled;
+
+    // Critical flags require explicit confirmation header when disabling
+    const isCritical = CRITICAL_FLAGS.includes(flagKey as (typeof CRITICAL_FLAGS)[number]);
+    if (isCritical && !isEnabled && !request.headers.get('x-confirm-critical')) {
+      return NextResponse.json({ error: 'Critical flag requires confirmation', confirm: true }, { status: 409 });
+    }
 
     const updated = await toggleFlag(result.admin, flagKey, isEnabled, result.user_id);
     return NextResponse.json(updated);

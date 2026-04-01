@@ -9,11 +9,13 @@ export async function GET(request: Request) {
     const { admin } = result;
     const { searchParams } = new URL(request.url);
 
-    const status = searchParams.get('status') ?? 'all';
-    const tier = searchParams.get('tier') ?? 'all';
-    const search = searchParams.get('search') ?? '';
-    const limit = Math.min(Number(searchParams.get('limit') ?? 50), 100);
-    const offset = Number(searchParams.get('offset') ?? 0);
+    const statusParam = searchParams.get('status') ?? 'all';
+    const status = ['all', 'active', 'trialing', 'past_due', 'cancelled'].includes(statusParam) ? statusParam : 'all';
+    const tierParam = searchParams.get('tier') ?? 'all';
+    const tier = ['all', 'starter', 'growth', 'pro'].includes(tierParam) ? tierParam : 'all';
+    const search = (searchParams.get('search') ?? '').slice(0, 256);
+    const limit = Math.min(Math.max(1, Number(searchParams.get('limit') ?? 50) || 50), 100);
+    const offset = Math.max(0, Number(searchParams.get('offset') ?? 0) || 0);
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
 
@@ -68,9 +70,9 @@ export async function GET(request: Request) {
       const members = memberCounts[g.id] ?? 0;
       const sessions = sessionCounts[g.id] ?? 0;
 
-      // Simplified health score: activity (sessions/members ratio) + billing status
+      // Health score: activity (sessions/members ratio capped at 3x) + billing status
       let health = 50;
-      if (members > 0) health += Math.min(30, Math.round((sessions / members) * 10));
+      if (members > 0) health += Math.min(30, Math.round(Math.min(sessions / members, 3) * 10));
       if (g.subscription_status === 'active') health += 20;
       else if (g.subscription_status === 'trialing') health += 10;
       health = Math.min(100, Math.max(0, health));

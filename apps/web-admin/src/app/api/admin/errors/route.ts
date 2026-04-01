@@ -9,11 +9,12 @@ export async function GET(request: Request) {
     const { admin } = result;
     const { searchParams } = new URL(request.url);
 
-    const status = searchParams.get('status') ?? 'unresolved';
+    const statusParam = searchParams.get('status') ?? 'unresolved';
+    const status = ['unresolved', 'resolved', 'all'].includes(statusParam) ? statusParam : 'unresolved';
     const env = searchParams.get('env') ?? 'all';
-    const search = searchParams.get('search') ?? '';
-    const limit = Math.min(Number(searchParams.get('limit') ?? 50), 100);
-    const offset = Number(searchParams.get('offset') ?? 0);
+    const search = (searchParams.get('search') ?? '').slice(0, 256);
+    const limit = Math.min(Math.max(1, Number(searchParams.get('limit') ?? 50) || 50), 100);
+    const offset = Math.max(0, Number(searchParams.get('offset') ?? 0) || 0);
 
     const twentyFourHoursAgo = new Date(Date.now() - 86400000).toISOString();
 

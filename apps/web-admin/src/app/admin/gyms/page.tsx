@@ -139,8 +139,7 @@ export default function AdminGymsPage() {
   if (!data) {
     return (
       <div style={spinnerStyle}>
-        <style>{`@keyframes gspin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-elevated)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'gspin 0.7s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-elevated)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       </div>
     );
   }
