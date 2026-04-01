@@ -33,16 +33,16 @@ const gridStyle: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as any,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const cardTitleStyle: CSSProperties = {
-  fontSize: 14,
-  fontWeight: 600,
-  color: '#555',
+  fontSize: 'var(--text-base)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-secondary)',
   textTransform: 'uppercase',
   letterSpacing: '0.3px',
   marginBottom: 16,
@@ -55,39 +55,39 @@ const tableContainerStyle: CSSProperties = {
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '10px 12px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
-  fontWeight: 600,
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-secondary)',
   fontSize: 12,
   textTransform: 'uppercase',
 };
 
 const tdStyle: CSSProperties = {
   padding: '10px 12px',
-  borderBottom: '1px solid #f0f0f0',
-  fontSize: 14,
-  color: '#333',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  fontSize: 'var(--text-base)' as any,
+  color: 'var(--color-text-primary)',
 };
 
 const statValueStyle: CSSProperties = {
-  fontSize: 32,
-  fontWeight: 700,
-  color: '#1a1a2e',
+  fontSize: 'var(--text-3xl)' as any,
+  fontWeight: 'var(--weight-bold)' as any,
+  color: 'var(--color-text-primary)',
   marginBottom: 4,
 };
 
 const statLabelStyle: CSSProperties = {
-  fontSize: 13,
-  color: '#999',
+  fontSize: 'var(--text-sm)' as any,
+  color: 'var(--color-text-muted)',
 };
 
 const errorStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#b71c1c',
+  backgroundColor: 'var(--color-red-subtle)',
+  color: 'var(--color-red-light)',
   padding: '14px 18px',
-  borderRadius: 8,
-  fontSize: 14,
+  borderRadius: 'var(--radius-sm)' as any,
+  fontSize: 'var(--text-base)' as any,
   marginBottom: 16,
 };
 
@@ -101,11 +101,11 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -230,7 +230,7 @@ export default function AnalyticsPage() {
               <span style={statsChipStyle}>{contextCounts.length} feature{contextCounts.length !== 1 ? 's' : ''} used</span>
               <span style={statsChipStyle}>{avgDaily} avg calls/day</span>
               <span style={statsChipStyle}>Top: {topFeature}</span>
-              {conversion && <span style={{ ...statsChipStyle, backgroundColor: parseFloat(conversion.rate) >= 50 ? '#e8f5e9' : '#fff3e0', color: parseFloat(conversion.rate) >= 50 ? '#2e7d32' : '#e65100' }}>{conversion.rate}% adoption</span>}
+              {conversion && <span style={{ ...statsChipStyle, backgroundColor: parseFloat(conversion.rate) >= 50 ? 'var(--color-green-subtle)' : 'var(--color-gold-subtle)', color: parseFloat(conversion.rate) >= 50 ? 'var(--color-green-light)' : 'var(--color-gold-light)' }}>{conversion.rate}% adoption</span>}
             </div>
           );
         })()}
@@ -273,13 +273,13 @@ export default function AnalyticsPage() {
                   {contextCounts.map((row, i) => (
                     <tr key={row.context} className={`row-stagger stagger-${Math.min(i, 19)}`}>
                       <td style={tdStyle}>{contextLabel(row.context)}</td>
-                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600 }}>{row.count}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 'var(--weight-bold)' as any }}>{row.count}</td>
                     </tr>
                   ))}
                   {contextCounts.length === 0 && (
                     <tr>
                       <td style={tdStyle} colSpan={2}>
-                        <span style={{ color: '#999' }}>No AI calls recorded in the last 7 days.</span>
+                        <span style={{ color: 'var(--color-text-muted)' }}>No AI calls recorded in the last 7 days.</span>
                       </td>
                     </tr>
                   )}
@@ -309,13 +309,13 @@ export default function AnalyticsPage() {
                           day: 'numeric',
                         })}
                       </td>
-                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600 }}>{row.count}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 'var(--weight-bold)' as any }}>{row.count}</td>
                     </tr>
                   ))}
                   {dailyCounts.length === 0 && (
                     <tr>
                       <td style={tdStyle} colSpan={2}>
-                        <span style={{ color: '#999' }}>No data for this period.</span>
+                        <span style={{ color: 'var(--color-text-muted)' }}>No data for this period.</span>
                       </td>
                     </tr>
                   )}

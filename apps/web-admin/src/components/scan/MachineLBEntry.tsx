@@ -29,7 +29,7 @@ const currentMemberStyle: CSSProperties = {
 };
 
 export function MachineLBEntry({ entry }: MachineLBEntryProps) {
-  const rankColor = RANK_COLORS[entry.rank] ?? '#94A3B8';
+  const rankColor = RANK_COLORS[entry.rank] ?? 'var(--color-text-secondary)';
 
   return (
     <div style={entry.is_current_member ? currentMemberStyle : rowStyle}>
@@ -63,13 +63,13 @@ export function MachineLBEntry({ entry }: MachineLBEntryProps) {
           width: 28,
           height: 28,
           borderRadius: '50%',
-          backgroundColor: '#334155',
+          backgroundColor: 'var(--color-bg-elevated)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: 12,
           fontWeight: 600,
-          color: '#94A3B8',
+          color: 'var(--color-text-secondary)',
           flexShrink: 0,
         }}>
           {entry.display_name.charAt(0).toUpperCase()}
@@ -82,7 +82,7 @@ export function MachineLBEntry({ entry }: MachineLBEntryProps) {
         minWidth: 0,
         fontSize: 13,
         fontWeight: entry.is_current_member ? 600 : 400,
-        color: entry.is_current_member ? '#F1F5F9' : '#E2E8F0',
+        color: entry.is_current_member ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',

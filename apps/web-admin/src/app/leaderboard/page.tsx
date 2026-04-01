@@ -20,55 +20,55 @@ type Period = 'weekly' | 'all_time';
 // ─── Styles ─────────────────────────────────────────────
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as any,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const toggleContainerStyle: CSSProperties = {
   display: 'inline-flex',
   gap: 0,
-  backgroundColor: '#f0f0f0',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderRadius: 'var(--radius-md)' as any,
   padding: 3,
   marginBottom: 20,
 };
 
 const toggleBtnStyle: CSSProperties = {
   padding: '8px 20px',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-sm)' as any,
   border: 'none',
   cursor: 'pointer',
-  fontSize: 14,
-  fontWeight: 600,
+  fontSize: 'var(--text-base)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
   background: 'transparent',
-  color: '#888',
+  color: 'var(--color-text-muted)',
   transition: 'all 0.2s',
 };
 
 const toggleActiveStyle: CSSProperties = {
   ...toggleBtnStyle,
-  backgroundColor: '#4361ee',
-  color: '#fff',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
 };
 
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '10px 12px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
-  fontWeight: 600,
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-secondary)',
   fontSize: 12,
   textTransform: 'uppercase',
 };
 
 const tdStyle: CSSProperties = {
   padding: '10px 12px',
-  borderBottom: '1px solid #f0f0f0',
-  fontSize: 14,
-  color: '#333',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  fontSize: 'var(--text-base)' as any,
+  color: 'var(--color-text-primary)',
 };
 
 const rankMedals: Record<number, string> = {
@@ -87,11 +87,11 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -203,11 +203,11 @@ export default function LeaderboardPage() {
 
         {error && (
           <div style={{
-            backgroundColor: '#fdecea',
-            color: '#b71c1c',
+            backgroundColor: 'var(--color-red-subtle)',
+            color: 'var(--color-red-light)',
             padding: '14px 18px',
-            borderRadius: 8,
-            fontSize: 14,
+            borderRadius: 'var(--radius-sm)' as any,
+            fontSize: 'var(--text-base)' as any,
             marginBottom: 16,
           }}>
             {error}
@@ -247,12 +247,12 @@ export default function LeaderboardPage() {
               <tbody>
                 {rows.map((row, i) => (
                   <tr key={row.profile_id} className={`row-stagger stagger-${Math.min(i, 19)}`}>
-                    <td style={{ ...tdStyle, fontWeight: 700, fontSize: 16 }}>
+                    <td style={{ ...tdStyle, fontWeight: 'var(--weight-bold)' as any, fontSize: 16 }}>
                       {rankMedals[row.rank] || `#${row.rank}`}
                     </td>
-                    <td style={{ ...tdStyle, fontWeight: 600 }}>{row.full_name}</td>
-                    <td style={{ ...tdStyle, color: '#888' }}>{row.email}</td>
-                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#3a0ca3' }}>
+                    <td style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any }}>{row.full_name}</td>
+                    <td style={{ ...tdStyle, color: 'var(--color-text-muted)' }}>{row.email}</td>
+                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 'var(--weight-bold)' as any, color: 'var(--color-purple-light)' }}>
                       {row.total_points.toLocaleString()}
                     </td>
                   </tr>
@@ -260,7 +260,7 @@ export default function LeaderboardPage() {
                 {rows.length === 0 && (
                   <tr>
                     <td style={tdStyle} colSpan={4}>
-                      <div style={{ textAlign: 'center', padding: 32, color: '#999' }}>
+                      <div style={{ textAlign: 'center', padding: 32, color: 'var(--color-text-muted)' }}>
                         No points recorded for this period yet.
                       </div>
                     </td>

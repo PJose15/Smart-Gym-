@@ -16,7 +16,7 @@ const trainerBubble: CSSProperties = {
   maxWidth: '70%',
   padding: '10px 14px',
   borderRadius: '12px 12px 4px 12px',
-  backgroundColor: '#3B82F6',
+  backgroundColor: 'var(--color-blue)',
   color: '#fff',
   fontSize: 14,
   alignSelf: 'flex-end',
@@ -27,8 +27,8 @@ const memberBubble: CSSProperties = {
   maxWidth: '70%',
   padding: '10px 14px',
   borderRadius: '12px 12px 12px 4px',
-  backgroundColor: '#1E293B',
-  color: '#F1F5F9',
+  backgroundColor: 'var(--color-bg-raised)',
+  color: 'var(--color-text-primary)',
   fontSize: 14,
   alignSelf: 'flex-start',
   lineHeight: 1.5,
@@ -36,7 +36,7 @@ const memberBubble: CSSProperties = {
 
 const timeStyle: CSSProperties = {
   fontSize: 10,
-  color: '#64748B',
+  color: 'var(--color-text-muted)',
   marginTop: 2,
 };
 
@@ -54,7 +54,7 @@ export function MessageThread({ messages }: Props) {
   if (messages.length === 0) {
     return (
       <div style={{ ...containerStyle, justifyContent: 'center', alignItems: 'center' }}>
-        <p style={{ color: '#64748B', fontSize: 14 }}>No messages yet. Start the conversation!</p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>No messages yet. Start the conversation!</p>
       </div>
     );
   }

@@ -45,11 +45,11 @@ export function GymHeader({ gymName, logoUrl, memberCount }: GymHeaderProps) {
         </div>
       )}
       <div style={{ flex: 1 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
           {gymName}
         </h1>
         {memberCount != null && (
-          <p style={{ fontSize: 13, color: '#64748B', margin: 0, marginTop: 2 }}>
+          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0, marginTop: 2 }}>
             {memberCount} member{memberCount !== 1 ? 's' : ''}
           </p>
         )}

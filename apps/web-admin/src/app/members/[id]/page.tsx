@@ -19,10 +19,10 @@ interface MemberStat {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as any,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const statGridStyle: CSSProperties = {
@@ -33,35 +33,35 @@ const statGridStyle: CSSProperties = {
 };
 
 const statValueStyle: CSSProperties = {
-  fontSize: 28,
-  fontWeight: 700,
-  color: '#1a1a2e',
+  fontSize: 'var(--text-2xl)' as any,
+  fontWeight: 'var(--weight-bold)' as any,
+  color: 'var(--color-text-primary)',
   marginBottom: 4,
 };
 
 const statLabelStyle: CSSProperties = {
-  fontSize: 13,
-  color: '#999',
+  fontSize: 'var(--text-sm)' as any,
+  color: 'var(--color-text-muted)',
 };
 
 const linkBtnStyle: CSSProperties = {
   display: 'inline-block',
   padding: '10px 20px',
-  fontSize: 14,
-  fontWeight: 600,
-  color: '#ffffff',
-  backgroundColor: '#4361ee',
-  borderRadius: 8,
+  fontSize: 'var(--text-base)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
+  borderRadius: 'var(--radius-sm)' as any,
   textDecoration: 'none',
 };
 
 const backLinkStyle: CSSProperties = {
   display: 'inline-block',
   marginBottom: 16,
-  fontSize: 14,
-  color: '#4361ee',
+  fontSize: 'var(--text-base)' as any,
+  color: 'var(--color-blue-light)',
   textDecoration: 'none',
-  fontWeight: 600,
+  fontWeight: 'var(--weight-medium)' as any,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -74,11 +74,11 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 export default function MemberDetailPage() {
@@ -165,7 +165,7 @@ export default function MemberDetailPage() {
         />
 
         {error && (
-          <div style={{ backgroundColor: '#fdecea', color: '#b71c1c', padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16 }}>
+          <div style={{ backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)', padding: '14px 18px', borderRadius: 'var(--radius-sm)' as any, fontSize: 'var(--text-base)' as any, marginBottom: 16 }}>
             {error}
           </div>
         )}
@@ -177,11 +177,11 @@ export default function MemberDetailPage() {
             <span style={{
               ...statsChipStyle,
               backgroundColor: stats.lastWorkout
-                ? (Date.now() - new Date(stats.lastWorkout).getTime() < 7 * 86400000 ? '#e8f5e9' : '#fff3e0')
-                : '#fce4e6',
+                ? (Date.now() - new Date(stats.lastWorkout).getTime() < 7 * 86400000 ? 'var(--color-green-subtle)' : 'var(--color-gold-subtle)')
+                : 'var(--color-red-subtle)',
               color: stats.lastWorkout
-                ? (Date.now() - new Date(stats.lastWorkout).getTime() < 7 * 86400000 ? '#2e7d32' : '#e65100')
-                : '#c62828',
+                ? (Date.now() - new Date(stats.lastWorkout).getTime() < 7 * 86400000 ? 'var(--color-green-light)' : 'var(--color-gold-light)')
+                : 'var(--color-red-light)',
             }}>
               {stats.lastWorkout
                 ? `Last active ${Math.floor((Date.now() - new Date(stats.lastWorkout).getTime()) / 86400000)}d ago`
@@ -189,8 +189,8 @@ export default function MemberDetailPage() {
             </span>
             <span style={{
               ...statsChipStyle,
-              backgroundColor: stats.currentProgram ? '#e3f2fd' : '#f5f5f5',
-              color: stats.currentProgram ? '#1565c0' : '#999',
+              backgroundColor: stats.currentProgram ? 'var(--color-blue-subtle)' : 'var(--color-bg-elevated)',
+              color: stats.currentProgram ? 'var(--color-blue-light)' : 'var(--color-text-muted)',
             }}>
               {stats.currentProgram ? `Program: ${stats.currentProgram}` : 'No program'}
             </span>
@@ -215,7 +215,7 @@ export default function MemberDetailPage() {
               <div style={statLabelStyle}>Last Workout</div>
             </div>
             <div style={cardStyle} className="section-glow">
-              <div style={{ ...statValueStyle, fontSize: 20 }}>
+              <div style={{ ...statValueStyle, fontSize: 'var(--text-lg)' as any }}>
                 {stats.currentProgram ?? 'None'}
               </div>
               <div style={statLabelStyle}>Current Program</div>

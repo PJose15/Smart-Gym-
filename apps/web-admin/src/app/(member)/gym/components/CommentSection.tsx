@@ -35,9 +35,9 @@ const inputStyle: CSSProperties = {
   flex: 1,
   padding: '8px 12px',
   borderRadius: 8,
-  border: '1px solid #334155',
-  backgroundColor: '#0F172A',
-  color: '#E2E8F0',
+  border: '1px solid var(--color-border-default)',
+  backgroundColor: 'var(--color-bg-base)',
+  color: 'var(--color-text-secondary)',
   fontSize: 13,
   outline: 'none',
 };
@@ -46,7 +46,7 @@ const sendBtnStyle: CSSProperties = {
   padding: '8px 14px',
   borderRadius: 8,
   border: 'none',
-  backgroundColor: '#3B82F6',
+  backgroundColor: 'var(--color-blue)',
   color: '#fff',
   fontSize: 13,
   fontWeight: 600,
@@ -122,11 +122,11 @@ export function CommentSection({ eventId, memberId }: CommentSectionProps) {
   return (
     <div style={containerStyle}>
       {loading ? (
-        <div style={{ fontSize: 12, color: '#64748B', padding: 4 }}>Loading comments...</div>
+        <div style={{ fontSize: 12, color: 'var(--color-text-muted)', padding: 4 }}>Loading comments...</div>
       ) : (
         <>
           {comments.length === 0 && (
-            <div style={{ fontSize: 12, color: '#64748B', padding: 4 }}>No comments yet</div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', padding: 4 }}>No comments yet</div>
           )}
           {comments.map(c => (
             <div key={c.id} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
@@ -134,29 +134,29 @@ export function CommentSection({ eventId, memberId }: CommentSectionProps) {
                 width: 24,
                 height: 24,
                 borderRadius: '50%',
-                backgroundColor: '#334155',
+                backgroundColor: 'var(--color-bg-elevated)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 10,
-                color: '#94A3B8',
+                color: 'var(--color-text-secondary)',
                 fontWeight: 700,
                 flexShrink: 0,
               }}>
                 {c.member_name.charAt(0).toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, color: '#E2E8F0' }}>
+                <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
                   <span style={{ fontWeight: 600 }}>{c.member_name}</span>{' '}
                   {c.comment_text}
                 </div>
-                <div style={{ display: 'flex', gap: 8, fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                <div style={{ display: 'flex', gap: 8, fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>
                   <span>{timeAgo(c.created_at)}</span>
                   {c.member_id === memberId && (
                     <button
                       type="button"
                       onClick={() => handleDelete(c.id)}
-                      style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 11, padding: 0 }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-red)', cursor: 'pointer', fontSize: 11, padding: 0 }}
                     >
                       Delete
                     </button>

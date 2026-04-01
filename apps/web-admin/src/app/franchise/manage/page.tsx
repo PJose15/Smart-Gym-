@@ -141,7 +141,7 @@ export default function FranchiseManagePage() {
     return (
       <div style={centeredStyle}>
         <div style={spinnerStyle} className="spinner-enhanced" />
-        <p style={{ color: '#999', marginTop: 16 }}>Loading...</p>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: 16 }}>Loading...</p>
       </div>
     );
   }
@@ -168,7 +168,7 @@ export default function FranchiseManagePage() {
         {ownedGyms.length > 0 && (
           <div style={statsStripStyle}>
             <span style={statsChipStyle}>{ownedGyms.length} owned gym{ownedGyms.length !== 1 ? 's' : ''}</span>
-            <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{franchiseGymIds.size} in franchise</span>
+            <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' }}>{franchiseGymIds.size} in franchise</span>
             <span style={statsChipStyle}>{ownedGyms.length - franchiseGymIds.size} not added</span>
           </div>
         )}
@@ -213,13 +213,13 @@ export default function FranchiseManagePage() {
 
                 return (
                   <div key={gym.gym_id} style={gymRowStyle} className="table-row-hover">
-                    <span style={{ fontWeight: 600, color: '#1a1a2e' }}>{gym.name}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{gym.name}</span>
                     <button
                       onClick={() => handleToggleGym(gym.gym_id)}
                       disabled={isSaving}
                       style={{
                         ...toggleBtnStyle,
-                        backgroundColor: inFranchise ? '#2a9d8f' : '#dee2e6',
+                        backgroundColor: inFranchise ? 'var(--color-green)' : 'var(--color-bg-highest)',
                         opacity: isSaving ? 0.6 : 1,
                       }}
                     >
@@ -228,7 +228,7 @@ export default function FranchiseManagePage() {
                         transform: inFranchise ? 'translateX(20px)' : 'translateX(0)',
                       }} />
                     </button>
-                    <span style={{ fontSize: 12, color: '#666', marginLeft: 8 }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginLeft: 8 }}>
                       {inFranchise ? 'In franchise' : 'Not added'}
                     </span>
                   </div>
@@ -242,24 +242,24 @@ export default function FranchiseManagePage() {
   );
 }
 
-/* ── Styles ─────────────────────────────────────────────── */
+/* -- Styles --------------------------------------------------------- */
 
 const backLinkStyle: CSSProperties = {
-  display: 'inline-block', marginBottom: 16, fontSize: 14,
-  color: '#4361ee', textDecoration: 'none', fontWeight: 600,
+  display: 'inline-block', marginBottom: 16, fontSize: 'var(--text-sm)',
+  color: 'var(--color-blue)', textDecoration: 'none', fontWeight: 600,
 };
 
 const sectionStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 24,
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 16, fontWeight: 600, color: '#333', marginTop: 0, marginBottom: 12,
+  fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--color-text-primary)', marginTop: 0, marginBottom: 12,
 };
 
 const descStyle: CSSProperties = {
-  fontSize: 14, color: '#666', marginTop: 0, marginBottom: 16,
+  fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginTop: 0, marginBottom: 16,
 };
 
 const nameRowStyle: CSSProperties = {
@@ -267,52 +267,53 @@ const nameRowStyle: CSSProperties = {
 };
 
 const textInputStyle: CSSProperties = {
-  padding: '8px 14px', borderRadius: 6, border: '1px solid #ddd',
-  fontSize: 14, flex: 1, maxWidth: 400,
+  padding: '8px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border-default)',
+  fontSize: 'var(--text-sm)', flex: 1, maxWidth: 400,
+  backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)',
 };
 
 const saveBtnStyle: CSSProperties = {
-  padding: '8px 16px', borderRadius: 6, border: 'none',
-  backgroundColor: '#4361ee', color: '#fff', fontSize: 13,
+  padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
+  backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)',
   fontWeight: 600, cursor: 'pointer',
 };
 
 const gymRowStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 12,
-  padding: '12px 0', borderBottom: '1px solid #f0f0f0',
+  padding: '12px 0', borderBottom: '1px solid var(--color-border-subtle)',
 };
 
 const toggleBtnStyle: CSSProperties = {
-  width: 44, height: 24, borderRadius: 12, border: 'none',
+  width: 44, height: 24, borderRadius: 'var(--radius-full)', border: 'none',
   cursor: 'pointer', position: 'relative', transition: 'background-color 0.2s',
   padding: 0, marginLeft: 'auto',
 };
 
 const toggleKnobStyle: CSSProperties = {
-  display: 'block', width: 20, height: 20, borderRadius: 10,
-  backgroundColor: '#ffffff', position: 'absolute', top: 2, left: 2,
-  transition: 'transform 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+  display: 'block', width: 20, height: 20, borderRadius: 'var(--radius-full)',
+  backgroundColor: 'var(--color-text-primary)', position: 'absolute', top: 2, left: 2,
+  transition: 'transform 0.2s', boxShadow: 'var(--shadow-sm)',
 };
 
 const centeredStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 40,
-  textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 40,
+  textAlign: 'center', border: '1px solid var(--color-border-subtle)',
   display: 'flex', flexDirection: 'column', alignItems: 'center',
 };
 
 const spinnerStyle: CSSProperties = {
-  width: 32, height: 32, border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7', borderRadius: '50%',
+  width: 32, height: 32, border: '3px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)', borderRadius: '50%',
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#fef2f2', border: '1px solid #fecaca',
-  borderRadius: 8, padding: '12px 16px', marginBottom: 16,
-  color: '#dc2626', fontSize: 14,
+  backgroundColor: 'var(--color-red-subtle)', border: '1px solid var(--color-red)',
+  borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: 16,
+  color: 'var(--color-red-light)', fontSize: 'var(--text-sm)',
 };
 
 const emptyStyle: CSSProperties = {
-  color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+  color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', padding: 20,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -325,9 +326,9 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
-  fontSize: 12,
+  borderRadius: 'var(--radius-full)',
+  fontSize: 'var(--text-xs)',
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };

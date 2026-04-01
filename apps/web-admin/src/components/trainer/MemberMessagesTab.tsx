@@ -4,7 +4,7 @@ import { CSSProperties } from 'react';
 import Link from 'next/link';
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 20,
   textAlign: 'center',
@@ -13,7 +13,7 @@ const cardStyle: CSSProperties = {
 export function MemberMessagesTab({ memberId }: { memberId: string }) {
   return (
     <div style={cardStyle}>
-      <p style={{ color: '#94A3B8', fontSize: 14, marginBottom: 12 }}>
+      <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, marginBottom: 12 }}>
         View the full message thread with this member.
       </p>
       <Link
@@ -21,7 +21,7 @@ export function MemberMessagesTab({ memberId }: { memberId: string }) {
         style={{
           display: 'inline-block',
           padding: '10px 20px',
-          backgroundColor: '#3B82F6',
+          backgroundColor: 'var(--color-blue)',
           color: '#fff',
           borderRadius: 8,
           textDecoration: 'none',

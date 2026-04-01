@@ -6,16 +6,16 @@ interface PageHeaderProps {
 }
 
 const titleStyle: CSSProperties = {
-    fontSize: 24,
-    fontWeight: 700,
-    color: '#1a1a2e',
+    fontSize: 'var(--text-xl)' as unknown as number,
+    fontWeight: 600,
+    color: 'var(--color-text-primary)',
     margin: 0,
     marginBottom: 4,
 };
 
 const descriptionStyle: CSSProperties = {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 'var(--text-base)' as unknown as number,
+    color: 'var(--color-text-secondary)',
     margin: 0,
 };
 

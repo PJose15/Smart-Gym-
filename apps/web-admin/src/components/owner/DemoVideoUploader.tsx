@@ -13,13 +13,13 @@ const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 const ACCEPTED_TYPES = ['video/mp4'];
 
 const containerStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 16,
 };
 
 const dropZoneStyle: CSSProperties = {
-  border: '2px dashed #334155',
+  border: '2px dashed var(--color-border-default)',
   borderRadius: 10,
   padding: 24,
   textAlign: 'center',
@@ -29,7 +29,7 @@ const dropZoneStyle: CSSProperties = {
 
 const dropZoneActiveStyle: CSSProperties = {
   ...dropZoneStyle,
-  borderColor: '#3B82F6',
+  borderColor: 'var(--color-blue)',
   backgroundColor: 'rgba(59, 130, 246, 0.05)',
 };
 
@@ -106,7 +106,7 @@ export function DemoVideoUploader({ machineId, currentVideoUrl, onUploadComplete
         marginBottom: 12,
       }}>
         <span style={{ fontSize: 14 }}>🎬</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#F1F5F9' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
           Demo Video
         </span>
       </div>
@@ -118,7 +118,7 @@ export function DemoVideoUploader({ machineId, currentVideoUrl, onUploadComplete
           borderRadius: 8,
           overflow: 'hidden',
           aspectRatio: '16/10',
-          backgroundColor: '#0F172A',
+          backgroundColor: 'var(--color-bg-base)',
         }}>
           <video
             src={currentVideoUrl}
@@ -149,7 +149,7 @@ export function DemoVideoUploader({ machineId, currentVideoUrl, onUploadComplete
 
         {uploading ? (
           <div>
-            <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
               Uploading...
             </div>
             <div style={{
@@ -162,7 +162,7 @@ export function DemoVideoUploader({ machineId, currentVideoUrl, onUploadComplete
               <div style={{
                 width: `${progress}%`,
                 height: '100%',
-                backgroundColor: '#3B82F6',
+                backgroundColor: 'var(--color-blue)',
                 transition: 'width 0.3s ease',
               }} />
             </div>
@@ -170,10 +170,10 @@ export function DemoVideoUploader({ machineId, currentVideoUrl, onUploadComplete
         ) : (
           <>
             <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>📹</div>
-            <div style={{ fontSize: 13, color: '#E2E8F0', fontWeight: 500 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>
               {currentVideoUrl ? 'Replace video' : 'Upload demo video'}
             </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
               MP4 H.264 · 720p+ · Max {MAX_SIZE_MB}MB
             </div>
           </>
@@ -185,7 +185,7 @@ export function DemoVideoUploader({ machineId, currentVideoUrl, onUploadComplete
         <div style={{
           marginTop: 8,
           fontSize: 12,
-          color: '#EF4444',
+          color: 'var(--color-red)',
           backgroundColor: 'rgba(239, 68, 68, 0.08)',
           borderRadius: 6,
           padding: '6px 10px',

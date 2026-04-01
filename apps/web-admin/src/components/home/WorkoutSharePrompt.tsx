@@ -25,7 +25,7 @@ interface WorkoutSharePromptProps {
 const AUTO_DISMISS_MS = 8000;
 
 const bannerStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 14,
   border: '1px solid rgba(59, 130, 246, 0.2)',
@@ -108,10 +108,10 @@ export function WorkoutSharePrompt({
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#F1F5F9', marginBottom: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 4 }}>
               Share your workout?
             </div>
-            <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.4, marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4, marginBottom: 10 }}>
               Let gym members know you&apos;re training today
             </div>
 
@@ -125,8 +125,8 @@ export function WorkoutSharePrompt({
                   padding: '6px 14px',
                   borderRadius: 8,
                   border: 'none',
-                  backgroundColor: '#3B82F6',
-                  color: '#FFFFFF',
+                  backgroundColor: 'var(--color-blue)',
+                  color: 'var(--color-text-primary)',
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -140,9 +140,9 @@ export function WorkoutSharePrompt({
                 style={{
                   padding: '6px 14px',
                   borderRadius: 8,
-                  border: '1px solid #334155',
+                  border: '1px solid var(--color-border-default)',
                   backgroundColor: 'transparent',
-                  color: '#94A3B8',
+                  color: 'var(--color-text-secondary)',
                   fontSize: 12,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -162,7 +162,7 @@ export function WorkoutSharePrompt({
                 marginTop: 8,
                 background: 'none',
                 border: 'none',
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 fontSize: 11,
                 cursor: 'pointer',
                 padding: 0,

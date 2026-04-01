@@ -7,12 +7,12 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const hours = Array.from({ length: 18 }, (_, i) => i + 5); // 5am-10pm
 
 function getColor(count: number, max: number): string {
-  if (count === 0 || max === 0) return '#0F172A';
+  if (count === 0 || max === 0) return 'var(--color-bg-base)';
   const ratio = count / max;
   if (ratio > 0.75) return '#DC2626';
   if (ratio > 0.5) return '#F97316';
   if (ratio > 0.25) return '#EAB308';
-  return '#22C55E';
+  return 'var(--color-green)';
 }
 
 const cellStyle: CSSProperties = {
@@ -23,7 +23,7 @@ const cellStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   fontSize: 9,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
 };
 
 interface Props {
@@ -43,9 +43,9 @@ export function PeakHoursGrid({ data }: Props) {
       <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 11 }}>
         <thead>
           <tr>
-            <th style={{ padding: '4px 8px', color: '#64748B', fontSize: 10 }}></th>
+            <th style={{ padding: '4px 8px', color: 'var(--color-text-muted)', fontSize: 10 }}></th>
             {hours.map((h) => (
-              <th key={h} style={{ padding: '4px 2px', color: '#64748B', fontSize: 10, fontWeight: 400 }}>
+              <th key={h} style={{ padding: '4px 2px', color: 'var(--color-text-muted)', fontSize: 10, fontWeight: 400 }}>
                 {h % 12 || 12}{h >= 12 ? 'p' : 'a'}
               </th>
             ))}
@@ -54,7 +54,7 @@ export function PeakHoursGrid({ data }: Props) {
         <tbody>
           {days.map((day, di) => (
             <tr key={day}>
-              <td style={{ padding: '2px 8px', color: '#94A3B8', fontSize: 11, fontWeight: 500 }}>{day}</td>
+              <td style={{ padding: '2px 8px', color: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 500 }}>{day}</td>
               {hours.map((h) => {
                 const count = cellMap.get(`${di}-${h}`) ?? 0;
                 return (

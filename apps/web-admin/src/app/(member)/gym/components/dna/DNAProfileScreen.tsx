@@ -22,7 +22,7 @@ const screenStyle: CSSProperties = {
 const sectionTitleStyle: CSSProperties = {
   fontSize: 14,
   fontWeight: 700,
-  color: '#CBD5E1',
+  color: 'var(--color-text-secondary)',
   margin: '20px 0 10px',
 };
 
@@ -33,7 +33,7 @@ const toggleBtnStyle: CSSProperties = {
   borderRadius: 8,
   border: '1px solid rgba(255,255,255,0.1)',
   background: 'rgba(255,255,255,0.04)',
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   cursor: 'pointer',
   transition: 'background 0.2s',
 };
@@ -123,11 +123,11 @@ export function DNAProfileScreen({ memberId }: DNAProfileScreenProps) {
       ))}
 
       <div style={coachingStyle}>
-        <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 4px' }}>Coaching Focus</p>
-        <p style={{ fontSize: 13, color: '#CBD5E1', margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '0 0 4px' }}>Coaching Focus</p>
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>
           {data.archetype.coaching_focus}
         </p>
-        <p style={{ fontSize: 12, color: '#94A3B8', margin: '8px 0 0', fontStyle: 'italic' }}>
+        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '8px 0 0', fontStyle: 'italic' }}>
           Lowest dimension:{' '}
           <span style={{ color: '#EF9F27', fontWeight: 600 }}>
             {DIMENSION_CONFIG[lowestDim as keyof typeof DIMENSION_CONFIG].label} ({Math.round(data.scores[lowestDim])})

@@ -42,11 +42,11 @@ export default function HomePage() {
   if (error) {
     return (
       <div style={{ padding: 16, textAlign: 'center', paddingTop: 60 }}>
-        <p style={{ color: '#94A3B8', fontSize: 14, marginBottom: 16 }}>{error}</p>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, marginBottom: 16 }}>{error}</p>
         <button
           onClick={() => setRetryCount((c) => c + 1)}
           style={{
-            backgroundColor: '#3B82F6',
+            backgroundColor: 'var(--color-blue)',
             color: '#fff',
             border: 'none',
             borderRadius: 8,

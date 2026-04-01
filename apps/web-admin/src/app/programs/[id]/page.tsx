@@ -296,7 +296,7 @@ export default function ProgramDetailPage() {
     return (
       <div style={centeredStyle}>
         <div style={spinnerStyle} className="spinner-enhanced" />
-        <p style={{ color: '#999', marginTop: 16, fontSize: 15 }}>Loading program...</p>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: 16, fontSize: 15 }}>Loading program...</p>
       </div>
     );
   }
@@ -304,10 +304,10 @@ export default function ProgramDetailPage() {
   if (error || !program) {
     return (
       <div style={centeredStyle}>
-        <p style={{ color: '#e53935', fontSize: 15 }}>
+        <p style={{ color: 'var(--color-red-light)', fontSize: 15 }}>
           {error ?? 'Program not found.'}
         </p>
-        <Link href="/programs" style={{ color: '#4fc3f7', marginTop: 12, fontSize: 14 }}>
+        <Link href="/programs" style={{ color: 'var(--color-blue)', marginTop: 12, fontSize: 14 }}>
           Back to Programs
         </Link>
       </div>
@@ -339,7 +339,7 @@ export default function ProgramDetailPage() {
           </div>
         ) : (
           <h1
-            style={{ fontSize: 24, fontWeight: 700, margin: '0 0 4px', color: '#1a1a2e', cursor: 'pointer' }}
+            style={{ fontSize: 24, fontWeight: 600, margin: '0 0 4px', color: 'var(--color-text-primary)', cursor: 'pointer' }}
             onClick={() => setEditingName(true)}
             title="Click to edit"
           >
@@ -364,7 +364,7 @@ export default function ProgramDetailPage() {
           </div>
         ) : (
           <p
-            style={{ color: '#666', margin: 0, cursor: 'pointer', fontSize: 14, lineHeight: 1.5 }}
+            style={{ color: 'var(--color-text-secondary)', margin: 0, cursor: 'pointer', fontSize: 14, lineHeight: 1.5 }}
             onClick={() => setEditingDesc(true)}
             title="Click to edit"
           >
@@ -391,7 +391,7 @@ export default function ProgramDetailPage() {
         </div>
 
         {program.program_days.length === 0 && (
-          <p style={{ color: '#999', fontSize: 14, marginBottom: 16 }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 14, marginBottom: 16 }}>
             No days added yet. Add your first training day below.
           </p>
         )}
@@ -408,14 +408,14 @@ export default function ProgramDetailPage() {
                 onClick={() => toggleDay(day.id)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 12, color: '#999', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
                     &#9654;
                   </span>
-                  <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 15 }}>
+                  <span style={{ fontWeight: 600, color: 'var(--color-text-primary)', fontSize: 15 }}>
                     Day {day.day_number}: {day.name}
                   </span>
                 </div>
-                <span style={{ fontSize: 13, color: '#888' }}>
+                <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
                   {day.program_exercises.length}{' '}
                   {day.program_exercises.length === 1 ? 'exercise' : 'exercises'}
                 </span>
@@ -425,17 +425,17 @@ export default function ProgramDetailPage() {
               {isExpanded && (
                 <div style={{ padding: '0 16px 16px' }}>
                   {day.program_exercises.length === 0 ? (
-                    <p style={{ color: '#999', fontSize: 13, margin: '12px 0' }}>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: '12px 0' }}>
                       No exercises yet for this day.
                     </p>
                   ) : (
                     <div style={{ marginTop: 8 }}>
                       {day.program_exercises.map((ex, idx) => (
                         <div key={ex.id} style={exerciseRowStyle}>
-                          <span style={{ color: '#aaa', fontSize: 13, minWidth: 24 }}>
+                          <span style={{ color: 'var(--color-text-muted)', fontSize: 13, minWidth: 24 }}>
                             {idx + 1}.
                           </span>
-                          <span style={{ fontWeight: 500, color: '#1a1a2e', fontSize: 14, flex: 1 }}>
+                          <span style={{ fontWeight: 500, color: 'var(--color-text-primary)', fontSize: 14, flex: 1 }}>
                             {ex.exercise_name}
                           </span>
                           {machineName(ex.machine_id) && (
@@ -443,7 +443,7 @@ export default function ProgramDetailPage() {
                               {machineName(ex.machine_id)}
                             </span>
                           )}
-                          <span style={{ fontSize: 13, color: '#666', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
                             {ex.default_sets} x {ex.default_reps}
                           </span>
                         </div>
@@ -453,7 +453,7 @@ export default function ProgramDetailPage() {
 
                   {/* Add exercise form */}
                   <div style={addExerciseFormStyle}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', margin: '0 0 10px' }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 10px' }}>
                       Add Exercise
                     </p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}>
@@ -546,7 +546,7 @@ export default function ProgramDetailPage() {
         <h2 style={sectionTitleStyle}>Assigned Members</h2>
 
         {assignments.length === 0 ? (
-          <p style={{ color: '#999', fontSize: 14, marginBottom: 16 }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 14, marginBottom: 16 }}>
             No members assigned to this program yet.
           </p>
         ) : (
@@ -609,7 +609,7 @@ export default function ProgramDetailPage() {
           </button>
         </div>
         {unassignedMembers.length === 0 && members.length > 0 && (
-          <p style={{ color: '#999', fontSize: 13, marginTop: 8 }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 13, marginTop: 8 }}>
             All members are already assigned to this program.
           </p>
         )}
@@ -623,11 +623,11 @@ export default function ProgramDetailPage() {
 /* ── Styles ─────────────────────────────────────────────── */
 
 const centeredStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 8,
   padding: 40,
   textAlign: 'center',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.24)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -636,57 +636,59 @@ const centeredStyle: CSSProperties = {
 const spinnerStyle: CSSProperties = {
   width: 32,
   height: 32,
-  border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7',
+  border: '3px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)',
   borderRadius: '50%',
 };
 
 const backLinkStyle: CSSProperties = {
   display: 'inline-block',
   marginBottom: 20,
-  color: '#4fc3f7',
+  color: 'var(--color-blue)',
   textDecoration: 'none',
   fontSize: 14,
   fontWeight: 500,
 };
 
 const sectionCardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 8,
   padding: 24,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.24)',
 };
 
 const sectionTitleStyle: CSSProperties = {
   fontSize: 18,
   fontWeight: 600,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
   margin: '0 0 12px',
 };
 
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '8px 12px',
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   fontSize: 14,
   outline: 'none',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const labelStyle: CSSProperties = {
   display: 'block',
   fontSize: 12,
   fontWeight: 500,
-  color: '#666',
+  color: 'var(--color-text-secondary)',
   marginBottom: 4,
 };
 
 const smallBtnPrimary: CSSProperties = {
   padding: '8px 16px',
-  backgroundColor: '#4fc3f7',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
   border: 'none',
   borderRadius: 6,
   fontSize: 13,
@@ -697,9 +699,9 @@ const smallBtnPrimary: CSSProperties = {
 
 const smallBtnSecondary: CSSProperties = {
   padding: '8px 16px',
-  backgroundColor: '#f0f0f0',
-  color: '#333',
-  border: 'none',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   fontSize: 13,
   fontWeight: 500,
@@ -708,8 +710,8 @@ const smallBtnSecondary: CSSProperties = {
 };
 
 const dayCardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e8e8e8',
+  backgroundColor: 'var(--color-bg-raised)',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 8,
   marginBottom: 12,
   overflow: 'hidden',
@@ -722,7 +724,7 @@ const dayHeaderStyle: CSSProperties = {
   padding: '14px 16px',
   cursor: 'pointer',
   userSelect: 'none',
-  backgroundColor: '#fafafa',
+  backgroundColor: 'var(--color-bg-elevated)',
 };
 
 const exerciseRowStyle: CSSProperties = {
@@ -730,13 +732,13 @@ const exerciseRowStyle: CSSProperties = {
   alignItems: 'center',
   gap: 12,
   padding: '10px 0',
-  borderBottom: '1px solid #f0f0f0',
+  borderBottom: '1px solid var(--color-border-subtle)',
 };
 
 const machineTagStyle: CSSProperties = {
   fontSize: 12,
-  color: '#4fc3f7',
-  backgroundColor: 'rgba(79,195,247,0.1)',
+  color: 'var(--color-blue)',
+  backgroundColor: 'var(--color-blue-subtle)',
   padding: '2px 8px',
   borderRadius: 4,
   fontWeight: 500,
@@ -745,7 +747,7 @@ const machineTagStyle: CSSProperties = {
 const addExerciseFormStyle: CSSProperties = {
   marginTop: 16,
   paddingTop: 16,
-  borderTop: '1px dashed #e0e0e0',
+  borderTop: '1px dashed var(--color-border-default)',
 };
 
 const addDayFormStyle: CSSProperties = {
@@ -764,17 +766,17 @@ const thStyle: CSSProperties = {
   padding: '10px 12px',
   fontSize: 12,
   fontWeight: 600,
-  color: '#888',
+  color: 'var(--color-text-muted)',
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
-  borderBottom: '1px solid #eee',
+  borderBottom: '1px solid var(--color-border-default)',
 };
 
 const tdStyle: CSSProperties = {
   padding: '12px',
   fontSize: 14,
-  color: '#333',
-  borderBottom: '1px solid #f5f5f5',
+  color: 'var(--color-text-primary)',
+  borderBottom: '1px solid var(--color-border-subtle)',
 };
 
 const statsStripStyle: CSSProperties = {
@@ -790,15 +792,15 @@ const statsChipStyle: CSSProperties = {
   borderRadius: 14,
   fontSize: 12,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 const removeBtnStyle: CSSProperties = {
   padding: '4px 12px',
   backgroundColor: 'transparent',
-  color: '#e53935',
-  border: '1px solid #e53935',
+  color: 'var(--color-red)',
+  border: '1px solid var(--color-red)',
   borderRadius: 4,
   fontSize: 12,
   fontWeight: 500,

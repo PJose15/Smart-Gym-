@@ -13,49 +13,49 @@ const navItems = [
 const layoutStyle: CSSProperties = {
   display: 'flex',
   minHeight: '100vh',
-  backgroundColor: '#0F172A',
-  color: '#F1F5F9',
+  backgroundColor: 'var(--color-bg-base)',
+  color: 'var(--color-text-primary)',
 };
 
 const sidebarStyle: CSSProperties = {
   width: 220,
   minHeight: '100vh',
-  backgroundColor: '#0F172A',
+  backgroundColor: 'var(--color-bg-base)',
   padding: '24px 0',
   display: 'flex',
   flexDirection: 'column',
-  borderRight: '1px solid #1E293B',
+  borderRight: '1px solid var(--color-border-subtle)',
 };
 
 const logoStyle: CSSProperties = {
   padding: '0 20px 20px',
-  borderBottom: '1px solid #1E293B',
+  borderBottom: '1px solid var(--color-border-subtle)',
   marginBottom: 16,
 };
 
 const linkStyle: CSSProperties = {
   display: 'block',
   padding: '10px 20px',
-  color: '#94A3B8',
+  color: 'var(--color-text-muted)',
   textDecoration: 'none',
-  fontSize: 14,
+  fontSize: 'var(--text-sm)',
   fontWeight: 500,
   transition: 'background-color 0.15s, color 0.15s',
 };
 
 const activeLinkStyle: CSSProperties = {
   ...linkStyle,
-  color: '#F1F5F9',
-  backgroundColor: '#1E293B',
-  borderLeft: '3px solid #3B82F6',
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-bg-raised)',
+  borderLeft: '3px solid var(--color-blue)',
   paddingLeft: 17,
 };
 
 const signOutStyle: CSSProperties = {
   marginTop: 'auto',
   padding: '12px 20px',
-  color: '#64748B',
-  fontSize: 13,
+  color: 'var(--color-text-disabled)',
+  fontSize: 'var(--text-sm)',
   cursor: 'pointer',
   border: 'none',
   background: 'none',
@@ -75,8 +75,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     <div style={layoutStyle}>
       <aside style={sidebarStyle}>
         <div style={logoStyle}>
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
-            Nexera <span style={{ color: '#3B82F6' }}>Owner</span>
+          <h1 style={{ margin: 0, fontSize: 'var(--text-md)', fontWeight: 600 }}>
+            Nexera <span style={{ color: 'var(--color-blue)' }}>Owner</span>
           </h1>
         </div>
         <nav>

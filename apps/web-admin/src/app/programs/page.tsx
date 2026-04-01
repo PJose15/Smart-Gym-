@@ -53,7 +53,7 @@ export default function ProgramsPage() {
             description="Create and manage workout programs, assign exercises, and set training schedules."
           />
           <div style={{ display: 'flex', gap: 12 }}>
-            <Link href="/programs/generate" style={{ ...createButtonStyle, backgroundColor: '#4361ee' }} className="btn-primary">
+            <Link href="/programs/generate" style={{ ...createButtonStyle, backgroundColor: 'var(--color-blue-dark)' }} className="btn-primary">
               Generate with AI
             </Link>
             <Link href="/programs/create" style={createButtonStyle} className="btn-primary">
@@ -80,17 +80,17 @@ export default function ProgramsPage() {
         {loading ? (
           <div style={centeredContainerStyle}>
             <div style={spinnerStyle} className="spinner-enhanced" />
-            <p style={{ color: '#999', marginTop: 16, fontSize: 15 }}>
+            <p style={{ color: 'var(--color-text-muted)', marginTop: 16, fontSize: 'var(--text-base)' as unknown as number }}>
               Loading programs...
             </p>
           </div>
         ) : error ? (
           <div style={centeredContainerStyle}>
-            <p style={{ color: '#e53935', fontSize: 15 }} className="error-shake">Error: {error}</p>
+            <p style={{ color: 'var(--color-red-light)', fontSize: 'var(--text-base)' as unknown as number }} className="error-shake">Error: {error}</p>
           </div>
         ) : programs.length === 0 ? (
           <div style={centeredContainerStyle}>
-            <p style={{ color: '#999', fontSize: 15, marginBottom: 16 }} className="empty-breathe">
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-base)' as unknown as number, marginBottom: 16 }} className="empty-breathe">
               No programs yet. Create your first workout program to get started.
             </p>
             <Link href="/programs/create" style={createButtonStyle} className="btn-primary">
@@ -149,21 +149,21 @@ const createButtonStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   padding: '10px 20px',
-  backgroundColor: '#4fc3f7',
-  color: '#ffffff',
-  borderRadius: 6,
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
+  borderRadius: 'var(--radius-sm)' as unknown as number,
   textDecoration: 'none',
-  fontSize: 14,
+  fontSize: 'var(--text-base)' as unknown as number,
   fontWeight: 600,
   whiteSpace: 'nowrap',
 };
 
 const centeredContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as unknown as number,
   padding: 40,
   textAlign: 'center',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -172,8 +172,8 @@ const centeredContainerStyle: CSSProperties = {
 const spinnerStyle: CSSProperties = {
   width: 32,
   height: 32,
-  border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7',
+  border: '3px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)',
   borderRadius: '50%',
 };
 
@@ -189,26 +189,26 @@ const cardLinkStyle: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as unknown as number,
   padding: 24,
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
   cursor: 'pointer',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const cardTitleStyle: CSSProperties = {
   fontSize: 18,
   fontWeight: 600,
   margin: 0,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
 };
 
 const cardDescriptionStyle: CSSProperties = {
-  fontSize: 14,
-  color: '#666',
+  fontSize: 'var(--text-base)' as unknown as number,
+  color: 'var(--color-text-secondary)',
   margin: 0,
   lineHeight: 1.5,
 };
@@ -218,12 +218,12 @@ const cardFooterStyle: CSSProperties = {
   gap: 12,
   marginTop: 'auto',
   paddingTop: 12,
-  borderTop: '1px solid #f0f0f0',
+  borderTop: '1px solid var(--color-border-subtle)',
 };
 
 const cardBadgeStyle: CSSProperties = {
-  fontSize: 13,
-  color: '#888',
+  fontSize: 'var(--text-sm)' as unknown as number,
+  color: 'var(--color-text-muted)',
   fontWeight: 500,
 };
 
@@ -238,8 +238,8 @@ const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
   borderRadius: 14,
-  fontSize: 12,
+  fontSize: 'var(--text-xs)' as unknown as number,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };

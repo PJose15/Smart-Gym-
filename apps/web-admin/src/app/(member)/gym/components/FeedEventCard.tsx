@@ -32,7 +32,7 @@ const EVENT_ICONS: Record<string, string> = {
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 14,
   transition: 'transform 0.15s ease',
@@ -79,7 +79,7 @@ export function FeedEventCard({ event, memberId, onToggleReaction }: FeedEventCa
             width: 36,
             height: 36,
             borderRadius: '50%',
-            backgroundColor: '#334155',
+            backgroundColor: 'var(--color-bg-elevated)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -96,11 +96,11 @@ export function FeedEventCard({ event, memberId, onToggleReaction }: FeedEventCa
               Pinned
             </div>
           )}
-          <div style={{ fontSize: 14, color: '#E2E8F0', lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 600, color: '#F1F5F9' }}>{event.member_name}</span>{' '}
+          <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+            <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{event.member_name}</span>{' '}
             {event.description}
           </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 12, color: '#64748B' }}>
+          <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 12, color: 'var(--color-text-muted)' }}>
             <span>{timeAgo(event.created_at)}</span>
             <button
               type="button"
@@ -108,7 +108,7 @@ export function FeedEventCard({ event, memberId, onToggleReaction }: FeedEventCa
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#64748B',
+                color: 'var(--color-text-muted)',
                 cursor: 'pointer',
                 fontSize: 12,
                 padding: 0,

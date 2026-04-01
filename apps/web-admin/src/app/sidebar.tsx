@@ -29,10 +29,10 @@ export function Sidebar() {
     <aside className={styles.sidebar}>
       <div className={styles.logoContainer}>
         <h1 className={styles.logo}>
-          Smart<span className={styles.logoAccent}>Gym</span>
+          Nex<span className={styles.logoAccent}>era</span>
         </h1>
         <p className={styles.subtitle}>
-          Admin Panel
+          Admin
         </p>
       </div>
       <nav className={styles.nav}>

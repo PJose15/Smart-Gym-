@@ -18,7 +18,7 @@ export default function GymPage() {
               key={i}
               style={{
                 height: i === 1 ? 60 : 120,
-                backgroundColor: '#1E293B',
+                backgroundColor: 'var(--color-bg-raised)',
                 borderRadius: 12,
                 animation: 'pulse 1.5s ease-in-out infinite',
               }}
@@ -32,7 +32,7 @@ export default function GymPage() {
   if (!member || !gym) {
     return (
       <div style={{ padding: 16, textAlign: 'center', paddingTop: 60 }}>
-        <p style={{ color: '#94A3B8', fontSize: 14 }}>Unable to load gym info.</p>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>Unable to load gym info.</p>
       </div>
     );
   }

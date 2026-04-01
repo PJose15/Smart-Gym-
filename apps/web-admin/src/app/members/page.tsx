@@ -40,27 +40,27 @@ interface AssignmentRow {
 
 const addButtonStyle: CSSProperties = {
   padding: '10px 20px',
-  fontSize: 14,
-  fontWeight: 600,
-  color: '#ffffff',
-  backgroundColor: '#4fc3f7',
+  fontSize: 'var(--text-base)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)' as any,
   cursor: 'pointer',
 };
 
 const formContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as any,
   padding: '24px',
   marginBottom: 24,
-  border: '1px solid rgba(79, 195, 247, 0.15)',
+  border: '1px solid var(--color-border-default)',
 };
 
 const formTitleStyle: CSSProperties = {
   fontSize: 18,
-  fontWeight: 600,
-  color: '#1a1a2e',
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-primary)',
   marginTop: 0,
   marginBottom: 20,
 };
@@ -77,25 +77,26 @@ const fieldStyle: CSSProperties = {
 
 const labelStyle: CSSProperties = {
   display: 'block',
-  fontSize: 13,
-  fontWeight: 600,
-  color: '#333',
+  fontSize: 'var(--text-sm)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-primary)',
   marginBottom: 6,
 };
 
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '8px 12px',
-  fontSize: 14,
-  border: '1px solid #ddd',
-  borderRadius: 6,
+  fontSize: 'var(--text-base)' as any,
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-sm)' as any,
   boxSizing: 'border-box',
   outline: 'none',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const selectStyle: CSSProperties = {
   ...inputStyle,
-  backgroundColor: '#fff',
 };
 
 const formActionsStyle: CSSProperties = {
@@ -106,55 +107,55 @@ const formActionsStyle: CSSProperties = {
 
 const submitButtonStyle: CSSProperties = {
   padding: '10px 24px',
-  fontSize: 14,
-  fontWeight: 600,
-  color: '#ffffff',
-  backgroundColor: '#4fc3f7',
+  fontSize: 'var(--text-base)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)' as any,
   cursor: 'pointer',
 };
 
 const cancelButtonStyle: CSSProperties = {
   padding: '10px 24px',
-  fontSize: 14,
-  fontWeight: 600,
-  color: '#666',
-  backgroundColor: '#f0f0f0',
+  fontSize: 'var(--text-base)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-secondary)',
+  backgroundColor: 'var(--color-bg-elevated)',
   border: 'none',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)' as any,
   cursor: 'pointer',
 };
 
 const tableContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as any,
   overflow: 'hidden',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const tableStyle: CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
-  fontSize: 14,
+  fontSize: 'var(--text-base)' as any,
 };
 
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '12px 16px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
-  fontWeight: 600,
-  color: '#555',
-  fontSize: 13,
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-secondary)',
+  fontSize: 'var(--text-sm)' as any,
   textTransform: 'uppercase',
   letterSpacing: '0.3px',
 };
 
 const tdStyle: CSSProperties = {
   padding: '12px 16px',
-  borderBottom: '1px solid #f0f0f0',
-  color: '#333',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  color: 'var(--color-text-primary)',
   verticalAlign: 'middle',
 };
 
@@ -163,7 +164,7 @@ const roleBadgeBase: CSSProperties = {
   padding: '3px 10px',
   borderRadius: 12,
   fontSize: 12,
-  fontWeight: 600,
+  fontWeight: 'var(--weight-medium)' as any,
 };
 
 const programBadgeStyle: CSSProperties = {
@@ -171,19 +172,20 @@ const programBadgeStyle: CSSProperties = {
   padding: '3px 10px',
   borderRadius: 12,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: 'rgba(79,195,247,0.12)',
-  color: '#0288d1',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-blue-subtle)',
+  color: 'var(--color-blue-light)',
   marginRight: 8,
 };
 
 const assignSelectStyle: CSSProperties = {
   padding: '5px 8px',
-  fontSize: 13,
-  border: '1px solid #ddd',
-  borderRadius: 6,
+  fontSize: 'var(--text-sm)' as any,
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-sm)' as any,
   outline: 'none',
-  backgroundColor: '#fff',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
   marginRight: 6,
   maxWidth: 180,
 };
@@ -191,9 +193,9 @@ const assignSelectStyle: CSSProperties = {
 const assignBtnStyle: CSSProperties = {
   padding: '5px 12px',
   fontSize: 12,
-  fontWeight: 600,
-  color: '#fff',
-  backgroundColor: '#4fc3f7',
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
   borderRadius: 5,
   cursor: 'pointer',
@@ -202,20 +204,20 @@ const assignBtnStyle: CSSProperties = {
 const removeProgramBtnStyle: CSSProperties = {
   padding: '4px 10px',
   fontSize: 12,
-  fontWeight: 500,
-  color: '#e53935',
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-red-light)',
   backgroundColor: 'transparent',
-  border: '1px solid #e53935',
+  border: '1px solid var(--color-red-light)',
   borderRadius: 5,
   cursor: 'pointer',
 };
 
 const errorBoxStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#b71c1c',
+  backgroundColor: 'var(--color-red-subtle)',
+  color: 'var(--color-red-light)',
   padding: '14px 18px',
-  borderRadius: 8,
-  fontSize: 14,
+  borderRadius: 'var(--radius-sm)' as any,
+  fontSize: 'var(--text-base)' as any,
   marginBottom: 16,
 };
 
@@ -229,16 +231,16 @@ const loadingContainerStyle: CSSProperties = {
 const spinnerStyle: CSSProperties = {
   width: 36,
   height: 36,
-  border: '4px solid #e0e0e0',
-  borderTopColor: '#4fc3f7',
+  border: '4px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)',
   borderRadius: '50%',
 };
 
 const emptyStyle: CSSProperties = {
   padding: 40,
   textAlign: 'center',
-  color: '#999',
-  fontSize: 15,
+  color: 'var(--color-text-muted)',
+  fontSize: 'var(--text-base)' as any,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -251,19 +253,19 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 // ─── Helpers ─────────────────────────────────────────────
 
 function getRoleBadgeStyle(role: string): CSSProperties {
-  if (role === 'owner') return { ...roleBadgeBase, backgroundColor: '#f3e5f5', color: '#7b1fa2' };
-  if (role === 'trainer') return { ...roleBadgeBase, backgroundColor: '#e3f2fd', color: '#1565c0' };
-  return { ...roleBadgeBase, backgroundColor: '#e8f5e9', color: '#2e7d32' };
+  if (role === 'owner') return { ...roleBadgeBase, backgroundColor: 'var(--color-purple-subtle)', color: 'var(--color-purple-light)' };
+  if (role === 'trainer') return { ...roleBadgeBase, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' };
+  return { ...roleBadgeBase, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' };
 }
 
 function formatDate(dateStr: string): string {
@@ -473,10 +475,10 @@ export default function MembersPage() {
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{members.length} total</span>
-              {owners > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#f3e5f5', color: '#7b1fa2' }}>{owners} owner{owners !== 1 ? 's' : ''}</span>}
-              {trainers > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{trainers} trainer{trainers !== 1 ? 's' : ''}</span>}
-              <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{regularMembers} member{regularMembers !== 1 ? 's' : ''}</span>
-              <span style={{ ...statsChipStyle, backgroundColor: assignmentRate >= 50 ? '#e8f5e9' : '#fff3e0', color: assignmentRate >= 50 ? '#2e7d32' : '#e65100' }}>
+              {owners > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-purple-subtle)', color: 'var(--color-purple-light)' }}>{owners} owner{owners !== 1 ? 's' : ''}</span>}
+              {trainers > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' }}>{trainers} trainer{trainers !== 1 ? 's' : ''}</span>}
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' }}>{regularMembers} member{regularMembers !== 1 ? 's' : ''}</span>
+              <span style={{ ...statsChipStyle, backgroundColor: assignmentRate >= 50 ? 'var(--color-green-subtle)' : 'var(--color-gold-subtle)', color: assignmentRate >= 50 ? 'var(--color-green-light)' : 'var(--color-gold-light)' }}>
                 {assignmentRate}% with programs
               </span>
             </div>
@@ -568,7 +570,7 @@ export default function MembersPage() {
                   return (
                     <tr key={m.id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
                       <td
-                        style={{ ...tdStyle, fontWeight: 600, color: '#4361ee', cursor: 'pointer' }}
+                        style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-blue-light)', cursor: 'pointer' }}
                         onClick={() => router.push(`/members/${profileId}`)}
                       >
                         {m.profiles?.full_name ?? 'Unknown'}
@@ -590,7 +592,7 @@ export default function MembersPage() {
                             </button>
                           </div>
                         ) : gymPrograms.length === 0 ? (
-                          <span style={{ color: '#bbb', fontSize: 13 }}>No programs</span>
+                          <span style={{ color: 'var(--color-text-disabled)', fontSize: 'var(--text-sm)' as any }}>No programs</span>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                             <select

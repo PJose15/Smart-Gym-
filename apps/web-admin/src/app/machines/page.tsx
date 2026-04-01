@@ -47,25 +47,25 @@ const addButtonStyle: CSSProperties = {
   padding: '10px 20px',
   fontSize: 14,
   fontWeight: 600,
-  color: '#ffffff',
-  backgroundColor: '#4fc3f7',
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
   borderRadius: 6,
   cursor: 'pointer',
 };
 
 const formContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: '24px',
   marginBottom: 24,
-  border: '1px solid rgba(79, 195, 247, 0.15)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const formTitleStyle: CSSProperties = {
   fontSize: 18,
   fontWeight: 600,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
   marginTop: 0,
   marginBottom: 20,
 };
@@ -90,7 +90,7 @@ const labelStyle: CSSProperties = {
   display: 'block',
   fontSize: 13,
   fontWeight: 600,
-  color: '#333',
+  color: 'var(--color-text-primary)',
   marginBottom: 6,
 };
 
@@ -98,10 +98,12 @@ const inputStyle: CSSProperties = {
   width: '100%',
   padding: '8px 12px',
   fontSize: 14,
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   boxSizing: 'border-box',
   outline: 'none',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const textareaStyle: CSSProperties = {
@@ -113,7 +115,7 @@ const textareaStyle: CSSProperties = {
 
 const selectStyle: CSSProperties = {
   ...inputStyle,
-  backgroundColor: '#fff',
+  backgroundColor: 'var(--color-bg-elevated)',
 };
 
 const formActionsStyle: CSSProperties = {
@@ -126,8 +128,8 @@ const submitButtonStyle: CSSProperties = {
   padding: '10px 24px',
   fontSize: 14,
   fontWeight: 600,
-  color: '#ffffff',
-  backgroundColor: '#4fc3f7',
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
   borderRadius: 6,
   cursor: 'pointer',
@@ -137,18 +139,18 @@ const cancelButtonStyle: CSSProperties = {
   padding: '10px 24px',
   fontSize: 14,
   fontWeight: 600,
-  color: '#666',
-  backgroundColor: '#f0f0f0',
+  color: 'var(--color-text-secondary)',
+  backgroundColor: 'var(--color-bg-elevated)',
   border: 'none',
   borderRadius: 6,
   cursor: 'pointer',
 };
 
 const tableContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   overflow: 'hidden',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const tableStyle: CSSProperties = {
@@ -160,10 +162,10 @@ const tableStyle: CSSProperties = {
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '12px 16px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-default)',
   fontWeight: 600,
-  color: '#555',
+  color: 'var(--color-text-muted)',
   fontSize: 13,
   textTransform: 'uppercase',
   letterSpacing: '0.3px',
@@ -171,15 +173,15 @@ const thStyle: CSSProperties = {
 
 const tdStyle: CSSProperties = {
   padding: '12px 16px',
-  borderBottom: '1px solid #f0f0f0',
-  color: '#333',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  color: 'var(--color-text-primary)',
 };
 
 const tagStyle: CSSProperties = {
   display: 'inline-block',
   padding: '2px 8px',
-  backgroundColor: '#e3f2fd',
-  color: '#1565c0',
+  backgroundColor: 'var(--color-blue-subtle)',
+  color: 'var(--color-blue)',
   borderRadius: 4,
   fontSize: 12,
   marginRight: 4,
@@ -188,15 +190,15 @@ const tagStyle: CSSProperties = {
 
 const metaTagStyle: CSSProperties = {
   ...tagStyle,
-  backgroundColor: '#f3e5f5',
-  color: '#7b1fa2',
+  backgroundColor: 'rgba(167,100,229,0.15)',
+  color: '#a764e5',
 };
 
 const slugStyle: CSSProperties = {
   fontFamily: 'monospace',
   fontSize: 13,
-  color: '#666',
-  backgroundColor: '#f5f5f5',
+  color: 'var(--color-text-secondary)',
+  backgroundColor: 'var(--color-bg-elevated)',
   padding: '2px 6px',
   borderRadius: 4,
 };
@@ -205,16 +207,16 @@ const deleteButtonStyle: CSSProperties = {
   padding: '6px 14px',
   fontSize: 13,
   fontWeight: 600,
-  color: '#d32f2f',
-  backgroundColor: '#fdecea',
+  color: 'var(--color-red)',
+  backgroundColor: 'var(--color-red-light)',
   border: 'none',
   borderRadius: 4,
   cursor: 'pointer',
 };
 
 const errorBoxStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#b71c1c',
+  backgroundColor: 'var(--color-red-light)',
+  color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
   fontSize: 14,
@@ -231,15 +233,15 @@ const loadingContainerStyle: CSSProperties = {
 const spinnerStyle: CSSProperties = {
   width: 36,
   height: 36,
-  border: '4px solid #e0e0e0',
-  borderTopColor: '#4fc3f7',
+  border: '4px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)',
   borderRadius: '50%',
 };
 
 const emptyStyle: CSSProperties = {
   padding: 40,
   textAlign: 'center',
-  color: '#999',
+  color: 'var(--color-text-muted)',
   fontSize: 15,
 };
 
@@ -256,12 +258,12 @@ const machineStatsChipStyle: CSSProperties = {
   borderRadius: 14,
   fontSize: 12,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-muted)',
 };
 
 const sectionDividerStyle: CSSProperties = {
-  borderTop: '1px solid #eee',
+  borderTop: '1px solid var(--color-border-default)',
   marginTop: 16,
   marginBottom: 16,
   paddingTop: 16,
@@ -270,7 +272,7 @@ const sectionDividerStyle: CSSProperties = {
 const sectionLabelStyle: CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
-  color: '#4fc3f7',
+  color: 'var(--color-blue)',
   marginBottom: 12,
 };
 
@@ -281,15 +283,17 @@ const muscleChipStyle: CSSProperties = {
   borderRadius: 16,
   fontSize: 12,
   cursor: 'pointer',
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   transition: 'all 0.15s',
+  color: 'var(--color-text-secondary)',
+  backgroundColor: 'transparent',
 };
 
 const muscleChipActiveStyle: CSSProperties = {
   ...muscleChipStyle,
-  backgroundColor: '#4fc3f7',
-  color: '#fff',
-  borderColor: '#4fc3f7',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
+  borderColor: 'var(--color-blue)',
 };
 
 const tagInputContainerStyle: CSSProperties = {
@@ -297,10 +301,11 @@ const tagInputContainerStyle: CSSProperties = {
   flexWrap: 'wrap',
   gap: 4,
   padding: '6px 8px',
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   minHeight: 38,
   alignItems: 'center',
+  backgroundColor: 'var(--color-bg-elevated)',
 };
 
 const tagChipStyle: CSSProperties = {
@@ -308,8 +313,8 @@ const tagChipStyle: CSSProperties = {
   alignItems: 'center',
   gap: 4,
   padding: '2px 8px',
-  backgroundColor: '#e8eaf6',
-  color: '#3949ab',
+  backgroundColor: 'var(--color-blue-subtle)',
+  color: 'var(--color-blue)',
   borderRadius: 12,
   fontSize: 12,
 };
@@ -319,7 +324,7 @@ const tagRemoveStyle: CSSProperties = {
   fontWeight: 700,
   fontSize: 14,
   lineHeight: 1,
-  color: '#7986cb',
+  color: 'var(--color-text-muted)',
 };
 
 const tagInputStyle: CSSProperties = {
@@ -329,6 +334,8 @@ const tagInputStyle: CSSProperties = {
   flex: 1,
   minWidth: 80,
   padding: '2px 0',
+  backgroundColor: 'transparent',
+  color: 'var(--color-text-primary)',
 };
 
 // ─── Multi-select muscle component ──────────────────────
@@ -625,7 +632,7 @@ export default function MachinesPage() {
           />
           <div style={{ display: 'flex', gap: 8 }}>
             <button
-              style={{ ...addButtonStyle, backgroundColor: '#334155' }}
+              style={{ ...addButtonStyle, backgroundColor: 'var(--color-bg-highest)' }}
               onClick={() => {
                 window.open('/api/machines/qr-pdf', '_blank');
               }}
@@ -656,11 +663,11 @@ export default function MachinesPage() {
           return (
             <div style={machineStatsStripStyle}>
               <span style={machineStatsChipStyle}>{machines.length} machines</span>
-              {topType && <span style={{ ...machineStatsChipStyle, backgroundColor: '#f3e5f5', color: '#7b1fa2' }}>{topType[1]} {topType[0]}</span>}
-              {byDiff.get('beginner') && <span style={{ ...machineStatsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{byDiff.get('beginner')} beginner</span>}
-              {byDiff.get('intermediate') && <span style={{ ...machineStatsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{byDiff.get('intermediate')} intermediate</span>}
-              {byDiff.get('advanced') && <span style={{ ...machineStatsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{byDiff.get('advanced')} advanced</span>}
-              <span style={{ ...machineStatsChipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{new Set(machines.map(m => m.gym_id)).size} gym{new Set(machines.map(m => m.gym_id)).size !== 1 ? 's' : ''}</span>
+              {topType && <span style={{ ...machineStatsChipStyle, backgroundColor: 'rgba(167,100,229,0.15)', color: '#a764e5' }}>{topType[1]} {topType[0]}</span>}
+              {byDiff.get('beginner') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{byDiff.get('beginner')} beginner</span>}
+              {byDiff.get('intermediate') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'rgba(239,159,39,0.15)', color: 'var(--color-gold)' }}>{byDiff.get('intermediate')} intermediate</span>}
+              {byDiff.get('advanced') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{byDiff.get('advanced')} advanced</span>}
+              <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue)' }}>{new Set(machines.map(m => m.gym_id)).size} gym{new Set(machines.map(m => m.gym_id)).size !== 1 ? 's' : ''}</span>
             </div>
           );
         })()}
@@ -825,7 +832,7 @@ export default function MachinesPage() {
               </div>
 
               {formGymId && formName && (
-                <p style={{ fontSize: 13, color: '#888', margin: '0 0 12px' }}>
+                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '0 0 12px' }}>
                   QR Slug:{' '}
                   <code style={slugStyle}>
                     {generateQrSlug(gyms.find((g) => g.id === formGymId)?.slug ?? 'gym', formName)}
@@ -878,10 +885,10 @@ export default function MachinesPage() {
                         <span style={metaTagStyle}>{m.movement_pattern}</span>
                       )}
                       {m.equipment_type && m.equipment_type !== 'unknown' && (
-                        <span style={{ ...metaTagStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{m.equipment_type}</span>
+                        <span style={{ ...metaTagStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{m.equipment_type}</span>
                       )}
                       {m.difficulty && m.difficulty !== 'beginner' && (
-                        <span style={{ ...metaTagStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{m.difficulty}</span>
+                        <span style={{ ...metaTagStyle, backgroundColor: 'rgba(239,159,39,0.15)', color: 'var(--color-gold)' }}>{m.difficulty}</span>
                       )}
                     </td>
                     <td style={tdStyle}>

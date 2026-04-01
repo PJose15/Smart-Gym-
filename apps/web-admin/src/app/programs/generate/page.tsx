@@ -25,66 +25,68 @@ interface MachineOption {
 // ─── Styles ─────────────────────────────────────────────
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as unknown as number,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
   marginBottom: 20,
 };
 
 const labelStyle: CSSProperties = {
   display: 'block',
-  fontSize: 13,
+  fontSize: 'var(--text-sm)' as unknown as number,
   fontWeight: 600,
-  color: '#333',
+  color: 'var(--color-text-primary)',
   marginBottom: 6,
 };
 
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '10px 14px',
-  fontSize: 14,
-  border: '1px solid #ddd',
-  borderRadius: 8,
+  fontSize: 'var(--text-base)' as unknown as number,
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-md)' as unknown as number,
   boxSizing: 'border-box',
   outline: 'none',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const selectStyle: CSSProperties = {
   ...inputStyle,
-  backgroundColor: '#fff',
+  backgroundColor: 'var(--color-bg-elevated)',
 };
 
 const fieldStyle: CSSProperties = { marginBottom: 16 };
 
 const btnPrimaryStyle: CSSProperties = {
   padding: '12px 28px',
-  fontSize: 14,
+  fontSize: 'var(--text-base)' as unknown as number,
   fontWeight: 600,
-  color: '#ffffff',
-  backgroundColor: '#4361ee',
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-md)' as unknown as number,
   cursor: 'pointer',
 };
 
 const btnSecondaryStyle: CSSProperties = {
   padding: '12px 28px',
-  fontSize: 14,
+  fontSize: 'var(--text-base)' as unknown as number,
   fontWeight: 600,
-  color: '#666',
-  backgroundColor: '#f0f0f0',
+  color: 'var(--color-text-secondary)',
+  backgroundColor: 'var(--color-bg-elevated)',
   border: 'none',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-md)' as unknown as number,
   cursor: 'pointer',
 };
 
 const dayCardStyle: CSSProperties = {
-  backgroundColor: '#fafafa',
-  borderRadius: 8,
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderRadius: 'var(--radius-md)' as unknown as number,
   padding: 16,
   marginBottom: 12,
-  border: '1px solid #eee',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const exerciseRowStyle: CSSProperties = {
@@ -93,27 +95,27 @@ const exerciseRowStyle: CSSProperties = {
   gap: 8,
   alignItems: 'center',
   padding: '6px 0',
-  borderBottom: '1px solid #f0f0f0',
+  borderBottom: '1px solid var(--color-border-subtle)',
 };
 
 const backLinkStyle: CSSProperties = {
   display: 'inline-block',
   marginBottom: 16,
-  fontSize: 14,
-  color: '#4361ee',
+  fontSize: 'var(--text-base)' as unknown as number,
+  color: 'var(--color-blue)',
   textDecoration: 'none',
   fontWeight: 600,
 };
 
 const rationaleStyle: CSSProperties = {
-  backgroundColor: '#f0f4ff',
-  borderRadius: 8,
+  backgroundColor: 'var(--color-blue-subtle)',
+  borderRadius: 'var(--radius-md)' as unknown as number,
   padding: 16,
   marginBottom: 20,
-  fontSize: 14,
-  color: '#333',
+  fontSize: 'var(--text-base)' as unknown as number,
+  color: 'var(--color-text-primary)',
   lineHeight: 1.6,
-  borderLeft: '4px solid #4361ee',
+  borderLeft: '4px solid var(--color-blue)',
 };
 
 const previewStatsStripStyle: CSSProperties = {
@@ -127,10 +129,10 @@ const previewStatsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
   borderRadius: 14,
-  fontSize: 12,
+  fontSize: 'var(--text-xs)' as unknown as number,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -333,8 +335,8 @@ export default function GenerateProgramPage() {
 
         {error && (
           <div style={{
-            backgroundColor: '#fdecea', color: '#b71c1c',
-            padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16,
+            backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)',
+            padding: '14px 18px', borderRadius: 'var(--radius-md)' as unknown as number, fontSize: 'var(--text-base)' as unknown as number, marginBottom: 16,
           }}>
             {error}
           </div>
@@ -399,7 +401,7 @@ export default function GenerateProgramPage() {
             </div>
 
             {machines.length > 0 && (
-              <p style={{ fontSize: 13, color: '#999', marginTop: 12, marginBottom: 0 }}>
+              <p style={{ fontSize: 'var(--text-sm)' as unknown as number, color: 'var(--color-text-muted)', marginTop: 12, marginBottom: 0 }}>
                 {machines.length} machines available in selected gym
               </p>
             )}
@@ -420,7 +422,7 @@ export default function GenerateProgramPage() {
                   <span style={previewStatsChipStyle}>{program.days.length} day{program.days.length !== 1 ? 's' : ''}</span>
                   <span style={previewStatsChipStyle}>{totalEx} exercise{totalEx !== 1 ? 's' : ''}</span>
                   <span style={previewStatsChipStyle}>{avgSets} avg sets/exercise</span>
-                  <span style={{ ...previewStatsChipStyle, backgroundColor: program.source === 'ai' ? '#e3f2fd' : '#f0f0f0', color: program.source === 'ai' ? '#1565c0' : '#555' }}>
+                  <span style={{ ...previewStatsChipStyle, backgroundColor: program.source === 'ai' ? 'var(--color-blue-subtle)' : 'var(--color-bg-elevated)', color: program.source === 'ai' ? 'var(--color-blue-light)' : 'var(--color-text-secondary)' }}>
                     {program.source === 'ai' ? 'AI-generated' : 'Rules-based'}
                   </span>
                 </div>
@@ -458,11 +460,11 @@ export default function GenerateProgramPage() {
             {/* Days */}
             {program.days.map((day, di) => (
               <div key={di} style={dayCardStyle}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 600, color: '#333' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                   Day {day.day_number}: {day.name}
                 </h4>
 
-                <div style={{ ...exerciseRowStyle, borderBottom: '2px solid #ddd', fontWeight: 600, fontSize: 12, color: '#888', textTransform: 'uppercase' }}>
+                <div style={{ ...exerciseRowStyle, borderBottom: '2px solid var(--color-border-default)', fontWeight: 600, fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                   <span>Exercise</span>
                   <span>Sets</span>
                   <span>Reps</span>
@@ -493,7 +495,7 @@ export default function GenerateProgramPage() {
                       max={30}
                     />
                     <button
-                      style={{ background: 'none', border: 'none', color: '#e53935', cursor: 'pointer', fontSize: 18 }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-red-light)', cursor: 'pointer', fontSize: 18 }}
                       onClick={() => removeExercise(di, ei)}
                       title="Remove exercise"
                     >
@@ -503,7 +505,7 @@ export default function GenerateProgramPage() {
                 ))}
 
                 {day.exercises.length === 0 && (
-                  <p style={{ color: '#999', fontSize: 13, margin: '12px 0' }}>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' as unknown as number, margin: '12px 0' }}>
                     No exercises — this day will be skipped.
                   </p>
                 )}
@@ -525,7 +527,7 @@ export default function GenerateProgramPage() {
         {step === 'saving' && (
           <div style={{ ...cardStyle, textAlign: 'center', padding: 48 }}>
             <div className="spinner-enhanced" />
-            <p style={{ color: '#666', marginTop: 16 }}>Saving program...</p>
+            <p style={{ color: 'var(--color-text-secondary)', marginTop: 16 }}>Saving program...</p>
           </div>
         )}
       </div>

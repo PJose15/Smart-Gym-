@@ -16,52 +16,57 @@ interface DashboardMetrics {
 
 const quickActionStyle: CSSProperties = {
   display: 'flex',
-  gap: 10,
+  gap: 'var(--space-3)',
   flexWrap: 'wrap',
-  marginBottom: 24,
+  marginBottom: 'var(--space-6)',
 };
 
 const quickActionBtnStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 6,
-  padding: '8px 16px',
-  backgroundColor: '#edf2ff',
-  color: '#4361ee',
-  borderRadius: 8,
-  fontSize: 13,
-  fontWeight: 600,
+  gap: 'var(--space-2)',
+  padding: 'var(--space-2) var(--space-4)',
+  backgroundColor: 'var(--color-blue-subtle)',
+  color: 'var(--color-blue-light)',
+  borderRadius: 'var(--radius-md)',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 500,
   textDecoration: 'none',
-  border: '1px solid #d0dafe',
+  border: '1px solid rgba(59, 139, 212, 0.2)',
   cursor: 'pointer',
-  transition: 'background-color 0.15s',
+  transition: 'background-color var(--duration-fast), transform var(--duration-instant)',
+  minHeight: 'var(--tap-target-min)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const timestampStyle: CSSProperties = {
-  fontSize: 12,
-  color: '#999',
+  fontSize: 'var(--text-xs)',
+  color: 'var(--color-text-muted)',
   textAlign: 'right',
-  marginBottom: 8,
+  marginBottom: 'var(--space-2)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const activeWorkoutsBannerStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 8,
-  backgroundColor: '#e3f2fd',
-  borderRadius: 8,
-  padding: '10px 16px',
-  marginBottom: 20,
-  fontSize: 14,
+  gap: 'var(--space-2)',
+  backgroundColor: 'var(--color-blue-subtle)',
+  borderRadius: 'var(--radius-md)',
+  padding: 'var(--space-3) var(--space-4)',
+  marginBottom: 'var(--space-5)',
+  fontSize: 'var(--text-sm)',
   fontWeight: 500,
-  color: '#1565c0',
+  color: 'var(--color-blue-light)',
+  border: '1px solid rgba(59, 139, 212, 0.15)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const activeDotStyle: CSSProperties = {
   width: 8,
   height: 8,
-  borderRadius: '50%',
-  backgroundColor: '#1565c0',
+  borderRadius: 'var(--radius-full)',
+  backgroundColor: 'var(--color-blue)',
 };
 
 interface RecentWorkout {
@@ -73,58 +78,63 @@ interface RecentWorkout {
 }
 
 const sectionHeadingStyle: CSSProperties = {
-  fontSize: 20,
-  fontWeight: 600,
-  color: '#1a1a2e',
-  marginTop: 40,
-  marginBottom: 16,
+  fontSize: 'var(--text-lg)',
+  fontWeight: 500,
+  color: 'var(--color-text-primary)',
+  marginTop: 'var(--space-10)',
+  marginBottom: 'var(--space-4)',
+  fontFamily: 'var(--font-sans)',
+  letterSpacing: 'var(--tracking-tight)',
 };
 
 const tableContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-lg)',
   overflow: 'hidden',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const tableStyle: CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
-  fontSize: 14,
+  fontSize: 'var(--text-sm)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const thStyle: CSSProperties = {
   textAlign: 'left',
-  padding: '12px 16px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
-  fontWeight: 600,
-  color: '#555',
-  fontSize: 13,
+  padding: 'var(--space-3) var(--space-4)',
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-default)',
+  fontWeight: 500,
+  color: 'var(--color-text-muted)',
+  fontSize: 'var(--text-xs)',
   textTransform: 'uppercase',
-  letterSpacing: '0.3px',
+  letterSpacing: 'var(--tracking-wider)',
 };
 
 const tdStyle: CSSProperties = {
-  padding: '12px 16px',
-  borderBottom: '1px solid #f0f0f0',
-  color: '#333',
+  padding: 'var(--space-3) var(--space-4)',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  color: 'var(--color-text-secondary)',
 };
 
 const statusBadgeBase: CSSProperties = {
   display: 'inline-block',
   padding: '3px 10px',
-  borderRadius: 12,
-  fontSize: 12,
-  fontWeight: 600,
+  borderRadius: 'var(--radius-full)',
+  fontSize: 'var(--text-xs)',
+  fontWeight: 500,
 };
 
 const errorBoxStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#b71c1c',
-  padding: '14px 18px',
-  borderRadius: 8,
-  fontSize: 14,
+  backgroundColor: 'var(--color-red-subtle)',
+  color: 'var(--color-red-light)',
+  padding: 'var(--space-4) var(--space-5)',
+  borderRadius: 'var(--radius-md)',
+  fontSize: 'var(--text-sm)',
+  border: '1px solid rgba(192, 57, 43, 0.2)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const loadingContainerStyle: CSSProperties = {
@@ -137,19 +147,19 @@ const loadingContainerStyle: CSSProperties = {
 const spinnerStyle: CSSProperties = {
   width: 36,
   height: 36,
-  border: '4px solid #e0e0e0',
-  borderTopColor: '#4fc3f7',
+  border: '4px solid var(--color-bg-elevated)',
+  borderTopColor: 'var(--color-blue)',
   borderRadius: '50%',
 };
 
 function getStatusBadgeStyle(status: string): CSSProperties {
   if (status === 'completed') {
-    return { ...statusBadgeBase, backgroundColor: '#e8f5e9', color: '#2e7d32' };
+    return { ...statusBadgeBase, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' };
   }
   if (status === 'in_progress') {
-    return { ...statusBadgeBase, backgroundColor: '#e3f2fd', color: '#1565c0' };
+    return { ...statusBadgeBase, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' };
   }
-  return { ...statusBadgeBase, backgroundColor: '#fff3e0', color: '#e65100' };
+  return { ...statusBadgeBase, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold-light)' };
 }
 
 function formatDate(dateStr: string): string {
@@ -309,7 +319,7 @@ export default function DashboardPage() {
         <h2 style={sectionHeadingStyle} className="title-animate">Recent Workouts</h2>
         <div style={tableContainerStyle} className="section-glow">
           {recentWorkouts.length === 0 ? (
-            <p style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 14 }} className="empty-breathe">
+            <p style={{ padding: 24, textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }} className="empty-breathe">
               No workouts recorded yet.
             </p>
           ) : (

@@ -7,14 +7,14 @@ import { TrainerSidebar } from '@/components/TrainerSidebar';
 const shellStyle: CSSProperties = {
   display: 'flex',
   minHeight: '100vh',
-  backgroundColor: '#0F172A',
-  color: '#F1F5F9',
+  backgroundColor: 'var(--color-bg-base)',
+  color: 'var(--color-text-primary)',
 };
 
 const mainStyle: CSSProperties = {
   flex: 1,
-  padding: 32,
-  backgroundColor: '#111827',
+  padding: 'var(--space-8)',
+  backgroundColor: 'var(--color-bg-base)',
   overflowY: 'auto',
 };
 
@@ -23,7 +23,7 @@ const spinnerContainerStyle: CSSProperties = {
   justifyContent: 'center',
   alignItems: 'center',
   minHeight: '100vh',
-  backgroundColor: '#0F172A',
+  backgroundColor: 'var(--color-bg-base)',
 };
 
 export default function TrainerLayout({ children }: { children: React.ReactNode }) {
@@ -53,7 +53,7 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
     return (
       <div style={spinnerContainerStyle}>
         <style>{`@keyframes tspin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ width: 32, height: 32, border: '3px solid #334155', borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'tspin 0.7s linear infinite' }} />
+        <div style={{ width: 32, height: 32, border: '3px solid var(--color-bg-elevated)', borderTopColor: 'var(--color-blue)', borderRadius: '50%', animation: 'tspin 0.7s linear infinite' }} />
       </div>
     );
   }

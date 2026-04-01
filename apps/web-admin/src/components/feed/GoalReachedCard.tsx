@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 14,
   border: '1px solid rgba(251, 191, 36, 0.2)',
@@ -81,8 +81,8 @@ export function GoalReachedCard({ event, onToggleReaction }: GoalReachedCardProp
             Goal Reached
           </div>
 
-          <div style={{ fontSize: 14, color: '#E2E8F0', lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 600, color: '#F1F5F9' }}>{event.member_name}</span>{' '}
+          <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+            <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{event.member_name}</span>{' '}
             {event.description}
           </div>
 
@@ -105,7 +105,7 @@ export function GoalReachedCard({ event, onToggleReaction }: GoalReachedCardProp
               {ctx.machine_name && (
                 <div style={{
                   fontSize: 12,
-                  color: '#94A3B8',
+                  color: 'var(--color-text-secondary)',
                   backgroundColor: 'rgba(148, 163, 184, 0.1)',
                   borderRadius: 6,
                   padding: '3px 8px',
@@ -127,7 +127,7 @@ export function GoalReachedCard({ event, onToggleReaction }: GoalReachedCardProp
             </div>
           )}
 
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>
             {timeAgo(event.created_at)}
           </div>
 

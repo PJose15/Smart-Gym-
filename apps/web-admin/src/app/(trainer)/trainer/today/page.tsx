@@ -3,27 +3,28 @@
 import { useEffect, useState, CSSProperties } from 'react';
 import type { TrainerTodayData, AttentionItem, TrainingNowMember, TodaySessionSummary, RecentPR } from '@nexera/types';
 
-const headerStyle: CSSProperties = { margin: '0 0 24px', fontSize: 22, fontWeight: 700 };
+const headerStyle: CSSProperties = { margin: '0 0 var(--space-6)', fontSize: 'var(--text-xl)', fontWeight: 500, fontFamily: 'var(--font-sans)', letterSpacing: 'var(--tracking-tight)' };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
-  borderRadius: 10,
-  padding: 20,
-  marginBottom: 20,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-lg)',
+  padding: 'var(--card-padding-lg)',
+  marginBottom: 'var(--space-5)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
-const sectionTitle: CSSProperties = { margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: '#94A3B8' };
+const sectionTitle: CSSProperties = { margin: '0 0 var(--space-3)', fontSize: 'var(--text-base)', fontWeight: 500, color: 'var(--color-text-muted)', fontFamily: 'var(--font-sans)' };
 
 const badgeColors: Record<string, string> = {
-  at_risk: '#EF4444',
-  injury_report: '#F97316',
-  program_ending: '#EAB308',
-  new_member: '#22C55E',
+  at_risk: 'var(--color-red)',
+  injury_report: 'var(--color-amber)',
+  program_ending: 'var(--color-gold)',
+  new_member: 'var(--color-green)',
 };
 
-const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 13 };
-const thStyle: CSSProperties = { textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #334155', color: '#64748B', fontWeight: 500 };
-const tdStyle: CSSProperties = { padding: '8px 12px', borderBottom: '1px solid #1E293B' };
+const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-sans)' };
+const thStyle: CSSProperties = { textAlign: 'left', padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--color-border-default)', color: 'var(--color-text-muted)', fontWeight: 500, fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)' };
+const tdStyle: CSSProperties = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--color-border-subtle)', color: 'var(--color-text-secondary)' };
 
 export default function TrainerTodayPage() {
   const [data, setData] = useState<TrainerTodayData | null>(null);
@@ -36,61 +37,58 @@ export default function TrainerTodayPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <p style={{ color: '#94A3B8' }}>Loading...</p>;
-  if (!data) return <p style={{ color: '#EF4444' }}>Failed to load today data.</p>;
+  if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading...</p>;
+  if (!data) return <p style={{ color: 'var(--color-red-light)' }}>Failed to load today data.</p>;
 
   return (
     <div>
       <h1 style={headerStyle}>Today</h1>
 
-      {/* Attention Items */}
       {data.attention_items.length > 0 && (
         <div style={cardStyle}>
           <h2 style={sectionTitle}>Needs Attention</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
             {data.attention_items.map((item: AttentionItem, i: number) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                 <span style={{
                   display: 'inline-block',
                   padding: '2px 8px',
-                  borderRadius: 4,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  backgroundColor: badgeColors[item.type] ?? '#3B82F6',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-xs)',
+                  fontWeight: 500,
+                  backgroundColor: badgeColors[item.type] ?? 'var(--color-blue)',
                   color: '#fff',
                 }}>
                   {item.type.replace('_', ' ')}
                 </span>
-                <span style={{ fontWeight: 500, fontSize: 13 }}>{item.member_name}</span>
-                <span style={{ color: '#94A3B8', fontSize: 12 }}>{item.description}</span>
+                <span style={{ fontWeight: 500, fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>{item.member_name}</span>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{item.description}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Members Training Now */}
       <div style={cardStyle}>
         <h2 style={sectionTitle}>Training Now ({data.members_training_now.length})</h2>
         {data.members_training_now.length === 0 ? (
-          <p style={{ color: '#64748B', fontSize: 13, margin: 0 }}>No members currently training.</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', margin: 0 }}>No members currently training.</p>
         ) : (
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
             {data.members_training_now.map((m: TrainingNowMember) => (
-              <div key={m.member_id} style={{ backgroundColor: '#0F172A', borderRadius: 8, padding: '10px 14px', minWidth: 140 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{m.member_name}</div>
-                <div style={{ color: '#94A3B8', fontSize: 12 }}>{m.exercises_count} exercises</div>
+              <div key={m.member_id} style={{ backgroundColor: 'var(--color-bg-elevated)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3) var(--space-4)', minWidth: 140, border: '1px solid var(--color-border-subtle)' }}>
+                <div style={{ fontWeight: 500, fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>{m.member_name}</div>
+                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{m.exercises_count} exercises</div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Today's Sessions */}
       <div style={cardStyle}>
         <h2 style={sectionTitle}>Today&apos;s Sessions ({data.todays_sessions.length})</h2>
         {data.todays_sessions.length === 0 ? (
-          <p style={{ color: '#64748B', fontSize: 13, margin: 0 }}>No sessions today yet.</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', margin: 0 }}>No sessions today yet.</p>
         ) : (
           <table style={tableStyle}>
             <thead>
@@ -110,7 +108,7 @@ export default function TrainerTodayPage() {
                   <td style={tdStyle}>{s.exercises_count}</td>
                   <td style={tdStyle}>{s.total_sets}</td>
                   <td style={tdStyle}>
-                    <span style={{ color: s.finished_at ? '#22C55E' : '#EAB308', fontSize: 12 }}>
+                    <span style={{ color: s.finished_at ? 'var(--color-green-light)' : 'var(--color-gold-light)', fontSize: 'var(--text-xs)' }}>
                       {s.finished_at ? 'Done' : 'In Progress'}
                     </span>
                   </td>
@@ -121,18 +119,17 @@ export default function TrainerTodayPage() {
         )}
       </div>
 
-      {/* Recent PRs */}
       {data.recent_prs.length > 0 && (
         <div style={cardStyle}>
           <h2 style={sectionTitle}>Recent PRs</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
             {data.recent_prs.map((pr: RecentPR, i: number) => (
-              <div key={i} style={{ fontSize: 13 }}>
-                <span style={{ fontWeight: 600 }}>{pr.member_name}</span>
+              <div key={i} style={{ fontSize: 'var(--text-sm)' }}>
+                <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{pr.member_name}</span>
                 {' — '}
-                <span style={{ color: '#EAB308' }}>{pr.exercise_name}</span>
+                <span style={{ color: 'var(--color-gold-light)' }}>{pr.exercise_name}</span>
                 {' '}
-                <span style={{ color: '#94A3B8' }}>{pr.value} ({pr.pr_type})</span>
+                <span style={{ color: 'var(--color-text-muted)' }}>{pr.value} ({pr.pr_type})</span>
               </div>
             ))}
           </div>

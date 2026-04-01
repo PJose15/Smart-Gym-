@@ -4,8 +4,8 @@ import { useEffect, useState, FormEvent, CSSProperties } from 'react';
 import type { GymSettings } from '@nexera/types';
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)',
   padding: 24,
   marginBottom: 20,
   maxWidth: 600,
@@ -14,11 +14,11 @@ const cardStyle: CSSProperties = {
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '10px 12px',
-  backgroundColor: '#0F172A',
-  border: '1px solid #334155',
-  borderRadius: 8,
-  color: '#F1F5F9',
-  fontSize: 14,
+  backgroundColor: 'var(--color-bg-base)',
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-md)',
+  color: 'var(--color-text-primary)',
+  fontSize: 'var(--text-sm)',
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -26,8 +26,8 @@ const inputStyle: CSSProperties = {
 const labelStyle: CSSProperties = {
   display: 'block',
   marginBottom: 6,
-  fontSize: 12,
-  color: '#94A3B8',
+  fontSize: 'var(--text-xs)',
+  color: 'var(--color-text-muted)',
   fontWeight: 500,
 };
 
@@ -35,27 +35,27 @@ const fieldStyle: CSSProperties = { marginBottom: 16 };
 
 const btnStyle: CSSProperties = {
   padding: '10px 24px',
-  backgroundColor: '#3B82F6',
-  color: '#fff',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
   border: 'none',
-  borderRadius: 8,
-  fontSize: 14,
+  borderRadius: 'var(--radius-md)',
+  fontSize: 'var(--text-sm)',
   fontWeight: 600,
   cursor: 'pointer',
 };
 
 const sectionTitle: CSSProperties = {
   margin: '0 0 16px',
-  fontSize: 15,
+  fontSize: 'var(--text-base)',
   fontWeight: 600,
-  color: '#94A3B8',
+  color: 'var(--color-text-muted)',
 };
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, fontSize: 13, cursor: 'pointer' }}>
+    <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, fontSize: 'var(--text-sm)', cursor: 'pointer' }}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span style={{ color: '#F1F5F9' }}>{label}</span>
+      <span style={{ color: 'var(--color-text-primary)' }}>{label}</span>
     </label>
   );
 }
@@ -98,12 +98,12 @@ export default function OwnerSettingsPage() {
     setSaving(false);
   }
 
-  if (loading) return <p style={{ color: '#94A3B8' }}>Loading settings...</p>;
-  if (!settings) return <p style={{ color: '#EF4444' }}>Failed to load settings.</p>;
+  if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading settings...</p>;
+  if (!settings) return <p style={{ color: 'var(--color-red-light)' }}>Failed to load settings.</p>;
 
   return (
-    <div style={{ color: '#F1F5F9', maxWidth: 600 }}>
-      <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Gym Settings</h1>
+    <div style={{ color: 'var(--color-text-primary)', maxWidth: 600 }}>
+      <h1 style={{ margin: '0 0 24px', fontSize: 'var(--text-xl)', fontWeight: 600 }}>Gym Settings</h1>
 
       <form onSubmit={handleSave}>
         {/* Branding */}
@@ -231,7 +231,7 @@ export default function OwnerSettingsPage() {
           <Toggle label="Maintenance alerts" checked={settings.owner_maintenance_alerts} onChange={(v) => update('owner_maintenance_alerts', v)} />
         </div>
 
-        {msg && <p style={{ color: msg.includes('saved') ? '#22C55E' : '#EF4444', fontSize: 13, marginBottom: 12 }}>{msg}</p>}
+        {msg && <p style={{ color: msg.includes('saved') ? 'var(--color-green-light)' : 'var(--color-red-light)', fontSize: 'var(--text-sm)', marginBottom: 12 }}>{msg}</p>}
 
         <button type="submit" disabled={saving} style={{ ...btnStyle, opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Saving...' : 'Save Settings'}

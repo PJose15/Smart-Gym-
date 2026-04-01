@@ -6,23 +6,23 @@ const formStyle: CSSProperties = {
   display: 'flex',
   gap: 10,
   padding: '12px 0',
-  borderTop: '1px solid #334155',
+  borderTop: '1px solid var(--color-border-default)',
 };
 
 const inputStyle: CSSProperties = {
   flex: 1,
   padding: '10px 14px',
-  backgroundColor: '#0F172A',
-  border: '1px solid #334155',
+  backgroundColor: 'var(--color-bg-base)',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 8,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
   fontSize: 14,
   outline: 'none',
 };
 
 const sendStyle: CSSProperties = {
   padding: '10px 20px',
-  backgroundColor: '#3B82F6',
+  backgroundColor: 'var(--color-blue)',
   color: '#fff',
   border: 'none',
   borderRadius: 8,

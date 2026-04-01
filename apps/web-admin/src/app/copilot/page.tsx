@@ -37,10 +37,11 @@ const filterBarStyle: CSSProperties = {
 const filterSelectStyle: CSSProperties = {
   padding: '6px 12px',
   fontSize: 13,
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   outline: 'none',
-  backgroundColor: '#fff',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const cardGridStyle: CSSProperties = {
@@ -50,10 +51,10 @@ const cardGridStyle: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: '20px',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
   cursor: 'pointer',
   transition: 'box-shadow 0.2s',
 };
@@ -61,19 +62,19 @@ const cardStyle: CSSProperties = {
 const cardTitleStyle: CSSProperties = {
   fontSize: 16,
   fontWeight: 600,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
   marginBottom: 6,
 };
 
 const memberNameStyle: CSSProperties = {
   fontSize: 13,
-  color: '#666',
+  color: 'var(--color-text-secondary)',
   marginBottom: 8,
 };
 
 const bodyPreviewStyle: CSSProperties = {
   fontSize: 13,
-  color: '#555',
+  color: 'var(--color-text-muted)',
   lineHeight: 1.5,
   marginBottom: 12,
   maxHeight: 60,
@@ -105,8 +106,8 @@ const sendBtnStyle: CSSProperties = {
   padding: '6px 16px',
   fontSize: 13,
   fontWeight: 600,
-  color: '#fff',
-  backgroundColor: '#4fc3f7',
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
   borderRadius: 6,
   cursor: 'pointer',
@@ -116,9 +117,9 @@ const discardBtnStyle: CSSProperties = {
   padding: '6px 16px',
   fontSize: 13,
   fontWeight: 600,
-  color: '#e53935',
+  color: 'var(--color-red)',
   backgroundColor: 'transparent',
-  border: '1px solid #e53935',
+  border: '1px solid var(--color-red)',
   borderRadius: 6,
   cursor: 'pointer',
 };
@@ -137,7 +138,7 @@ const modalOverlayStyle: CSSProperties = {
 };
 
 const modalStyle: CSSProperties = {
-  backgroundColor: '#fff',
+  backgroundColor: 'var(--color-bg-elevated)',
   borderRadius: 12,
   padding: 32,
   width: '90%',
@@ -151,50 +152,54 @@ const textareaStyle: CSSProperties = {
   minHeight: 160,
   padding: '10px 12px',
   fontSize: 14,
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   fontFamily: 'inherit',
   resize: 'vertical',
   boxSizing: 'border-box',
+  backgroundColor: 'var(--color-bg-highest)',
+  color: 'var(--color-text-primary)',
 };
 
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '8px 12px',
   fontSize: 14,
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   boxSizing: 'border-box',
   marginBottom: 12,
+  backgroundColor: 'var(--color-bg-highest)',
+  color: 'var(--color-text-primary)',
 };
 
 const labelStyle: CSSProperties = {
   display: 'block',
   fontSize: 13,
   fontWeight: 600,
-  color: '#333',
+  color: 'var(--color-text-primary)',
   marginBottom: 6,
 };
 
 const signalsPanelStyle: CSSProperties = {
-  backgroundColor: '#f8f9fa',
+  backgroundColor: 'var(--color-bg-highest)',
   borderRadius: 8,
   padding: '14px 16px',
   marginBottom: 16,
   fontSize: 13,
-  color: '#555',
+  color: 'var(--color-text-muted)',
 };
 
 const confidenceBadgeStyle = (confidence: number): CSSProperties => ({
   ...chipStyle,
-  backgroundColor: confidence >= 0.7 ? '#e8f5e9' : confidence >= 0.5 ? '#fff8e1' : '#fce4ec',
-  color: confidence >= 0.7 ? '#2e7d32' : confidence >= 0.5 ? '#f57f17' : '#c62828',
+  backgroundColor: confidence >= 0.7 ? 'var(--color-green-light)' : confidence >= 0.5 ? 'rgba(239,159,39,0.15)' : 'var(--color-red-light)',
+  color: confidence >= 0.7 ? 'var(--color-green)' : confidence >= 0.5 ? 'var(--color-gold)' : 'var(--color-red)',
 });
 
 const emptyStyle: CSSProperties = {
   padding: 40,
   textAlign: 'center',
-  color: '#999',
+  color: 'var(--color-text-muted)',
   fontSize: 15,
 };
 
@@ -205,8 +210,8 @@ const loadingStyle: CSSProperties = {
 };
 
 const errorStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#b71c1c',
+  backgroundColor: 'var(--color-red-light)',
+  color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
   fontSize: 14,
@@ -226,8 +231,8 @@ const statsChipStyle: CSSProperties = {
   borderRadius: 14,
   fontSize: 12,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-highest)',
+  color: 'var(--color-text-muted)',
 };
 
 // ─── Component ────────────────────────────────────────────
@@ -452,8 +457,8 @@ export default function CopilotInboxPage() {
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</span>
-              {pendingCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{pendingCount} pending</span>}
-              {sentCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{sentCount} sent</span>}
+              {pendingCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(239,159,39,0.15)', color: 'var(--color-gold)' }}>{pendingCount} pending</span>}
+              {sentCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{sentCount} sent</span>}
               {discardedCount > 0 && <span style={statsChipStyle}>{discardedCount} discarded</span>}
               <span style={statsChipStyle}>{avgConfidence}% avg confidence</span>
               <span style={statsChipStyle}>{uniqueMembers} member{uniqueMembers !== 1 ? 's' : ''}</span>
@@ -462,7 +467,7 @@ export default function CopilotInboxPage() {
         })()}
 
         <div style={filterBarStyle}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: '#555' }}>Status:</label>
+          <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' }}>Status:</label>
           <select
             style={filterSelectStyle}
             value={filterStatus}
@@ -502,7 +507,7 @@ export default function CopilotInboxPage() {
                       {Math.round(draft.confidence * 100)}% confidence
                     </span>
                     {chips?.map((c, i) => (
-                      <span key={i} style={{ ...chipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{c}</span>
+                      <span key={i} style={{ ...chipStyle, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue)' }}>{c}</span>
                     ))}
                   </div>
                   {draft.status === 'pending' && (
@@ -526,8 +531,8 @@ export default function CopilotInboxPage() {
                   {draft.status !== 'pending' && (
                     <span style={{
                       ...chipStyle,
-                      backgroundColor: draft.status === 'sent' ? '#e8f5e9' : '#f5f5f5',
-                      color: draft.status === 'sent' ? '#2e7d32' : '#999',
+                      backgroundColor: draft.status === 'sent' ? 'var(--color-green-light)' : 'var(--color-bg-highest)',
+                      color: draft.status === 'sent' ? 'var(--color-green)' : 'var(--color-text-muted)',
                     }}>
                       {draft.status}
                     </span>
@@ -542,7 +547,7 @@ export default function CopilotInboxPage() {
         {selectedDraft && (
           <div style={modalOverlayStyle} onClick={closeDraft}>
             <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 16, color: '#1a1a2e' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 16, color: 'var(--color-text-primary)' }}>
                 Edit Draft
               </h2>
 
@@ -577,7 +582,7 @@ export default function CopilotInboxPage() {
               />
 
               <div style={{ ...actionsRowStyle, marginTop: 16, justifyContent: 'flex-end' }}>
-                <button style={{ ...discardBtnStyle, color: '#666', borderColor: '#ccc' }} onClick={closeDraft}>
+                <button style={{ ...discardBtnStyle, color: 'var(--color-text-secondary)', borderColor: 'var(--color-border-default)' }} onClick={closeDraft}>
                   Cancel
                 </button>
                 {selectedDraft.status === 'pending' && (

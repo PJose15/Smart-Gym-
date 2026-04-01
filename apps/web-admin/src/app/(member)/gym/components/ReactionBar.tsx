@@ -34,7 +34,7 @@ function btnStyle(isActive: boolean): CSSProperties {
     fontSize: 12,
     fontWeight: 600,
     backgroundColor: isActive ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-    color: isActive ? '#60A5FA' : '#94A3B8',
+    color: isActive ? '#60A5FA' : 'var(--color-text-secondary)',
     transition: 'all 0.15s ease',
   };
 }

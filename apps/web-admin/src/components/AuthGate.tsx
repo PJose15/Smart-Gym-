@@ -11,14 +11,14 @@ const spinnerContainerStyle: CSSProperties = {
   justifyContent: 'center',
   alignItems: 'center',
   minHeight: '100vh',
-  backgroundColor: '#f5f5f5',
+  backgroundColor: 'var(--color-bg-base)',
 };
 
 const spinnerStyle: CSSProperties = {
   width: 40,
   height: 40,
-  border: '4px solid #e0e0e0',
-  borderTopColor: '#4fc3f7',
+  border: '4px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)',
   borderRadius: '50%',
   animation: 'authgate-spin 0.8s linear infinite',
 };
@@ -29,7 +29,7 @@ const accessDeniedStyle: CSSProperties = {
   justifyContent: 'center',
   alignItems: 'center',
   minHeight: '100vh',
-  backgroundColor: '#f5f5f5',
+  backgroundColor: 'var(--color-bg-base)',
   gap: 16,
 };
 
@@ -137,13 +137,13 @@ export function AuthGate({ children, requiredRoles }: AuthGateProps) {
   if (requiredRoles && requiredRoles.length > 0 && (!userRole || !requiredRoles.includes(userRole))) {
     return (
       <div style={accessDeniedStyle}>
-        <h2 style={{ margin: 0, color: '#333' }}>Access Denied</h2>
-        <p style={{ margin: 0, color: '#666', fontSize: 15 }}>
+        <h2 style={{ margin: 0, color: 'var(--color-text-primary)' }}>Access Denied</h2>
+        <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: 15 }}>
           You don&apos;t have permission to access this page.
         </p>
         <button
           onClick={() => router.push('/')}
-          style={{ padding: '10px 24px', backgroundColor: '#4fc3f7', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
+          style={{ padding: '10px 24px', backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
         >
           Go to Dashboard
         </button>

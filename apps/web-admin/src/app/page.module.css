@@ -1,23 +1,26 @@
 .container {
-  padding: 32px;
+  padding: var(--space-8);
   max-width: 1200px;
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin: 0 0 8px;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2);
+  letter-spacing: var(--tracking-tight);
+  font-family: var(--font-sans);
 }
 
 .description {
-  font-size: 15px;
-  color: #666;
-  margin: 0 0 32px;
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-8);
+  font-family: var(--font-sans);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  gap: var(--space-5);
 }

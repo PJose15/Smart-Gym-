@@ -25,45 +25,46 @@ interface ProfileOption { id: string; full_name: string; role: string; profile_i
 // ─── Styles ─────────────────────────────────────────────
 
 const addBtnStyle: CSSProperties = {
-  padding: '10px 20px', fontSize: 14, fontWeight: 600, color: '#fff',
-  backgroundColor: '#4fc3f7', border: 'none', borderRadius: 6, cursor: 'pointer',
+  padding: '10px 20px', fontSize: 'var(--text-base)' as any, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)', border: 'none', borderRadius: 'var(--radius-sm)' as any, cursor: 'pointer',
 };
 
 const formContainerStyle: CSSProperties = {
-  backgroundColor: '#fff', borderRadius: 10, padding: 24, marginBottom: 24,
-  border: '1px solid rgba(79,195,247,0.15)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)' as any, padding: 24, marginBottom: 24,
+  border: '1px solid var(--color-border-default)',
 };
 
 const formGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 };
 
-const labelStyle: CSSProperties = { display: 'block', fontSize: 13, fontWeight: 600, color: '#333', marginBottom: 6 };
+const labelStyle: CSSProperties = { display: 'block', fontSize: 'var(--text-sm)' as any, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginBottom: 6 };
 const selectStyle: CSSProperties = {
-  width: '100%', padding: '8px 12px', fontSize: 14, border: '1px solid #ddd',
-  borderRadius: 6, boxSizing: 'border-box', outline: 'none', backgroundColor: '#fff',
+  width: '100%', padding: '8px 12px', fontSize: 'var(--text-base)' as any, border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-sm)' as any, boxSizing: 'border-box', outline: 'none', backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const tableContainerStyle: CSSProperties = {
-  backgroundColor: '#fff', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)' as any, overflow: 'hidden', border: '1px solid var(--color-border-subtle)',
 };
-const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 14 };
+const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-base)' as any };
 const thStyle: CSSProperties = {
-  textAlign: 'left', padding: '12px 16px', backgroundColor: '#fafafa', borderBottom: '1px solid #eee',
-  fontWeight: 600, color: '#555', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.3px',
+  textAlign: 'left', padding: '12px 16px', backgroundColor: 'var(--color-bg-elevated)', borderBottom: '1px solid var(--color-border-subtle)',
+  fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' as any, textTransform: 'uppercase', letterSpacing: '0.3px',
 };
-const tdStyle: CSSProperties = { padding: '12px 16px', borderBottom: '1px solid #f0f0f0', color: '#333' };
+const tdStyle: CSSProperties = { padding: '12px 16px', borderBottom: '1px solid var(--color-border-subtle)', color: 'var(--color-text-primary)' };
 
 const statusBadge = (status: string): CSSProperties => ({
-  display: 'inline-block', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600,
-  backgroundColor: status === 'active' ? '#e8f5e9' : '#f5f5f5',
-  color: status === 'active' ? '#2e7d32' : '#999',
+  display: 'inline-block', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: status === 'active' ? 'var(--color-green-subtle)' : 'var(--color-bg-elevated)',
+  color: status === 'active' ? 'var(--color-green-light)' : 'var(--color-text-muted)',
 });
 
 const actionBtnStyle: CSSProperties = {
-  padding: '5px 12px', fontSize: 12, fontWeight: 600, border: 'none', borderRadius: 5, cursor: 'pointer',
+  padding: '5px 12px', fontSize: 12, fontWeight: 'var(--weight-medium)' as any, border: 'none', borderRadius: 5, cursor: 'pointer',
 };
 
-const emptyStyle: CSSProperties = { padding: 40, textAlign: 'center', color: '#999', fontSize: 15 };
-const errorStyle: CSSProperties = { backgroundColor: '#fdecea', color: '#b71c1c', padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16 };
+const emptyStyle: CSSProperties = { padding: 40, textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--text-base)' as any };
+const errorStyle: CSSProperties = { backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)', padding: '14px 18px', borderRadius: 'var(--radius-sm)' as any, fontSize: 'var(--text-base)' as any, marginBottom: 16 };
 
 const statsStripStyle: CSSProperties = {
   display: 'flex',
@@ -75,11 +76,11 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 // ─── Component ────────────────────────────────────────────
@@ -223,8 +224,8 @@ export default function AssignmentsPage() {
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{assignments.length} assignment{assignments.length !== 1 ? 's' : ''}</span>
-              <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{activeCount} active</span>
-              {pausedCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{pausedCount} paused</span>}
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' }}>{activeCount} active</span>
+              {pausedCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold-light)' }}>{pausedCount} paused</span>}
               <span style={statsChipStyle}>{uniqueTrainers} trainer{uniqueTrainers !== 1 ? 's' : ''}</span>
               <span style={statsChipStyle}>{uniqueMembers} member{uniqueMembers !== 1 ? 's' : ''}</span>
               {uniqueGyms > 1 && <span style={statsChipStyle}>{uniqueGyms} gyms</span>}
@@ -234,7 +235,7 @@ export default function AssignmentsPage() {
 
         {showForm && (
           <div style={formContainerStyle} className="form-slide-down">
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a2e', marginTop: 0, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginTop: 0, marginBottom: 20 }}>
               Assign Trainer to Member
             </h3>
             <form onSubmit={handleAdd}>
@@ -265,7 +266,7 @@ export default function AssignmentsPage() {
                 <button type="submit" style={addBtnStyle} className="btn-primary" disabled={submitting}>
                   {submitting ? 'Creating...' : 'Create Assignment'}
                 </button>
-                <button type="button" style={{ ...actionBtnStyle, color: '#666', backgroundColor: '#f0f0f0' }} onClick={() => setShowForm(false)}>Cancel</button>
+                <button type="button" style={{ ...actionBtnStyle, color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-bg-elevated)' }} onClick={() => setShowForm(false)}>Cancel</button>
               </div>
             </form>
           </div>
@@ -292,20 +293,20 @@ export default function AssignmentsPage() {
                 {assignments.map((a) => (
                   <tr key={a.id} className="table-row-hover">
                     <td style={tdStyle}>{a.gyms?.name ?? '--'}</td>
-                    <td style={{ ...tdStyle, fontWeight: 600 }}>{a.trainer_profile?.full_name ?? '--'}</td>
+                    <td style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any }}>{a.trainer_profile?.full_name ?? '--'}</td>
                     <td style={tdStyle}>{a.member_profile?.full_name ?? '--'}</td>
                     <td style={tdStyle}><span style={statusBadge(a.status)}>{a.status}</span></td>
                     <td style={tdStyle}>{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button
-                          style={{ ...actionBtnStyle, color: '#fff', backgroundColor: a.status === 'active' ? '#ff9800' : '#4caf50' }}
+                          style={{ ...actionBtnStyle, color: 'var(--color-text-primary)', backgroundColor: a.status === 'active' ? 'var(--color-gold)' : 'var(--color-green)' }}
                           onClick={() => handleToggleStatus(a)}
                         >
                           {a.status === 'active' ? 'Pause' : 'Resume'}
                         </button>
                         <button
-                          style={{ ...actionBtnStyle, color: '#e53935', backgroundColor: 'transparent', border: '1px solid #e53935' }}
+                          style={{ ...actionBtnStyle, color: 'var(--color-red-light)', backgroundColor: 'transparent', border: '1px solid var(--color-red-light)' }}
                           onClick={() => handleDelete(a.id)}
                         >
                           Remove

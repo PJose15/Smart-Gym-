@@ -37,7 +37,7 @@ export function DNAArchetypeCard({ archetype, variant = 'full' }: DNAArchetypeCa
           }}
         />
         <span style={{ fontSize: 18 }}>{archetype.icon}</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#CBD5E1' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
           {archetype.name}
         </span>
       </div>
@@ -55,7 +55,7 @@ export function DNAArchetypeCard({ archetype, variant = 'full' }: DNAArchetypeCa
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
         <span style={{ fontSize: 48 }}>{archetype.icon}</span>
         <div>
-          <h3 style={{ fontSize: 17, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>
+          <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
             {archetype.name}
           </h3>
           <span
@@ -71,13 +71,13 @@ export function DNAArchetypeCard({ archetype, variant = 'full' }: DNAArchetypeCa
           </span>
         </div>
       </div>
-      <p style={{ fontSize: 13, color: '#94A3B8', margin: '0 0 10px', lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 10px', lineHeight: 1.5 }}>
         {archetype.description}
       </p>
       <div
         style={{
           fontSize: 12,
-          color: '#CBD5E1',
+          color: 'var(--color-text-secondary)',
           background: 'rgba(0,0,0,0.2)',
           borderRadius: 8,
           padding: '8px 10px',

@@ -25,7 +25,7 @@ export function MemberAuthGate({ children }: MemberAuthGateProps) {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: 'var(--color-bg-dark, #0F172A)',
+        backgroundColor: 'var(--color-bg-base)',
       }}>
         <div
           className="skeleton"

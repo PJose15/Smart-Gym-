@@ -12,8 +12,8 @@ const containerStyle: CSSProperties = {
   width: '100%',
   aspectRatio: '16/10',
   borderRadius: 12,
-  backgroundColor: '#0F172A',
-  border: '1px solid #334155',
+  backgroundColor: 'var(--color-bg-base)',
+  border: '1px solid var(--color-border-default)',
   overflow: 'hidden',
   position: 'relative',
 };
@@ -32,7 +32,7 @@ const placeholderStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: 8,
-  color: '#64748B',
+  color: 'var(--color-text-muted)',
 };
 
 const labelStyle: CSSProperties = {
@@ -41,7 +41,7 @@ const labelStyle: CSSProperties = {
   left: 8,
   fontSize: 10,
   fontWeight: 600,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
   backgroundColor: 'rgba(0, 0, 0, 0.6)',
   borderRadius: 4,
   padding: '2px 6px',

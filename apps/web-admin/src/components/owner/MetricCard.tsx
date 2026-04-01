@@ -3,7 +3,7 @@
 import { CSSProperties, useEffect, useRef, useState } from 'react';
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 20,
   display: 'flex',
@@ -57,17 +57,17 @@ export function MetricCard({ title, value, subtitle, change, placeholder, flashO
       className={isFlashing ? 'metric-card-flash' : ''}
       style={{ ...cardStyle, border: flashBorder }}
     >
-      <div style={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }}>{title}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: placeholder ? '#64748B' : '#F1F5F9' }}>
+      <div style={{ color: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 500 }}>{title}</div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: placeholder ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}>
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
       {change !== undefined && (
-        <div style={{ fontSize: 12, color: change >= 0 ? '#22C55E' : '#EF4444' }}>
+        <div style={{ fontSize: 12, color: change >= 0 ? 'var(--color-green)' : 'var(--color-red)' }}>
           {change >= 0 ? '+' : ''}{change}% vs last week
         </div>
       )}
       {subtitle && (
-        <div style={{ fontSize: 12, color: '#64748B' }}>{subtitle}</div>
+        <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{subtitle}</div>
       )}
     </div>
   );

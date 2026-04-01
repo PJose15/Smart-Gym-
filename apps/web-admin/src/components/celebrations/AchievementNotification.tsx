@@ -17,14 +17,14 @@ const toastStyle: CSSProperties = {
   transform: 'translateX(-50%)',
   maxWidth: 360,
   width: 'calc(100% - 32px)',
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 'var(--radius-md, 12px)',
   padding: '12px 16px',
   display: 'flex',
   alignItems: 'center',
   gap: 12,
   boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-  border: '1px solid #334155',
+  border: '1px solid var(--color-border-default)',
   zIndex: 100,
   animation: 'slideUpFade 0.3s ease-out both',
 };
@@ -51,10 +51,10 @@ export function AchievementNotification({ title, points, onDismiss, delay = 3000
         &#127942;
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
           {title}
         </div>
-        <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+        <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>
           +{points} points
         </div>
       </div>

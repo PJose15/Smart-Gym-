@@ -25,8 +25,8 @@ const joinBtnStyle: CSSProperties = {
   padding: '14px 0',
   borderRadius: 10,
   border: 'none',
-  backgroundColor: '#3B82F6',
-  color: '#fff',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
   fontSize: 15,
   fontWeight: 700,
   cursor: 'pointer',
@@ -75,11 +75,11 @@ export default function ChallengeDetailPage({ params }: PageProps) {
   }
 
   if (!member || loading) {
-    return <div style={{ padding: 16, textAlign: 'center', color: '#64748B', paddingTop: 60 }}>Loading...</div>;
+    return <div style={{ padding: 16, textAlign: 'center', color: 'var(--color-text-muted)', paddingTop: 60 }}>Loading...</div>;
   }
 
   if (!data) {
-    return <div style={{ padding: 16, textAlign: 'center', color: '#94A3B8', paddingTop: 60 }}>Challenge not found</div>;
+    return <div style={{ padding: 16, textAlign: 'center', color: 'var(--color-text-secondary)', paddingTop: 60 }}>Challenge not found</div>;
   }
 
   return (
@@ -89,11 +89,11 @@ export default function ChallengeDetailPage({ params }: PageProps) {
         <div style={{ fontSize: 48, marginBottom: 8 }}>
           {CHALLENGE_ICONS[data.challenge_type] || '\uD83C\uDFAF'}
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
           {data.title}
         </h1>
         {data.description && (
-          <p style={{ fontSize: 14, color: '#94A3B8', marginTop: 8, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginTop: 8, lineHeight: 1.5 }}>
             {data.description}
           </p>
         )}
@@ -127,7 +127,7 @@ export default function ChallengeDetailPage({ params }: PageProps) {
           <div style={{ fontSize: 11, fontWeight: 600, color: '#EAB308', textTransform: 'uppercase', marginBottom: 4 }}>
             Prize
           </div>
-          <div style={{ fontSize: 14, color: '#F1F5F9' }}>{data.prize_description}</div>
+          <div style={{ fontSize: 14, color: 'var(--color-text-primary)' }}>{data.prize_description}</div>
         </div>
       )}
 
@@ -143,7 +143,7 @@ export default function ChallengeDetailPage({ params }: PageProps) {
         <div style={{
           fontSize: 11,
           fontWeight: 600,
-          color: '#94A3B8',
+          color: 'var(--color-text-secondary)',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           marginBottom: 12,
@@ -152,7 +152,7 @@ export default function ChallengeDetailPage({ params }: PageProps) {
         </div>
 
         {data.participants.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 32, color: '#64748B', fontSize: 14 }}>
+          <div style={{ textAlign: 'center', padding: 32, color: 'var(--color-text-muted)', fontSize: 14 }}>
             No participants yet. Be the first to join!
           </div>
         ) : (
@@ -171,7 +171,7 @@ export default function ChallengeDetailPage({ params }: PageProps) {
                     backgroundColor: isCurrent ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
                   }}
                 >
-                  <div style={{ width: 28, fontSize: 14, fontWeight: 700, color: '#94A3B8', textAlign: 'center' }}>
+                  <div style={{ width: 28, fontSize: 14, fontWeight: 700, color: 'var(--color-text-secondary)', textAlign: 'center' }}>
                     {RANK_MEDALS[p.current_rank] || `#${p.current_rank}`}
                   </div>
                   {p.avatar_url ? (
@@ -181,21 +181,21 @@ export default function ChallengeDetailPage({ params }: PageProps) {
                       width: 32,
                       height: 32,
                       borderRadius: '50%',
-                      backgroundColor: '#334155',
+                      backgroundColor: 'var(--color-bg-elevated)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: 13,
                       fontWeight: 700,
-                      color: '#94A3B8',
+                      color: 'var(--color-text-secondary)',
                     }}>
                       {p.display_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div style={{ flex: 1, fontSize: 14, fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#60A5FA' : '#E2E8F0' }}>
+                  <div style={{ flex: 1, fontSize: 14, fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#60A5FA' : 'var(--color-text-secondary)' }}>
                     {p.display_name}{isCurrent ? ' (You)' : ''}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                     {p.current_score.toLocaleString()}
                   </div>
                 </div>
@@ -213,13 +213,13 @@ function StatChip({ label, value, highlight }: { label: string; value: string; h
     <div style={{
       padding: '8px 14px',
       borderRadius: 8,
-      backgroundColor: highlight ? 'rgba(59, 130, 246, 0.1)' : '#1E293B',
+      backgroundColor: highlight ? 'var(--color-blue-subtle)' : 'var(--color-bg-raised)',
       textAlign: 'center',
     }}>
-      <div style={{ fontSize: 10, color: highlight ? '#60A5FA' : '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 10, color: highlight ? '#60A5FA' : 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
         {label}
       </div>
-      <div style={{ fontSize: 16, fontWeight: 700, color: '#F1F5F9', marginTop: 2 }}>{value}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)', marginTop: 2 }}>{value}</div>
     </div>
   );
 }

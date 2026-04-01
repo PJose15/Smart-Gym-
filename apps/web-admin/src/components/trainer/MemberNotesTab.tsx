@@ -6,15 +6,15 @@ import type { TrainerNote, TrainerNoteType } from '@nexera/types';
 const NOTE_TYPES: TrainerNoteType[] = ['general', 'form', 'injury', 'progress', 'program'];
 
 const noteTypeColors: Record<string, string> = {
-  general: '#3B82F6',
+  general: 'var(--color-blue)',
   form: '#8B5CF6',
-  injury: '#EF4444',
-  progress: '#22C55E',
+  injury: 'var(--color-red)',
+  progress: 'var(--color-green)',
   program: '#EAB308',
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 16,
   marginBottom: 10,
@@ -23,10 +23,10 @@ const cardStyle: CSSProperties = {
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '10px 12px',
-  backgroundColor: '#0F172A',
-  border: '1px solid #334155',
+  backgroundColor: 'var(--color-bg-base)',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 8,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
   fontSize: 14,
   outline: 'none',
   resize: 'vertical',
@@ -37,17 +37,17 @@ const inputStyle: CSSProperties = {
 
 const selectStyle: CSSProperties = {
   padding: '8px 12px',
-  backgroundColor: '#0F172A',
-  border: '1px solid #334155',
+  backgroundColor: 'var(--color-bg-base)',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
   fontSize: 13,
   outline: 'none',
 };
 
 const btnStyle: CSSProperties = {
   padding: '8px 16px',
-  backgroundColor: '#3B82F6',
+  backgroundColor: 'var(--color-blue)',
   color: '#fff',
   border: 'none',
   borderRadius: 6,
@@ -137,7 +137,7 @@ export function MemberNotesTab({ memberId }: { memberId: string }) {
               <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
             ))}
           </select>
-          <label style={{ fontSize: 12, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <label style={{ fontSize: 12, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <input
               type="checkbox"
               checked={visibleToMember}
@@ -161,9 +161,9 @@ export function MemberNotesTab({ memberId }: { memberId: string }) {
 
       {/* Notes List */}
       {loading ? (
-        <p style={{ color: '#94A3B8' }}>Loading notes...</p>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Loading notes...</p>
       ) : notes.length === 0 ? (
-        <p style={{ color: '#64748B', fontSize: 13 }}>No notes yet.</p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>No notes yet.</p>
       ) : (
         notes.map((note) => (
           <div key={note.id} style={cardStyle}>
@@ -174,16 +174,16 @@ export function MemberNotesTab({ memberId }: { memberId: string }) {
                   borderRadius: 4,
                   fontSize: 11,
                   fontWeight: 600,
-                  backgroundColor: (noteTypeColors[note.note_type] ?? '#3B82F6') + '22',
-                  color: noteTypeColors[note.note_type] ?? '#3B82F6',
+                  backgroundColor: (noteTypeColors[note.note_type] ?? 'var(--color-blue)') + '22',
+                  color: noteTypeColors[note.note_type] ?? 'var(--color-blue)',
                 }}>
                   {note.note_type}
                 </span>
                 {note.is_visible_to_member && (
-                  <span style={{ fontSize: 11, color: '#64748B' }}>Visible to member</span>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Visible to member</span>
                 )}
               </div>
-              <span style={{ fontSize: 11, color: '#64748B' }}>
+              <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                 {new Date(note.created_at).toLocaleString()}
               </span>
             </div>
@@ -197,7 +197,7 @@ export function MemberNotesTab({ memberId }: { memberId: string }) {
                 />
                 <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                   <button onClick={() => handleUpdate(note.id)} style={btnStyle}>Save</button>
-                  <button onClick={() => setEditingId(null)} style={{ ...btnStyle, backgroundColor: '#334155' }}>Cancel</button>
+                  <button onClick={() => setEditingId(null)} style={{ ...btnStyle, backgroundColor: 'var(--color-bg-elevated)' }}>Cancel</button>
                 </div>
               </div>
             ) : (
@@ -206,13 +206,13 @@ export function MemberNotesTab({ memberId }: { memberId: string }) {
                 <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                   <button
                     onClick={() => { setEditingId(note.id); setEditText(note.note_text); }}
-                    style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: 12, cursor: 'pointer', padding: 0 }}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-blue)', fontSize: 12, cursor: 'pointer', padding: 0 }}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(note.id)}
-                    style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 12, cursor: 'pointer', padding: 0 }}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-red)', fontSize: 12, cursor: 'pointer', padding: 0 }}
                   >
                     Delete
                   </button>

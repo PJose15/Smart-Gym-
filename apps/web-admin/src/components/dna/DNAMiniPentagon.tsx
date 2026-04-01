@@ -36,7 +36,7 @@ export function DNAMiniPentagon({
   animated = false,
   className = '',
 }: DNAMiniPentagonProps) {
-  const color = archetypeColor || '#94A3B8';
+  const color = archetypeColor || 'var(--color-text-secondary)';
   const cx = size / 2;
   const cy = size / 2;
   const maxRadius = size * 0.42;

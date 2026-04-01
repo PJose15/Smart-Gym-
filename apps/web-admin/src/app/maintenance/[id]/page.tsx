@@ -95,7 +95,7 @@ export default function MachineMaintenanceDetailPage() {
     return (
       <div style={centeredStyle}>
         <div style={spinnerStyle} className="spinner-enhanced" />
-        <p style={{ color: '#999', marginTop: 16 }}>Loading machine details...</p>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: 16 }}>Loading machine details...</p>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function MachineMaintenanceDetailPage() {
   if (!machine) {
     return (
       <div style={centeredStyle}>
-        <p style={{ color: '#999' }}>Machine not found.</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>Machine not found.</p>
       </div>
     );
   }
@@ -134,8 +134,8 @@ export default function MachineMaintenanceDetailPage() {
         <div style={statsStripStyle}>
           <span style={{
             ...statsChipStyle,
-            backgroundColor: machine.maintenance_status === 'ok' ? '#e8f5e9' : machine.maintenance_status === 'overdue' ? '#fce4e6' : machine.maintenance_status === 'due_soon' ? '#fff3e0' : '#e3f2fd',
-            color: machine.maintenance_status === 'ok' ? '#2e7d32' : machine.maintenance_status === 'overdue' ? '#c62828' : machine.maintenance_status === 'due_soon' ? '#e65100' : '#1565c0',
+            backgroundColor: machine.maintenance_status === 'ok' ? 'var(--color-green-subtle)' : machine.maintenance_status === 'overdue' ? 'var(--color-red-subtle)' : machine.maintenance_status === 'due_soon' ? 'var(--color-gold-subtle)' : 'var(--color-blue-subtle)',
+            color: machine.maintenance_status === 'ok' ? 'var(--color-green-light)' : machine.maintenance_status === 'overdue' ? 'var(--color-red-light)' : machine.maintenance_status === 'due_soon' ? 'var(--color-gold-light)' : 'var(--color-blue-light)',
           }}>
             {formatStatus(machine.maintenance_status)}
           </span>
@@ -179,7 +179,7 @@ export default function MachineMaintenanceDetailPage() {
         <div style={{ ...cardStyle, marginTop: 16 }} className="section-glow">
           <h3 style={cardTitleStyle}>Maintenance Interval</h3>
           <div style={intervalRowStyle}>
-            <label style={{ fontSize: 14, color: '#333' }}>
+            <label style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
               Interval (days):
             </label>
             <input
@@ -250,88 +250,88 @@ function formatStatus(status: MaintenanceStatus): string {
 
 function getStatusBadgeStyle(status: MaintenanceStatus): CSSProperties {
   const base: CSSProperties = {
-    display: 'inline-block', padding: '3px 10px', borderRadius: 12,
-    fontSize: 12, fontWeight: 600,
+    display: 'inline-block', padding: '3px 10px', borderRadius: 'var(--radius-full)',
+    fontSize: 'var(--text-xs)', fontWeight: 600,
   };
   switch (status) {
-    case 'ok': return { ...base, backgroundColor: '#e8f5e9', color: '#2e7d32' };
-    case 'due_soon': return { ...base, backgroundColor: '#fff3e0', color: '#e65100' };
-    case 'overdue': return { ...base, backgroundColor: '#fce4e6', color: '#c62828' };
-    case 'in_maintenance': return { ...base, backgroundColor: '#e3f2fd', color: '#1565c0' };
+    case 'ok': return { ...base, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' };
+    case 'due_soon': return { ...base, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold-light)' };
+    case 'overdue': return { ...base, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)' };
+    case 'in_maintenance': return { ...base, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' };
   }
 }
 
-/* ── Styles ─────────────────────────────────────────────── */
+/* -- Styles --------------------------------------------------------- */
 
 const backLinkStyle: CSSProperties = {
-  display: 'inline-block', marginBottom: 16, fontSize: 14,
-  color: '#4361ee', textDecoration: 'none', fontWeight: 600,
+  display: 'inline-block', marginBottom: 16, fontSize: 'var(--text-sm)',
+  color: 'var(--color-blue)', textDecoration: 'none', fontWeight: 600,
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)', marginBottom: 0,
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 24,
+  border: '1px solid var(--color-border-subtle)', marginBottom: 0,
 };
 
 const cardTitleStyle: CSSProperties = {
-  fontSize: 16, fontWeight: 600, color: '#333', marginTop: 0, marginBottom: 16,
+  fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--color-text-primary)', marginTop: 0, marginBottom: 16,
 };
 
 const infoGridStyle: CSSProperties = {
   display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 20,
 };
 
-const statLabelStyle: CSSProperties = { fontSize: 13, color: '#999', marginBottom: 4 };
+const statLabelStyle: CSSProperties = { fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 4 };
 
-const statValueStyle: CSSProperties = { fontSize: 20, fontWeight: 700, color: '#1a1a2e' };
+const statValueStyle: CSSProperties = { fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--color-text-primary)' };
 
 const intervalRowStyle: CSSProperties = {
   display: 'flex', gap: 12, alignItems: 'center',
 };
 
 const intervalInputStyle: CSSProperties = {
-  padding: '8px 12px', borderRadius: 6, border: '1px solid #ddd',
-  fontSize: 14, width: 100,
+  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border-default)',
+  fontSize: 'var(--text-sm)', width: 100, backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)',
 };
 
 const saveBtnStyle: CSSProperties = {
-  padding: '8px 16px', borderRadius: 6, border: 'none',
-  backgroundColor: '#4361ee', color: '#fff', fontSize: 13,
+  padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
+  backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)',
   fontWeight: 600, cursor: 'pointer',
 };
 
 const tableContainerStyle: CSSProperties = { overflowX: 'auto' };
 
-const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 14 };
+const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' };
 
 const thStyle: CSSProperties = {
-  textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid #eee',
-  fontSize: 13, fontWeight: 600, color: '#666', textTransform: 'uppercase',
+  textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid var(--color-border-default)',
+  fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase',
 };
 
 const tdStyle: CSSProperties = {
-  padding: '12px 16px', borderBottom: '1px solid #f0f0f0', verticalAlign: 'middle',
+  padding: '12px 16px', borderBottom: '1px solid var(--color-border-subtle)', verticalAlign: 'middle',
 };
 
 const centeredStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 40,
-  textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 40,
+  textAlign: 'center', border: '1px solid var(--color-border-subtle)',
   display: 'flex', flexDirection: 'column', alignItems: 'center',
 };
 
 const spinnerStyle: CSSProperties = {
-  width: 32, height: 32, border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7', borderRadius: '50%',
+  width: 32, height: 32, border: '3px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)', borderRadius: '50%',
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#fef2f2', border: '1px solid #fecaca',
-  borderRadius: 8, padding: '12px 16px', marginBottom: 16,
-  color: '#dc2626', fontSize: 14,
+  backgroundColor: 'var(--color-red-subtle)', border: '1px solid var(--color-red)',
+  borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: 16,
+  color: 'var(--color-red-light)', fontSize: 'var(--text-sm)',
 };
 
 const emptyStyle: CSSProperties = {
-  color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+  color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', padding: 20,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -344,9 +344,9 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
-  fontSize: 12,
+  borderRadius: 'var(--radius-full)',
+  fontSize: 'var(--text-xs)',
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };

@@ -14,7 +14,7 @@ const RANK_MEDALS: Record<number, string> = {
 const toggleContainerStyle: CSSProperties = {
   display: 'inline-flex',
   gap: 0,
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 3,
   marginBottom: 16,
@@ -28,8 +28,8 @@ function toggleBtnStyle(active: boolean): CSSProperties {
     cursor: 'pointer',
     fontSize: 13,
     fontWeight: 600,
-    background: active ? '#3B82F6' : 'transparent',
-    color: active ? '#fff' : '#94A3B8',
+    background: active ? 'var(--color-blue)' : 'transparent',
+    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
     transition: 'all 0.2s',
   };
 }
@@ -45,7 +45,7 @@ const podiumStyle: CSSProperties = {
 
 function podiumCardStyle(rank: number, isCurrent: boolean): CSSProperties {
   const heights: Record<number, number> = { 1: 120, 2: 100, 3: 85 };
-  const colors: Record<number, string> = { 1: '#EAB308', 2: '#94A3B8', 3: '#CD7F32' };
+  const colors: Record<number, string> = { 1: '#EAB308', 2: 'var(--color-text-secondary)', 3: '#CD7F32' };
   return {
     display: 'flex',
     flexDirection: 'column',
@@ -53,10 +53,10 @@ function podiumCardStyle(rank: number, isCurrent: boolean): CSSProperties {
     justifyContent: 'flex-end',
     width: rank === 1 ? 100 : 85,
     height: heights[rank] || 80,
-    backgroundColor: '#1E293B',
+    backgroundColor: 'var(--color-bg-raised)',
     borderRadius: 12,
     padding: 10,
-    border: isCurrent ? '2px solid #3B82F6' : `2px solid ${colors[rank] || '#334155'}`,
+    border: isCurrent ? '2px solid var(--color-blue)' : `2px solid ${colors[rank] || 'var(--color-bg-elevated)'}`,
     order: rank === 1 ? 1 : rank === 2 ? 0 : 2,
   };
 }
@@ -69,7 +69,7 @@ export default function LeaderboardFullPage() {
   );
 
   if (!member || !gym) {
-    return <div style={{ padding: 16, color: '#94A3B8' }}>Loading...</div>;
+    return <div style={{ padding: 16, color: 'var(--color-text-secondary)' }}>Loading...</div>;
   }
 
   const entries = data?.entries || [];
@@ -78,7 +78,7 @@ export default function LeaderboardFullPage() {
 
   return (
     <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)', paddingBottom: 100 }}>
-      <h1 style={{ fontSize: 20, fontWeight: 700, color: '#F1F5F9', margin: 0, marginBottom: 16 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, marginBottom: 16 }}>
         Leaderboard
       </h1>
 
@@ -92,9 +92,9 @@ export default function LeaderboardFullPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 48, color: '#64748B' }}>Loading...</div>
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)' }}>Loading...</div>
       ) : entries.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 48, color: '#64748B', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)', fontSize: 14 }}>
           No activity for this period yet.
         </div>
       ) : (
@@ -108,7 +108,7 @@ export default function LeaderboardFullPage() {
                   <div style={{
                     fontSize: 12,
                     fontWeight: 600,
-                    color: entry.is_current_user ? '#60A5FA' : '#E2E8F0',
+                    color: entry.is_current_user ? '#60A5FA' : 'var(--color-text-secondary)',
                     textAlign: 'center',
                     lineHeight: 1.2,
                     marginTop: 4,
@@ -119,7 +119,7 @@ export default function LeaderboardFullPage() {
                   }}>
                     {entry.full_name}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)', marginTop: 2 }}>
                     {entry.total_points.toLocaleString()}
                   </div>
                 </div>

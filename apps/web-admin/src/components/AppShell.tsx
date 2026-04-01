@@ -32,9 +32,9 @@ export function AppShell({ children }: AppShellProps) {
   // Everything else → sidebar + AuthGate (existing admin behavior)
   return (
     <AuthGate>
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-bg-base)' }}>
         <Sidebar />
-        <main style={{ flex: 1, padding: '32px', backgroundColor: '#f5f5f5' }}>
+        <main style={{ flex: 1, padding: 'var(--space-8)', backgroundColor: 'var(--color-bg-base)' }}>
           {children}
         </main>
       </div>

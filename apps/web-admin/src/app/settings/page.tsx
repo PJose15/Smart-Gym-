@@ -130,7 +130,7 @@ export default function SettingsPage() {
     return (
       <div style={centeredStyle}>
         <div style={spinnerStyle} className="spinner-enhanced" />
-        <p style={{ color: '#999', marginTop: 16 }}>Loading settings...</p>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: 16 }}>Loading settings...</p>
       </div>
     );
   }
@@ -158,7 +158,7 @@ export default function SettingsPage() {
           <div style={statsStripStyle}>
             <span style={statsChipStyle}>{gyms.length} gym{gyms.length !== 1 ? 's' : ''}</span>
             <span style={statsChipStyle}>{KNOWN_FLAGS.length} feature flag{KNOWN_FLAGS.length !== 1 ? 's' : ''}</span>
-            <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{enabledCount} enabled</span>
+            <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{enabledCount} enabled</span>
             <span style={statsChipStyle}>{totalCombinations - enabledCount} disabled</span>
           </div>
         );
@@ -205,7 +205,7 @@ export default function SettingsPage() {
                             className="toggle-enhanced"
                             style={{
                               ...toggleButtonStyle,
-                              backgroundColor: enabled ? '#2a9d8f' : '#dee2e6',
+                              backgroundColor: enabled ? 'var(--color-green)' : 'var(--color-bg-highest)',
                               opacity: isSaving ? 0.6 : 1,
                             }}
                             title={flag.description}
@@ -218,7 +218,7 @@ export default function SettingsPage() {
                               }}
                             />
                           </button>
-                          <span style={{ fontSize: 12, color: '#666', marginLeft: 8 }}>
+                          <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginLeft: 8 }}>
                             {enabled ? 'On' : 'Off'}
                           </span>
                         </td>
@@ -257,20 +257,20 @@ const titleStyle: CSSProperties = {
   fontWeight: 700,
   marginTop: 0,
   marginBottom: 8,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
 };
 
 const subtitleStyle: CSSProperties = {
-  color: '#666',
+  color: 'var(--color-text-secondary)',
   marginTop: 0,
   marginBottom: 0,
 };
 
 const sectionStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const sectionTitleStyle: CSSProperties = {
@@ -278,12 +278,12 @@ const sectionTitleStyle: CSSProperties = {
   fontWeight: 600,
   marginTop: 0,
   marginBottom: 8,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
 };
 
 const sectionDescStyle: CSSProperties = {
   fontSize: 14,
-  color: '#666',
+  color: 'var(--color-text-secondary)',
   marginTop: 0,
   marginBottom: 20,
 };
@@ -300,22 +300,22 @@ const tableStyle: CSSProperties = {
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '12px 16px',
-  borderBottom: '2px solid #eee',
+  borderBottom: '2px solid var(--color-border-default)',
   fontSize: 13,
   fontWeight: 600,
-  color: '#666',
+  color: 'var(--color-text-secondary)',
   textTransform: 'uppercase',
 };
 
 const tdStyle: CSSProperties = {
   padding: '12px 16px',
-  borderBottom: '1px solid #f0f0f0',
+  borderBottom: '1px solid var(--color-border-subtle)',
   verticalAlign: 'middle',
 };
 
 const gymNameStyle: CSSProperties = {
   fontWeight: 600,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
 };
 
 const toggleButtonStyle: CSSProperties = {
@@ -334,7 +334,7 @@ const toggleKnobStyle: CSSProperties = {
   width: 20,
   height: 20,
   borderRadius: 10,
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-text-primary)',
   position: 'absolute',
   top: 2,
   left: 2,
@@ -343,11 +343,11 @@ const toggleKnobStyle: CSSProperties = {
 };
 
 const centeredStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 40,
   textAlign: 'center',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -356,23 +356,23 @@ const centeredStyle: CSSProperties = {
 const spinnerStyle: CSSProperties = {
   width: 32,
   height: 32,
-  border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7',
+  border: '3px solid var(--color-bg-highest)',
+  borderTopColor: 'var(--color-blue)',
   borderRadius: '50%',
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#fef2f2',
-  border: '1px solid #fecaca',
+  backgroundColor: 'var(--color-red-light)',
+  border: '1px solid var(--color-red)',
   borderRadius: 8,
   padding: '12px 16px',
   marginBottom: 16,
-  color: '#dc2626',
+  color: 'var(--color-red)',
   fontSize: 14,
 };
 
 const emptyStyle: CSSProperties = {
-  color: '#999',
+  color: 'var(--color-text-muted)',
   fontSize: 14,
   textAlign: 'center',
   padding: 20,
@@ -380,13 +380,13 @@ const emptyStyle: CSSProperties = {
 
 const flagInfoStyle: CSSProperties = {
   padding: '12px 0',
-  borderBottom: '1px solid #f0f0f0',
+  borderBottom: '1px solid var(--color-border-subtle)',
   fontSize: 14,
 };
 
 const flagDescStyle: CSSProperties = {
   margin: '4px 0 0 0',
-  color: '#666',
+  color: 'var(--color-text-secondary)',
   fontSize: 13,
 };
 
@@ -403,6 +403,6 @@ const statsChipStyle: CSSProperties = {
   borderRadius: 14,
   fontSize: 12,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-muted)',
 };

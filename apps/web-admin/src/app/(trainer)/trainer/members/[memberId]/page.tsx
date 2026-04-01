@@ -13,22 +13,24 @@ type Tab = typeof tabs[number];
 
 const tabBarStyle: CSSProperties = {
   display: 'flex',
-  gap: 4,
-  marginBottom: 24,
-  borderBottom: '1px solid #334155',
+  gap: 'var(--space-1)',
+  marginBottom: 'var(--space-6)',
+  borderBottom: '1px solid var(--color-border-default)',
   paddingBottom: 0,
 };
 
 const tabStyle = (active: boolean): CSSProperties => ({
-  padding: '10px 16px',
-  fontSize: 13,
-  fontWeight: active ? 600 : 400,
-  color: active ? '#F1F5F9' : '#64748B',
+  padding: 'var(--space-3) var(--space-4)',
+  fontSize: 'var(--text-sm)',
+  fontWeight: active ? 500 : 400,
+  color: active ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
   backgroundColor: 'transparent',
   border: 'none',
-  borderBottom: active ? '2px solid #3B82F6' : '2px solid transparent',
+  borderBottom: active ? '2px solid var(--color-blue)' : '2px solid transparent',
   cursor: 'pointer',
-  transition: 'color 0.15s',
+  transition: 'color var(--duration-fast)',
+  fontFamily: 'var(--font-sans)',
+  minHeight: 'var(--tap-target-min)',
 });
 
 export default function TrainerMemberDetailPage() {

@@ -92,11 +92,11 @@ export function AnimatedLeaderboard({
             <div style={{ fontSize: 11, color: '#60A5FA', fontWeight: 600, textTransform: 'uppercase' as const }}>
               Your Position
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#F1F5F9' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)' }}>
               #{myRank}
             </div>
           </div>
-          <div style={{ fontSize: 12, color: '#94A3B8' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
             out of {totalParticipants}
           </div>
         </div>
@@ -127,7 +127,7 @@ export function AnimatedLeaderboard({
               <div style={nameStyle(entry.is_current_user)}>
                 {entry.full_name}{entry.is_current_user ? ' (You)' : ''}
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                 {entry.total_points.toLocaleString()}
               </div>
             </div>
@@ -178,7 +178,7 @@ const rankNumStyle: CSSProperties = {
   width: 32,
   fontSize: 14,
   fontWeight: 700,
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   textAlign: 'center',
 };
 
@@ -186,13 +186,13 @@ const avatarStyle: CSSProperties = {
   width: 32,
   height: 32,
   borderRadius: '50%',
-  backgroundColor: '#334155',
+  backgroundColor: 'var(--color-bg-elevated)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   fontSize: 13,
   fontWeight: 700,
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   flexShrink: 0,
 };
 
@@ -201,6 +201,6 @@ function nameStyle(isCurrent: boolean): CSSProperties {
     flex: 1,
     fontSize: 14,
     fontWeight: isCurrent ? 700 : 500,
-    color: isCurrent ? '#60A5FA' : '#E2E8F0',
+    color: isCurrent ? '#60A5FA' : 'var(--color-text-secondary)',
   };
 }

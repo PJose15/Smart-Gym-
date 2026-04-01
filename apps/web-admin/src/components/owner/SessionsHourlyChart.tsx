@@ -21,7 +21,7 @@ const wrapperStyle: CSSProperties = {
 
 const hourLabelStyle: CSSProperties = {
   fontSize: 8,
-  color: '#475569',
+  color: 'var(--color-text-disabled)',
   marginTop: 4,
 };
 
@@ -30,7 +30,7 @@ export function SessionsHourlyChart() {
   const currentHour = new Date().getHours();
 
   if (loading) {
-    return <div style={{ color: '#64748B', fontSize: 13, height: 48 }}>Loading...</div>;
+    return <div style={{ color: 'var(--color-text-muted)', fontSize: 13, height: 48 }}>Loading...</div>;
   }
 
   const values = Object.values(data);
@@ -46,7 +46,7 @@ export function SessionsHourlyChart() {
 
           const barStyle: CSSProperties = {
             width: '100%',
-            background: isCurrentHour ? '#3B82F6' : count > 0 ? '#334155' : '#1E293B',
+            background: isCurrentHour ? 'var(--color-blue)' : count > 0 ? 'var(--color-bg-elevated)' : 'var(--color-bg-raised)',
             borderRadius: '2px 2px 0 0',
             minHeight: 2,
             height: `${Math.max(heightPct, 4)}%`,

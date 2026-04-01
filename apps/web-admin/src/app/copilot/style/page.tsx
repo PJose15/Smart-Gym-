@@ -21,17 +21,17 @@ const formContainerStyle: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const labelStyle: CSSProperties = {
   display: 'block',
   fontSize: 13,
   fontWeight: 600,
-  color: '#555',
+  color: 'var(--color-text-muted)',
   marginBottom: 6,
   textTransform: 'uppercase',
   letterSpacing: '0.3px',
@@ -41,10 +41,11 @@ const selectStyle: CSSProperties = {
   width: '100%',
   padding: '10px 12px',
   fontSize: 14,
-  border: '1px solid #ddd',
+  border: '1px solid var(--color-border-default)',
   borderRadius: 6,
   outline: 'none',
-  backgroundColor: '#fff',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
   marginBottom: 20,
   boxSizing: 'border-box',
 };
@@ -53,35 +54,35 @@ const saveBtnStyle: CSSProperties = {
   padding: '10px 24px',
   fontSize: 14,
   fontWeight: 600,
-  color: '#fff',
-  backgroundColor: '#4fc3f7',
+  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--color-blue)',
   border: 'none',
   borderRadius: 6,
   cursor: 'pointer',
 };
 
 const previewContainerStyle: CSSProperties = {
-  backgroundColor: '#f8f9fa',
+  backgroundColor: 'var(--color-bg-highest)',
   borderRadius: 8,
   padding: '16px 20px',
   fontSize: 14,
   lineHeight: 1.6,
-  color: '#333',
+  color: 'var(--color-text-primary)',
   whiteSpace: 'pre-wrap',
 };
 
 const previewLabelStyle: CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
-  color: '#555',
+  color: 'var(--color-text-muted)',
   marginBottom: 8,
   textTransform: 'uppercase',
   letterSpacing: '0.3px',
 };
 
 const errorStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#b71c1c',
+  backgroundColor: 'var(--color-red-light)',
+  color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
   fontSize: 14,
@@ -89,8 +90,8 @@ const errorStyle: CSSProperties = {
 };
 
 const successStyle: CSSProperties = {
-  backgroundColor: '#e8f5e9',
-  color: '#2e7d32',
+  backgroundColor: 'var(--color-green-light)',
+  color: 'var(--color-green)',
   padding: '14px 18px',
   borderRadius: 8,
   fontSize: 14,
@@ -110,8 +111,8 @@ const statsChipStyle: CSSProperties = {
   borderRadius: 14,
   fontSize: 12,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-highest)',
+  color: 'var(--color-text-muted)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -247,10 +248,10 @@ export default function StyleSettingsPage() {
 
         {/* Settings summary strip */}
         <div style={statsStripStyle}>
-          <span style={{ ...statsChipStyle, backgroundColor: tone === 'supportive' ? '#e8f5e9' : tone === 'strict' ? '#fce4e6' : '#f5f5f5', color: tone === 'supportive' ? '#2e7d32' : tone === 'strict' ? '#c62828' : '#555' }}>
+          <span style={{ ...statsChipStyle, backgroundColor: tone === 'supportive' ? 'var(--color-green-light)' : tone === 'strict' ? 'var(--color-red-light)' : 'var(--color-bg-highest)', color: tone === 'supportive' ? 'var(--color-green)' : tone === 'strict' ? 'var(--color-red)' : 'var(--color-text-muted)' }}>
             Tone: {tone}
           </span>
-          <span style={{ ...statsChipStyle, backgroundColor: verbosity === 'detailed' ? '#e3f2fd' : verbosity === 'short' ? '#fff3e0' : '#f5f5f5', color: verbosity === 'detailed' ? '#1565c0' : verbosity === 'short' ? '#e65100' : '#555' }}>
+          <span style={{ ...statsChipStyle, backgroundColor: verbosity === 'detailed' ? 'var(--color-blue-subtle)' : verbosity === 'short' ? 'rgba(239,159,39,0.15)' : 'var(--color-bg-highest)', color: verbosity === 'detailed' ? 'var(--color-blue)' : verbosity === 'short' ? 'var(--color-gold)' : 'var(--color-text-muted)' }}>
             Verbosity: {verbosity}
           </span>
           <span style={statsChipStyle}>
@@ -301,13 +302,13 @@ export default function StyleSettingsPage() {
           {/* Preview panel */}
           <div style={cardStyle} className="section-glow">
             <div style={previewLabelStyle}>Preview</div>
-            <div style={{ ...previewLabelStyle, fontSize: 15, fontWeight: 700, color: '#1a1a2e', textTransform: 'none', letterSpacing: 0 }}>
+            <div style={{ ...previewLabelStyle, fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', textTransform: 'none', letterSpacing: 0 }}>
               {previewDraft.draft_title}
             </div>
             <div style={previewContainerStyle}>
               {previewDraft.draft_body}
             </div>
-            <div style={{ marginTop: 12, fontSize: 12, color: '#999' }}>
+            <div style={{ marginTop: 12, fontSize: 12, color: 'var(--color-text-muted)' }}>
               Confidence: {Math.round(previewDraft.confidence * 100)}%
             </div>
           </div>

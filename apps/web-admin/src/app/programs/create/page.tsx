@@ -132,7 +132,7 @@ export default function CreateProgramPage() {
           {/* Program Name */}
           <div style={fieldGroupStyle}>
             <label htmlFor="program-name" style={labelStyle}>
-              Program Name <span style={{ color: '#e53935' }}>*</span>
+              Program Name <span style={{ color: 'var(--color-red-light)' }}>*</span>
             </label>
             <input
               id="program-name"
@@ -165,14 +165,14 @@ export default function CreateProgramPage() {
           {/* Gym Selector */}
           <div style={fieldGroupStyle}>
             <label htmlFor="program-gym" style={labelStyle}>
-              Gym <span style={{ color: '#e53935' }}>*</span>
+              Gym <span style={{ color: 'var(--color-red-light)' }}>*</span>
             </label>
             {loadingGyms ? (
-              <p style={{ color: '#999', fontSize: 14, margin: 0 }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 14, margin: 0 }}>
                 Loading gyms...
               </p>
             ) : gyms.length === 0 ? (
-              <p style={{ color: '#e53935', fontSize: 14, margin: 0 }}>
+              <p style={{ color: 'var(--color-red-light)', fontSize: 14, margin: 0 }}>
                 No gyms found. Please create a gym first.
               </p>
             ) : (
@@ -229,43 +229,43 @@ export default function CreateProgramPage() {
 const backLinkStyle: CSSProperties = {
   display: 'inline-block',
   marginBottom: 20,
-  color: '#4fc3f7',
+  color: 'var(--color-blue)',
   textDecoration: 'none',
-  fontSize: 14,
+  fontSize: 'var(--text-base)' as unknown as number,
   fontWeight: 500,
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 28,
-  fontWeight: 700,
+  fontSize: 'var(--text-2xl)' as unknown as number,
+  fontWeight: 600,
   marginTop: 0,
   marginBottom: 8,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
 };
 
 const subtitleStyle: CSSProperties = {
-  color: '#666',
+  color: 'var(--color-text-secondary)',
   marginTop: 0,
   marginBottom: 24,
-  fontSize: 15,
+  fontSize: 'var(--text-base)' as unknown as number,
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 8,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as unknown as number,
   padding: 32,
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  boxShadow: 'var(--shadow-sm)',
   maxWidth: 560,
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#611a15',
+  backgroundColor: 'var(--color-red-subtle)',
+  color: 'var(--color-red-light)',
   padding: '12px 16px',
-  borderRadius: 6,
-  fontSize: 14,
+  borderRadius: 'var(--radius-sm)' as unknown as number,
+  fontSize: 'var(--text-base)' as unknown as number,
   marginBottom: 20,
-  border: '1px solid #f5c6cb',
+  border: '1px solid var(--color-border-default)',
 };
 
 const fieldGroupStyle: CSSProperties = {
@@ -274,33 +274,37 @@ const fieldGroupStyle: CSSProperties = {
 
 const labelStyle: CSSProperties = {
   display: 'block',
-  fontSize: 14,
+  fontSize: 'var(--text-base)' as unknown as number,
   fontWeight: 600,
-  color: '#1a1a2e',
+  color: 'var(--color-text-primary)',
   marginBottom: 6,
 };
 
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '10px 12px',
-  border: '1px solid #ddd',
-  borderRadius: 6,
-  fontSize: 14,
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-sm)' as unknown as number,
+  fontSize: 'var(--text-base)' as unknown as number,
   outline: 'none',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const textareaStyle: CSSProperties = {
   width: '100%',
   padding: '10px 12px',
-  border: '1px solid #ddd',
-  borderRadius: 6,
-  fontSize: 14,
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-sm)' as unknown as number,
+  fontSize: 'var(--text-base)' as unknown as number,
   outline: 'none',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
   resize: 'vertical',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
 };
 
 const buttonRowStyle: CSSProperties = {
@@ -314,20 +318,20 @@ const cancelButtonStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   padding: '10px 20px',
-  backgroundColor: '#f0f0f0',
-  color: '#333',
-  borderRadius: 6,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)',
+  borderRadius: 'var(--radius-sm)' as unknown as number,
   textDecoration: 'none',
-  fontSize: 14,
+  fontSize: 'var(--text-base)' as unknown as number,
   fontWeight: 500,
 };
 
 const submitButtonStyle: CSSProperties = {
   padding: '10px 24px',
-  backgroundColor: '#4361ee',
-  color: '#ffffff',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
   border: 'none',
-  borderRadius: 6,
-  fontSize: 14,
+  borderRadius: 'var(--radius-sm)' as unknown as number,
+  fontSize: 'var(--text-base)' as unknown as number,
   fontWeight: 600,
 };

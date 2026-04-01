@@ -9,15 +9,17 @@ const TIER_LABELS: Record<SubscriptionTier, string> = {
   pro: 'Pro',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  active: '#22C55E',
-  trialing: '#3B82F6',
-  past_due: '#EAB308',
-  cancelled: '#EF4444',
-  incomplete: '#EAB308',
-  unpaid: '#EF4444',
-  paused: '#64748B',
+const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
+  active: { color: 'var(--color-green)', bg: 'var(--color-green-light)' },
+  trialing: { color: 'var(--color-blue)', bg: 'var(--color-blue-subtle)' },
+  past_due: { color: 'var(--color-gold)', bg: 'rgba(239,159,39,0.15)' },
+  cancelled: { color: 'var(--color-red)', bg: 'var(--color-red-light)' },
+  incomplete: { color: 'var(--color-gold)', bg: 'rgba(239,159,39,0.15)' },
+  unpaid: { color: 'var(--color-red)', bg: 'var(--color-red-light)' },
+  paused: { color: 'var(--color-text-muted)', bg: 'var(--color-bg-elevated)' },
 };
+
+const defaultStatus = { color: 'var(--color-text-muted)', bg: 'var(--color-bg-elevated)' };
 
 export default function BillingPage() {
   const [billing, setBilling] = useState<BillingInfo | null>(null);
@@ -91,11 +93,11 @@ export default function BillingPage() {
   }
 
   if (loading) {
-    return <div style={pageStyle}><p style={{ color: '#94A3B8' }}>Loading billing info...</p></div>;
+    return <div style={pageStyle}><p style={{ color: 'var(--color-text-muted)' }}>Loading billing info...</p></div>;
   }
 
   if (error && !billing) {
-    return <div style={pageStyle}><p style={{ color: '#EF4444' }}>{error}</p></div>;
+    return <div style={pageStyle}><p style={{ color: 'var(--color-red-light)' }}>{error}</p></div>;
   }
 
   if (!billing) return null;
@@ -128,8 +130,8 @@ export default function BillingPage() {
               <span style={tierBadgeStyle}>{TIER_LABELS[billing.tier]}</span>
               <span style={{
                 ...statusBadgeStyle,
-                backgroundColor: `${STATUS_COLORS[billing.status] || '#64748B'}20`,
-                color: STATUS_COLORS[billing.status] || '#64748B',
+                backgroundColor: (STATUS_COLORS[billing.status] || defaultStatus).bg,
+                color: (STATUS_COLORS[billing.status] || defaultStatus).color,
               }}>
                 {billing.status}
               </span>
@@ -150,7 +152,7 @@ export default function BillingPage() {
           <div style={trialBannerStyle}>
             <strong>{trialDaysLeft}</strong> day{trialDaysLeft !== 1 ? 's' : ''} remaining in your free trial
             {billing.trial_ends_at && (
-              <span style={{ color: '#94A3B8', marginLeft: 8 }}>
+              <span style={{ color: 'var(--color-text-muted)', marginLeft: 8 }}>
                 (ends {new Date(billing.trial_ends_at).toLocaleDateString()})
               </span>
             )}
@@ -158,7 +160,7 @@ export default function BillingPage() {
         )}
 
         {billing.current_period_end && billing.status === 'active' && (
-          <p style={{ color: '#94A3B8', fontSize: 13, margin: '8px 0 0' }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', margin: '8px 0 0' }}>
             Current period ends {new Date(billing.current_period_end).toLocaleDateString()}
           </p>
         )}
@@ -214,13 +216,13 @@ export default function BillingPage() {
 
 function UsageBar({ label, count, limit, pct }: { label: string; count: number; limit: number; pct: number }) {
   const isUnlimited = limit === -1;
-  const barColor = pct >= 90 ? '#EF4444' : pct >= 70 ? '#EAB308' : '#3B82F6';
+  const barColor = pct >= 90 ? 'var(--color-red-light)' : pct >= 70 ? 'var(--color-gold-light)' : 'var(--color-blue)';
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ color: '#F1F5F9', fontSize: 14 }}>{label}</span>
-        <span style={{ color: '#94A3B8', fontSize: 14 }}>
+        <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>{label}</span>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
           {count} / {isUnlimited ? 'Unlimited' : limit}
         </span>
       </div>
@@ -246,13 +248,13 @@ function PlanCard({ name, price, features, onSelect, loading, highlighted }: {
   return (
     <div style={{
       ...planCardStyle,
-      borderColor: highlighted ? '#3B82F6' : '#1E293B',
+      borderColor: highlighted ? 'var(--color-blue)' : 'var(--color-border-subtle)',
     }}>
-      <h3 style={{ color: '#F1F5F9', fontSize: 18, fontWeight: 600, margin: '0 0 4px' }}>{name}</h3>
-      <p style={{ color: '#3B82F6', fontSize: 24, fontWeight: 700, margin: '0 0 16px' }}>{price}</p>
+      <h3 style={{ color: 'var(--color-text-primary)', fontSize: 'var(--text-md)', fontWeight: 600, margin: '0 0 4px' }}>{name}</h3>
+      <p style={{ color: 'var(--color-blue)', fontSize: 'var(--text-xl)', fontWeight: 600, margin: '0 0 16px' }}>{price}</p>
       <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', flex: 1 }}>
         {features.map((f) => (
-          <li key={f} style={{ color: '#94A3B8', fontSize: 13, padding: '3px 0' }}>
+          <li key={f} style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', padding: '3px 0' }}>
             {f}
           </li>
         ))}
@@ -268,98 +270,98 @@ function PlanCard({ name, price, features, onSelect, loading, highlighted }: {
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────
+// --- Styles ---------------------------------------------------------
 
 const pageStyle: CSSProperties = {
   maxWidth: 800,
 };
 
 const headingStyle: CSSProperties = {
-  fontSize: 24,
-  fontWeight: 700,
-  color: '#F1F5F9',
+  fontSize: 'var(--text-xl)',
+  fontWeight: 600,
+  color: 'var(--color-text-primary)',
   marginBottom: 24,
 };
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
-  borderRadius: 12,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-lg)',
   padding: 24,
   marginBottom: 20,
 };
 
 const cardTitleStyle: CSSProperties = {
-  fontSize: 16,
+  fontSize: 'var(--text-base)',
   fontWeight: 600,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
   margin: 0,
 };
 
 const tierBadgeStyle: CSSProperties = {
-  backgroundColor: '#3B82F620',
-  color: '#3B82F6',
+  backgroundColor: 'var(--color-blue-subtle)',
+  color: 'var(--color-blue)',
   padding: '4px 12px',
-  borderRadius: 6,
-  fontSize: 14,
+  borderRadius: 'var(--radius-sm)',
+  fontSize: 'var(--text-sm)',
   fontWeight: 600,
 };
 
 const statusBadgeStyle: CSSProperties = {
   padding: '4px 10px',
-  borderRadius: 6,
-  fontSize: 13,
+  borderRadius: 'var(--radius-sm)',
+  fontSize: 'var(--text-sm)',
   fontWeight: 500,
   textTransform: 'capitalize' as const,
 };
 
 const trialBannerStyle: CSSProperties = {
-  backgroundColor: '#3B82F610',
-  border: '1px solid #3B82F630',
-  borderRadius: 8,
+  backgroundColor: 'var(--color-blue-subtle)',
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-md)',
   padding: '12px 16px',
-  color: '#93C5FD',
-  fontSize: 14,
+  color: 'var(--color-blue-light)',
+  fontSize: 'var(--text-sm)',
   marginTop: 16,
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#EF444420',
-  border: '1px solid #EF444440',
-  borderRadius: 8,
+  backgroundColor: 'var(--color-red-subtle)',
+  border: '1px solid var(--color-red)',
+  borderRadius: 'var(--radius-md)',
   padding: '12px 16px',
-  color: '#FCA5A5',
-  fontSize: 14,
+  color: 'var(--color-red-light)',
+  fontSize: 'var(--text-sm)',
   marginBottom: 16,
 };
 
 const barTrackStyle: CSSProperties = {
   height: 8,
-  backgroundColor: '#0F172A',
-  borderRadius: 4,
+  backgroundColor: 'var(--color-bg-base)',
+  borderRadius: 'var(--radius-sm)',
   overflow: 'hidden',
 };
 
 const barFillStyle: CSSProperties = {
   height: '100%',
-  borderRadius: 4,
+  borderRadius: 'var(--radius-sm)',
   transition: 'width 0.3s ease',
 };
 
 const planCardStyle: CSSProperties = {
-  border: '1px solid #1E293B',
-  borderRadius: 10,
+  border: '1px solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-md)',
   padding: 20,
   display: 'flex',
   flexDirection: 'column',
 };
 
 const primaryButtonStyle: CSSProperties = {
-  backgroundColor: '#3B82F6',
-  color: '#FFFFFF',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
   border: 'none',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-md)',
   padding: '10px 20px',
-  fontSize: 14,
+  fontSize: 'var(--text-sm)',
   fontWeight: 600,
   cursor: 'pointer',
   width: '100%',
@@ -367,11 +369,11 @@ const primaryButtonStyle: CSSProperties = {
 
 const secondaryButtonStyle: CSSProperties = {
   backgroundColor: 'transparent',
-  color: '#3B82F6',
-  border: '1px solid #3B82F6',
-  borderRadius: 8,
+  color: 'var(--color-blue)',
+  border: '1px solid var(--color-blue)',
+  borderRadius: 'var(--radius-md)',
   padding: '10px 20px',
-  fontSize: 14,
+  fontSize: 'var(--text-sm)',
   fontWeight: 500,
   cursor: 'pointer',
 };

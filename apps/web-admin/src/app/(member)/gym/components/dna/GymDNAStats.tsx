@@ -9,13 +9,13 @@ interface GymDNAStatsProps {
 }
 
 const containerStyle: CSSProperties = { padding: '0 0 24px' };
-const sectionTitleStyle: CSSProperties = { fontSize: 14, fontWeight: 700, color: '#CBD5E1', margin: '0 0 12px' };
+const sectionTitleStyle: CSSProperties = { fontSize: 14, fontWeight: 700, color: 'var(--color-text-secondary)', margin: '0 0 12px' };
 const gridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8, marginBottom: 20 };
 const tileStyle: CSSProperties = { background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 10px', textAlign: 'center' };
 const tileScoreStyle: CSSProperties = { fontSize: 22, fontWeight: 800, color: '#EF9F27', margin: 0 };
-const tileLabelStyle: CSSProperties = { fontSize: 11, color: '#94A3B8', margin: '4px 0 0' };
+const tileLabelStyle: CSSProperties = { fontSize: 11, color: 'var(--color-text-secondary)', margin: '4px 0 0' };
 const archetypeRowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' };
-const memberCountStyle: CSSProperties = { fontSize: 13, color: '#64748B', marginTop: 16 };
+const memberCountStyle: CSSProperties = { fontSize: 13, color: 'var(--color-text-muted)', marginTop: 16 };
 
 type DimensionKey = keyof typeof DIMENSION_CONFIG;
 
@@ -65,13 +65,13 @@ export function GymDNAStats({ gymId }: GymDNAStatsProps) {
           return (
             <div key={archetypeId} style={archetypeRowStyle}>
               <span style={{ fontSize: 16, width: 24, textAlign: 'center' }}>{arch.icon}</span>
-              <span style={{ fontSize: 13, color: '#CBD5E1', flex: 1 }}>{arch.name}</span>
+              <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', flex: 1 }}>{arch.name}</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: arch.color }}>{count}</span>
             </div>
           );
         })
       ) : (
-        <p style={{ fontSize: 12, color: '#64748B' }}>No data yet.</p>
+        <p style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>No data yet.</p>
       )}
 
       <p style={memberCountStyle}>

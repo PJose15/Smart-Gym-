@@ -10,8 +10,8 @@ interface NavTab {
 }
 
 const ICON_SIZE = 24;
-const ACTIVE_COLOR = '#3B82F6';
-const INACTIVE_COLOR = '#64748B';
+const ACTIVE_COLOR = 'var(--color-blue)';
+const INACTIVE_COLOR = 'var(--color-text-muted)';
 
 const HomeIcon = (active: boolean) => (
   <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={active ? ACTIVE_COLOR : INACTIVE_COLOR} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,8 +66,8 @@ const navStyle: CSSProperties = {
   left: 0,
   right: 0,
   height: 64,
-  backgroundColor: '#0F172A',
-  borderTop: '1px solid #1E293B',
+  backgroundColor: 'var(--color-bg-base)',
+  borderTop: '1px solid var(--color-border-subtle)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-around',
@@ -125,7 +125,7 @@ export function BottomNav({ unreadCheckIn }: BottomNavProps) {
                     height: 8,
                     background: '#EF9F27',
                     borderRadius: '50%',
-                    border: '1.5px solid #0F172A',
+                    border: '1.5px solid var(--color-bg-base)',
                   }}
                 />
               )}

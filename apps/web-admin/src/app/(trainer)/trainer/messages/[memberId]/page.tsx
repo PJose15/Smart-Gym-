@@ -26,8 +26,6 @@ export default function TrainerMessageThreadPage() {
       .catch(() => setLoading(false));
   }, [memberId]);
 
-  // Listen for new messages via realtime — only handle member-sent messages
-  // to avoid duplicates (trainer messages are added optimistically in handleSend)
   useRealtimeMessages(memberId, (msg: TrainerMessage) => {
     if (msg.sender_type === 'member') {
       setMessages((prev) => [...prev, msg]);
@@ -47,7 +45,7 @@ export default function TrainerMessageThreadPage() {
     }
   }
 
-  if (loading) return <p style={{ color: '#94A3B8' }}>Loading messages...</p>;
+  if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading messages...</p>;
 
   return (
     <div style={pageStyle}>

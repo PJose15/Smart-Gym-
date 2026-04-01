@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      <body style={{ margin: 0, fontFamily: 'var(--font-sans)', backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)', colorScheme: 'dark' as const, WebkitFontSmoothing: 'antialiased' }}>
         <AppShell>
           {children}
         </AppShell>

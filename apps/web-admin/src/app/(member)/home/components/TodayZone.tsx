@@ -9,7 +9,7 @@ interface TodayZoneProps {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 'var(--radius-md, 12px)',
   padding: 'var(--space-4, 16px)',
   animation: 'slideUpFade 0.4s ease-out 0.1s both',
@@ -18,7 +18,7 @@ const cardStyle: CSSProperties = {
 const labelStyle: CSSProperties = {
   fontSize: 11,
   fontWeight: 600,
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
   marginBottom: 12,
@@ -30,17 +30,17 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
     return (
       <div style={cardStyle}>
         <div style={labelStyle}>Today&apos;s Program</div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', marginBottom: 4 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 4 }}>
           {program.program_name}
         </div>
-        <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 12 }}>
           Week {program.week_number} of {program.total_weeks}
         </div>
 
         {/* Progress bar */}
         <div style={{
           height: 6,
-          backgroundColor: '#334155',
+          backgroundColor: 'var(--color-bg-elevated)',
           borderRadius: 3,
           overflow: 'hidden',
           marginBottom: 12,
@@ -48,12 +48,12 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
           <div style={{
             height: '100%',
             width: `${program.progress_pct}%`,
-            backgroundColor: '#3B82F6',
+            backgroundColor: 'var(--color-blue)',
             borderRadius: 3,
             transition: 'width 0.4s ease-out',
           }} />
         </div>
-        <div style={{ fontSize: 11, color: '#64748B' }}>
+        <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
           {program.sessions_completed} / {program.sessions_total} sessions
         </div>
 
@@ -65,10 +65,10 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 fontSize: 13,
-                color: '#CBD5E1',
+                color: 'var(--color-text-secondary)',
               }}>
                 <span>{ex.name}</span>
-                <span style={{ color: '#64748B' }}>{ex.sets}x{ex.reps}</span>
+                <span style={{ color: 'var(--color-text-muted)' }}>{ex.sets}x{ex.reps}</span>
               </div>
             ))}
           </div>
@@ -89,10 +89,10 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
               justifyContent: 'space-between',
               alignItems: 'center',
               fontSize: 13,
-              color: '#CBD5E1',
+              color: 'var(--color-text-secondary)',
             }}>
               <span>{s.machine_name}</span>
-              <span style={{ color: '#64748B', fontSize: 12 }}>
+              <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
                 {s.sets_count} sets · {Math.round(s.total_volume_lbs).toLocaleString()} lbs
               </span>
             </div>
@@ -106,7 +106,7 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
   return (
     <div style={cardStyle}>
       <div style={labelStyle}>Today</div>
-      <div style={{ fontSize: 14, color: '#94A3B8', textAlign: 'center', padding: '12px 0' }}>
+      <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', textAlign: 'center', padding: '12px 0' }}>
         Scan a machine QR code to start your session.
       </div>
     </div>

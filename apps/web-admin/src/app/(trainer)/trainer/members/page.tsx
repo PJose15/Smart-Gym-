@@ -8,32 +8,34 @@ import { MemberAvatar } from '@/components/ui/MemberAvatar';
 const searchStyle: CSSProperties = {
   width: '100%',
   maxWidth: 360,
-  padding: '10px 14px',
-  backgroundColor: '#0F172A',
-  border: '1px solid #334155',
-  borderRadius: 8,
-  color: '#F1F5F9',
-  fontSize: 14,
+  padding: 'var(--space-3) var(--space-4)',
+  backgroundColor: 'var(--color-bg-elevated)',
+  border: '1px solid var(--color-border-default)',
+  borderRadius: 'var(--radius-md)',
+  color: 'var(--color-text-primary)',
+  fontSize: 'var(--text-sm)',
   outline: 'none',
-  marginBottom: 20,
+  marginBottom: 'var(--space-5)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const cardStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 14,
-  backgroundColor: '#1E293B',
-  borderRadius: 10,
-  padding: '14px 18px',
+  gap: 'var(--space-4)',
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-lg)',
+  padding: 'var(--space-4) var(--space-5)',
   textDecoration: 'none',
-  color: '#F1F5F9',
-  transition: 'background-color 0.15s',
+  color: 'var(--color-text-primary)',
+  transition: 'background-color var(--duration-fast)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const statusColors: Record<string, string> = {
-  active: '#22C55E',
-  at_risk: '#EF4444',
-  inactive: '#64748B',
+  active: 'var(--color-green)',
+  at_risk: 'var(--color-red)',
+  inactive: 'var(--color-text-muted)',
 };
 
 export default function TrainerMembersPage() {
@@ -52,11 +54,11 @@ export default function TrainerMembersPage() {
     m.member_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <p style={{ color: '#94A3B8' }}>Loading members...</p>;
+  if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading members...</p>;
 
   return (
     <div>
-      <h1 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 700 }}>Members ({members.length})</h1>
+      <h1 style={{ margin: '0 0 var(--space-5)', fontSize: 'var(--text-xl)', fontWeight: 500, fontFamily: 'var(--font-sans)', letterSpacing: 'var(--tracking-tight)' }}>Members ({members.length})</h1>
 
       <input
         type="text"
@@ -66,7 +68,7 @@ export default function TrainerMembersPage() {
         style={searchStyle}
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
         {filtered.map((m) => (
           <Link key={m.member_id} href={`/trainer/members/${m.member_id}`} style={cardStyle}>
             <MemberAvatar
@@ -75,8 +77,8 @@ export default function TrainerMembersPage() {
               size="medium"
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{m.member_name}</div>
-              <div style={{ color: '#94A3B8', fontSize: 12 }}>
+              <div style={{ fontWeight: 500, fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>{m.member_name}</div>
+              <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
                 {m.total_sessions} sessions · {m.current_streak}d streak
                 {m.has_program && ' · Has program'}
               </div>
@@ -85,16 +87,16 @@ export default function TrainerMembersPage() {
               <span style={{
                 display: 'inline-block',
                 padding: '2px 8px',
-                borderRadius: 4,
-                fontSize: 11,
-                fontWeight: 600,
+                borderRadius: 'var(--radius-full)',
+                fontSize: 'var(--text-xs)',
+                fontWeight: 500,
                 backgroundColor: statusColors[m.status] + '22',
                 color: statusColors[m.status],
               }}>
                 {m.status.replace('_', ' ')}
               </span>
               {m.last_session_date && (
-                <div style={{ color: '#64748B', fontSize: 11, marginTop: 4 }}>
+                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginTop: 'var(--space-1)' }}>
                   Last: {new Date(m.last_session_date).toLocaleDateString()}
                 </div>
               )}
@@ -102,7 +104,7 @@ export default function TrainerMembersPage() {
           </Link>
         ))}
         {filtered.length === 0 && (
-          <p style={{ color: '#64748B', fontSize: 13 }}>No members found.</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No members found.</p>
         )}
       </div>
     </div>

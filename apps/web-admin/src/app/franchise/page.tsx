@@ -140,7 +140,7 @@ export default function FranchisePage() {
     return (
       <div style={centeredStyle}>
         <div style={spinnerStyle} className="spinner-enhanced" />
-        <p style={{ color: '#999', marginTop: 16 }}>Loading franchise data...</p>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: 16 }}>Loading franchise data...</p>
       </div>
     );
   }
@@ -247,7 +247,7 @@ export default function FranchisePage() {
               <span style={statsChipStyle}>{gymOverviews.length} gym{gymOverviews.length !== 1 ? 's' : ''}</span>
               <span style={statsChipStyle}>{avgMembers} avg members/gym</span>
               <span style={statsChipStyle}>{totalMachines} total machines</span>
-              {bestGym7d && <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>Top gym (7d): {bestGym7d.gym_name}</span>}
+              {bestGym7d && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' }}>Top gym (7d): {bestGym7d.gym_name}</span>}
             </div>
           );
         })()}
@@ -267,7 +267,7 @@ export default function FranchisePage() {
           <h2 style={sectionTitleStyle}>Gym Comparison</h2>
 
           {gymOverviews.length === 0 ? (
-            <p style={emptyStyle}>No gyms in this franchise yet. <Link href="/franchise/manage" style={{ color: '#4361ee' }}>Add gyms</Link></p>
+            <p style={emptyStyle}>No gyms in this franchise yet. <Link href="/franchise/manage" style={{ color: 'var(--color-blue)' }}>Add gyms</Link></p>
           ) : (
             <div style={tableContainerStyle}>
               <table style={tableStyle}>
@@ -285,7 +285,7 @@ export default function FranchisePage() {
                   {gymOverviews.map((g, i) => (
                     <tr key={g.gym_id} className={`row-stagger stagger-${i} table-row-hover`}>
                       <td style={tdStyle}>
-                        <span style={{ fontWeight: 600, color: '#1a1a2e' }}>{g.gym_name}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{g.gym_name}</span>
                       </td>
                       <td style={tdStyle}>{g.total_members}</td>
                       <td style={tdStyle}>{g.total_machines}</td>
@@ -306,11 +306,11 @@ export default function FranchisePage() {
             <h2 style={sectionTitleStyle}>Workouts (7d) by Gym</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={gymOverviews}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
                 <XAxis dataKey="gym_name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="workouts_7d" fill="#4361ee" radius={[4, 4, 0, 0]} name="Workouts (7d)" />
+                <Bar dataKey="workouts_7d" fill="var(--color-blue)" radius={[4, 4, 0, 0]} name="Workouts (7d)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -320,15 +320,15 @@ export default function FranchisePage() {
   );
 }
 
-/* ── Styles ─────────────────────────────────────────────── */
+/* -- Styles --------------------------------------------------------- */
 
 const headerStyle: CSSProperties = { marginBottom: 32 };
 
 const titleStyleH: CSSProperties = {
-  fontSize: 28, fontWeight: 700, marginTop: 0, marginBottom: 8, color: '#1a1a2e',
+  fontSize: 'var(--text-2xl)', fontWeight: 600, marginTop: 0, marginBottom: 8, color: 'var(--color-text-primary)',
 };
 
-const subtitleStyle: CSSProperties = { color: '#666', marginTop: 0, marginBottom: 0 };
+const subtitleStyle: CSSProperties = { color: 'var(--color-text-secondary)', marginTop: 0, marginBottom: 0 };
 
 const gridStyle: CSSProperties = {
   display: 'grid',
@@ -338,71 +338,72 @@ const gridStyle: CSSProperties = {
 };
 
 const sectionStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 24,
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 16, color: '#1a1a2e',
+  fontSize: 'var(--text-lg)', fontWeight: 600, marginTop: 0, marginBottom: 16, color: 'var(--color-text-primary)',
 };
 
 const tableContainerStyle: CSSProperties = { overflowX: 'auto' };
 
-const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 14 };
+const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' };
 
 const thStyle: CSSProperties = {
-  textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid #eee',
-  fontSize: 13, fontWeight: 600, color: '#666', textTransform: 'uppercase',
+  textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid var(--color-border-default)',
+  fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase',
 };
 
 const tdStyle: CSSProperties = {
-  padding: '12px 16px', borderBottom: '1px solid #f0f0f0', verticalAlign: 'middle',
+  padding: '12px 16px', borderBottom: '1px solid var(--color-border-subtle)', verticalAlign: 'middle',
 };
 
 const manageLinkStyle: CSSProperties = {
-  padding: '8px 16px', borderRadius: 6, backgroundColor: '#f0f0f0',
-  color: '#333', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+  padding: '8px 16px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', fontWeight: 600, textDecoration: 'none',
 };
 
 const labelStyle: CSSProperties = {
-  display: 'block', fontSize: 14, fontWeight: 600, color: '#333', marginBottom: 6,
+  display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 6,
 };
 
 const textInputStyle: CSSProperties = {
-  width: '100%', maxWidth: 400, padding: '10px 14px', borderRadius: 8,
-  border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box',
+  width: '100%', maxWidth: 400, padding: '10px 14px', borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--color-border-default)', fontSize: 'var(--text-sm)', boxSizing: 'border-box',
+  backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)',
 };
 
 const checkboxRowStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', padding: '8px 0',
-  fontSize: 14, color: '#333', cursor: 'pointer',
+  fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', cursor: 'pointer',
 };
 
 const createBtnStyle: CSSProperties = {
-  padding: '10px 24px', borderRadius: 8, border: 'none',
-  backgroundColor: '#4361ee', color: '#fff', fontSize: 14,
+  padding: '10px 24px', borderRadius: 'var(--radius-md)', border: 'none',
+  backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)',
   fontWeight: 600, cursor: 'pointer',
 };
 
 const centeredStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 40,
-  textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 40,
+  textAlign: 'center', border: '1px solid var(--color-border-subtle)',
   display: 'flex', flexDirection: 'column', alignItems: 'center',
 };
 
 const spinnerStyle: CSSProperties = {
-  width: 32, height: 32, border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7', borderRadius: '50%',
+  width: 32, height: 32, border: '3px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)', borderRadius: '50%',
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#fef2f2', border: '1px solid #fecaca',
-  borderRadius: 8, padding: '12px 16px', marginBottom: 16,
-  color: '#dc2626', fontSize: 14,
+  backgroundColor: 'var(--color-red-subtle)', border: '1px solid var(--color-red)',
+  borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: 16,
+  color: 'var(--color-red-light)', fontSize: 'var(--text-sm)',
 };
 
 const emptyStyle: CSSProperties = {
-  color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+  color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', padding: 20,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -415,9 +416,9 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
-  fontSize: 12,
+  borderRadius: 'var(--radius-full)',
+  fontSize: 'var(--text-xs)',
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };

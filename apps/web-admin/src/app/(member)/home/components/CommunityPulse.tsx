@@ -8,7 +8,7 @@ interface CommunityPulseProps {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 'var(--radius-md, 12px)',
   padding: 'var(--space-4, 16px)',
   animation: 'slideUpFade 0.4s ease-out 0.35s both',
@@ -46,7 +46,7 @@ export function CommunityPulse({ feed }: CommunityPulseProps) {
       <div style={{
         fontSize: 11,
         fontWeight: 600,
-        color: '#94A3B8',
+        color: 'var(--color-text-secondary)',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
         marginBottom: 12,
@@ -60,11 +60,11 @@ export function CommunityPulse({ feed }: CommunityPulseProps) {
               {EVENT_ICONS[event.event_type] || '\uD83D\uDCE2'}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, color: '#CBD5E1', lineHeight: 1.3 }}>
+              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.3 }}>
                 <span style={{ fontWeight: 600 }}>{event.member_name}</span>{' '}
                 {event.description}
               </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 3, fontSize: 11, color: '#64748B' }}>
+              <div style={{ display: 'flex', gap: 8, marginTop: 3, fontSize: 11, color: 'var(--color-text-muted)' }}>
                 <span>{timeAgo(event.created_at)}</span>
                 {event.reaction_count > 0 && (
                   <span>\uD83D\uDC4F {event.reaction_count}</span>

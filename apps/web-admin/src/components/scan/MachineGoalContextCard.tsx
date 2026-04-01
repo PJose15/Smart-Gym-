@@ -12,7 +12,7 @@ interface MachineGoalContextCardProps {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 14,
   border: '1px solid rgba(167, 139, 250, 0.15)',
@@ -58,7 +58,7 @@ export function MachineGoalContextCard({ memberId, machineId, currentBestLbs }: 
         marginBottom: 10,
       }}>
         <span style={{ fontSize: 14 }}>🎯</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#F1F5F9' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
           Your Goal{goals.length > 1 ? 's' : ''}
         </span>
       </div>
@@ -75,14 +75,14 @@ export function MachineGoalContextCard({ memberId, machineId, currentBestLbs }: 
               {GOAL_LABELS[goal.goal_type] ?? goal.goal_type}
             </span>
             {goal.target_weight_lbs && (
-              <span style={{ fontSize: 12, color: '#94A3B8' }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
                 Target: {goal.target_weight_lbs} lbs
               </span>
             )}
           </div>
 
           {goal.custom_description && (
-            <div style={{ fontSize: 12, color: '#E2E8F0', marginBottom: 6 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
               {goal.custom_description}
             </div>
           )}

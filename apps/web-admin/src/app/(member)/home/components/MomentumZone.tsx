@@ -12,7 +12,7 @@ interface MomentumZoneProps {
 
 const tileStyle: CSSProperties = {
   flex: 1,
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 'var(--radius-md, 12px)',
   padding: '12px',
   textAlign: 'center',
@@ -34,7 +34,7 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
         <div style={{ fontSize: 22, fontWeight: 800, color: '#FBBF24' }}>
           {streak}
         </div>
-        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>
           Week Streak
         </div>
         {/* Flame icon */}
@@ -48,7 +48,7 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
         <div style={{ fontSize: 22, fontWeight: 800, color: '#34D399' }}>
           {weekSessions}
         </div>
-        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>
           This Week
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 3, marginTop: 6 }}>
@@ -57,7 +57,7 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
               width: 6,
               height: 6,
               borderRadius: '50%',
-              backgroundColor: filled ? '#34D399' : '#334155',
+              backgroundColor: filled ? '#34D399' : 'var(--color-bg-elevated)',
             }} />
           ))}
         </div>
@@ -68,12 +68,12 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
         <div style={{ fontSize: 22, fontWeight: 800, color: level.color }}>
           {level.level}
         </div>
-        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>
           {level.name}
         </div>
         <div style={{
           height: 4,
-          backgroundColor: '#334155',
+          backgroundColor: 'var(--color-bg-elevated)',
           borderRadius: 2,
           overflow: 'hidden',
           marginTop: 6,

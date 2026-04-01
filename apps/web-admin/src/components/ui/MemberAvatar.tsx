@@ -85,13 +85,13 @@ export function MemberAvatar({
     width: avatarPx,
     height: avatarPx,
     borderRadius: '50%',
-    backgroundColor: '#334155',
+    backgroundColor: 'var(--color-bg-elevated)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize,
     fontWeight: 600,
-    color: '#F1F5F9',
+    color: 'var(--color-text-primary)',
     overflow: 'hidden',
   };
 

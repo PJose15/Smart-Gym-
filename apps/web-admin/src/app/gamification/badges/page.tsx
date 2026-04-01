@@ -29,28 +29,28 @@ interface MemberUnlock {
 // ─── Styles ─────────────────────────────────────────────
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '10px 12px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-default)',
   fontWeight: 600,
-  color: '#555',
+  color: 'var(--color-text-muted)',
   fontSize: 12,
   textTransform: 'uppercase',
 };
 
 const tdStyle: CSSProperties = {
   padding: '10px 12px',
-  borderBottom: '1px solid #f0f0f0',
+  borderBottom: '1px solid var(--color-border-subtle)',
   fontSize: 14,
-  color: '#333',
+  color: 'var(--color-text-primary)',
 };
 
 const RARITY_COLORS: Record<string, string> = {
@@ -72,7 +72,7 @@ const rarityBadgeStyle = (rarity: string): CSSProperties => ({
 });
 
 const expandedRowStyle: CSSProperties = {
-  backgroundColor: '#fafafa',
+  backgroundColor: 'var(--color-bg-elevated)',
   padding: '12px 16px',
 };
 
@@ -89,8 +89,8 @@ const statsChipStyle: CSSProperties = {
   borderRadius: 14,
   fontSize: 12,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-muted)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -186,8 +186,8 @@ export default function BadgesPage() {
 
         {error && (
           <div style={{
-            backgroundColor: '#fdecea',
-            color: '#b71c1c',
+            backgroundColor: 'var(--color-red-light)',
+            color: 'var(--color-red)',
             padding: '14px 18px',
             borderRadius: 8,
             fontSize: 14,
@@ -247,7 +247,7 @@ export default function BadgesPage() {
                       </td>
                       <td style={{ ...tdStyle, fontWeight: 600 }}>
                         {badge.name}
-                        <div style={{ fontSize: 12, color: '#888', fontWeight: 400, marginTop: 2 }}>
+                        <div style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 400, marginTop: 2 }}>
                           {badge.description}
                         </div>
                       </td>
@@ -256,10 +256,10 @@ export default function BadgesPage() {
                           {badge.rarity}
                         </span>
                       </td>
-                      <td style={{ ...tdStyle, color: '#666' }}>
+                      <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>
                         {badge.criteria_type.replace(/_/g, ' ')} ({badge.criteria_value.toLocaleString()})
                       </td>
-                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#3a0ca3' }}>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: 'var(--color-blue)' }}>
                         {badge.member_count}
                       </td>
                     </tr>
@@ -267,26 +267,26 @@ export default function BadgesPage() {
                       <tr key={`${badge.id}-expanded`}>
                         <td colSpan={5} style={expandedRowStyle}>
                           {membersLoading ? (
-                            <div style={{ textAlign: 'center', padding: 16, color: '#888' }}>
+                            <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-muted)' }}>
                               Loading...
                             </div>
                           ) : members.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: 16, color: '#999' }}>
+                            <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-muted)' }}>
                               No members have earned this badge yet.
                             </div>
                           ) : (
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                               <thead>
                                 <tr>
-                                  <th style={{ ...thStyle, backgroundColor: '#f0f0f0' }}>Member</th>
-                                  <th style={{ ...thStyle, backgroundColor: '#f0f0f0', textAlign: 'right' }}>Unlocked</th>
+                                  <th style={{ ...thStyle, backgroundColor: 'var(--color-bg-highest)' }}>Member</th>
+                                  <th style={{ ...thStyle, backgroundColor: 'var(--color-bg-highest)', textAlign: 'right' }}>Unlocked</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {members.map((m) => (
                                   <tr key={m.profile_id}>
                                     <td style={{ ...tdStyle, fontWeight: 500 }}>{m.full_name}</td>
-                                    <td style={{ ...tdStyle, textAlign: 'right', color: '#888' }}>
+                                    <td style={{ ...tdStyle, textAlign: 'right', color: 'var(--color-text-muted)' }}>
                                       {new Date(m.unlocked_at).toLocaleDateString()}
                                     </td>
                                   </tr>
@@ -302,7 +302,7 @@ export default function BadgesPage() {
                 {badges.length === 0 && (
                   <tr>
                     <td style={tdStyle} colSpan={5}>
-                      <div style={{ textAlign: 'center', padding: 32, color: '#999' }}>
+                      <div style={{ textAlign: 'center', padding: 32, color: 'var(--color-text-muted)' }}>
                         No badges configured yet.
                       </div>
                     </td>

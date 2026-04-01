@@ -10,7 +10,7 @@ interface ChallengePreviewProps {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 16,
   marginBottom: 16,
@@ -18,7 +18,7 @@ const cardStyle: CSSProperties = {
 };
 
 const challengeCardStyle: CSSProperties = {
-  backgroundColor: '#0F172A',
+  backgroundColor: 'var(--color-bg-base)',
   borderRadius: 10,
   padding: 12,
 };
@@ -27,7 +27,7 @@ const joinBtnStyle: CSSProperties = {
   padding: '6px 14px',
   borderRadius: 6,
   border: 'none',
-  backgroundColor: '#3B82F6',
+  backgroundColor: 'var(--color-blue)',
   color: '#fff',
   fontSize: 12,
   fontWeight: 600,
@@ -37,8 +37,8 @@ const joinBtnStyle: CSSProperties = {
 const joinedBadgeStyle: CSSProperties = {
   padding: '4px 10px',
   borderRadius: 6,
-  backgroundColor: 'rgba(34, 197, 94, 0.15)',
-  color: '#22C55E',
+  backgroundColor: 'var(--color-green-light)',
+  color: 'var(--color-green)',
   fontSize: 11,
   fontWeight: 600,
 };
@@ -88,7 +88,7 @@ export function ChallengePreview({ memberId, gymId }: ChallengePreviewProps) {
     return (
       <div style={cardStyle}>
         <div style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ fontSize: 13, color: '#64748B' }}>Loading challenges...</div>
+          <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Loading challenges...</div>
         </div>
       </div>
     );
@@ -99,7 +99,7 @@ export function ChallengePreview({ memberId, gymId }: ChallengePreviewProps) {
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Active Challenges
         </div>
         <Link href="/gym/challenges" style={{ fontSize: 12, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>
@@ -112,8 +112,8 @@ export function ChallengePreview({ memberId, gymId }: ChallengePreviewProps) {
           <div key={c.challenge_id} style={challengeCardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#F1F5F9' }}>{c.title}</div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>{c.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 2 }}>
                   {c.days_left} day{c.days_left !== 1 ? 's' : ''} left &middot; {c.total_participants} participant{c.total_participants !== 1 ? 's' : ''}
                 </div>
               </div>
@@ -131,8 +131,8 @@ export function ChallengePreview({ memberId, gymId }: ChallengePreviewProps) {
               )}
             </div>
             {c.is_joined && c.my_score != null && (
-              <div style={{ fontSize: 12, color: '#94A3B8' }}>
-                Your score: <span style={{ color: '#F1F5F9', fontWeight: 600 }}>{c.my_score.toLocaleString()}</span>
+              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                Your score: <span style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>{c.my_score.toLocaleString()}</span>
                 {c.rank > 0 && <span> &middot; Rank #{c.rank}</span>}
               </div>
             )}

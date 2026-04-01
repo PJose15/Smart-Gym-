@@ -14,7 +14,7 @@ const containerStyle: CSSProperties = {
 const titleStyle: CSSProperties = {
   fontSize: 14,
   fontWeight: 700,
-  color: '#CBD5E1',
+  color: 'var(--color-text-secondary)',
   margin: '0 0 12px',
 };
 
@@ -28,7 +28,7 @@ export function DNAHistoryChart({ snapshots }: DNAHistoryChartProps) {
     return (
       <div style={containerStyle}>
         <h4 style={titleStyle}>12-Week Trend</h4>
-        <p style={{ fontSize: 12, color: '#64748B' }}>
+        <p style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
           Not enough data yet. Check back after a few weeks of training.
         </p>
       </div>
@@ -72,7 +72,7 @@ export function DNAHistoryChart({ snapshots }: DNAHistoryChartProps) {
                 stroke="rgba(255,255,255,0.05)"
                 strokeWidth={1}
               />
-              <text x={padX - 4} y={y + 3} textAnchor="end" fill="#64748B" fontSize={9}>
+              <text x={padX - 4} y={y + 3} textAnchor="end" fill="var(--color-text-muted)" fontSize={9}>
                 {v}
               </text>
             </g>
@@ -91,7 +91,7 @@ export function DNAHistoryChart({ snapshots }: DNAHistoryChartProps) {
         {points.map((p, i) => {
           if (recent.length <= 6 || i % 2 === 0 || i === recent.length - 1) {
             return (
-              <text key={`x-${i}`} x={p.x} y={height - 2} textAnchor="middle" fill="#64748B" fontSize={8}>
+              <text key={`x-${i}`} x={p.x} y={height - 2} textAnchor="middle" fill="var(--color-text-muted)" fontSize={8}>
                 W{i + 1}
               </text>
             );

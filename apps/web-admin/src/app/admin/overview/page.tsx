@@ -19,9 +19,9 @@ const spinnerStyle: CSSProperties = {
 };
 
 const healthColors: Record<string, string> = {
-  healthy: '#22C55E',
-  degraded: '#F59E0B',
-  down: '#EF4444',
+  healthy: 'var(--color-green)',
+  degraded: 'var(--color-gold)',
+  down: 'var(--color-red)',
 };
 
 export default function AdminOverviewPage() {
@@ -42,7 +42,7 @@ export default function AdminOverviewPage() {
     return (
       <div>
         <h1 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 700 }}>Platform Overview</h1>
-        <p style={{ color: '#EF4444', fontSize: 14 }}>{error}</p>
+        <p style={{ color: 'var(--color-red)', fontSize: 14 }}>{error}</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default function AdminOverviewPage() {
     return (
       <div style={spinnerStyle}>
         <style>{`@keyframes ospin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ width: 28, height: 28, border: '3px solid #334155', borderTopColor: '#DC2626', borderRadius: '50%', animation: 'ospin 0.7s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-elevated)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'ospin 0.7s linear infinite' }} />
       </div>
     );
   }
@@ -59,7 +59,7 @@ export default function AdminOverviewPage() {
   return (
     <div>
       <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 700 }}>Platform Overview</h1>
-      <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: 14 }}>
+      <p style={{ margin: '0 0 16px', color: 'var(--color-text-muted)', fontSize: 14 }}>
         Real-time platform metrics
       </p>
 
@@ -71,18 +71,18 @@ export default function AdminOverviewPage() {
         <MetricCard title="OpenAI Costs (30d)" value={`$${data.openai_cost_30d.toFixed(2)}`} />
         <MetricCard title="New Registrations (7d)" value={data.new_registrations_7d} />
         <div style={{
-          backgroundColor: '#1E293B',
+          backgroundColor: 'var(--color-bg-raised)',
           borderRadius: 10,
           padding: 20,
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
         }}>
-          <div style={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }}>Health Status</div>
+          <div style={{ color: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 500 }}>Health Status</div>
           <div style={{
             fontSize: 28,
             fontWeight: 700,
-            color: healthColors[data.health_status] ?? '#F1F5F9',
+            color: healthColors[data.health_status] ?? 'var(--color-text-primary)',
             textTransform: 'capitalize',
           }}>
             {data.health_status}

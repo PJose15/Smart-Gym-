@@ -6,10 +6,10 @@ import { useLiveGymActivity, LiveActivityEvent } from '@/hooks/useLiveGymActivit
 const stripStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: '12px 16px',
-  border: '1px solid #334155',
+  border: '1px solid var(--color-border-default)',
   gap: 16,
   height: 56,
   overflow: 'hidden',
@@ -25,15 +25,15 @@ const leftStyle: CSSProperties = {
 const dotStyle: CSSProperties = {
   width: 7,
   height: 7,
-  backgroundColor: '#22C55E',
+  backgroundColor: 'var(--color-green)',
   borderRadius: '50%',
-  boxShadow: '0 0 5px #22C55E',
+  boxShadow: '0 0 5px var(--color-green)',
 };
 
 const labelStyle: CSSProperties = {
   fontSize: 11,
   fontWeight: 500,
-  color: '#22C55E',
+  color: 'var(--color-green)',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
 };
@@ -49,7 +49,7 @@ const centerStyle: CSSProperties = {
 
 const eventTextStyle: CSSProperties = {
   fontSize: 13,
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -65,13 +65,13 @@ const rightStyle: CSSProperties = {
 const countStyle: CSSProperties = {
   fontSize: 18,
   fontWeight: 700,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
   lineHeight: 1,
 };
 
 const countLabelStyle: CSSProperties = {
   fontSize: 9,
-  color: '#64748B',
+  color: 'var(--color-text-muted)',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
 };
@@ -120,7 +120,7 @@ export function LiveActivityStrip() {
             {currentEvent.text}
           </div>
         ) : (
-          <div style={{ ...eventTextStyle, color: '#475569' }}>
+          <div style={{ ...eventTextStyle, color: 'var(--color-text-disabled)' }}>
             Waiting for activity...
           </div>
         )}

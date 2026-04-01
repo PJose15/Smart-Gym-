@@ -8,11 +8,11 @@ import { AtRiskList } from '@/components/owner/AtRiskList';
 import { SessionsHourlyChart } from '@/components/owner/SessionsHourlyChart';
 import type { OwnerDashboardMetrics, MachinePerformance, PeakHourCell, ActivityFeedItem } from '@nexera/types';
 
-const sectionTitle: CSSProperties = { margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: '#94A3B8' };
-const cardStyle: CSSProperties = { backgroundColor: '#1E293B', borderRadius: 10, padding: 20, marginBottom: 20 };
+const sectionTitle: CSSProperties = { margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: 'var(--color-text-secondary)' };
+const cardStyle: CSSProperties = { backgroundColor: 'var(--color-bg-raised)', borderRadius: 10, padding: 20, marginBottom: 20 };
 const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 13 };
-const thStyle: CSSProperties = { textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #334155', color: '#64748B', fontWeight: 500 };
-const tdStyle: CSSProperties = { padding: '8px 12px', borderBottom: '1px solid #1E293B' };
+const thStyle: CSSProperties = { textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--color-bg-elevated)', color: 'var(--color-text-muted)', fontWeight: 500 };
+const tdStyle: CSSProperties = { padding: '8px 12px', borderBottom: '1px solid var(--color-bg-raised)' };
 
 interface DashboardData {
   metrics: OwnerDashboardMetrics;
@@ -58,13 +58,13 @@ export default function OwnerDashboardPage() {
     };
   }, []);
 
-  if (loading) return <p style={{ color: '#94A3B8' }}>Loading dashboard...</p>;
-  if (!data) return <p style={{ color: '#EF4444' }}>Failed to load dashboard.</p>;
+  if (loading) return <p style={{ color: 'var(--color-text-secondary)' }}>Loading dashboard...</p>;
+  if (!data) return <p style={{ color: 'var(--color-red)' }}>Failed to load dashboard.</p>;
 
   const { metrics, machine_performance, peak_hours, activity } = data;
 
   return (
-    <div style={{ maxWidth: 1100, color: '#F1F5F9' }}>
+    <div style={{ maxWidth: 1100, color: 'var(--color-text-primary)' }}>
       <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Owner Dashboard</h1>
 
       {/* Live Activity Ticker */}
@@ -96,7 +96,7 @@ export default function OwnerDashboardPage() {
       <div style={cardStyle}>
         <h2 style={sectionTitle}>Machine Performance (7 days)</h2>
         {machine_performance.length === 0 ? (
-          <p style={{ color: '#64748B', fontSize: 13, margin: 0 }}>No usage data yet.</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: 0 }}>No usage data yet.</p>
         ) : (
           <table style={tableStyle}>
             <thead>
@@ -131,16 +131,16 @@ export default function OwnerDashboardPage() {
       <div style={cardStyle}>
         <h2 style={sectionTitle}>Recent Activity</h2>
         {activity.length === 0 ? (
-          <p style={{ color: '#64748B', fontSize: 13, margin: 0 }}>No recent activity.</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: 0 }}>No recent activity.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {activity.map((item) => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #0F172A' }}>
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--color-bg-base)' }}>
                 <div>
                   <span style={{ fontSize: 13 }}>{item.description}</span>
-                  {item.actor_name && <span style={{ color: '#94A3B8', fontSize: 12 }}> — {item.actor_name}</span>}
+                  {item.actor_name && <span style={{ color: 'var(--color-text-secondary)', fontSize: 12 }}> — {item.actor_name}</span>}
                 </div>
-                <span style={{ color: '#64748B', fontSize: 11, flexShrink: 0 }}>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: 11, flexShrink: 0 }}>
                   {new Date(item.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>

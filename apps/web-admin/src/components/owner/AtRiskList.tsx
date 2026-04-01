@@ -14,7 +14,7 @@ const emptyStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 8,
-  color: '#22C55E',
+  color: 'var(--color-green)',
   fontSize: 13,
   padding: '12px 0',
 };
@@ -24,20 +24,20 @@ const rowStyle: CSSProperties = {
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '10px 12px',
-  backgroundColor: '#0F172A',
+  backgroundColor: 'var(--color-bg-base)',
   borderRadius: 8,
-  borderLeft: '3px solid #EF4444',
+  borderLeft: '3px solid var(--color-red)',
 };
 
 const nameStyle: CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
 };
 
 const reasonStyle: CSSProperties = {
   fontSize: 12,
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   marginTop: 2,
 };
 
@@ -64,7 +64,7 @@ const AtRiskMemberRow = memo(function AtRiskMemberRow({ member }: { member: AtRi
         <div style={reasonStyle}>{formatReason(member.reasons[0])}</div>
       </div>
       {member.reasons.length > 1 && (
-        <span style={{ fontSize: 11, color: '#64748B' }}>
+        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
           +{member.reasons.length - 1} more
         </span>
       )}
@@ -113,7 +113,7 @@ export function AtRiskList() {
   }, [members]);
 
   if (loading) {
-    return <div style={{ color: '#64748B', fontSize: 13 }}>Loading at-risk members...</div>;
+    return <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Loading at-risk members...</div>;
   }
 
   if (displayed.length === 0) {

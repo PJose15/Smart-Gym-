@@ -8,10 +8,10 @@ interface ChallengeZoneProps {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 'var(--radius-md, 12px)',
   padding: 'var(--space-4, 16px)',
-  border: '1px solid #334155',
+  border: '1px solid var(--color-bg-elevated)',
   animation: 'slideUpFade 0.4s ease-out 0.3s both',
 };
 
@@ -23,7 +23,7 @@ export function ChallengeZone({ challenge }: ChallengeZoneProps) {
           <div style={{ fontSize: 11, fontWeight: 600, color: '#A78BFA', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
             Active Challenge
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)' }}>
             {challenge.title}
           </div>
         </div>
@@ -42,7 +42,7 @@ export function ChallengeZone({ challenge }: ChallengeZoneProps) {
       {/* Progress bar */}
       <div style={{
         height: 6,
-        backgroundColor: '#334155',
+        backgroundColor: 'var(--color-bg-elevated)',
         borderRadius: 3,
         overflow: 'hidden',
         marginBottom: 8,
@@ -55,7 +55,7 @@ export function ChallengeZone({ challenge }: ChallengeZoneProps) {
         }} />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748B' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-text-muted)' }}>
         <span>{challenge.total_participants} participants</span>
         <span>{challenge.days_left} days left</span>
       </div>

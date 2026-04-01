@@ -16,7 +16,7 @@ const rowStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '16px 20px',
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
 };
 
@@ -35,7 +35,7 @@ const toggleKnob: CSSProperties = {
   width: 18,
   height: 18,
   borderRadius: '50%',
-  backgroundColor: '#fff',
+  backgroundColor: 'var(--color-text-primary)',
   position: 'absolute',
   top: 3,
   transition: 'left 0.2s',
@@ -118,7 +118,7 @@ export default function AdminFeatureFlagsPage() {
     return (
       <div>
         <h1 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 700 }}>Feature Flags</h1>
-        <p style={{ color: '#EF4444', fontSize: 14 }}>{error}</p>
+        <p style={{ color: 'var(--color-red)', fontSize: 14 }}>{error}</p>
       </div>
     );
   }
@@ -127,7 +127,7 @@ export default function AdminFeatureFlagsPage() {
     return (
       <div style={spinnerStyle}>
         <style>{`@keyframes ffspin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ width: 28, height: 28, border: '3px solid #334155', borderTopColor: '#DC2626', borderRadius: '50%', animation: 'ffspin 0.7s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '3px solid var(--color-bg-highest)', borderTopColor: 'var(--color-red)', borderRadius: '50%', animation: 'ffspin 0.7s linear infinite' }} />
       </div>
     );
   }
@@ -135,23 +135,23 @@ export default function AdminFeatureFlagsPage() {
   return (
     <div>
       <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 700 }}>Feature Flags</h1>
-      <p style={{ margin: '0 0 24px', color: '#64748B', fontSize: 14 }}>
+      <p style={{ margin: '0 0 24px', color: 'var(--color-text-secondary)', fontSize: 14 }}>
         Toggle platform-wide feature flags
       </p>
 
       {toggleError && (
-        <p style={{ margin: '0 0 12px', color: '#EF4444', fontSize: 13 }}>{toggleError}</p>
+        <p style={{ margin: '0 0 12px', color: 'var(--color-red)', fontSize: 13 }}>{toggleError}</p>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {flags.map((flag) => (
           <div key={flag.flag_key} style={rowStyle}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#F1F5F9' }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                 {formatFlagLabel(flag.flag_key)}
               </div>
               {flag.description && (
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>
+                <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginTop: 2 }}>
                   {flag.description}
                 </div>
               )}
@@ -163,8 +163,8 @@ export default function AdminFeatureFlagsPage() {
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 600,
-                backgroundColor: flag.is_enabled ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                color: flag.is_enabled ? '#22C55E' : '#EF4444',
+                backgroundColor: flag.is_enabled ? 'var(--color-green-light)' : 'var(--color-red-light)',
+                color: flag.is_enabled ? 'var(--color-green)' : 'var(--color-red)',
               }}>
                 {flag.is_enabled ? 'ON' : 'OFF'}
               </span>
@@ -175,7 +175,7 @@ export default function AdminFeatureFlagsPage() {
                 aria-label={`Toggle ${formatFlagLabel(flag.flag_key)}`}
                 style={{
                   ...toggleTrackBase,
-                  backgroundColor: flag.is_enabled ? '#22C55E' : '#475569',
+                  backgroundColor: flag.is_enabled ? 'var(--color-green)' : 'var(--color-bg-highest)',
                   opacity: toggling === flag.flag_key ? 0.6 : 1,
                   cursor: toggling === flag.flag_key ? 'not-allowed' : 'pointer',
                 }}

@@ -12,7 +12,7 @@ interface TrainerDNACardProps {
 }
 
 const cardStyle: CSSProperties = {
-  background: '#1E293B',
+  background: 'var(--color-bg-raised)',
   borderRadius: 14,
   padding: 16,
   marginBottom: 12,
@@ -40,7 +40,7 @@ export function TrainerDNACard({ scores, archetype, isBuilding }: TrainerDNACard
       <div style={cardStyle}>
         <div style={headerStyle}>
           <span style={{ fontSize: 20 }}>{'\uD83E\uDDEC'}</span>
-          <span style={{ fontSize: 13, color: '#64748B' }}>DNA forming...</span>
+          <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>DNA forming...</span>
         </div>
       </div>
     );
@@ -58,10 +58,10 @@ export function TrainerDNACard({ scores, archetype, isBuilding }: TrainerDNACard
       <div style={headerStyle}>
         <span style={{ fontSize: 22 }}>{archetype.icon}</span>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
             {archetype.name}
           </p>
-          <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0' }}>
+          <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>
             {archetype.coaching_focus}
           </p>
         </div>

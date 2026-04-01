@@ -30,10 +30,10 @@ type PeriodDays = 30 | 60 | 90;
 // ─── Styles ─────────────────────────────────────────────
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as any,
   padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const gridStyle: CSSProperties = {
@@ -44,15 +44,15 @@ const gridStyle: CSSProperties = {
 };
 
 const statValueStyle: CSSProperties = {
-  fontSize: 28,
-  fontWeight: 700,
-  color: '#1a1a2e',
+  fontSize: 'var(--text-2xl)' as any,
+  fontWeight: 'var(--weight-bold)' as any,
+  color: 'var(--color-text-primary)',
   marginBottom: 4,
 };
 
 const statLabelStyle: CSSProperties = {
-  fontSize: 13,
-  color: '#999',
+  fontSize: 'var(--text-sm)' as any,
+  color: 'var(--color-text-muted)',
 };
 
 const chartCardStyle: CSSProperties = {
@@ -63,37 +63,37 @@ const chartCardStyle: CSSProperties = {
 const periodToggleStyle: CSSProperties = {
   display: 'inline-flex',
   gap: 0,
-  backgroundColor: '#f0f0f0',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderRadius: 'var(--radius-md)' as any,
   padding: 3,
   marginBottom: 20,
 };
 
 const periodBtnStyle: CSSProperties = {
   padding: '8px 20px',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-sm)' as any,
   border: 'none',
   cursor: 'pointer',
-  fontSize: 14,
-  fontWeight: 600,
+  fontSize: 'var(--text-base)' as any,
+  fontWeight: 'var(--weight-medium)' as any,
   background: 'transparent',
-  color: '#888',
+  color: 'var(--color-text-muted)',
   transition: 'all 0.2s',
 };
 
 const periodActiveStyle: CSSProperties = {
   ...periodBtnStyle,
-  backgroundColor: '#4361ee',
-  color: '#fff',
+  backgroundColor: 'var(--color-blue)',
+  color: 'var(--color-text-primary)',
 };
 
 const backLinkStyle: CSSProperties = {
   display: 'inline-block',
   marginBottom: 16,
-  fontSize: 14,
-  color: '#4361ee',
+  fontSize: 'var(--text-base)' as any,
+  color: 'var(--color-blue-light)',
   textDecoration: 'none',
-  fontWeight: 600,
+  fontWeight: 'var(--weight-medium)' as any,
 };
 
 const trendBadgeStyle = (dir: string): CSSProperties => ({
@@ -101,11 +101,11 @@ const trendBadgeStyle = (dir: string): CSSProperties => ({
   padding: '2px 10px',
   borderRadius: 12,
   fontSize: 12,
-  fontWeight: 600,
+  fontWeight: 'var(--weight-medium)' as any,
   backgroundColor:
-    dir === 'increasing' ? '#e8f5e9' : dir === 'decreasing' ? '#fce4e6' : '#f5f5f5',
+    dir === 'increasing' ? 'var(--color-green-subtle)' : dir === 'decreasing' ? 'var(--color-red-subtle)' : 'var(--color-bg-elevated)',
   color:
-    dir === 'increasing' ? '#2e7d32' : dir === 'decreasing' ? '#c62828' : '#888',
+    dir === 'increasing' ? 'var(--color-green-light)' : dir === 'decreasing' ? 'var(--color-red-light)' : 'var(--color-text-muted)',
 });
 
 const statsStripStyle: CSSProperties = {
@@ -118,11 +118,11 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -281,8 +281,8 @@ export default function MemberAnalyticsPage() {
 
         {error && (
           <div style={{
-            backgroundColor: '#fdecea', color: '#b71c1c',
-            padding: '14px 18px', borderRadius: 8, fontSize: 14, marginBottom: 16,
+            backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)',
+            padding: '14px 18px', borderRadius: 'var(--radius-sm)' as any, fontSize: 'var(--text-base)' as any, marginBottom: 16,
           }}>
             {error}
           </div>
@@ -295,8 +295,8 @@ export default function MemberAnalyticsPage() {
             <span style={statsChipStyle}>{avgDuration}m avg duration</span>
             <span style={{
               ...statsChipStyle,
-              backgroundColor: volumeTrend === 'increasing' ? '#e8f5e9' : volumeTrend === 'decreasing' ? '#fce4e6' : '#f5f5f5',
-              color: volumeTrend === 'increasing' ? '#2e7d32' : volumeTrend === 'decreasing' ? '#c62828' : '#888',
+              backgroundColor: volumeTrend === 'increasing' ? 'var(--color-green-subtle)' : volumeTrend === 'decreasing' ? 'var(--color-red-subtle)' : 'var(--color-bg-elevated)',
+              color: volumeTrend === 'increasing' ? 'var(--color-green-light)' : volumeTrend === 'decreasing' ? 'var(--color-red-light)' : 'var(--color-text-muted)',
             }}>
               Volume: {volumeTrend}
             </span>
@@ -340,21 +340,21 @@ export default function MemberAnalyticsPage() {
 
         {/* Weekly Volume Chart */}
         <div style={chartCardStyle} className="section-glow">
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 16, marginTop: 0 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginBottom: 16, marginTop: 0 }}>
             Weekly Volume (kg)
           </h3>
           {weeklyVolume.length >= 2 ? (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={weeklyVolume}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#4361ee" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="var(--color-blue)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p style={{ color: '#999', textAlign: 'center', padding: 32 }}>
+            <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: 32 }}>
               Not enough data for this period.
             </p>
           )}
@@ -362,21 +362,21 @@ export default function MemberAnalyticsPage() {
 
         {/* Weekly Frequency Chart */}
         <div style={chartCardStyle} className="section-glow">
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 16, marginTop: 0 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginBottom: 16, marginTop: 0 }}>
             Weekly Workout Frequency
           </h3>
           {weeklyFreq.length >= 2 ? (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={weeklyFreq}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#2a9d8f" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="var(--color-green)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p style={{ color: '#999', textAlign: 'center', padding: 32 }}>
+            <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: 32 }}>
               Not enough data for this period.
             </p>
           )}
@@ -385,12 +385,12 @@ export default function MemberAnalyticsPage() {
         {/* Exercise 1RM Progressions */}
         {exerciseProgressions.length > 0 && (
           <div style={chartCardStyle} className="section-glow">
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 16, marginTop: 0 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginBottom: 16, marginTop: 0 }}>
               1RM Progression by Exercise
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
                 <XAxis
                   dataKey="date"
                   type="category"
@@ -400,7 +400,7 @@ export default function MemberAnalyticsPage() {
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 {exerciseProgressions.map((ep, i) => {
-                  const colors = ['#4361ee', '#2a9d8f', '#3a0ca3', '#e63946', '#e9c46a'];
+                  const colors = ['#3B8BD4', '#639922', '#7F77DD', '#C0392B', '#EF9F27'];
                   return (
                     <Line
                       key={ep.name}

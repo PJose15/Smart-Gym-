@@ -11,8 +11,8 @@ const shellStyle: CSSProperties = {
   maxWidth: 480,
   margin: '0 auto',
   minHeight: '100vh',
-  backgroundColor: '#0F172A',
-  color: '#F1F5F9',
+  backgroundColor: 'var(--color-bg-base)',
+  color: 'var(--color-text-primary)',
   position: 'relative',
 };
 

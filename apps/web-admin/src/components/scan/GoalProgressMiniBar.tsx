@@ -23,7 +23,7 @@ export function GoalProgressMiniBar({ current, target, unit = 'lbs' }: GoalProgr
     width: `${pct}%`,
     height: '100%',
     borderRadius: 3,
-    backgroundColor: pct >= 100 ? '#22C55E' : '#3B82F6',
+    backgroundColor: pct >= 100 ? 'var(--color-green)' : 'var(--color-blue)',
     transition: 'width 0.4s ease',
   };
 
@@ -37,7 +37,7 @@ export function GoalProgressMiniBar({ current, target, unit = 'lbs' }: GoalProgr
         justifyContent: 'space-between',
         marginTop: 4,
         fontSize: 11,
-        color: '#94A3B8',
+        color: 'var(--color-text-secondary)',
       }}>
         <span>{current} {unit}</span>
         <span>{pct}%</span>

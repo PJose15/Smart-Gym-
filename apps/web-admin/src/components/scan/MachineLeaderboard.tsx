@@ -13,7 +13,7 @@ interface MachineLeaderboardProps {
 }
 
 const containerStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 14,
 };
@@ -27,7 +27,7 @@ const headerStyle: CSSProperties = {
 
 const dividerStyle: CSSProperties = {
   height: 1,
-  backgroundColor: '#334155',
+  backgroundColor: 'var(--color-bg-elevated)',
   margin: '4px 0',
 };
 
@@ -64,7 +64,7 @@ export function MachineLeaderboard({ machineId, memberId, gymId, hasLoggedSet }:
   if (loading) {
     return (
       <div style={containerStyle}>
-        <div style={{ textAlign: 'center', padding: 12, color: '#64748B', fontSize: 12 }}>
+        <div style={{ textAlign: 'center', padding: 12, color: 'var(--color-text-muted)', fontSize: 12 }}>
           Loading leaderboard...
         </div>
       </div>
@@ -81,7 +81,7 @@ export function MachineLeaderboard({ machineId, memberId, gymId, hasLoggedSet }:
     <div style={containerStyle}>
       <div style={headerStyle}>
         <span style={{ fontSize: 14 }}>🏆</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#F1F5F9' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
           Machine Leaderboard
         </span>
       </div>
@@ -93,7 +93,7 @@ export function MachineLeaderboard({ machineId, memberId, gymId, hasLoggedSet }:
       {appendedEntry && (
         <>
           <div style={dividerStyle} />
-          <div style={{ textAlign: 'center', fontSize: 10, color: '#64748B', padding: '2px 0' }}>
+          <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--color-text-muted)', padding: '2px 0' }}>
             ···
           </div>
           <MachineLBEntry entry={appendedEntry} />

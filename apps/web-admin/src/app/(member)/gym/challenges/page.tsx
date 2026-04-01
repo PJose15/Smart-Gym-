@@ -10,7 +10,7 @@ type Tab = 'active' | 'completed';
 const toggleContainerStyle: CSSProperties = {
   display: 'inline-flex',
   gap: 0,
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   padding: 3,
   marginBottom: 16,
@@ -24,8 +24,8 @@ function toggleBtnStyle(active: boolean): CSSProperties {
     cursor: 'pointer',
     fontSize: 13,
     fontWeight: 600,
-    background: active ? '#3B82F6' : 'transparent',
-    color: active ? '#fff' : '#94A3B8',
+    background: active ? 'var(--color-blue)' : 'transparent',
+    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
     transition: 'all 0.2s',
   };
 }
@@ -83,14 +83,14 @@ export default function ChallengesListPage() {
   }
 
   if (!member || !gym) {
-    return <div style={{ padding: 16, color: '#94A3B8' }}>Loading...</div>;
+    return <div style={{ padding: 16, color: 'var(--color-text-secondary)' }}>Loading...</div>;
   }
 
   const filtered = challenges.filter(c => tab === 'active' ? c.is_active : !c.is_active);
 
   return (
     <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)', paddingBottom: 100 }}>
-      <h1 style={{ fontSize: 20, fontWeight: 700, color: '#F1F5F9', margin: 0, marginBottom: 16 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, marginBottom: 16 }}>
         Challenges
       </h1>
 
@@ -100,9 +100,9 @@ export default function ChallengesListPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 48, color: '#64748B' }}>Loading...</div>
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)' }}>Loading...</div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 48, color: '#64748B', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)', fontSize: 14 }}>
           No {tab} challenges right now.
         </div>
       ) : (
@@ -114,7 +114,7 @@ export default function ChallengesListPage() {
               style={{ textDecoration: 'none' }}
             >
               <div style={{
-                backgroundColor: '#1E293B',
+                backgroundColor: 'var(--color-bg-raised)',
                 borderRadius: 12,
                 padding: 16,
                 transition: 'transform 0.1s',
@@ -125,9 +125,9 @@ export default function ChallengesListPage() {
                       {CHALLENGE_ICONS[c.challenge_type] || '\uD83C\uDFAF'}
                     </span>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: '#F1F5F9' }}>{c.title}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>{c.title}</div>
                       {c.description && (
-                        <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2, lineHeight: 1.3 }}>
+                        <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2, lineHeight: 1.3 }}>
                           {c.description.length > 80 ? c.description.slice(0, 80) + '...' : c.description}
                         </div>
                       )}
@@ -141,8 +141,8 @@ export default function ChallengesListPage() {
                         padding: '6px 14px',
                         borderRadius: 6,
                         border: 'none',
-                        backgroundColor: '#3B82F6',
-                        color: '#fff',
+                        backgroundColor: 'var(--color-blue)',
+                        color: 'var(--color-text-primary)',
                         fontSize: 12,
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -154,7 +154,7 @@ export default function ChallengesListPage() {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: '#64748B' }}>
+                <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: 'var(--color-text-muted)' }}>
                   <span>{c.total_participants} participant{c.total_participants !== 1 ? 's' : ''}</span>
                   {c.is_active && <span>{c.days_left}d left</span>}
                   <span>Top: {c.top_score.toLocaleString()}</span>
@@ -170,8 +170,8 @@ export default function ChallengesListPage() {
                     justifyContent: 'space-between',
                     fontSize: 12,
                   }}>
-                    <span style={{ color: '#22C55E', fontWeight: 600 }}>Joined</span>
-                    <span style={{ color: '#94A3B8' }}>
+                    <span style={{ color: 'var(--color-green)', fontWeight: 600 }}>Joined</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
                       Score: {(c.my_score ?? 0).toLocaleString()} &middot; Rank #{c.rank}
                     </span>
                   </div>

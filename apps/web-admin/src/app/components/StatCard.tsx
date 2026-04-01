@@ -12,37 +12,40 @@ interface StatCardProps {
 }
 
 const cardStyle: CSSProperties = {
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    padding: '22px 24px',
+    backgroundColor: 'var(--color-bg-raised)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--card-padding-lg) var(--card-padding-lg)',
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 'var(--space-2)',
     cursor: 'default',
-    border: '1px solid rgba(79, 195, 247, 0.08)',
+    border: '1px solid var(--color-border-subtle)',
 };
 
 const titleStyle: CSSProperties = {
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#888',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 'var(--weight-medium)' as unknown as number,
+    color: 'var(--color-text-muted)',
     textTransform: 'uppercase',
-    letterSpacing: '0.4px',
+    letterSpacing: 'var(--tracking-wider)',
     margin: 0,
+    fontFamily: 'var(--font-sans)',
 };
 
 const valueStyle: CSSProperties = {
-    fontSize: 32,
-    fontWeight: 700,
-    color: '#1a1a2e',
+    fontSize: 'var(--text-3xl)',
+    fontWeight: 'var(--weight-bold)' as unknown as number,
+    color: 'var(--color-text-primary)',
     margin: 0,
-    lineHeight: 1,
+    lineHeight: 'var(--leading-tight)' as unknown as number,
+    letterSpacing: 'var(--tracking-tight)',
+    fontFamily: 'var(--font-sans)',
 };
 
 function getTrendStyle(trend?: 'up' | 'down' | 'neutral'): CSSProperties {
-    if (trend === 'up') return { color: '#2e7d32', fontSize: 13, fontWeight: 600 };
-    if (trend === 'down') return { color: '#c62828', fontSize: 13, fontWeight: 600 };
-    return { color: '#888', fontSize: 13, fontWeight: 600 };
+    if (trend === 'up') return { color: 'var(--color-green-light)', fontSize: 'var(--text-sm)', fontWeight: 500 };
+    if (trend === 'down') return { color: 'var(--color-red-light)', fontSize: 'var(--text-sm)', fontWeight: 500 };
+    return { color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', fontWeight: 500 };
 }
 
 function getTrendArrow(trend?: 'up' | 'down' | 'neutral'): string {

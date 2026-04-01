@@ -102,7 +102,7 @@ export default function MaintenancePage() {
     return (
       <div style={centeredStyle}>
         <div style={spinnerStyle} className="spinner-enhanced" />
-        <p style={{ color: '#999', marginTop: 16 }}>Loading maintenance data...</p>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: 16 }}>Loading maintenance data...</p>
       </div>
     );
   }
@@ -139,10 +139,10 @@ export default function MaintenancePage() {
           const totalUsage = machines.reduce((s, m) => s + m.usage_since_maintenance, 0);
           return (
             <div style={statsStripStyle}>
-              <span style={{ ...statsChipStyle, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>{okCount} OK</span>
-              <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{dueSoon} due soon</span>
-              <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{overdue} overdue</span>
-              {inMaint > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e3f2fd', color: '#1565c0' }}>{inMaint} in maintenance</span>}
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' }}>{okCount} OK</span>
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold-light)' }}>{dueSoon} due soon</span>
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)' }}>{overdue} overdue</span>
+              {inMaint > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' }}>{inMaint} in maintenance</span>}
               <span style={statsChipStyle}>{avgDays}d avg since service</span>
               <span style={statsChipStyle}>{totalUsage} total uses since service</span>
             </div>
@@ -231,31 +231,31 @@ function getStatusBadgeStyle(status: MaintenanceStatus): CSSProperties {
   const base: CSSProperties = {
     display: 'inline-block',
     padding: '3px 10px',
-    borderRadius: 12,
-    fontSize: 12,
+    borderRadius: 'var(--radius-full)',
+    fontSize: 'var(--text-xs)',
     fontWeight: 600,
   };
   switch (status) {
     case 'ok':
-      return { ...base, backgroundColor: '#e8f5e9', color: '#2e7d32' };
+      return { ...base, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' };
     case 'due_soon':
-      return { ...base, backgroundColor: '#fff3e0', color: '#e65100' };
+      return { ...base, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold-light)' };
     case 'overdue':
-      return { ...base, backgroundColor: '#fce4e6', color: '#c62828' };
+      return { ...base, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)' };
     case 'in_maintenance':
-      return { ...base, backgroundColor: '#e3f2fd', color: '#1565c0' };
+      return { ...base, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' };
   }
 }
 
-/* ── Styles ─────────────────────────────────────────────── */
+/* -- Styles --------------------------------------------------------- */
 
 const headerStyle: CSSProperties = { marginBottom: 32 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 28, fontWeight: 700, marginTop: 0, marginBottom: 8, color: '#1a1a2e',
+  fontSize: 'var(--text-2xl)', fontWeight: 600, marginTop: 0, marginBottom: 8, color: 'var(--color-text-primary)',
 };
 
-const subtitleStyle: CSSProperties = { color: '#666', marginTop: 0, marginBottom: 0 };
+const subtitleStyle: CSSProperties = { color: 'var(--color-text-secondary)', marginTop: 0, marginBottom: 0 };
 
 const gridStyle: CSSProperties = {
   display: 'grid',
@@ -265,29 +265,29 @@ const gridStyle: CSSProperties = {
 };
 
 const sectionStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 24,
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 16, color: '#1a1a2e',
+  fontSize: 'var(--text-lg)', fontWeight: 600, marginTop: 0, marginBottom: 16, color: 'var(--color-text-primary)',
 };
 
 const tableContainerStyle: CSSProperties = { overflowX: 'auto' };
 
-const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 14 };
+const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' };
 
 const thStyle: CSSProperties = {
-  textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid #eee',
-  fontSize: 13, fontWeight: 600, color: '#666', textTransform: 'uppercase',
+  textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid var(--color-border-default)',
+  fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase',
 };
 
 const tdStyle: CSSProperties = {
-  padding: '12px 16px', borderBottom: '1px solid #f0f0f0', verticalAlign: 'middle',
+  padding: '12px 16px', borderBottom: '1px solid var(--color-border-subtle)', verticalAlign: 'middle',
 };
 
 const linkStyle: CSSProperties = {
-  color: '#4361ee', textDecoration: 'none', fontWeight: 600,
+  color: 'var(--color-blue)', textDecoration: 'none', fontWeight: 600,
 };
 
 const actionsStyle: CSSProperties = {
@@ -295,35 +295,35 @@ const actionsStyle: CSSProperties = {
 };
 
 const notesInputStyle: CSSProperties = {
-  padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd',
-  fontSize: 13, width: 140,
+  padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border-default)',
+  fontSize: 'var(--text-sm)', width: 140, backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)',
 };
 
 const logBtnStyle: CSSProperties = {
-  padding: '6px 14px', borderRadius: 6, border: 'none',
-  backgroundColor: '#4361ee', color: '#fff', fontSize: 13,
+  padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: 'none',
+  backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)',
   fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
 };
 
 const centeredStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 40,
-  textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)', padding: 40,
+  textAlign: 'center', border: '1px solid var(--color-border-subtle)',
   display: 'flex', flexDirection: 'column', alignItems: 'center',
 };
 
 const spinnerStyle: CSSProperties = {
-  width: 32, height: 32, border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7', borderRadius: '50%',
+  width: 32, height: 32, border: '3px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)', borderRadius: '50%',
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#fef2f2', border: '1px solid #fecaca',
-  borderRadius: 8, padding: '12px 16px', marginBottom: 16,
-  color: '#dc2626', fontSize: 14,
+  backgroundColor: 'var(--color-red-subtle)', border: '1px solid var(--color-red)',
+  borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: 16,
+  color: 'var(--color-red-light)', fontSize: 'var(--text-sm)',
 };
 
 const emptyStyle: CSSProperties = {
-  color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+  color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', padding: 20,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -336,9 +336,9 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
-  fontSize: 12,
+  borderRadius: 'var(--radius-full)',
+  fontSize: 'var(--text-xs)',
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };

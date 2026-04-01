@@ -34,7 +34,7 @@ export function LevelUpOverlay({ level, name, color, onDismiss }: LevelUpOverlay
         <div style={{
           fontSize: 14,
           fontWeight: 600,
-          color: '#94A3B8',
+          color: 'var(--color-text-secondary)',
           textTransform: 'uppercase',
           letterSpacing: '0.15em',
           marginBottom: 8,
@@ -53,14 +53,14 @@ export function LevelUpOverlay({ level, name, color, onDismiss }: LevelUpOverlay
         <div style={{
           fontSize: 24,
           fontWeight: 800,
-          color: '#F1F5F9',
+          color: 'var(--color-text-primary)',
           marginTop: 8,
         }}>
           {name}
         </div>
         <div style={{
           fontSize: 14,
-          color: '#64748B',
+          color: 'var(--color-text-muted)',
           marginTop: 16,
         }}>
           Tap to continue

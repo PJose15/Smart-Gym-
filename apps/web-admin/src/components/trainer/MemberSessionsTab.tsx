@@ -13,8 +13,8 @@ interface SessionRow {
 }
 
 const tableStyle: CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 13 };
-const thStyle: CSSProperties = { textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #334155', color: '#64748B', fontWeight: 500 };
-const tdStyle: CSSProperties = { padding: '8px 12px', borderBottom: '1px solid #1E293B' };
+const thStyle: CSSProperties = { textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--color-border-default)', color: 'var(--color-text-muted)', fontWeight: 500 };
+const tdStyle: CSSProperties = { padding: '8px 12px', borderBottom: '1px solid var(--color-border-subtle)' };
 
 export function MemberSessionsTab({ memberId }: { memberId: string }) {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
@@ -50,10 +50,10 @@ export function MemberSessionsTab({ memberId }: { memberId: string }) {
       <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600 }}>Session History</h2>
 
       {sessions.length === 0 && !loading ? (
-        <p style={{ color: '#64748B', fontSize: 13 }}>No sessions recorded yet.</p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>No sessions recorded yet.</p>
       ) : (
         <>
-          <div style={{ backgroundColor: '#1E293B', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ backgroundColor: 'var(--color-bg-raised)', borderRadius: 10, overflow: 'hidden' }}>
             <table style={tableStyle}>
               <thead>
                 <tr>
@@ -74,7 +74,7 @@ export function MemberSessionsTab({ memberId }: { memberId: string }) {
                     <td style={tdStyle}>{s.total_sets}</td>
                     <td style={tdStyle}>{s.total_volume_lbs.toLocaleString()} lbs</td>
                     <td style={tdStyle}>
-                      <span style={{ color: s.finished_at ? '#22C55E' : '#EAB308', fontSize: 12 }}>
+                      <span style={{ color: s.finished_at ? 'var(--color-green)' : 'var(--color-gold)', fontSize: 12 }}>
                         {s.finished_at ? 'Completed' : 'In Progress'}
                       </span>
                     </td>
@@ -90,8 +90,8 @@ export function MemberSessionsTab({ memberId }: { memberId: string }) {
               style={{
                 marginTop: 12,
                 padding: '8px 16px',
-                backgroundColor: '#334155',
-                color: '#F1F5F9',
+                backgroundColor: 'var(--color-bg-elevated)',
+                color: 'var(--color-text-primary)',
                 border: 'none',
                 borderRadius: 6,
                 fontSize: 13,

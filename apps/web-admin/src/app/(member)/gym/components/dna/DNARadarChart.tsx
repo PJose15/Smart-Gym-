@@ -146,7 +146,7 @@ export function DNARadarChart({
                     x={x}
                     y={y + (size === 'full' ? 6 : 4)}
                     textAnchor="middle"
-                    fill="#CBD5E1"
+                    fill="var(--color-text-secondary)"
                     fontSize={fontSize}
                     fontWeight={600}
                   >

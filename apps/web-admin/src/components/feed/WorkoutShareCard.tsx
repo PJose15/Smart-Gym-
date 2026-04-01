@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 14,
   transition: 'transform 0.15s ease',
@@ -64,8 +64,8 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
                   width: 10,
                   height: 10,
                   borderRadius: '50%',
-                  backgroundColor: '#22C55E',
-                  border: '2px solid #1E293B',
+                  backgroundColor: 'var(--color-green)',
+                  border: '2px solid var(--color-bg-raised)',
                   animation: 'greenPulse 2s infinite',
                 }} />
               )}
@@ -75,7 +75,7 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
               width: 36,
               height: 36,
               borderRadius: '50%',
-              backgroundColor: isTraining ? 'rgba(34, 197, 94, 0.15)' : '#334155',
+              backgroundColor: isTraining ? 'rgba(34, 197, 94, 0.15)' : 'var(--color-bg-elevated)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -91,7 +91,7 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
             {isTraining && (
               <div style={{
                 fontSize: 10,
-                color: '#22C55E',
+                color: 'var(--color-green)',
                 fontWeight: 600,
                 marginBottom: 2,
                 textTransform: 'uppercase',
@@ -102,8 +102,8 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
             )}
 
             {/* Member name + description */}
-            <div style={{ fontSize: 14, color: '#E2E8F0', lineHeight: 1.4 }}>
-              <span style={{ fontWeight: 600, color: '#F1F5F9' }}>{event.member_name}</span>{' '}
+            <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+              <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{event.member_name}</span>{' '}
               {event.description}
             </div>
 
@@ -111,7 +111,7 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
             {ctx.program_focus && (
               <div style={{
                 fontSize: 12,
-                color: '#94A3B8',
+                color: 'var(--color-text-secondary)',
                 marginTop: 4,
               }}>
                 {ctx.program_week && ctx.program_day
@@ -131,7 +131,7 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
                 {ctx.volume_lbs > 0 && (
                   <div style={{
                     fontSize: 12,
-                    color: '#E2E8F0',
+                    color: 'var(--color-text-secondary)',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderRadius: 6,
                     padding: '3px 8px',
@@ -153,7 +153,7 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
                 {ctx.machines_used.length > 0 && (
                   <div style={{
                     fontSize: 12,
-                    color: '#94A3B8',
+                    color: 'var(--color-text-secondary)',
                     backgroundColor: 'rgba(148, 163, 184, 0.1)',
                     borderRadius: 6,
                     padding: '3px 8px',
@@ -165,7 +165,7 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
             )}
 
             {/* Time + reactions */}
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>
               {timeAgo(event.created_at)}
             </div>
 

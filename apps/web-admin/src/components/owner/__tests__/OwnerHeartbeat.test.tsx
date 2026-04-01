@@ -34,6 +34,7 @@ function makeAtRiskMember(overrides: Partial<AtRiskMember> = {}): AtRiskMember {
 // ── Hook harnesses ──────────────────────────────
 
 function useLiveGymActivityHarness() {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { useLiveGymActivity } = require('@/hooks/useLiveGymActivity');
   const state = useLiveGymActivity();
   return (
@@ -49,6 +50,7 @@ function useLiveGymActivityHarness() {
 function LiveActivityHarness() { return useLiveGymActivityHarness(); }
 
 function useAtRiskHarness() {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { useAtRiskMembers } = require('@/hooks/useAtRiskMembers');
   const state = useAtRiskMembers();
   return (

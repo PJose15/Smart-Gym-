@@ -10,19 +10,19 @@ import type { MemberData, AtRiskMember } from '@nexera/ai-assist';
 // ─── Styles ─────────────────────────────────────────────
 
 const tableContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 10,
   overflow: 'hidden',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '12px 16px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-subtle)',
   fontWeight: 600,
-  color: '#555',
+  color: 'var(--color-text-muted)',
   fontSize: 13,
   textTransform: 'uppercase',
   letterSpacing: '0.3px',
@@ -30,9 +30,9 @@ const thStyle: CSSProperties = {
 
 const tdStyle: CSSProperties = {
   padding: '12px 16px',
-  borderBottom: '1px solid #f0f0f0',
+  borderBottom: '1px solid var(--color-border-subtle)',
   fontSize: 14,
-  color: '#333',
+  color: 'var(--color-text-primary)',
   verticalAlign: 'top',
 };
 
@@ -49,25 +49,25 @@ const badgeStyle: CSSProperties = {
 const reasonBadge = (type: string): CSSProperties => ({
   ...badgeStyle,
   backgroundColor:
-    type === 'no_workouts_7d' ? '#fff3e0' :
-    type === 'repeated_discomfort' ? '#fce4e6' :
-    '#e8eaf6',
+    type === 'no_workouts_7d' ? 'rgba(239,159,39,0.15)' :
+    type === 'repeated_discomfort' ? 'var(--color-red-light)' :
+    'rgba(127,119,221,0.15)',
   color:
-    type === 'no_workouts_7d' ? '#e65100' :
-    type === 'repeated_discomfort' ? '#c62828' :
-    '#283593',
+    type === 'no_workouts_7d' ? 'var(--color-gold)' :
+    type === 'repeated_discomfort' ? 'var(--color-red)' :
+    'var(--color-purple)',
 });
 
 const emptyStateStyle: CSSProperties = {
   textAlign: 'center',
   padding: '48px 24px',
-  color: '#999',
+  color: 'var(--color-text-muted)',
   fontSize: 15,
 };
 
 const errorStyle: CSSProperties = {
-  backgroundColor: '#fdecea',
-  color: '#b71c1c',
+  backgroundColor: 'var(--color-red-light)',
+  color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
   fontSize: 14,
@@ -102,8 +102,8 @@ const statsChipStyle: CSSProperties = {
   borderRadius: 14,
   fontSize: 12,
   fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  backgroundColor: 'var(--color-bg-highest)',
+  color: 'var(--color-text-muted)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -211,10 +211,10 @@ export default function AtRiskPage() {
           const plateauCount = allReasons.filter((r) => r.type === 'plateauing').length;
           return (
             <div style={statsStripStyle}>
-              <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{members.length} at-risk member{members.length !== 1 ? 's' : ''}</span>
-              {inactiveCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fff3e0', color: '#e65100' }}>{inactiveCount} inactive</span>}
-              {discomfortCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{discomfortCount} discomfort</span>}
-              {plateauCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#e8eaf6', color: '#283593' }}>{plateauCount} plateauing</span>}
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{members.length} at-risk member{members.length !== 1 ? 's' : ''}</span>
+              {inactiveCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(239,159,39,0.15)', color: 'var(--color-gold)' }}>{inactiveCount} inactive</span>}
+              {discomfortCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{discomfortCount} discomfort</span>}
+              {plateauCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(127,119,221,0.15)', color: 'var(--color-purple)' }}>{plateauCount} plateauing</span>}
               <span style={statsChipStyle}>{allReasons.length} total flag{allReasons.length !== 1 ? 's' : ''}</span>
             </div>
           );

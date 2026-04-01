@@ -78,7 +78,7 @@ const signalRowStyle: CSSProperties = {
 
 const tipStyle: CSSProperties = {
   fontSize: 12,
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   marginTop: 8,
   fontStyle: 'italic',
   lineHeight: 1.4,
@@ -114,7 +114,7 @@ export function DNADimensionRow({
         }}
       >
         <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{config.icon}</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#CBD5E1', width: 90 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', width: 90 }}>
           {config.label}
         </span>
         <div style={barTrackStyle}>
@@ -141,8 +141,8 @@ export function DNADimensionRow({
           {signals &&
             Object.entries(signals).map(([key, value]) => (
               <div key={key} style={signalRowStyle}>
-                <span style={{ color: '#94A3B8' }}>{formatSignalLabel(key)}</span>
-                <span style={{ color: '#CBD5E1', fontWeight: 600 }}>{formatSignalValue(value)}</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>{formatSignalLabel(key)}</span>
+                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>{formatSignalValue(value)}</span>
               </div>
             ))}
           <p style={tipStyle}>{config.improvementTip(score)}</p>

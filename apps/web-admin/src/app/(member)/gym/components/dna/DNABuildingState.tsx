@@ -17,13 +17,13 @@ const containerStyle: CSSProperties = {
 const headingStyle: CSSProperties = {
   fontSize: 18,
   fontWeight: 700,
-  color: '#F1F5F9',
+  color: 'var(--color-text-primary)',
   margin: '0 0 8px',
 };
 
 const descStyle: CSSProperties = {
   fontSize: 13,
-  color: '#94A3B8',
+  color: 'var(--color-text-secondary)',
   margin: '0 0 20px',
   lineHeight: 1.5,
 };
@@ -38,7 +38,7 @@ const trackStyle: CSSProperties = {
 
 const labelStyle: CSSProperties = {
   fontSize: 12,
-  color: '#64748B',
+  color: 'var(--color-text-muted)',
 };
 
 export function DNABuildingState({ sessionsLogged, distinctMachines }: DNABuildingStateProps) {

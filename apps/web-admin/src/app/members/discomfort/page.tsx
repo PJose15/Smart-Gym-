@@ -20,29 +20,29 @@ interface DiscomfortRow {
 // ─── Styles ─────────────────────────────────────────────
 
 const tableContainerStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: 10,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 'var(--radius-md)' as any,
   overflow: 'hidden',
-  border: '1px solid rgba(0,0,0,0.06)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: '12px 16px',
-  backgroundColor: '#fafafa',
-  borderBottom: '1px solid #eee',
-  fontWeight: 600,
-  color: '#555',
-  fontSize: 13,
+  backgroundColor: 'var(--color-bg-elevated)',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  fontWeight: 'var(--weight-medium)' as any,
+  color: 'var(--color-text-secondary)',
+  fontSize: 'var(--text-sm)' as any,
   textTransform: 'uppercase',
   letterSpacing: '0.3px',
 };
 
 const tdStyle: CSSProperties = {
   padding: '12px 16px',
-  borderBottom: '1px solid #f0f0f0',
-  fontSize: 14,
-  color: '#333',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  fontSize: 'var(--text-base)' as any,
+  color: 'var(--color-text-primary)',
 };
 
 const badgeStyle: CSSProperties = {
@@ -50,28 +50,28 @@ const badgeStyle: CSSProperties = {
   padding: '2px 8px',
   borderRadius: 12,
   fontSize: 12,
-  fontWeight: 600,
+  fontWeight: 'var(--weight-medium)' as any,
   marginRight: 4,
   marginBottom: 2,
 };
 
 const countBadgeStyle = (count: number): CSSProperties => ({
   ...badgeStyle,
-  backgroundColor: count >= 4 ? '#fce4e6' : count >= 2 ? '#fff8e1' : '#e8f5e9',
-  color: count >= 4 ? '#c62828' : count >= 2 ? '#e65100' : '#2e7d32',
+  backgroundColor: count >= 4 ? 'var(--color-red-subtle)' : count >= 2 ? 'var(--color-gold-subtle)' : 'var(--color-green-subtle)',
+  color: count >= 4 ? 'var(--color-red-light)' : count >= 2 ? 'var(--color-gold-light)' : 'var(--color-green-light)',
 });
 
 const bodyAreaBadgeStyle: CSSProperties = {
   ...badgeStyle,
-  backgroundColor: '#e3f2fd',
-  color: '#1565c0',
+  backgroundColor: 'var(--color-blue-subtle)',
+  color: 'var(--color-blue-light)',
 };
 
 const emptyStateStyle: CSSProperties = {
   textAlign: 'center',
   padding: '48px 24px',
-  color: '#999',
-  fontSize: 15,
+  color: 'var(--color-text-muted)',
+  fontSize: 'var(--text-base)' as any,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -84,11 +84,11 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };
 
 // ─── Component ──────────────────────────────────────────
@@ -145,11 +145,11 @@ export default function DiscomfortPage() {
             description="Members reporting repeated discomfort or instability"
           />
           <div className="error-shake" style={{
-            backgroundColor: '#fce4e6',
-            borderRadius: 10,
+            backgroundColor: 'var(--color-red-subtle)',
+            borderRadius: 'var(--radius-md)' as any,
             padding: 16,
-            color: '#c62828',
-            fontSize: 14,
+            color: 'var(--color-red-light)',
+            fontSize: 'var(--text-base)' as any,
           }}>
             {error}
           </div>
@@ -175,10 +175,10 @@ export default function DiscomfortPage() {
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{rows.length} member{rows.length !== 1 ? 's' : ''} flagged</span>
-              <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{totalDiscomfort} discomfort reports</span>
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)' }}>{totalDiscomfort} discomfort reports</span>
               <span style={statsChipStyle}>{totalUnstable} instability reports</span>
               <span style={statsChipStyle}>{allAreas.size} body area{allAreas.size !== 1 ? 's' : ''} affected</span>
-              {highRisk > 0 && <span style={{ ...statsChipStyle, backgroundColor: '#fce4e6', color: '#c62828' }}>{highRisk} high-risk (4+)</span>}
+              {highRisk > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)' }}>{highRisk} high-risk (4+)</span>}
             </div>
           );
         })()}
@@ -208,7 +208,7 @@ export default function DiscomfortPage() {
                     className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}
                   >
                     <td style={tdStyle}>
-                      <span style={{ fontWeight: 600 }}>{row.full_name}</span>
+                      <span style={{ fontWeight: 'var(--weight-medium)' as any }}>{row.full_name}</span>
                     </td>
                     <td style={tdStyle}>
                       <span style={countBadgeStyle(row.discomfort_count_7d)}>
@@ -228,7 +228,7 @@ export default function DiscomfortPage() {
                           </span>
                         ))
                       ) : (
-                        <span style={{ color: '#999', fontSize: 13 }}>—</span>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' as any }}>--</span>
                       )}
                     </td>
                     <td style={tdStyle}>
@@ -239,7 +239,7 @@ export default function DiscomfortPage() {
                             hour: '2-digit',
                             minute: '2-digit',
                           })
-                        : '—'}
+                        : '--'}
                     </td>
                   </tr>
                 ))}

@@ -23,7 +23,7 @@ export default function ProfilePage() {
   if (memberLoading) {
     return (
       <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)' }}>
-        <p style={{ color: '#94A3B8', fontSize: 14 }}>Loading...</p>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>Loading...</p>
       </div>
     );
   }
@@ -31,7 +31,7 @@ export default function ProfilePage() {
   if (!member) {
     return (
       <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)' }}>
-        <p style={{ color: '#94A3B8', fontSize: 14 }}>Not signed in.</p>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>Not signed in.</p>
       </div>
     );
   }
@@ -48,7 +48,7 @@ export default function ProfilePage() {
         />
 
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: 'var(--text-xl, 20px)', fontWeight: 700, margin: 0, color: '#F1F5F9' }}>
+          <h1 style={{ fontSize: 'var(--text-xl, 20px)', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
             {member.display_name}
           </h1>
           {dna?.archetype && !dna.is_building && (
@@ -56,7 +56,7 @@ export default function ProfilePage() {
               {dna.archetype.name}
             </p>
           )}
-          <p style={{ color: '#94A3B8', fontSize: 13, margin: '4px 0 0' }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 13, margin: '4px 0 0' }}>
             Score: {member.smartgym_score} · Streak: {member.current_streak}d
           </p>
         </div>
@@ -64,7 +64,7 @@ export default function ProfilePage() {
 
       {/* Placeholder for future profile sections */}
       <div style={{ marginTop: 32 }}>
-        <p style={{ color: '#64748B', fontSize: 14 }}>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
           Your settings and activity will appear here.
         </p>
       </div>

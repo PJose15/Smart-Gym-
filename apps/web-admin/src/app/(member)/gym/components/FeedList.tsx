@@ -14,7 +14,7 @@ interface FeedListProps {
 const emptyStyle: CSSProperties = {
   textAlign: 'center',
   padding: 32,
-  color: '#64748B',
+  color: 'var(--color-text-muted)',
   fontSize: 14,
 };
 
@@ -76,7 +76,7 @@ export function FeedList({ memberId, gymId }: FeedListProps) {
       <div style={{
         fontSize: 11,
         fontWeight: 600,
-        color: '#94A3B8',
+        color: 'var(--color-text-secondary)',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
         marginBottom: 12,
@@ -129,7 +129,7 @@ export function FeedList({ memberId, gymId }: FeedListProps) {
       <div ref={sentinelRef} style={{ height: 1 }} />
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: 20, color: '#64748B', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: 20, color: 'var(--color-text-muted)', fontSize: 13 }}>
           Loading...
         </div>
       )}

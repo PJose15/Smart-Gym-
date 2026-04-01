@@ -14,7 +14,7 @@ interface StatTile {
 }
 
 const tileStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 'var(--radius-sm, 8px)',
   padding: '10px 8px',
   textAlign: 'center',
@@ -42,7 +42,7 @@ export function QuickStatsRow({ stats }: QuickStatsRowProps) {
           <div style={{ fontSize: 16, fontWeight: 800, color: tile.color, fontFamily: 'var(--font-mono)' }}>
             {tile.value}
           </div>
-          <div style={{ fontSize: 9, color: '#64748B', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontSize: 9, color: 'var(--color-text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {tile.label}
           </div>
         </div>

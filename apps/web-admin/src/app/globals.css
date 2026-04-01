@@ -203,8 +203,9 @@
 
 .btn-danger:hover {
   transform: translateY(-2px) scale(1.03) !important;
-  box-shadow: 0 6px 18px rgba(229, 57, 53, 0.25) !important;
-  background-color: #ffebee !important;
+  box-shadow: 0 6px 18px rgba(192, 57, 43, 0.25) !important;
+  background-color: var(--color-red) !important;
+  color: #FFFFFF !important;
 }
 
 .btn-danger:active {
@@ -218,7 +219,7 @@
 }
 
 .btn-secondary:hover {
-  background-color: #e0e0e0 !important;
+  background-color: var(--color-bg-highest) !important;
   transform: translateY(-2px) scale(1.02) !important;
 }
 
@@ -243,7 +244,7 @@
 }
 
 .table-row-hover:hover {
-  background-color: #eef6ff !important;
+  background-color: var(--color-bg-elevated) !important;
 }
 
 /* Card hover lift – dramatic */

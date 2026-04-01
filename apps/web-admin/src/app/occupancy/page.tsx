@@ -74,7 +74,7 @@ export default function OccupancyPage() {
     return (
       <div style={centeredStyle}>
         <div style={spinnerStyle} className="spinner-enhanced" />
-        <p style={{ color: '#999', marginTop: 16 }}>Loading occupancy data...</p>
+        <p style={{ color: 'var(--color-text-muted)', marginTop: 16 }}>Loading occupancy data...</p>
       </div>
     );
   }
@@ -166,8 +166,8 @@ export default function OccupancyPage() {
                       key={h}
                       style={{
                         ...heatCellStyle,
-                        backgroundColor: `rgba(67, 97, 238, ${0.08 + intensity * 0.82})`,
-                        color: intensity > 0.5 ? '#fff' : '#333',
+                        backgroundColor: `rgba(59, 139, 212, ${0.08 + intensity * 0.82})`,
+                        color: intensity > 0.5 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                       }}
                       title={`${DAY_LABELS[dow]} ${formatHour(h)}: ${count} sessions`}
                     >
@@ -196,7 +196,7 @@ export default function OccupancyPage() {
                 layout="vertical"
                 margin={{ left: 120, right: 20, top: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
                 <XAxis type="number" tick={{ fontSize: 11 }} />
                 <YAxis
                   type="category"
@@ -205,7 +205,7 @@ export default function OccupancyPage() {
                   width={110}
                 />
                 <Tooltip />
-                <Bar dataKey="session_count" fill="#4361ee" radius={[0, 4, 4, 0]} name="Sessions" />
+                <Bar dataKey="session_count" fill="var(--color-blue)" radius={[0, 4, 4, 0]} name="Sessions" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -227,37 +227,37 @@ function formatHour(h: number): string {
 const headerStyle: CSSProperties = { marginBottom: 32 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 28, fontWeight: 700, marginTop: 0, marginBottom: 8, color: '#1a1a2e',
+  fontSize: 'var(--text-2xl)' as any, fontWeight: 'var(--weight-bold)' as any, marginTop: 0, marginBottom: 8, color: 'var(--color-text-primary)',
 };
 
-const subtitleStyle: CSSProperties = { color: '#666', marginTop: 0, marginBottom: 0 };
+const subtitleStyle: CSSProperties = { color: 'var(--color-text-secondary)', marginTop: 0, marginBottom: 0 };
 
 const periodToggleStyle: CSSProperties = {
-  display: 'inline-flex', gap: 0, backgroundColor: '#f0f0f0',
-  borderRadius: 10, padding: 3, marginBottom: 20,
+  display: 'inline-flex', gap: 0, backgroundColor: 'var(--color-bg-elevated)',
+  borderRadius: 'var(--radius-md)' as any, padding: 3, marginBottom: 20,
 };
 
 const periodBtnStyle: CSSProperties = {
-  padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
-  fontSize: 14, fontWeight: 600, background: 'transparent', color: '#888',
+  padding: '8px 20px', borderRadius: 'var(--radius-sm)' as any, border: 'none', cursor: 'pointer',
+  fontSize: 'var(--text-base)' as any, fontWeight: 'var(--weight-medium)' as any, background: 'transparent', color: 'var(--color-text-muted)',
   transition: 'all 0.2s',
 };
 
 const periodActiveStyle: CSSProperties = {
-  ...periodBtnStyle, backgroundColor: '#4361ee', color: '#fff',
+  ...periodBtnStyle, backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)',
 };
 
 const sectionStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 24,
-  border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)' as any, padding: 24,
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 8, color: '#1a1a2e',
+  fontSize: 'var(--text-lg)' as any, fontWeight: 'var(--weight-medium)' as any, marginTop: 0, marginBottom: 8, color: 'var(--color-text-primary)',
 };
 
 const sectionDescStyle: CSSProperties = {
-  fontSize: 14, color: '#666', marginTop: 0, marginBottom: 20,
+  fontSize: 'var(--text-base)' as any, color: 'var(--color-text-secondary)', marginTop: 0, marginBottom: 20,
 };
 
 const heatGridContainerStyle: CSSProperties = {
@@ -272,42 +272,42 @@ const heatGridRowStyle: CSSProperties = {
 };
 
 const dayLabelStyle: CSSProperties = {
-  fontSize: 12, fontWeight: 600, color: '#666',
+  fontSize: 12, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-secondary)',
   display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
   paddingRight: 8,
 };
 
 const hourLabelStyle: CSSProperties = {
-  fontSize: 11, color: '#999', textAlign: 'center',
+  fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center',
   paddingBottom: 4,
 };
 
 const heatCellStyle: CSSProperties = {
   height: 36, borderRadius: 4, display: 'flex',
   alignItems: 'center', justifyContent: 'center',
-  fontSize: 11, fontWeight: 600, cursor: 'default',
+  fontSize: 11, fontWeight: 'var(--weight-medium)' as any, cursor: 'default',
   minWidth: 36, transition: 'background-color 0.2s',
 };
 
 const centeredStyle: CSSProperties = {
-  backgroundColor: '#ffffff', borderRadius: 10, padding: 40,
-  textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)',
+  backgroundColor: 'var(--color-bg-raised)', borderRadius: 'var(--radius-md)' as any, padding: 40,
+  textAlign: 'center', border: '1px solid var(--color-border-subtle)',
   display: 'flex', flexDirection: 'column', alignItems: 'center',
 };
 
 const spinnerStyle: CSSProperties = {
-  width: 32, height: 32, border: '3px solid #e0e0e0',
-  borderTopColor: '#4fc3f7', borderRadius: '50%',
+  width: 32, height: 32, border: '3px solid var(--color-border-default)',
+  borderTopColor: 'var(--color-blue)', borderRadius: '50%',
 };
 
 const errorBannerStyle: CSSProperties = {
-  backgroundColor: '#fef2f2', border: '1px solid #fecaca',
-  borderRadius: 8, padding: '12px 16px', marginBottom: 16,
-  color: '#dc2626', fontSize: 14,
+  backgroundColor: 'var(--color-red-subtle)', border: '1px solid var(--color-red)',
+  borderRadius: 'var(--radius-sm)' as any, padding: '12px 16px', marginBottom: 16,
+  color: 'var(--color-red-light)', fontSize: 'var(--text-base)' as any,
 };
 
 const emptyStyle: CSSProperties = {
-  color: '#999', fontSize: 14, textAlign: 'center', padding: 20,
+  color: 'var(--color-text-muted)', fontSize: 'var(--text-base)' as any, textAlign: 'center', padding: 20,
 };
 
 const statsStripStyle: CSSProperties = {
@@ -320,9 +320,9 @@ const statsStripStyle: CSSProperties = {
 const statsChipStyle: CSSProperties = {
   display: 'inline-block',
   padding: '4px 12px',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)' as any,
   fontSize: 12,
-  fontWeight: 600,
-  backgroundColor: '#f0f0f0',
-  color: '#555',
+  fontWeight: 'var(--weight-medium)' as any,
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-secondary)',
 };

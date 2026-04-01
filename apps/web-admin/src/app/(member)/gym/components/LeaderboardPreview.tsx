@@ -10,7 +10,7 @@ interface LeaderboardPreviewProps {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: '#1E293B',
+  backgroundColor: 'var(--color-bg-raised)',
   borderRadius: 12,
   padding: 16,
   marginBottom: 16,
@@ -56,7 +56,7 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
     return (
       <div style={cardStyle}>
         <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ fontSize: 13, color: '#64748B' }}>Loading leaderboard...</div>
+          <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Loading leaderboard...</div>
         </div>
       </div>
     );
@@ -65,7 +65,7 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
   return (
     <div style={cardStyle}>
       <div style={headerStyle}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Weekly Leaderboard
         </div>
         <Link href="/gym/leaderboard" style={{ fontSize: 12, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>
@@ -74,7 +74,7 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
       </div>
 
       {entries.length === 0 ? (
-        <div style={{ fontSize: 13, color: '#64748B', textAlign: 'center', padding: 16 }}>
+        <div style={{ fontSize: 13, color: 'var(--color-text-muted)', textAlign: 'center', padding: 16 }}>
           No activity this week yet
         </div>
       ) : (
@@ -88,13 +88,13 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
               borderRadius: 8,
               backgroundColor: entry.is_current_user ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
             }}>
-              <div style={{ width: 28, fontSize: 14, fontWeight: 700, color: '#F1F5F9', textAlign: 'center' }}>
+              <div style={{ width: 28, fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)', textAlign: 'center' }}>
                 {RANK_MEDALS[entry.rank] || `#${entry.rank}`}
               </div>
-              <div style={{ flex: 1, fontSize: 13, fontWeight: entry.is_current_user ? 700 : 500, color: entry.is_current_user ? '#60A5FA' : '#CBD5E1' }}>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: entry.is_current_user ? 700 : 500, color: entry.is_current_user ? '#60A5FA' : 'var(--color-text-secondary)' }}>
                 {entry.full_name}{entry.is_current_user ? ' (You)' : ''}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                 {entry.total_points.toLocaleString()}
               </div>
             </div>
@@ -109,7 +109,7 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
           borderRadius: 8,
           backgroundColor: 'rgba(59, 130, 246, 0.08)',
           fontSize: 13,
-          color: '#94A3B8',
+          color: 'var(--color-text-secondary)',
           textAlign: 'center',
         }}>
           Your rank: <span style={{ fontWeight: 700, color: '#60A5FA' }}>#{myRank}</span>
