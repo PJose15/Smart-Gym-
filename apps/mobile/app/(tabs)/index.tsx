@@ -1,20 +1,16 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   View,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  Animated as RNAnimated,
-  Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
 import { getTodaysProgramDay } from '@nexera/utils';
-import { getTodayExplanation, computeGuardrails, getCoachingInsight, buildMemberContext } from '@nexera/ai-assist';
-import type { WorkoutRecord, CoachingInsight } from '@nexera/ai-assist';
+import { getTodayExplanation, computeGuardrails, getCoachingInsight, buildMemberContext, computeLevelProgress } from '@nexera/ai-assist';
+import type { WorkoutRecord, CoachingInsight, LevelProgress } from '@nexera/ai-assist';
 import { fetchCoachingInsight } from '../../src/lib/aiService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
@@ -25,13 +21,19 @@ import { getUserRank } from '../../src/lib/leaderboardService';
 import type { BadgeWithStatus } from '@nexera/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PRDetection } from '@nexera/types';
-import { Button, Text, Card } from '../../src/components';
+import { Button, Text } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { SkeletonGate, HomeScreenSkeleton } from '../../src/components/skeleton';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@nexera/types';
+import { computeHeroState } from '../../src/lib/heroState';
+import type { HeroInput } from '../../src/lib/heroState';
+import { HeroZone } from '../../src/components/home/HeroZone';
+import { TodayZone } from '../../src/components/home/TodayZone';
+import { MomentumZone } from '../../src/components/home/MomentumZone';
+import { CommunityPulse } from '../../src/components/home/CommunityPulse';
 
 interface TodayWorkout {
   dayName: string;
@@ -48,9 +50,6 @@ interface ActiveWorkout {
   id: string;
   started_at: string;
 }
-
-const WEB = Platform.OS === 'web';
-const ND = !WEB;
 
 const RECOVERY_TIPS = [
   'Hydrate well — aim for at least 2L of water today.',
@@ -93,64 +92,7 @@ function getTodayTrainingTip(): string {
   return TRAINING_TIPS[dayOfYear % TRAINING_TIPS.length];
 }
 
-function PulsingGreeting({ name }: { name: string | null }) {
-  const pulseAnim = useRef(new RNAnimated.Value(1)).current;
-  const slideIn = useRef(new RNAnimated.Value(-40)).current;
-  const fadeIn = useRef(new RNAnimated.Value(0)).current;
-
-  useEffect(() => {
-    const entryAnim = RNAnimated.parallel([
-      RNAnimated.spring(slideIn, {
-        toValue: 0,
-        tension: 40,
-        friction: 7,
-        useNativeDriver: ND,
-      }),
-      RNAnimated.timing(fadeIn, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: ND,
-      }),
-    ]);
-    entryAnim.start();
-
-    const loopAnim = RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(pulseAnim, {
-          toValue: 1.03,
-          duration: 2000,
-          useNativeDriver: ND,
-        }),
-        RNAnimated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: ND,
-        }),
-      ]),
-    );
-    loopAnim.start();
-
-    return () => {
-      entryAnim.stop();
-      loopAnim.stop();
-    };
-  }, []);
-
-  return (
-    <RNAnimated.View style={{
-      opacity: fadeIn,
-      transform: [{ translateX: slideIn }, { scale: pulseAnim }],
-      marginBottom: 20,
-    }}>
-      <Text variant="heading" style={styles.greeting}>
-        {name ? `Hey, ${name.split(' ')[0]}` : 'Welcome back'}
-      </Text>
-    </RNAnimated.View>
-  );
-}
-
 export default function HomeScreen() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [todayWorkout, setTodayWorkout] = useState<TodayWorkout | null>(null);
@@ -171,6 +113,11 @@ export default function HomeScreen() {
   const [programDayContext, setProgramDayContext] = useState<{ dayNumber: number; totalDays: number } | null>(null);
   const [totalWorkoutCount, setTotalWorkoutCount] = useState(0);
   const [userGoal, setUserGoal] = useState<UserGoal | null>(null);
+
+  // Level/score data
+  const [memberScore, setMemberScore] = useState(0);
+  const [levelData, setLevelData] = useState<LevelProgress | null>(null);
+  const [lastSessionDate, setLastSessionDate] = useState<string | null>(null);
 
   // PR Celebration Banner
   const [unseenPRs, setUnseenPRs] = useState<PRDetection[]>([]);
@@ -252,6 +199,39 @@ export default function HomeScreen() {
 
       const gymId = memberData.gym_id;
       if (mountedRef.current) setGymId(gymId);
+
+      // Load member score and level
+      try {
+        const { data: scoreData } = await supabase
+          .from('gym_members')
+          .select('smartgym_score')
+          .eq('profile_id', user.id)
+          .eq('gym_id', gymId)
+          .maybeSingle();
+        if (scoreData?.smartgym_score != null && mountedRef.current) {
+          setMemberScore(scoreData.smartgym_score);
+          setLevelData(computeLevelProgress(scoreData.smartgym_score));
+        }
+      } catch (err) {
+        console.warn('[home] score load failed:', err instanceof Error ? err.message : err);
+      }
+
+      // Load last completed session date
+      try {
+        const { data: lastSession } = await supabase
+          .from('workouts')
+          .select('started_at')
+          .eq('profile_id', user.id)
+          .eq('status', 'completed')
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (lastSession?.started_at && mountedRef.current) {
+          setLastSessionDate(lastSession.started_at);
+        }
+      } catch (err) {
+        console.warn('[home] last session load failed:', err instanceof Error ? err.message : err);
+      }
 
       // Load total workout count (always-visible quick stat)
       try {
@@ -767,6 +747,33 @@ export default function HomeScreen() {
     }
   }, []);
 
+  // Compute hero state from loaded data
+  const heroInput: HeroInput = {
+    firstName: userName?.split(' ')[0] || 'there',
+    streak: streak?.currentStreak ?? 0,
+    todaySessionCount: todayDone ? 1 : 0,
+    hasProgram: !!todayWorkout,
+    programTitle: todayWorkout?.dayName,
+    programDayNumber: programDayContext?.dayNumber,
+    programTotalDays: programDayContext?.totalDays,
+    programMachineCount: todayWorkout?.exercises.length ?? 0,
+    programEstDuration: todayWorkout
+      ? Math.round(todayWorkout.exercises.reduce((sum, e) => sum + e.default_sets, 0) * 2.5)
+      : undefined,
+    programTodaysFocus: todayWorkout?.dayName,
+    lastSessionDate: lastSessionDate,
+    lastSessionIsPR: unseenPRs.length > 0,
+    lastSessionPRMachine: unseenPRs[0]?.exercise_name,
+    lastSessionPRWeight: unseenPRs[0]?.value,
+    weeklyVolume,
+    weeklyWorkouts,
+    score: memberScore,
+    level: levelData?.current.level ?? 1,
+    levelName: levelData?.current.name,
+  };
+
+  const heroState = computeHeroState(heroInput);
+
   return (
     <SkeletonGate loading={loading} skeleton={<HomeScreenSkeleton />}>
     <AnimatedScreen>
@@ -783,78 +790,16 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <PulsingGreeting name={userName} />
+        {/* HERO ZONE — Personal greeting card */}
+        <HeroZone
+          hero={heroState}
+          firstName={userName?.split(' ')[0] || 'there'}
+          avatarUrl={null}
+          level={1}
+          streak={streak?.currentStreak ?? 0}
+        />
 
-        {/* Date + Program Day Context */}
-        {programDayContext && (
-          <Text variant="caption" color="textSecondary" style={styles.dayContext}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-            {' — Day '}
-            {programDayContext.dayNumber} of {programDayContext.totalDays}
-          </Text>
-        )}
-
-        {/* Phase 2.6: Streak Badge */}
-        {streak && streak.currentStreak > 0 && (
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakBadgeFlame}>{'\uD83D\uDD25'}</Text>
-            <Text style={styles.streakBadgeText}>
-              {streak.currentStreak} week streak
-            </Text>
-            {!streak.currentWeekActive && (
-              <Text style={styles.streakBadgeNudge}> — keep it going!</Text>
-            )}
-          </View>
-        )}
-
-        {/* Quick Stats Row */}
-        <View style={styles.quickStatsRow}>
-          <View style={styles.quickStatCard}>
-            <Text style={styles.quickStatValue}>{totalWorkoutCount}</Text>
-            <Text variant="caption" color="textSecondary" style={styles.quickStatLabel}>
-              Total Workouts
-            </Text>
-          </View>
-          <View style={styles.quickStatCard}>
-            <Text style={styles.quickStatValue}>{streak?.longestStreak ?? 0}</Text>
-            <Text variant="caption" color="textSecondary" style={styles.quickStatLabel}>
-              Best Streak
-            </Text>
-          </View>
-          <View style={styles.quickStatCard}>
-            <Text style={styles.quickStatValue}>
-              {weeklyVolume >= 1000
-                ? `${(weeklyVolume / 1000).toFixed(1)}t`
-                : `${weeklyVolume}kg`}
-            </Text>
-            <Text variant="caption" color="textSecondary" style={styles.quickStatLabel}>
-              This Week Vol
-            </Text>
-          </View>
-        </View>
-
-        {/* Training Goal Banner */}
-        {userGoal ? (
-          <View style={styles.goalBanner}>
-            <Text style={styles.goalIcon}>
-              {userGoal === 'strength' ? '\uD83C\uDFCB\uFE0F' : userGoal === 'hypertrophy' ? '\uD83D\uDCAA' : userGoal === 'endurance' ? '\uD83C\uDFC3' : '\uD83C\uDFAF'}
-            </Text>
-            <Text style={styles.goalText}>
-              Goal: {userGoal.charAt(0).toUpperCase() + userGoal.slice(1)}
-            </Text>
-          </View>
-        ) : gymId ? (
-          <TouchableOpacity
-            style={styles.goalBannerCta}
-            onPress={() => router.push('/(tabs)/profile')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.goalCtaText}>Set your training goal</Text>
-            <Text style={styles.goalCtaArrow}>{'\u2192'}</Text>
-          </TouchableOpacity>
-        ) : null}
-
-        {/* PR Celebration Banner */}
+        {/* PR CELEBRATION — if unseen PRs */}
         {unseenPRs.length > 0 && (
           <AnimatedCard index={0} style={styles.prBanner}>
             <View style={styles.prBannerHeader}>
@@ -881,86 +826,34 @@ export default function HomeScreen() {
                 </Text>
               </View>
             ))}
-            {unseenPRs.length > 3 && (
-              <Text variant="caption" color="textSecondary" style={{ textAlign: 'center', marginTop: 4 }}>
-                +{unseenPRs.length - 3} more
-              </Text>
-            )}
           </AnimatedCard>
         )}
 
-        {/* Phase 2.6: Leaderboard CTA */}
-        {userRank && (
-          <TouchableOpacity
-            style={styles.leaderboardCta}
-            onPress={() => router.push('/leaderboard')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.leaderboardCtaText}>
-              You're #{userRank.rank} of {userRank.total} this week
-            </Text>
-            <Text variant="caption" color="primary" style={{ fontWeight: '600' }}>
-              View Leaderboard
-            </Text>
-          </TouchableOpacity>
-        )}
+        {/* TODAY ZONE — What to do today */}
+        <TodayZone
+          todayWorkout={todayWorkout}
+          todayDone={todayDone}
+          activeWorkoutId={activeWorkout?.id}
+          nextDayPreview={nextDayPreview}
+          sessionIntent={sessionIntent}
+          restDayTip={getTodayTip()}
+          coachingMessage={coachingInsight?.message}
+          coachingSource={coachingInsight?.source}
+        />
 
-        {/* Recent Badge Unlock */}
-        {recentBadges.length > 0 && (
-          <TouchableOpacity
-            style={styles.recentBadgeCta}
-            onPress={() => router.push('/(tabs)/profile')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.recentBadgeEmoji}>{recentBadges[0].icon_emoji}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.recentBadgeTitle}>Badge Unlocked!</Text>
-              <Text style={styles.recentBadgeName}>{recentBadges[0].name}</Text>
-            </View>
-            <Text variant="caption" color="primary" style={{ fontWeight: '600' }}>View</Text>
-          </TouchableOpacity>
-        )}
+        {/* MOMENTUM ZONE — Streak, weekly stats, level */}
+        <MomentumZone
+          streak={streak?.currentStreak ?? 0}
+          weeklyWorkouts={weeklyWorkouts}
+          weeklyGoal={weeklyGoal || 3}
+          weeklyVolume={weeklyVolume}
+          level={1}
+          score={0}
+        />
 
-        {/* Weekly Progress Summary */}
-        {weeklyGoal > 0 && (
-          <AnimatedCard index={0} style={styles.weeklyCard}>
-            <Text variant="label" style={styles.weeklyTitle}>This Week</Text>
-            <View style={styles.weeklyStatsRow}>
-              <View style={styles.weeklyStat}>
-                <Text style={styles.weeklyStatValue}>
-                  {weeklyWorkouts}<Text style={styles.weeklyStatGoal}>/{weeklyGoal}</Text>
-                </Text>
-                <Text variant="caption" color="textSecondary">Sessions</Text>
-              </View>
-              <View style={styles.weeklyDivider} />
-              <View style={styles.weeklyStat}>
-                <Text style={styles.weeklyStatValue}>
-                  {weeklyVolume >= 1000
-                    ? `${(weeklyVolume / 1000).toFixed(1)}t`
-                    : `${weeklyVolume}kg`}
-                </Text>
-                <Text variant="caption" color="textSecondary">Volume</Text>
-              </View>
-            </View>
-            <View style={styles.weeklyBarBg}>
-              <View
-                style={[
-                  styles.weeklyBarFill,
-                  { width: `${Math.min((weeklyWorkouts / weeklyGoal) * 100, 100)}%` },
-                ]}
-              />
-            </View>
-            <Text variant="caption" color="textSecondary" style={styles.weeklyBarLabel}>
-              {weeklyWorkouts >= weeklyGoal
-                ? 'Weekly goal reached!'
-                : `${weeklyGoal - weeklyWorkouts} session${weeklyGoal - weeklyWorkouts !== 1 ? 's' : ''} to go`}
-            </Text>
-          </AnimatedCard>
-        )}
-
-        {/* Phase 2.5.2: Guardrails Nudge Banner */}
+        {/* GUARDRAILS — Training nudge */}
         {guardrails.length > 0 && (
-          <AnimatedCard index={0} style={styles.guardrailBanner}>
+          <AnimatedCard index={3} style={styles.guardrailBanner}>
             <Text variant="label" style={styles.guardrailTitle}>Training Nudge</Text>
             {guardrails.slice(0, 2).map((g, i) => (
               <View key={i} style={styles.guardrailItem}>
@@ -990,177 +883,22 @@ export default function HomeScreen() {
           </AnimatedCard>
         )}
 
-        {/* Phase 2.5.3: Coach Notes Banner */}
-        {unreadNotes > 0 && (
-          <AnimatedCard index={0} style={styles.coachNotesBanner}>
-            <View style={styles.coachNotesRow}>
-              <View style={{ flex: 1 }}>
-                <Text variant="label" style={styles.coachNotesTitle}>Coach Notes</Text>
-                <Text variant="caption" color="textSecondary">
-                  {unreadNotes} note{unreadNotes !== 1 ? 's' : ''} from your trainer
-                </Text>
-              </View>
-              <Button
-                title="View"
-                onPress={() => router.push('/coach-notes')}
-                style={styles.coachNotesBtn}
-              />
-            </View>
-          </AnimatedCard>
-        )}
+        {/* COMMUNITY PULSE — Activity & achievements */}
+        <CommunityPulse
+          rank={userRank}
+          recentBadgeIcon={recentBadges[0]?.icon_emoji}
+          recentBadgeName={recentBadges[0]?.name}
+          coachNotesCount={unreadNotes}
+        />
 
-        {activeWorkout && (
-          <AnimatedCard index={0} style={styles.activeCard}>
-            <Text variant="label" style={styles.activeLabel}>Workout in Progress</Text>
-            <Text variant="caption" color="textSecondary" style={styles.activeStarted}>
-              Started {new Date(activeWorkout.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </Text>
-            <Button
-              title="Continue Workout"
-              onPress={() => router.push(`/workout/${activeWorkout.id}?intent=${sessionIntent}`)}
-              style={styles.continueButton}
-            />
-          </AnimatedCard>
-        )}
+        {/* TRAINING TIP */}
+        <View style={styles.trainingTipCard}>
+          <Text style={styles.trainingTipIcon}>{'\uD83D\uDCA1'}</Text>
+          <Text variant="caption" style={styles.trainingTipText}>
+            {getTodayTrainingTip()}
+          </Text>
+        </View>
 
-        {/* Smart Rest Day: show rest card when today's workout is done */}
-        {todayWorkout && todayDone && !activeWorkout ? (
-          <AnimatedCard index={0} style={styles.restDayCard}>
-            <Text style={styles.restDayEmoji}>{'\u2705'}</Text>
-            <Text variant="label" style={styles.restDayTitle}>
-              All done for today!
-            </Text>
-            <Text variant="body" color="textSecondary" style={styles.restDaySubtitle}>
-              Great work completing {todayWorkout.dayName}. Time to recover.
-            </Text>
-
-            {nextDayPreview && (
-              <View style={styles.restDayNextPreview}>
-                <Text variant="caption" style={styles.restDayNextLabel}>NEXT UP</Text>
-                <Text variant="body" style={styles.restDayNextName}>
-                  {nextDayPreview.name}
-                </Text>
-                <Text variant="caption" color="textSecondary">
-                  {nextDayPreview.exerciseCount} exercise{nextDayPreview.exerciseCount !== 1 ? 's' : ''}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.restDayTipBox}>
-              <Text style={styles.restDayTipIcon}>{'\uD83D\uDCA1'}</Text>
-              <Text variant="caption" style={styles.restDayTipText}>
-                {getTodayTip()}
-              </Text>
-            </View>
-
-            {/* Still show coaching insight on rest state */}
-            {coachingInsight && (
-              <View style={styles.restDayCoaching}>
-                <Text variant="label" style={styles.coachingTitle}>
-                  {coachingInsight.source === 'ai' ? 'AI Coach' : 'Coach Tip'}
-                </Text>
-                <Text variant="body" color="textSecondary" style={styles.coachingMessage}>
-                  {coachingInsight.message}
-                </Text>
-              </View>
-            )}
-          </AnimatedCard>
-        ) : todayWorkout ? (
-          <View style={styles.todaySection}>
-            <Text variant="label" style={styles.sectionTitle}>
-              Today: {todayWorkout.dayName}
-            </Text>
-            {todayWorkout.exercises.length > 0 && (
-              <Text variant="caption" color="textSecondary" style={styles.durationEstimate}>
-                ~{(() => {
-                  const totalSets = todayWorkout.exercises.reduce((sum, e) => sum + e.default_sets, 0);
-                  const mins = Math.round(totalSets * 2.5);
-                  return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}min` : `${mins} min`;
-                })()} estimated
-              </Text>
-            )}
-
-            {todayWorkout.exercises.map((exercise, i) => (
-              <AnimatedCard key={exercise.id} index={i + 1} style={styles.exerciseCard}>
-                <Text variant="body" style={styles.exerciseName}>
-                  {exercise.exercise_name}
-                </Text>
-                <Text variant="caption" color="textSecondary">
-                  {exercise.default_sets} sets x {exercise.default_reps} reps
-                </Text>
-              </AnimatedCard>
-            ))}
-
-            {explanation && (
-              <AnimatedCard index={todayWorkout.exercises.length + 1} style={styles.explanationCard}>
-                <Text variant="label" style={styles.explanationTitle}>
-                  Why This Today?
-                </Text>
-                <Text variant="body" color="textSecondary" style={styles.explanationText}>
-                  {explanation.reasoning}
-                </Text>
-                {explanation.focus_muscles.length > 0 && (
-                  <View style={styles.muscleRow}>
-                    {explanation.focus_muscles.map((muscle) => (
-                      <View key={muscle} style={styles.muscleTag}>
-                        <Text variant="caption" style={styles.muscleTagText}>{muscle}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-                {explanation.last_workout_gap_text && (
-                  <Text variant="caption" color="textSecondary" style={styles.gapText}>
-                    {explanation.last_workout_gap_text}
-                  </Text>
-                )}
-              </AnimatedCard>
-            )}
-
-            {/* Phase 3: AI Coaching Insight */}
-            {coachingInsight && (
-              <AnimatedCard index={(todayWorkout?.exercises.length ?? 0) + 2} style={styles.coachingCard}>
-                <Text variant="label" style={styles.coachingTitle}>
-                  {coachingInsight.source === 'ai' ? 'AI Coach' : 'Coach Tip'}
-                </Text>
-                <Text variant="body" color="textSecondary" style={styles.coachingMessage}>
-                  {coachingInsight.message}
-                </Text>
-                {coachingInsight.action_items.length > 0 && (
-                  <View style={styles.coachingActions}>
-                    {coachingInsight.action_items.map((item, i) => (
-                      <View key={i} style={styles.coachingActionRow}>
-                        <View style={styles.coachingBullet} />
-                        <Text variant="caption" style={styles.coachingActionText}>{item}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </AnimatedCard>
-            )}
-
-            {/* Tip of the Day */}
-            <View style={styles.trainingTipCard}>
-              <Text style={styles.trainingTipIcon}>{'\uD83D\uDCA1'}</Text>
-              <Text variant="caption" style={styles.trainingTipText}>
-                {getTodayTrainingTip()}
-              </Text>
-            </View>
-
-            {!activeWorkout && (
-              <Button
-                title="Start Workout"
-                onPress={() => router.push(`/workout/start?intent=${sessionIntent}`)}
-                style={styles.startButton}
-              />
-            )}
-          </View>
-        ) : (
-          <AnimatedCard index={0} style={styles.emptyCard}>
-            <Text variant="body" color="textSecondary" style={styles.emptyText}>
-              No program assigned yet. Ask your trainer to set one up!
-            </Text>
-          </AnimatedCard>
-        )}
       </ScrollView>
     </AnimatedScreen>
     </SkeletonGate>
@@ -1168,287 +906,30 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-    backgroundColor: colors.background,
-  },
   scrollContainer: {
     flex: 1,
     backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  loadingText: {
-    marginTop: spacing.sm,
-  },
-  greeting: {
-    marginBottom: 0,
-  },
-  dayContext: {
-    marginBottom: spacing.md,
-    fontSize: 13,
-  },
-  quickStatsRow: {
-    flexDirection: 'row' as const,
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  quickStatCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.sm,
-    alignItems: 'center' as const,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  quickStatValue: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    color: colors.text,
-    marginBottom: 2,
-  },
-  quickStatLabel: {
-    fontSize: 11,
-    textAlign: 'center' as const,
-  },
-  goalBanner: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    backgroundColor: colors.primarySubtle,
-    borderRadius: 20,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    alignSelf: 'flex-start' as const,
-    marginBottom: spacing.md,
-    gap: 6,
-  },
-  goalIcon: {
-    fontSize: 14,
-  },
-  goalText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: colors.primaryDark,
-  },
-  goalBannerCta: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    backgroundColor: colors.purpleSubtle,
-    borderRadius: 20,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    alignSelf: 'flex-start' as const,
-    marginBottom: spacing.md,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  goalCtaText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: colors.purple,
-  },
-  goalCtaArrow: {
-    fontSize: 14,
-    color: colors.purple,
-  },
-  durationEstimate: {
-    marginTop: -2,
-    marginBottom: spacing.xs,
-    fontSize: 13,
-  },
-  trainingTipCard: {
-    flexDirection: 'row' as const,
-    alignItems: 'flex-start' as const,
-    backgroundColor: colors.goldSubtle,
-    borderRadius: 12,
-    padding: spacing.sm,
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.goldSubtle,
-  },
-  trainingTipIcon: {
-    fontSize: 16,
-    marginTop: 1,
-  },
-  trainingTipText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.goldDark,
-    lineHeight: 18,
-  },
+  // Error banner
   errorBanner: {
     backgroundColor: colors.errorSubtle,
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
+    marginHorizontal: spacing.md,
   },
   errorText: {
     color: colors.error,
     textAlign: 'center',
   },
-  activeCard: {
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.success,
-  },
-  activeLabel: {
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  activeStarted: {
-    marginBottom: spacing.sm,
-  },
-  continueButton: {
-    marginTop: spacing.xs,
-  },
-  todaySection: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  exerciseCard: {
-    padding: spacing.md,
-  },
-  exerciseName: {
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  explanationCard: {
-    padding: spacing.md,
-    marginTop: spacing.sm,
-    backgroundColor: colors.surface,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
-  },
-  explanationTitle: {
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-    color: colors.primary,
-  },
-  explanationText: {
-    lineHeight: 20,
-    marginBottom: spacing.sm,
-  },
-  muscleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
-  },
-  muscleTag: {
-    backgroundColor: colors.primary + '20',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  muscleTagText: {
-    color: colors.primary,
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  gapText: {
-    marginTop: spacing.xs,
-    fontStyle: 'italic',
-  },
-  startButton: {
-    marginTop: spacing.md,
-  },
-  emptyCard: {
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    textAlign: 'center',
-  },
-  // Smart Rest Day
-  restDayCard: {
-    padding: spacing.lg,
-    alignItems: 'center' as const,
-    backgroundColor: colors.successSubtle,
-    borderWidth: 1,
-    borderColor: colors.successSubtle,
-  },
-  restDayEmoji: {
-    fontSize: 36,
-    marginBottom: spacing.sm,
-  },
-  restDayTitle: {
-    fontWeight: '700' as const,
-    fontSize: 18,
-    color: colors.success,
-    marginBottom: spacing.xs,
-  },
-  restDaySubtitle: {
-    textAlign: 'center' as const,
-    marginBottom: spacing.md,
-    lineHeight: 20,
-  },
-  restDayNextPreview: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    padding: spacing.md,
-    width: '100%' as const,
-    alignItems: 'center' as const,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  restDayNextLabel: {
-    fontSize: 10,
-    fontWeight: '700' as const,
-    color: colors.textDisabled,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  restDayNextName: {
-    fontWeight: '600' as const,
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 2,
-  },
-  restDayTipBox: {
-    flexDirection: 'row' as const,
-    alignItems: 'flex-start' as const,
-    backgroundColor: colors.successSubtle,
-    borderRadius: 10,
-    padding: spacing.sm,
-    width: '100%' as const,
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  restDayTipIcon: {
-    fontSize: 16,
-    marginTop: 1,
-  },
-  restDayTipText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.success,
-    lineHeight: 18,
-  },
-  restDayCoaching: {
-    width: '100%' as const,
-    backgroundColor: colors.primarySubtle,
-    borderRadius: 10,
-    padding: spacing.md,
-    marginTop: spacing.xs,
-  },
   // PR Celebration Banner
   prBanner: {
     padding: spacing.md,
     marginBottom: spacing.md,
+    marginHorizontal: spacing.md,
     backgroundColor: colors.goldSubtle,
     borderLeftWidth: 4,
     borderLeftColor: colors.gold,
@@ -1503,66 +984,11 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: colors.goldDark,
   },
-  // Weekly Progress Summary
-  weeklyCard: {
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    backgroundColor: colors.successSubtle,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.success,
-  },
-  weeklyTitle: {
-    fontWeight: '700',
-    color: colors.success,
-    marginBottom: spacing.sm,
-    fontSize: 13,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-  },
-  weeklyStatsRow: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    marginBottom: spacing.sm,
-  },
-  weeklyStat: {
-    flex: 1,
-    alignItems: 'center' as const,
-  },
-  weeklyStatValue: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: colors.text,
-  },
-  weeklyStatGoal: {
-    fontSize: 16,
-    fontWeight: '400' as const,
-    color: colors.textMuted,
-  },
-  weeklyDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: colors.border,
-  },
-  weeklyBarBg: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-    overflow: 'hidden' as const,
-    marginBottom: spacing.xs,
-  },
-  weeklyBarFill: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
-  },
-  weeklyBarLabel: {
-    textAlign: 'center' as const,
-    fontSize: 12,
-  },
   // Guardrail styles
   guardrailBanner: {
     padding: spacing.md,
     marginBottom: spacing.md,
+    marginHorizontal: spacing.md,
     backgroundColor: colors.amberSubtle,
     borderLeftWidth: 4,
     borderLeftColor: colors.amber,
@@ -1608,138 +1034,27 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.xs,
   },
-  // Coach Notes styles
-  coachNotesBanner: {
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    backgroundColor: colors.primarySubtle,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
-  },
-  coachNotesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  coachNotesTitle: {
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: 2,
-  },
-  coachNotesBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  // Streak badge styles
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.amberSubtle,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  streakBadgeFlame: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  streakBadgeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.amber,
-  },
-  streakBadgeNudge: {
-    fontSize: 13,
-    color: colors.amber,
-    fontStyle: 'italic',
-  },
-  // Recent Badge CTA
-  recentBadgeCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.purpleSubtle,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.purple + '30',
-    gap: spacing.sm,
-  },
-  recentBadgeEmoji: {
-    fontSize: 28,
-  },
-  recentBadgeTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.purple,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-  },
-  recentBadgeName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  // Leaderboard CTA
-  leaderboardCta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.primarySubtle,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.primary + '30',
-  },
-  leaderboardCtaText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  // Phase 3: Coaching Card
-  coachingCard: {
-    backgroundColor: colors.primarySubtle,
-    borderRadius: 14,
-    padding: spacing.md,
-    marginTop: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  coachingTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-    marginBottom: spacing.xs,
-  },
-  coachingMessage: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.text,
-  },
-  coachingActions: {
-    marginTop: spacing.sm,
-    gap: 6,
-  },
-  coachingActionRow: {
+  // Training tip
+  trainingTipCard: {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
-    gap: 8,
+    backgroundColor: colors.goldSubtle,
+    borderRadius: 12,
+    padding: spacing.sm,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    marginHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.goldSubtle,
   },
-  coachingBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.primary,
-    marginTop: 6,
+  trainingTipIcon: {
+    fontSize: 16,
+    marginTop: 1,
   },
-  coachingActionText: {
+  trainingTipText: {
     flex: 1,
     fontSize: 13,
-    color: colors.text,
+    color: colors.goldDark,
     lineHeight: 18,
   },
 });

@@ -26,6 +26,8 @@ import { trackEvent } from '../../src/lib/events';
 import { isFeatureEnabled, refreshFeatureFlags, needsRefresh } from '../../src/lib/featureFlags';
 import { generateMachineMistakes, localCache } from '@nexera/ai-assist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { detectWorkoutMode } from '../../src/lib/workoutMode';
+import type { ModeContext } from '../../src/lib/workoutMode';
 
 interface MachineWithGym extends Machine {
   gym_name: string;
@@ -92,6 +94,9 @@ export default function MachineDetailScreen() {
 
   // Enrichment state
   const [history, setHistory] = useState<MachineHistory | null>(null);
+
+  // Workout mode context
+  const [modeContext, setModeContext] = useState<ModeContext | null>(null);
 
   const handleStartWorkout = async () => {
     if (!machine) return;
@@ -200,6 +205,17 @@ export default function MachineDetailScreen() {
 
       // Load personal history for this machine
       await loadMachineHistory(machine.id);
+
+      // Load workout mode context
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const ctx = await detectWorkoutMode(user.id);
+          setModeContext(ctx);
+        }
+      } catch (err) {
+        console.warn('[machine] mode detection failed:', err);
+      }
     })();
   }, [machine]);
 
@@ -384,6 +400,81 @@ export default function MachineDetailScreen() {
         <Text variant="caption" style={styles.gymName}>
           {machine.gym_name}
         </Text>
+      )}
+
+      {/* ─── Workout Mode Context ──────────────── */}
+      {modeContext && modeContext.mode !== 'freestyle' && (
+        <View style={styles.modeSection}>
+          <View style={[
+            styles.modePill,
+            { backgroundColor: modeContext.mode === 'trainer-program' ? colors.purpleSubtle : colors.primarySubtle },
+          ]}>
+            <Text style={[
+              styles.modePillText,
+              { color: modeContext.mode === 'trainer-program' ? colors.purple : colors.primary },
+            ]}>
+              {modeContext.mode === 'trainer-program'
+                ? `Coach Plan${modeContext.trainerName ? ` · ${modeContext.trainerName}` : ''}`
+                : 'AI Plan'}
+            </Text>
+          </View>
+
+          {modeContext.todayDay && (() => {
+            const isInPlan = modeContext.todayDay.exercises.some(
+              (e) => e.machine_id === machine.id,
+            );
+            const planExercise = modeContext.todayDay.exercises.find(
+              (e) => e.machine_id === machine.id,
+            );
+
+            if (isInPlan && planExercise) {
+              return (
+                <Card style={styles.modeCard}>
+                  <Text variant="caption" style={styles.modeCardLabel}>
+                    {'✓ Today\'s target'}
+                  </Text>
+                  <Text variant="body" style={styles.modeCardText}>
+                    {planExercise.default_sets} sets x {planExercise.default_reps} reps
+                  </Text>
+                  <Text variant="caption" color="textSecondary">
+                    This machine is in today's plan ({modeContext.todayDay.dayName})
+                  </Text>
+                </Card>
+              );
+            }
+
+            // Machine not in today's plan
+            const otherMachineExercises = modeContext.todayDay.exercises.filter(
+              (e) => e.machine_id && e.machine_id !== machine.id,
+            );
+            return (
+              <View>
+                <Text variant="caption" color="textSecondary" style={styles.modeNote}>
+                  Not in today's plan — no worries, we'll track it
+                </Text>
+                {otherMachineExercises.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.modeSuggestions}>
+                    {otherMachineExercises.slice(0, 5).map((e) => (
+                      <View key={e.id} style={styles.modeSuggestionChip}>
+                        <Text style={styles.modeSuggestionText} numberOfLines={1}>
+                          {e.exercise_name}
+                        </Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            );
+          })()}
+        </View>
+      )}
+
+      {modeContext && modeContext.mode === 'freestyle' && (
+        <View style={styles.modeSection}>
+          <View style={[styles.modePill, { backgroundColor: colors.surfaceElevated }]}>
+            <Text style={[styles.modePillText, { color: colors.textSecondary }]}>Freestyle</Text>
+          </View>
+        </View>
       )}
 
       {machine.target_muscles.length > 0 && (
@@ -855,6 +946,57 @@ const styles = StyleSheet.create({
   },
 
   // Alternatives button
+  // Workout mode context styles
+  modeSection: {
+    marginBottom: spacing.md,
+  },
+  modePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: spacing.xs,
+  },
+  modePillText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modeCard: {
+    padding: spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.success,
+  },
+  modeCardLabel: {
+    color: colors.success,
+    fontWeight: '700',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  modeCardText: {
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  modeNote: {
+    fontStyle: 'italic',
+    marginBottom: spacing.xs,
+  },
+  modeSuggestions: {
+    marginBottom: spacing.xs,
+  },
+  modeSuggestionChip: {
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginRight: spacing.xs,
+  },
+  modeSuggestionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.text,
+    maxWidth: 120,
+  },
+
   alternativesButton: {
     backgroundColor: colors.primarySubtle,
     paddingVertical: 12,

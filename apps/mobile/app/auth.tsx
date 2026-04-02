@@ -1,4 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+/**
+ * Onboarding / Auth Screen — DOC_10 compliant.
+ * Multi-step flow: Phone → OTP → Goal → Experience → Done
+ * 90-second target from scan to first set.
+ */
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,109 +16,71 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { colors } from '../src/theme/colors';
 import { spacing } from '../src/theme/spacing';
 import { AnimatedScreen } from '../src/components/AnimatedScreen';
 
-type AuthMode = 'login' | 'signup';
+// ─── Types ────────────────────────────────────────────
+type OnboardingStep = 'phone' | 'otp' | 'goal' | 'experience';
 
-// ─── Feature highlights ───────────────────────────────
-const FEATURES = [
-  { icon: '\uD83D\uDCF1', label: 'Scan machines' },
-  { icon: '\uD83E\uDDE0', label: 'AI form tips' },
-  { icon: '\uD83D\uDCC8', label: 'Track progress' },
+type UserGoal = 'strength' | 'hypertrophy' | 'endurance' | 'general';
+type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
+
+const GOALS: Array<{ key: UserGoal; icon: string; label: string; sub: string }> = [
+  { key: 'hypertrophy', icon: '\uD83D\uDCAA', label: 'Build Muscle', sub: 'Grow size and definition' },
+  { key: 'strength', icon: '\uD83C\uDFCB\uFE0F', label: 'Get Stronger', sub: 'Lift heavier, build power' },
+  { key: 'endurance', icon: '\uD83C\uDFC3', label: 'Stay Fit', sub: 'Maintain health and endurance' },
+  { key: 'general', icon: '\uD83C\uDFAF', label: 'General Fitness', sub: 'All-around improvement' },
 ];
 
-// ─── Motivational welcome messages ────────────────────
-const LOGIN_MESSAGES = [
-  'Welcome back — let\'s pick up where you left off.',
-  'Ready to crush another session?',
-  'Your gains are waiting.',
-  'Time to get after it.',
+const EXPERIENCE_LEVELS: Array<{ key: ExperienceLevel; label: string; sub: string }> = [
+  { key: 'beginner', label: 'Beginner', sub: 'New to lifting or < 6 months' },
+  { key: 'intermediate', label: 'Intermediate', sub: '6 months to 2 years' },
+  { key: 'advanced', label: 'Advanced', sub: '2+ years of consistent training' },
 ];
-
-const SIGNUP_MESSAGES = [
-  'Start training smarter today.',
-  'Your AI-powered gym companion awaits.',
-  'Join the smart way to train.',
-  'Every rep counts — let\'s track them.',
-];
-
-// ─── Password strength ───────────────────────────────
-type PasswordStrength = 'weak' | 'fair' | 'strong';
-
-function getPasswordStrength(pw: string): { level: PasswordStrength; score: number } {
-  if (pw.length === 0) return { level: 'weak', score: 0 };
-  let score = 0;
-  if (pw.length >= 6) score++;
-  if (pw.length >= 10) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 2) return { level: 'weak', score: Math.min(0.33, score / 5) };
-  if (score <= 3) return { level: 'fair', score: 0.6 };
-  return { level: 'strong', score: 1 };
-}
-
-const STRENGTH_COLORS: Record<PasswordStrength, string> = {
-  weak: colors.error,
-  fair: colors.gold,
-  strong: colors.success,
-};
 
 export default function AuthScreen() {
   const router = useRouter();
-  const [mode, setMode] = useState<AuthMode>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const params = useLocalSearchParams<{ returnTo?: string }>();
+
+  const [step, setStep] = useState<OnboardingStep>('phone');
+  const [firstName, setFirstName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [selectedGoal, setSelectedGoal] = useState<UserGoal | null>(null);
+  const [selectedExperience, setSelectedExperience] = useState<ExperienceLevel | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isReturningMember, setIsReturningMember] = useState(false);
 
-  // Animated brand icon
-  const iconScale = useRef(new Animated.Value(0.5)).current;
-  const iconOpacity = useRef(new Animated.Value(0)).current;
+  // Animations
+  const fadeIn = useRef(new Animated.Value(0)).current;
+  const slideUp = useRef(new Animated.Value(30)).current;
+
+  const animateStepIn = useCallback(() => {
+    fadeIn.setValue(0);
+    slideUp.setValue(30);
+    Animated.parallel([
+      Animated.timing(fadeIn, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.spring(slideUp, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true }),
+    ]).start();
+  }, [fadeIn, slideUp]);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.spring(iconScale, {
-        toValue: 1,
-        tension: 40,
-        friction: 5,
-        useNativeDriver: true,
-      }),
-      Animated.timing(iconOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+    animateStepIn();
+  }, [step, animateStepIn]);
 
-  // Motivational message based on day
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24),
-  );
-  const loginMsg = LOGIN_MESSAGES[dayOfYear % LOGIN_MESSAGES.length];
-  const signupMsg = SIGNUP_MESSAGES[dayOfYear % SIGNUP_MESSAGES.length];
-
-  const passwordStrength = getPasswordStrength(password);
-
-  const handleAuth = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password.');
+  // ─── Step 1: Send OTP ──────────────────────────────
+  const handleSendOTP = async () => {
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone) {
+      setError('Please enter your phone number.');
       return;
     }
-
-    if (mode === 'signup' && !fullName.trim()) {
-      setError('Please enter your full name.');
-      return;
-    }
-
-    if (mode === 'signup' && password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!isReturningMember && !firstName.trim()) {
+      setError('Please enter your first name.');
       return;
     }
 
@@ -121,178 +88,344 @@ export default function AuthScreen() {
       setLoading(true);
       setError(null);
 
-      if (mode === 'login') {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: password.trim(),
-        });
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        phone: trimmedPhone,
+      });
 
-        if (signInError) throw signInError;
-      } else {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password.trim(),
-          options: {
-            data: {
-              full_name: fullName.trim(),
-            },
-          },
-        });
-
-        if (signUpError) throw signUpError;
-      }
-
-      router.replace('/(tabs)' as const);
+      if (otpError) throw otpError;
+      setStep('otp');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      setError(err instanceof Error ? err.message : 'Failed to send verification code.');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleMode = () => {
-    setMode((prev) => (prev === 'login' ? 'signup' : 'login'));
-    setError(null);
+  // ─── Step 2: Verify OTP ────────────────────────────
+  const handleVerifyOTP = async () => {
+    if (otpCode.length < 6) {
+      setError('Please enter the 6-digit code.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        phone: phone.trim(),
+        token: otpCode,
+        type: 'sms',
+      });
+
+      if (verifyError) throw verifyError;
+
+      // Update profile with first name
+      if (!isReturningMember && firstName.trim()) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('profiles').upsert({
+            id: user.id,
+            full_name: firstName.trim(),
+          });
+        }
+      }
+
+      // Returning members skip intake
+      if (isReturningMember) {
+        router.replace(params.returnTo ? (params.returnTo as `/${string}`) : '/(tabs)');
+        return;
+      }
+
+      setStep('goal');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Invalid code. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // ─── Step 3: Save goal ─────────────────────────────
+  const handleGoalSelect = (goal: UserGoal) => {
+    setSelectedGoal(goal);
+    setStep('experience');
+  };
+
+  // ─── Step 4: Save experience & complete ────────────
+  const handleExperienceSelect = async (exp: ExperienceLevel) => {
+    setSelectedExperience(exp);
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Get gym from membership
+      const { data: memberData } = await supabase
+        .from('gym_members')
+        .select('gym_id')
+        .eq('profile_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (memberData?.gym_id) {
+        await supabase.from('user_training_profiles').upsert({
+          profile_id: user.id,
+          gym_id: memberData.gym_id,
+          goal: selectedGoal || 'general',
+          experience: exp,
+        });
+
+        // Mark onboarding complete
+        await supabase.from('gym_members')
+          .update({ onboarding_status: 'active' })
+          .eq('profile_id', user.id)
+          .eq('gym_id', memberData.gym_id);
+      }
+
+      router.replace(params.returnTo ? (params.returnTo as `/${string}`) : '/(tabs)');
+    } catch (err: unknown) {
+      // Non-blocking — still navigate even if profile save fails
+      console.warn('[onboarding] profile save failed:', err);
+      router.replace('/(tabs)');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Progress dots ─────────────────────────────────
+  const steps: OnboardingStep[] = isReturningMember ? ['phone', 'otp'] : ['phone', 'otp', 'goal', 'experience'];
+  const stepIndex = steps.indexOf(step);
 
   return (
     <AnimatedScreen>
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* ─── Brand header ──────────────────────── */}
-        <View style={styles.header}>
-          <Animated.View style={[styles.brandIcon, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
-            <Text style={styles.brandEmoji}>{'\uD83C\uDFCB\uFE0F'}</Text>
-          </Animated.View>
-          <Text style={styles.title}>Nexera</Text>
-          <Text style={styles.tagline}>
-            {mode === 'login' ? loginMsg : signupMsg}
-          </Text>
-        </View>
-
-        {/* ─── Feature pills ─────────────────────── */}
-        <View style={styles.featureRow}>
-          {FEATURES.map((f) => (
-            <View key={f.label} style={styles.featurePill}>
-              <Text style={styles.featureIcon}>{f.icon}</Text>
-              <Text style={styles.featureLabel}>{f.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* ─── Form ──────────────────────────────── */}
-        <View style={styles.form}>
-          {error && (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          {mode === 'signup' && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your full name"
-                placeholderTextColor={colors.textSecondary}
-                value={fullName}
-                onChangeText={setFullName}
-                autoCapitalize="words"
-                autoComplete="name"
-                editable={!loading}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Progress indicator */}
+          <View style={styles.progressRow}>
+            {steps.map((s, i) => (
+              <View
+                key={s}
+                style={[
+                  styles.progressDot,
+                  i <= stepIndex && styles.progressDotActive,
+                ]}
               />
-            </View>
-          )}
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor={colors.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              editable={!loading}
-            />
+            ))}
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={mode === 'signup' ? 'At least 6 characters' : 'Enter your password'}
-              placeholderTextColor={colors.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              editable={!loading}
-            />
-            {/* Password strength indicator (signup only) */}
-            {mode === 'signup' && password.length > 0 && (
-              <View style={styles.strengthContainer}>
-                <View style={styles.strengthBarBg}>
-                  <View
-                    style={[
-                      styles.strengthBarFill,
-                      {
-                        width: `${passwordStrength.score * 100}%`,
-                        backgroundColor: STRENGTH_COLORS[passwordStrength.level],
-                      },
-                    ]}
+          <Animated.View style={{ opacity: fadeIn, transform: [{ translateY: slideUp }] }}>
+
+            {/* ─── STEP 1: Phone ────────────────── */}
+            {step === 'phone' && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepHeading}>
+                  {isReturningMember ? 'Welcome back.' : 'Let\'s get you set up.'}
+                </Text>
+                <Text style={styles.stepSubheading}>
+                  {isReturningMember
+                    ? 'Enter your phone to sign back in.'
+                    : 'Under a minute — then you\'re training.'}
+                </Text>
+
+                {!isReturningMember && (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>First name</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Your first name"
+                      placeholderTextColor={colors.textMuted}
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      autoCapitalize="words"
+                      autoComplete="given-name"
+                      autoFocus
+                      editable={!loading}
+                    />
+                  </View>
+                )}
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Phone number</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="+1 (555) 000-0000"
+                    placeholderTextColor={colors.textMuted}
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                    autoComplete="tel"
+                    autoFocus={isReturningMember}
+                    editable={!loading}
                   />
                 </View>
-                <Text
-                  style={[styles.strengthLabel, { color: STRENGTH_COLORS[passwordStrength.level] }]}
+
+                {error && <Text style={styles.errorText}>{error}</Text>}
+
+                <TouchableOpacity
+                  style={[styles.primaryBtn, loading && styles.disabledBtn]}
+                  onPress={handleSendOTP}
+                  disabled={loading}
+                  activeOpacity={0.8}
                 >
-                  {passwordStrength.level}
-                </Text>
+                  {loading ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <Text style={styles.primaryBtnText}>Continue →</Text>
+                  )}
+                </TouchableOpacity>
+
+                {!isReturningMember && (
+                  <TouchableOpacity
+                    style={styles.secondaryBtn}
+                    onPress={() => setIsReturningMember(true)}
+                  >
+                    <Text style={styles.secondaryBtnText}>Already a member? Sign in</Text>
+                  </TouchableOpacity>
+                )}
+                {isReturningMember && (
+                  <TouchableOpacity
+                    style={styles.secondaryBtn}
+                    onPress={() => setIsReturningMember(false)}
+                  >
+                    <Text style={styles.secondaryBtnText}>New here? Create account</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
-          </View>
 
-          <TouchableOpacity
-            style={[styles.primaryButton, loading && styles.disabledButton]}
-            onPress={handleAuth}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.white} size="small" />
-            ) : (
-              <Text style={styles.primaryButtonText}>
-                {mode === 'login' ? 'Sign In' : 'Create Account'}
-              </Text>
+            {/* ─── STEP 2: OTP Verify ──────────── */}
+            {step === 'otp' && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepHeading}>Enter your code.</Text>
+                <Text style={styles.stepSubheading}>
+                  We sent a 6-digit code to {phone}.
+                </Text>
+
+                <View style={styles.otpContainer}>
+                  <TextInput
+                    style={styles.otpInput}
+                    placeholder="000000"
+                    placeholderTextColor={colors.textMuted}
+                    value={otpCode}
+                    onChangeText={(text) => {
+                      const cleaned = text.replace(/\D/g, '').slice(0, 6);
+                      setOtpCode(cleaned);
+                      // Auto-submit on 6 digits
+                      if (cleaned.length === 6) {
+                        setTimeout(() => handleVerifyOTP(), 100);
+                      }
+                    }}
+                    keyboardType="number-pad"
+                    autoFocus
+                    maxLength={6}
+                    editable={!loading}
+                  />
+                </View>
+
+                {error && <Text style={styles.errorText}>{error}</Text>}
+
+                <TouchableOpacity
+                  style={[styles.primaryBtn, loading && styles.disabledBtn]}
+                  onPress={handleVerifyOTP}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <Text style={styles.primaryBtnText}>Verify →</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.secondaryBtn}
+                  onPress={() => { setStep('phone'); setOtpCode(''); setError(null); }}
+                >
+                  <Text style={styles.secondaryBtnText}>Change phone number</Text>
+                </TouchableOpacity>
+              </View>
             )}
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.toggleButton}
-            onPress={toggleMode}
-            disabled={loading}
-          >
-            <Text style={styles.toggleText}>
-              {mode === 'login'
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            {/* ─── STEP 3: Goal ────────────────── */}
+            {step === 'goal' && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepHeading}>What's your goal?</Text>
+                <Text style={styles.stepSubheading}>
+                  This helps us personalize your experience.
+                </Text>
+
+                <View style={styles.optionList}>
+                  {GOALS.map((g) => (
+                    <TouchableOpacity
+                      key={g.key}
+                      style={[
+                        styles.optionCard,
+                        selectedGoal === g.key && styles.optionCardSelected,
+                      ]}
+                      onPress={() => handleGoalSelect(g.key)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.optionIcon}>{g.icon}</Text>
+                      <View style={styles.optionText}>
+                        <Text style={styles.optionLabel}>{g.label}</Text>
+                        <Text style={styles.optionSub}>{g.sub}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* ─── STEP 4: Experience ──────────── */}
+            {step === 'experience' && (
+              <View style={styles.stepContent}>
+                <Text style={styles.stepHeading}>Experience level?</Text>
+                <Text style={styles.stepSubheading}>
+                  We'll adjust suggestions to match your level.
+                </Text>
+
+                <View style={styles.optionList}>
+                  {EXPERIENCE_LEVELS.map((e) => (
+                    <TouchableOpacity
+                      key={e.key}
+                      style={[
+                        styles.optionCard,
+                        selectedExperience === e.key && styles.optionCardSelected,
+                      ]}
+                      onPress={() => handleExperienceSelect(e.key)}
+                      disabled={loading}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.optionText}>
+                        <Text style={styles.optionLabel}>{e.label}</Text>
+                        <Text style={styles.optionSub}>{e.sub}</Text>
+                      </View>
+                      {loading && selectedExperience === e.key && (
+                        <ActivityIndicator color={colors.primary} size="small" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </AnimatedScreen>
   );
 }
 
+// ─── Styles ──────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -300,72 +433,44 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  // Progress
+  progressRow: {
+    flexDirection: 'row',
     justifyContent: 'center',
-    padding: 24,
+    gap: 8,
+    marginBottom: 40,
   },
-  // ─── Brand header ─────────────────────────────────
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.surfaceElevated,
   },
-  brandIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
+  progressDotActive: {
+    backgroundColor: colors.primary,
+    width: 24,
   },
-  brandEmoji: {
-    fontSize: 36,
+  // Step content
+  stepContent: {
+    flex: 1,
   },
-  title: {
-    fontSize: 36,
+  stepHeading: {
+    fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  tagline: {
+  stepSubheading: {
     fontSize: 15,
     color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 21,
-    paddingHorizontal: spacing.md,
+    lineHeight: 22,
+    marginBottom: 32,
   },
-  // ─── Feature pills ────────────────────────────────
-  featureRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  featurePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    gap: 4,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  featureIcon: {
-    fontSize: 14,
-  },
-  featureLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  // ─── Form ─────────────────────────────────────────
-  form: {
-    width: '100%',
-  },
+  // Inputs
   inputGroup: {
     marginBottom: 20,
   },
@@ -385,67 +490,92 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-  // ─── Password strength ────────────────────────────
-  strengthContainer: {
+  // OTP
+  otpContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  otpInput: {
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    letterSpacing: 12,
+    width: '100%',
+    maxWidth: 280,
+  },
+  // Options (goal / experience)
+  optionList: {
+    gap: 12,
+  },
+  optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 18,
+    gap: 16,
   },
-  strengthBarBg: {
+  optionCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+  },
+  optionIcon: {
+    fontSize: 28,
+  },
+  optionText: {
     flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    overflow: 'hidden',
   },
-  strengthBarFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  strengthLabel: {
-    fontSize: 12,
+  optionLabel: {
+    fontSize: 16,
     fontWeight: '600',
-    textTransform: 'capitalize',
-    width: 44,
+    color: colors.text,
   },
-  // ─── Buttons ──────────────────────────────────────
-  primaryButton: {
+  optionSub: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  // Buttons
+  primaryBtn: {
     backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 56,
     marginTop: 8,
   },
-  primaryButtonText: {
+  primaryBtnText: {
     color: colors.white,
     fontSize: 17,
     fontWeight: '600',
   },
-  disabledButton: {
+  disabledBtn: {
     opacity: 0.6,
   },
-  toggleButton: {
+  secondaryBtn: {
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 20,
     paddingVertical: 8,
   },
-  toggleText: {
+  secondaryBtnText: {
     color: colors.primary,
     fontSize: 15,
     fontWeight: '500',
-  },
-  errorBanner: {
-    backgroundColor: colors.errorSubtle,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 20,
   },
   errorText: {
     color: colors.error,
     fontSize: 14,
     textAlign: 'center',
+    marginBottom: 16,
   },
 });

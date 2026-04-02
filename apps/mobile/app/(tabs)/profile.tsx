@@ -2,61 +2,37 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
   RefreshControl,
-  Alert,
-  TextInput,
-  TouchableOpacity,
   Animated as RNAnimated,
   Platform,
-  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../src/lib/supabase';
-import { getWeightUnit, saveWeightUnit } from '../../src/lib/weightUnit';
-import { getPointsSummary, formatPointsReason } from '../../src/lib/pointsService';
-import type { PointsEntry } from '../../src/lib/pointsService';
+import { getWeightUnit } from '../../src/lib/weightUnit';
+import { getPointsSummary } from '../../src/lib/pointsService';
 import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
-import { getBadges, RARITY_COLORS, RARITY_LABELS } from '../../src/lib/badgeService';
+import { getBadges } from '../../src/lib/badgeService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
-import { unregisterPushToken } from '../../src/lib/notificationService';
-import { formatWeight } from '@nexera/utils';
+import { fetchMemberLevel, fetchDNAResult, fetchMuscleMap } from '../../src/lib/memberData';
+import type { DNACacheResult, MuscleMapCacheResult } from '../../src/lib/memberData';
+import type { LevelProgress } from '@nexera/ai-assist';
 import { Button, Text, Card } from '../../src/components';
-import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { SkeletonGate, ProfileScreenSkeleton } from '../../src/components/skeleton';
+import { ProfileHeader } from '../../src/components/profile/ProfileHeader';
+import { ProfileTabs } from '../../src/components/profile/ProfileTabs';
+import type { ProfileTabKey } from '../../src/components/profile/ProfileTabs';
+import { OverviewTab } from '../../src/components/profile/OverviewTab';
+import { AchievementsTab } from '../../src/components/profile/AchievementsTab';
+import { DNATab } from '../../src/components/profile/DNATab';
+import { BodyMapTab } from '../../src/components/profile/BodyMapTab';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
-import type { UserGoal, ExperienceLevel, WeightUnit, BadgeWithStatus } from '@nexera/types';
-
-// ─── Constants ──────────────────────────────────────────
-
-const TRAINING_PROFILE_CACHE_KEY = '@nexera:training_profile';
-
-const GOAL_OPTIONS: { value: UserGoal; label: string }[] = [
-  { value: 'strength', label: 'Strength' },
-  { value: 'hypertrophy', label: 'Hypertrophy' },
-  { value: 'endurance', label: 'Endurance' },
-  { value: 'general', label: 'General Fitness' },
-];
-
-const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string }[] = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-];
-
-const LIMITATION_OPTIONS: { value: string; label: string }[] = [
-  { value: 'knee_sensitive', label: 'Knee Sensitive' },
-  { value: 'lower_back_sensitive', label: 'Lower Back Sensitive' },
-  { value: 'shoulder_sensitive', label: 'Shoulder Sensitive' },
-  { value: 'wrist_sensitive', label: 'Wrist Sensitive' },
-  { value: 'neck_sensitive', label: 'Neck Sensitive' },
-];
+import type { UserGoal, WeightUnit, BadgeWithStatus } from '@nexera/types';
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -65,26 +41,6 @@ interface Profile {
   full_name: string | null;
   email: string;
 }
-
-interface TrainingProfileState {
-  goal: UserGoal;
-  experience: ExperienceLevel;
-  units: WeightUnit;
-  preferred_rep_min: string;
-  preferred_rep_max: string;
-  limitations: string[];
-}
-
-const DEFAULT_TRAINING_PROFILE: TrainingProfileState = {
-  goal: 'general',
-  experience: 'beginner',
-  units: 'lbs',
-  preferred_rep_min: '',
-  preferred_rep_max: '',
-  limitations: [],
-};
-
-// ─── Enrichment Types ───────────────────────────────────
 
 interface LifetimeStats {
   totalWorkouts: number;
@@ -98,13 +54,6 @@ interface FavoriteMachine {
   count: number;
   slug: string;
 }
-
-const GOAL_EMOJI: Record<string, string> = {
-  strength: '\uD83C\uDFCB\uFE0F',
-  hypertrophy: '\uD83D\uDCAA',
-  endurance: '\uD83C\uDFC3',
-  general: '\uD83E\uDD38',
-};
 
 // ─── Breathing Animation Card ───────────────────────────
 
@@ -165,29 +114,26 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState('');
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('kg');
   const [error, setError] = useState<string | null>(null);
   const [totalPoints, setTotalPoints] = useState(0);
-  const [pointsEntries, setPointsEntries] = useState<PointsEntry[]>([]);
   const [gymId, setGymId] = useState<string | null>(null);
-  const [trainingProfile, setTrainingProfile] = useState<TrainingProfileState>(DEFAULT_TRAINING_PROFILE);
-  const [showTrainingProfile, setShowTrainingProfile] = useState(false);
   const [streak, setStreak] = useState<StreakResult | null>(null);
   const [badges, setBadges] = useState<BadgeWithStatus[]>([]);
-  const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>('overview');
 
   // Enrichment state
   const [lifetimeStats, setLifetimeStats] = useState<LifetimeStats | null>(null);
   const [memberSince, setMemberSince] = useState<string | null>(null);
   const [favoriteMachines, setFavoriteMachines] = useState<FavoriteMachine[]>([]);
   const [avgWorkoutsPerWeek, setAvgWorkoutsPerWeek] = useState<number | null>(null);
+  const [trainingGoal, setTrainingGoal] = useState<UserGoal | null>(null);
+
+  // New profile data
+  const [levelProgress, setLevelProgress] = useState<LevelProgress | null>(null);
+  const [dnaResult, setDnaResult] = useState<DNACacheResult | null>(null);
+  const [muscleMapResult, setMuscleMapResult] = useState<MuscleMapCacheResult | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -225,7 +171,7 @@ export default function ProfileScreen() {
       const savedUnit = await getWeightUnit();
       setWeightUnit(savedUnit);
 
-      // Load points ledger
+      // Load gym membership
       const { data: memberData } = await supabase
         .from('gym_members')
         .select('gym_id')
@@ -235,12 +181,13 @@ export default function ProfileScreen() {
 
       if (memberData?.gym_id) {
         setGymId(memberData.gym_id);
+
+        // Load points
         try {
           const summary = await getPointsSummary(user.id, memberData.gym_id);
           setTotalPoints(summary.total);
-          setPointsEntries(summary.entries.slice(0, 5));
         } catch {
-          // Points are non-critical — ignore errors
+          // Non-critical
         }
 
         // Load streak data
@@ -263,31 +210,35 @@ export default function ProfileScreen() {
           }
         }
 
-        // Load training profile (check cache first)
-        const profileEnabled = isFeatureEnabled('training_profile_enabled');
-        setShowTrainingProfile(profileEnabled);
-
-        if (profileEnabled) {
-          await loadTrainingProfile(user.id, memberData.gym_id);
+        // Load training goal
+        try {
+          const { data: tpData } = await supabase
+            .from('user_training_profiles')
+            .select('goal')
+            .eq('profile_id', user.id)
+            .eq('gym_id', memberData.gym_id)
+            .maybeSingle();
+          setTrainingGoal((tpData?.goal as UserGoal | undefined) ?? null);
+        } catch {
+          // Non-critical
         }
 
-        // Load notification preferences
-        if (isFeatureEnabled('push_notifications')) {
-          try {
-            const { data: prefData } = await supabase
-              .from('notification_preferences')
-              .select('enabled')
-              .eq('profile_id', user.id)
-              .maybeSingle();
-            setNotificationsEnabled(prefData?.enabled ?? true);
-          } catch {
-            // Non-critical
-          }
-          setNotificationsLoaded(true);
-        }
-
-        // ─── Enrichment data ─────────────────────────────
+        // Load enrichment data
         await loadEnrichmentData(user.id, memberData.gym_id);
+
+        // Load new profile data (level, DNA, muscle map)
+        try {
+          const [level, dna, muscle] = await Promise.all([
+            fetchMemberLevel(user.id),
+            fetchDNAResult(user.id),
+            fetchMuscleMap(user.id),
+          ]);
+          setLevelProgress(level);
+          setDnaResult(dna);
+          setMuscleMapResult(muscle);
+        } catch {
+          // Non-critical — these are enhancement data
+        }
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -296,48 +247,9 @@ export default function ProfileScreen() {
     }
   }, []);
 
-  const loadTrainingProfile = async (userId: string, currentGymId: string) => {
-    try {
-      // Try local cache first
-      const cached = await AsyncStorage.getItem(TRAINING_PROFILE_CACHE_KEY);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached) as TrainingProfileState;
-          setTrainingProfile(parsed);
-        } catch {
-          await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
-        }
-      }
-
-      // Then fetch from server
-      const { data } = await supabase
-        .from('user_training_profiles')
-        .select('goal, experience, units, preferred_rep_min, preferred_rep_max, limitations')
-        .eq('profile_id', userId)
-        .eq('gym_id', currentGymId)
-        .maybeSingle();
-
-      if (data) {
-        const serverProfile: TrainingProfileState = {
-          goal: data.goal as UserGoal,
-          experience: data.experience as ExperienceLevel,
-          units: data.units as WeightUnit,
-          preferred_rep_min: data.preferred_rep_min?.toString() || '',
-          preferred_rep_max: data.preferred_rep_max?.toString() || '',
-          limitations: data.limitations || [],
-        };
-        setTrainingProfile(serverProfile);
-        await AsyncStorage.setItem(TRAINING_PROFILE_CACHE_KEY, JSON.stringify(serverProfile));
-      }
-    } catch {
-      // Non-critical
-    }
-  };
-
   const loadEnrichmentData = async (userId: string, currentGymId: string) => {
     try {
       const [workoutsResult, exercisesResult, memberResult] = await Promise.all([
-        // Completed workouts with timing
         supabase
           .from('workouts')
           .select('id, started_at, finished_at')
@@ -346,7 +258,6 @@ export default function ProfileScreen() {
           .order('started_at', { ascending: false })
           .limit(500),
 
-        // Exercises with sets for volume + favorite machine calculation
         supabase
           .from('workout_exercises')
           .select(`
@@ -358,7 +269,6 @@ export default function ProfileScreen() {
           .eq('workouts.profile_id', userId)
           .limit(500),
 
-        // Member since date
         supabase
           .from('gym_members')
           .select('created_at')
@@ -379,7 +289,7 @@ export default function ProfileScreen() {
       for (const w of workouts) {
         if (w.started_at && w.finished_at) {
           const mins = (new Date(w.finished_at).getTime() - new Date(w.started_at).getTime()) / 60000;
-          if (mins > 0 && mins < 300) totalTimeMinutes += mins; // cap at 5h per session
+          if (mins > 0 && mins < 300) totalTimeMinutes += mins;
         }
       }
 
@@ -446,163 +356,6 @@ export default function ProfileScreen() {
     setRefreshing(false);
   }, [loadProfile]);
 
-  const handleSaveName = async () => {
-    if (!profile) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      const { error: updateErr } = await supabase
-        .from('profiles')
-        .update({ full_name: nameInput.trim() })
-        .eq('id', profile.id);
-
-      if (updateErr) throw updateErr;
-
-      setProfile({ ...profile, full_name: nameInput.trim() });
-      setEditingName(false);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update name');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleToggleWeightUnit = async (newUnit: WeightUnit) => {
-    setWeightUnit(newUnit);
-    await saveWeightUnit(newUnit);
-  };
-
-  const handleToggleNotifications = async (enabled: boolean) => {
-    setNotificationsEnabled(enabled);
-    if (!profile) return;
-    try {
-      const { error: upsertErr } = await supabase.from('notification_preferences').upsert(
-        {
-          profile_id: profile.id,
-          enabled,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'profile_id' },
-      );
-      if (upsertErr) throw upsertErr;
-    } catch (err) {
-      console.warn('[profile] notification toggle failed:', err);
-      setNotificationsEnabled(!enabled);
-    }
-  };
-
-  const handleSaveTrainingProfile = async () => {
-    if (!profile || !gymId) return;
-
-    // Validate rep range
-    const minStr = trainingProfile.preferred_rep_min.trim();
-    const maxStr = trainingProfile.preferred_rep_max.trim();
-    const hasMin = minStr.length > 0;
-    const hasMax = maxStr.length > 0;
-
-    if (hasMin !== hasMax) {
-      Alert.alert('Invalid Range', 'Both min and max reps must be set, or both left empty.');
-      return;
-    }
-
-    if (hasMin && hasMax) {
-      const min = parseInt(minStr, 10);
-      const max = parseInt(maxStr, 10);
-
-      if (isNaN(min) || isNaN(max) || min < 1 || max > 30 || max < min) {
-        Alert.alert('Invalid Range', 'Rep range must be between 1-30, and min must be <= max.');
-        return;
-      }
-    }
-
-    try {
-      setSavingProfile(true);
-
-      const repMin = hasMin ? parseInt(minStr, 10) : null;
-      const repMax = hasMax ? parseInt(maxStr, 10) : null;
-
-      const { error: upsertErr } = await supabase
-        .from('user_training_profiles')
-        .upsert(
-          {
-            gym_id: gymId,
-            profile_id: profile.id,
-            goal: trainingProfile.goal,
-            experience: trainingProfile.experience,
-            units: trainingProfile.units,
-            preferred_rep_min: repMin,
-            preferred_rep_max: repMax,
-            limitations: trainingProfile.limitations,
-          },
-          { onConflict: 'gym_id,profile_id' },
-        );
-
-      if (upsertErr) throw upsertErr;
-
-      // Update local cache
-      await AsyncStorage.setItem(TRAINING_PROFILE_CACHE_KEY, JSON.stringify(trainingProfile));
-
-      // Also sync weight unit
-      await saveWeightUnit(trainingProfile.units);
-      setWeightUnit(trainingProfile.units);
-
-      Alert.alert('Saved', 'Training profile updated successfully.');
-    } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save training profile.');
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const toggleLimitation = (limitation: string) => {
-    setTrainingProfile((prev) => {
-      const has = prev.limitations.includes(limitation);
-      return {
-        ...prev,
-        limitations: has
-          ? prev.limitations.filter((l) => l !== limitation)
-          : [...prev.limitations, limitation],
-      };
-    });
-  };
-
-  const handleSignOut = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
-          await unregisterPushToken();
-          await supabase.auth.signOut();
-          router.replace('/auth');
-        },
-      },
-    ]);
-  };
-
-  const startEditName = () => {
-    setNameInput(profile?.full_name || '');
-    setEditingName(true);
-  };
-
-  const cancelEditName = () => {
-    setEditingName(false);
-    setNameInput('');
-  };
-
-  const getInitials = (name: string | null): string => {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return parts[0][0]?.toUpperCase() || '?';
-  };
-
   if (loading) {
     return <SkeletonGate loading={true} skeleton={<ProfileScreenSkeleton />}><View /></SkeletonGate>;
   }
@@ -629,511 +382,57 @@ export default function ProfileScreen() {
 
   return (
     <AnimatedScreen>
-    <ScrollView
-      style={styles.scrollContainer}
-      contentContainerStyle={styles.scrollContent}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-      }
-    >
-      {error && (
-        <View style={styles.errorBanner}>
-          <Text variant="caption" style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-
-      <View style={styles.avatarSection}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarText}>{getInitials(profile.full_name)}</Text>
-        </View>
-        <Text variant="heading" style={styles.profileName}>
-          {profile.full_name || 'No Name Set'}
-        </Text>
-        <Text variant="body" color="textSecondary">{profile.email}</Text>
-        {memberSince && (
-          <Text variant="caption" color="textSecondary" style={styles.memberSince}>
-            Member since {new Date(memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-          </Text>
-        )}
-      </View>
-
-      {/* ─── Lifetime Stats ──────────────────────────── */}
-      {lifetimeStats && lifetimeStats.totalWorkouts > 0 && (
-        <AnimatedCard index={0} style={styles.lifetimeCard}>
-          <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
-            Lifetime Stats
-          </Text>
-          <View style={styles.lifetimeGrid}>
-            <View style={styles.lifetimePill}>
-              <Text style={styles.lifetimeValue}>{lifetimeStats.totalWorkouts}</Text>
-              <Text variant="caption" color="textSecondary">workouts</Text>
-            </View>
-            <View style={styles.lifetimePill}>
-              <Text style={styles.lifetimeValue}>
-                {lifetimeStats.totalVolumeKg >= 1000
-                  ? `${(lifetimeStats.totalVolumeKg / 1000).toFixed(1)}t`
-                  : formatWeight(lifetimeStats.totalVolumeKg, weightUnit)}
-              </Text>
-              <Text variant="caption" color="textSecondary">volume</Text>
-            </View>
-            <View style={styles.lifetimePill}>
-              <Text style={styles.lifetimeValue}>{lifetimeStats.totalSets}</Text>
-              <Text variant="caption" color="textSecondary">sets</Text>
-            </View>
-            <View style={styles.lifetimePill}>
-              <Text style={styles.lifetimeValue}>
-                {lifetimeStats.totalTimeMinutes >= 60
-                  ? `${Math.floor(lifetimeStats.totalTimeMinutes / 60)}h`
-                  : `${lifetimeStats.totalTimeMinutes}m`}
-              </Text>
-              <Text variant="caption" color="textSecondary">time in gym</Text>
-            </View>
-          </View>
-        </AnimatedCard>
-      )}
-
-      {/* ─── Training Consistency ─────────────────────── */}
-      {avgWorkoutsPerWeek !== null && (
-        <AnimatedCard index={1} style={styles.consistencyCard}>
-          <View style={styles.consistencyRow}>
-            <View style={{ flex: 1 }}>
-              <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
-                Training Consistency
-              </Text>
-              <Text style={styles.consistencyValue}>
-                {avgWorkoutsPerWeek} workouts / week
-              </Text>
-            </View>
-            <View style={styles.consistencyBarBg}>
-              <View
-                style={[
-                  styles.consistencyBarFill,
-                  { width: `${Math.min(100, (avgWorkoutsPerWeek / 5) * 100)}%` },
-                ]}
-              />
-            </View>
-          </View>
-          <Text variant="caption" color="textSecondary">
-            {avgWorkoutsPerWeek >= 4
-              ? 'Elite consistency — you rarely miss a week.'
-              : avgWorkoutsPerWeek >= 3
-                ? 'Strong habit — keep this rhythm going.'
-                : avgWorkoutsPerWeek >= 2
-                  ? 'Solid foundation — an extra day would accelerate gains.'
-                  : 'Building momentum — consistency is the #1 factor for results.'}
-          </Text>
-        </AnimatedCard>
-      )}
-
-      {/* ─── Favorite Machines ────────────────────────── */}
-      {favoriteMachines.length > 0 && (
-        <AnimatedCard index={2} style={styles.favoritesCard}>
-          <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
-            Most Used Machines
-          </Text>
-          {favoriteMachines.map((m, i) => (
-            <TouchableOpacity
-              key={m.slug}
-              style={styles.favoriteRow}
-              onPress={() => router.push(`/machine/${m.slug}` as any)}
-            >
-              <Text style={styles.favoriteRank}>#{i + 1}</Text>
-              <Text variant="body" style={styles.favoriteName}>{m.name}</Text>
-              <Text variant="caption" color="textSecondary">{m.count}x</Text>
-            </TouchableOpacity>
-          ))}
-        </AnimatedCard>
-      )}
-
-      {/* ─── Goal Alignment ───────────────────────────── */}
-      {showTrainingProfile && trainingProfile.goal !== 'general' && (
-        <AnimatedCard index={3} style={styles.goalCard}>
-          <View style={styles.goalRow}>
-            <Text style={styles.goalEmoji}>{GOAL_EMOJI[trainingProfile.goal] ?? '\uD83C\uDFAF'}</Text>
-            <View style={{ flex: 1 }}>
-              <Text variant="caption" color="textSecondary" style={styles.enrichSectionTitle}>
-                Your Focus
-              </Text>
-              <Text variant="body" style={styles.goalText}>
-                {trainingProfile.goal === 'strength' && 'Training for strength — heavy loads, lower reps.'}
-                {trainingProfile.goal === 'hypertrophy' && 'Training for muscle growth — moderate loads, volume-focused.'}
-                {trainingProfile.goal === 'endurance' && 'Training for endurance — lighter loads, higher reps.'}
-              </Text>
-            </View>
-          </View>
-        </AnimatedCard>
-      )}
-
-      {streak && streak.currentStreak > 0 && (
-        <View style={styles.section}>
-          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Streak</Text>
-          <Card style={styles.streakCard}>
-            <View style={styles.streakRow}>
-              <Text style={styles.streakFlame}>{'\uD83D\uDD25'}</Text>
-              <View style={{ flex: 1 }}>
-                <Text variant="heading" style={styles.streakCount}>
-                  {streak.currentStreak} week{streak.currentStreak !== 1 ? 's' : ''}
-                </Text>
-                <Text variant="caption" color="textSecondary">
-                  Longest: {streak.longestStreak} week{streak.longestStreak !== 1 ? 's' : ''}
-                </Text>
-              </View>
-              {streak.bonusPoints > 0 && (
-                <View style={styles.streakBonusBadge}>
-                  <Text style={styles.streakBonusText}>+{streak.bonusPoints}</Text>
-                </View>
-              )}
-            </View>
-            {!streak.currentWeekActive && (
-              <Text variant="caption" style={styles.streakNudge}>
-                Work out this week to keep your streak!
-              </Text>
-            )}
-          </Card>
-        </View>
-      )}
-
-      {badges.length > 0 && (
-        <View style={styles.section}>
-          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
-            Badges ({badges.filter((b) => b.unlocked).length}/{badges.length})
-          </Text>
-          <Card style={styles.card}>
-            <View style={styles.badgeGrid}>
-              {badges.map((badge) => (
-                <TouchableOpacity
-                  key={badge.id}
-                  style={[styles.badgeCell, !badge.unlocked && styles.badgeLocked]}
-                  onPress={() => setSelectedBadge(badge)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.badgeEmoji}>
-                    {badge.unlocked ? badge.icon_emoji : '\uD83D\uDD12'}
-                  </Text>
-                  <Text
-                    style={[styles.badgeName, !badge.unlocked && styles.badgeNameLocked]}
-                    numberOfLines={1}
-                  >
-                    {badge.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Card>
-        </View>
-      )}
-
-      {/* Badge Detail Modal */}
-      <Modal
-        visible={selectedBadge !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedBadge(null)}
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
       >
-        <TouchableOpacity
-          style={styles.badgeModalOverlay}
-          activeOpacity={1}
-          onPress={() => setSelectedBadge(null)}
-        >
-          <View style={styles.badgeModalContent}>
-            <Text style={styles.badgeModalEmoji}>
-              {selectedBadge?.unlocked ? selectedBadge.icon_emoji : '\uD83D\uDD12'}
-            </Text>
-            <Text style={styles.badgeModalName}>{selectedBadge?.name}</Text>
-            {selectedBadge && (
-              <View style={[
-                styles.badgeRarityTag,
-                { backgroundColor: (RARITY_COLORS[selectedBadge.rarity] ?? colors.textSecondary) + '20' },
-              ]}>
-                <Text style={[
-                  styles.badgeRarityText,
-                  { color: RARITY_COLORS[selectedBadge.rarity] ?? colors.textSecondary },
-                ]}>
-                  {RARITY_LABELS[selectedBadge.rarity] ?? selectedBadge.rarity}
-                </Text>
-              </View>
-            )}
-            <Text style={styles.badgeModalDesc}>{selectedBadge?.description}</Text>
-            {selectedBadge?.unlocked && selectedBadge.unlocked_at && (
-              <Text style={styles.badgeModalDate}>
-                Unlocked {new Date(selectedBadge.unlocked_at).toLocaleDateString()}
-              </Text>
-            )}
-            {selectedBadge && !selectedBadge.unlocked && (
-              <Text style={styles.badgeModalLocked}>Keep going to unlock this badge!</Text>
-            )}
-            <TouchableOpacity
-              style={styles.badgeModalClose}
-              onPress={() => setSelectedBadge(null)}
-            >
-              <Text style={styles.badgeModalCloseText}>Close</Text>
-            </TouchableOpacity>
+        {error && (
+          <View style={styles.errorBanner}>
+            <Text variant="caption" style={styles.errorText}>{error}</Text>
           </View>
-        </TouchableOpacity>
-      </Modal>
+        )}
 
-      <View style={styles.section}>
-        <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Edit Profile</Text>
-        <Card style={styles.card}>
-          <Text variant="caption" color="textSecondary" style={styles.fieldLabel}>Full Name</Text>
-          {editingName ? (
-            <View style={styles.editRow}>
-              <TextInput
-                style={styles.editInput}
-                value={nameInput}
-                onChangeText={setNameInput}
-                placeholder="Enter your full name"
-                placeholderTextColor={colors.textSecondary}
-                autoFocus
-                editable={!saving}
-              />
-              <View style={styles.editActions}>
-                <Button
-                  title="Save"
-                  onPress={handleSaveName}
-                  loading={saving}
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title="Cancel"
-                  onPress={cancelEditName}
-                  variant="outline"
-                  disabled={saving}
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.fieldRow} onPress={startEditName}>
-              <Text variant="body" style={styles.fieldValue}>
-                {profile.full_name || 'Tap to set name'}
-              </Text>
-              <Text variant="body" color="primary" style={styles.editIndicator}>Edit</Text>
-            </TouchableOpacity>
-          )}
-        </Card>
-      </View>
-
-      <View style={styles.section}>
-        <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Preferences</Text>
-        <Card style={styles.card}>
-          <View style={styles.preferenceRow}>
-            <Text variant="body" style={styles.preferenceLabel}>Weight Unit</Text>
-            <View style={styles.toggleContainer}>
-              <TouchableOpacity
-                style={[styles.toggleOption, weightUnit === 'kg' && styles.toggleOptionActive]}
-                onPress={() => handleToggleWeightUnit('kg')}
-              >
-                <Text
-                  style={[styles.toggleOptionText, weightUnit === 'kg' && styles.toggleOptionTextActive]}
-                >
-                  kg
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toggleOption, weightUnit === 'lbs' && styles.toggleOptionActive]}
-                onPress={() => handleToggleWeightUnit('lbs')}
-              >
-                <Text
-                  style={[styles.toggleOptionText, weightUnit === 'lbs' && styles.toggleOptionTextActive]}
-                >
-                  lbs
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          {notificationsLoaded && (
-            <View style={[styles.preferenceRow, { marginTop: spacing.md }]}>
-              <Text variant="body" style={styles.preferenceLabel}>Notifications</Text>
-              <View style={styles.toggleContainer}>
-                <TouchableOpacity
-                  style={[styles.toggleOption, notificationsEnabled && styles.toggleOptionActive]}
-                  onPress={() => handleToggleNotifications(true)}
-                >
-                  <Text
-                    style={[styles.toggleOptionText, notificationsEnabled && styles.toggleOptionTextActive]}
-                  >
-                    On
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggleOption, !notificationsEnabled && styles.toggleOptionActive]}
-                  onPress={() => handleToggleNotifications(false)}
-                >
-                  <Text
-                    style={[styles.toggleOptionText, !notificationsEnabled && styles.toggleOptionTextActive]}
-                  >
-                    Off
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </Card>
-      </View>
-
-      {gymId && (
-        <View style={styles.section}>
-          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Points</Text>
-          <Card style={styles.card}>
-            <View style={styles.pointsHeader}>
-              <Text variant="heading" style={styles.pointsTotal}>{totalPoints.toLocaleString()}</Text>
-              <Text variant="caption" color="textSecondary">total points</Text>
-            </View>
-            {pointsEntries.length > 0 ? (
-              pointsEntries.map((entry) => (
-                <View key={entry.id} style={styles.pointsRow}>
-                  <Text variant="body" style={styles.pointsReason}>
-                    {formatPointsReason(entry.reason)}
-                  </Text>
-                  <Text variant="label" color="primary">+{entry.points}</Text>
-                </View>
-              ))
-            ) : (
-              <Text variant="caption" color="textSecondary" style={styles.pointsEmpty}>
-                Complete workouts to earn points!
-              </Text>
-            )}
-          </Card>
-        </View>
-      )}
-
-      {showTrainingProfile && gymId && (
-        <View style={styles.section}>
-          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
-            Training Profile
-          </Text>
-          <Card style={styles.card}>
-            {/* Goal */}
-            <Text variant="caption" color="textSecondary" style={styles.fieldLabel}>Goal</Text>
-            <View style={styles.chipRow}>
-              {GOAL_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[styles.chip, trainingProfile.goal === opt.value && styles.chipActive]}
-                  onPress={() => setTrainingProfile((p) => ({ ...p, goal: opt.value }))}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      trainingProfile.goal === opt.value && styles.chipTextActive,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Experience */}
-            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-              Experience
-            </Text>
-            <View style={styles.chipRow}>
-              {EXPERIENCE_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[styles.chip, trainingProfile.experience === opt.value && styles.chipActive]}
-                  onPress={() => setTrainingProfile((p) => ({ ...p, experience: opt.value }))}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      trainingProfile.experience === opt.value && styles.chipTextActive,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Units */}
-            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-              Units
-            </Text>
-            <View style={styles.chipRow}>
-              {(['kg', 'lbs'] as WeightUnit[]).map((u) => (
-                <TouchableOpacity
-                  key={u}
-                  style={[styles.chip, trainingProfile.units === u && styles.chipActive]}
-                  onPress={() => setTrainingProfile((p) => ({ ...p, units: u }))}
-                >
-                  <Text
-                    style={[styles.chipText, trainingProfile.units === u && styles.chipTextActive]}
-                  >
-                    {u}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Rep Range */}
-            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-              Preferred Rep Range (optional)
-            </Text>
-            <View style={styles.repRangeRow}>
-              <TextInput
-                style={styles.repInput}
-                value={trainingProfile.preferred_rep_min}
-                onChangeText={(v) => setTrainingProfile((p) => ({ ...p, preferred_rep_min: v }))}
-                placeholder="Min"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
-              <Text variant="body" color="textSecondary"> - </Text>
-              <TextInput
-                style={styles.repInput}
-                value={trainingProfile.preferred_rep_max}
-                onChangeText={(v) => setTrainingProfile((p) => ({ ...p, preferred_rep_max: v }))}
-                placeholder="Max"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
-            </View>
-
-            {/* Limitations */}
-            <Text variant="caption" color="textSecondary" style={[styles.fieldLabel, { marginTop: spacing.md }]}>
-              Limitations
-            </Text>
-            <View style={styles.chipRow}>
-              {LIMITATION_OPTIONS.map((opt) => {
-                const selected = trainingProfile.limitations.includes(opt.value);
-                return (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={[styles.chip, selected && styles.chipActive]}
-                    onPress={() => toggleLimitation(opt.value)}
-                  >
-                    <Text style={[styles.chipText, selected && styles.chipTextActive]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <Button
-              title="Save Training Profile"
-              onPress={handleSaveTrainingProfile}
-              loading={savingProfile}
-              style={{ marginTop: spacing.lg }}
-            />
-          </Card>
-        </View>
-      )}
-
-      <View style={styles.section}>
-        <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>Account</Text>
-        <Button
-          title="Sign Out"
-          onPress={handleSignOut}
-          style={{ backgroundColor: colors.error }}
+        <ProfileHeader
+          fullName={profile.full_name}
+          email={profile.email}
+          memberSince={memberSince}
+          levelProgress={levelProgress}
+          streak={streak?.currentStreak ?? 0}
+          totalSessions={lifetimeStats?.totalWorkouts ?? 0}
         />
-      </View>
-    </ScrollView>
+
+        <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {activeTab === 'overview' && (
+          <OverviewTab
+            lifetimeStats={lifetimeStats}
+            avgWorkoutsPerWeek={avgWorkoutsPerWeek}
+            favoriteMachines={favoriteMachines}
+            trainingGoal={trainingGoal}
+            weightUnit={weightUnit}
+            totalPoints={totalPoints}
+          />
+        )}
+
+        {activeTab === 'achievements' && (
+          <AchievementsTab
+            badges={badges}
+            streak={streak}
+            totalPoints={totalPoints}
+          />
+        )}
+
+        {activeTab === 'dna' && (
+          <DNATab dna={dnaResult} />
+        )}
+
+        {activeTab === 'bodymap' && (
+          <BodyMapTab muscleMap={muscleMapResult} />
+        )}
+      </ScrollView>
     </AnimatedScreen>
   );
 }
@@ -1154,9 +453,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  loadingText: {
-    marginTop: spacing.sm,
-  },
   signInCard: {
     padding: spacing.xl,
     alignItems: 'center',
@@ -1168,104 +464,6 @@ const styles = StyleSheet.create({
   signInSubtitle: {
     textAlign: 'center',
     marginBottom: spacing.xl,
-  },
-  avatarSection: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  avatarCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  avatarText: {
-    color: colors.white,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  profileName: {
-    marginBottom: spacing.xs,
-  },
-  section: {
-    marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.xs,
-    paddingHorizontal: 4,
-  },
-  card: {
-    padding: spacing.md,
-  },
-  fieldLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    marginBottom: spacing.xs,
-  },
-  fieldRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  fieldValue: {
-    flex: 1,
-  },
-  editIndicator: {
-    fontWeight: '600',
-    marginLeft: spacing.md,
-  },
-  editRow: {
-    gap: spacing.md,
-  },
-  editInput: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-    color: colors.text,
-  },
-  editActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  preferenceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  preferenceLabel: {
-    fontWeight: '500',
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    padding: 3,
-  },
-  toggleOption: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: 8,
-  },
-  toggleOptionActive: {
-    backgroundColor: colors.primary,
-  },
-  toggleOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  toggleOptionTextActive: {
-    color: colors.white,
   },
   fullWidth: {
     width: '100%',
@@ -1279,294 +477,5 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.error,
     textAlign: 'center',
-  },
-  pointsHeader: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  pointsTotal: {
-    fontSize: 40,
-    fontWeight: '700',
-    color: colors.primary,
-    lineHeight: 44,
-  },
-  pointsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  pointsReason: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  pointsEmpty: {
-    textAlign: 'center',
-    paddingVertical: spacing.md,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  chipTextActive: {
-    color: colors.white,
-  },
-  repRangeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  repInput: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-    color: colors.text,
-    width: 70,
-    textAlign: 'center',
-  },
-  // Enrichment styles
-  memberSince: {
-    marginTop: spacing.xs,
-    fontStyle: 'italic',
-  },
-  enrichSectionTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-    fontSize: 11,
-    marginBottom: spacing.xs,
-  },
-  lifetimeCard: {
-    marginBottom: spacing.md,
-  },
-  lifetimeGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  lifetimePill: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  lifetimeValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  consistencyCard: {
-    marginBottom: spacing.md,
-  },
-  consistencyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  consistencyValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  consistencyBarBg: {
-    width: 60,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-    overflow: 'hidden',
-  },
-  consistencyBarFill: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-  },
-  favoritesCard: {
-    marginBottom: spacing.md,
-  },
-  favoriteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  favoriteRank: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.primary,
-    width: 30,
-  },
-  favoriteName: {
-    flex: 1,
-    fontWeight: '500',
-  },
-  goalCard: {
-    marginBottom: spacing.md,
-  },
-  goalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  goalEmoji: {
-    fontSize: 32,
-  },
-  goalText: {
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  // Streak styles
-  streakCard: {
-    padding: spacing.md,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.amber,
-  },
-  streakRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  streakFlame: {
-    fontSize: 32,
-  },
-  streakCount: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.amber,
-    lineHeight: 26,
-  },
-  streakBonusBadge: {
-    backgroundColor: colors.amber,
-    borderRadius: 12,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  streakBonusText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  streakNudge: {
-    marginTop: spacing.sm,
-    color: colors.amber,
-    fontStyle: 'italic',
-  },
-  // Badge styles
-  badgeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  badgeCell: {
-    width: '22%',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  badgeLocked: {
-    opacity: 0.4,
-  },
-  badgeEmoji: {
-    fontSize: 28,
-    marginBottom: 4,
-  },
-  badgeName: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-  },
-  badgeNameLocked: {
-    color: colors.textSecondary,
-  },
-  badgeModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  badgeModalContent: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: spacing.xl,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 320,
-  },
-  badgeModalEmoji: {
-    fontSize: 56,
-    marginBottom: spacing.md,
-  },
-  badgeModalName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  badgeRarityTag: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: spacing.md,
-  },
-  badgeRarityText: {
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  badgeModalDesc: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: spacing.md,
-  },
-  badgeModalDate: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: spacing.md,
-  },
-  badgeModalLocked: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-    marginBottom: spacing.md,
-  },
-  badgeModalClose: {
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-  },
-  badgeModalCloseText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '600',
   },
 });
