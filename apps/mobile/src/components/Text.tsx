@@ -13,8 +13,8 @@ interface TextProps {
 }
 
 const variantStyles: Record<TextVariant, TextStyle> = {
-    heading: { fontSize: 24, fontWeight: '700', color: colors.dark },
-    subheading: { fontSize: 18, fontWeight: '600', color: colors.dark },
+    heading: { fontSize: 24, fontWeight: '700', color: colors.text },
+    subheading: { fontSize: 18, fontWeight: '600', color: colors.text },
     body: { fontSize: 15, fontWeight: '400', color: colors.text },
     caption: { fontSize: 13, fontWeight: '400', color: colors.textSecondary },
     label: { fontSize: 13, fontWeight: '600', color: colors.text },

@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   ackButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },

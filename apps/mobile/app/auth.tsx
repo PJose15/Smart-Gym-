@@ -59,7 +59,7 @@ function getPasswordStrength(pw: string): { level: PasswordStrength; score: numb
 
 const STRENGTH_COLORS: Record<PasswordStrength, string> = {
   weak: colors.error,
-  fair: '#e9c46a',
+  fair: colors.gold,
   strong: colors.success,
 };
 
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   errorBanner: {
-    backgroundColor: '#fce4e6',
+    backgroundColor: colors.errorSubtle,
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,

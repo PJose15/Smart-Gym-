@@ -58,9 +58,9 @@ export function MiniChart({
         withShadow={false}
         fromZero={false}
         chartConfig={{
-          backgroundColor: colors.white,
-          backgroundGradientFrom: colors.white,
-          backgroundGradientTo: colors.white,
+          backgroundColor: colors.surface,
+          backgroundGradientFrom: colors.surface,
+          backgroundGradientTo: colors.surface,
           decimalPlaces: 0,
           color: () => color,
           labelColor: () => colors.textSecondary,
@@ -68,7 +68,7 @@ export function MiniChart({
             r: '4',
             strokeWidth: '2',
             stroke: color,
-            fill: colors.white,
+            fill: colors.surface,
           },
           propsForLabels: {
             fontSize: 10,

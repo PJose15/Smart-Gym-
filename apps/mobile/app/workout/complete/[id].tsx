@@ -38,6 +38,7 @@ import { sendLocalNotification } from '../../../src/lib/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
 import { AnimatedNumber } from '../../../src/components/AnimatedNumber';
+import { colors } from '../../../src/theme/colors';
 
 function computeSummary(
   workout: Workout,
@@ -173,12 +174,12 @@ function getTimeOfDayLabel(finishedAt: string | null): { label: string; emoji: s
 // ─── Intensity Level ────────────────────────────────────
 
 function getIntensityLevel(volumeKg: number, durationMin: number): { level: string; color: string; ratio: number } {
-  if (durationMin <= 0) return { level: 'N/A', color: '#6c757d', ratio: 0 };
+  if (durationMin <= 0) return { level: 'N/A', color: colors.textSecondary, ratio: 0 };
   const vpm = volumeKg / durationMin;
-  if (vpm < 20) return { level: 'Light', color: '#2a9d8f', ratio: 0.25 };
-  if (vpm < 50) return { level: 'Moderate', color: '#e9c46a', ratio: 0.5 };
-  if (vpm < 100) return { level: 'High', color: '#e76f51', ratio: 0.75 };
-  return { level: 'Beast Mode', color: '#e63946', ratio: 1.0 };
+  if (vpm < 20) return { level: 'Light', color: colors.success, ratio: 0.25 };
+  if (vpm < 50) return { level: 'Moderate', color: colors.gold, ratio: 0.5 };
+  if (vpm < 100) return { level: 'High', color: colors.amber, ratio: 0.75 };
+  return { level: 'Beast Mode', color: colors.error, ratio: 1.0 };
 }
 
 // ─── Motivational Messages ──────────────────────────────
@@ -595,7 +596,7 @@ export default function WorkoutCompleteScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4361ee" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading summary...</Text>
       </View>
     );
@@ -842,9 +843,9 @@ export default function WorkoutCompleteScreen() {
             <View key={i} style={styles.guardrailCard}>
               <View style={[
                 styles.guardrailSeverityBar,
-                g.severity === 'high' ? { backgroundColor: '#e63946' }
-                  : g.severity === 'medium' ? { backgroundColor: '#ffa726' }
-                  : { backgroundColor: '#66bb6a' },
+                g.severity === 'high' ? { backgroundColor: colors.error }
+                  : g.severity === 'medium' ? { backgroundColor: colors.amber }
+                  : { backgroundColor: colors.success },
               ]} />
               <View style={styles.guardrailCardContent}>
                 <Text style={styles.guardrailMessage}>{g.message}</Text>
@@ -914,7 +915,7 @@ export default function WorkoutCompleteScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -928,21 +929,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
 
   // Loading / Error
   loadingText: {
     fontSize: 16,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginTop: 12,
   },
   errorIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#e63946',
-    color: '#ffffff',
+    backgroundColor: colors.error,
+    color: colors.white,
     textAlign: 'center',
     lineHeight: 48,
     fontSize: 24,
@@ -953,24 +954,24 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
-    color: '#6c757d',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 12,
   },
   retryButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -979,7 +980,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   homeButtonOutlineText: {
-    color: '#4361ee',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -989,14 +990,14 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#2a9d8f',
+    backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
   checkText: {
     fontSize: 40,
-    color: '#ffffff',
+    color: colors.white,
     fontWeight: '700',
     lineHeight: 44,
   },
@@ -1005,7 +1006,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     marginBottom: 28,
   },
 
@@ -1020,49 +1021,49 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '46%',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
   },
   statValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#3a0ca3',
+    color: colors.primaryDark,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
 
   // Duration
   durationContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
     marginBottom: 32,
     width: '100%',
   },
   durationLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   durationValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
   },
 
   // ─── Phase 2.5: AI Insight Styles ───────────────────
@@ -1075,11 +1076,11 @@ const styles = StyleSheet.create({
 
   // PR Callout
   prContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#ffd700',
+    borderColor: colors.gold,
   },
   prHeader: {
     flexDirection: 'row',
@@ -1093,17 +1094,17 @@ const styles = StyleSheet.create({
   prTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#b8860b',
+    color: colors.goldDark,
   },
   prRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#fff3cd',
+    borderTopColor: colors.goldSubtle,
   },
   prTypeBadge: {
-    backgroundColor: '#ffd700',
+    backgroundColor: colors.gold,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -1112,18 +1113,18 @@ const styles = StyleSheet.create({
   prTypeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#5c4813',
+    color: colors.textInverse,
   },
   prExercise: {
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#1a1a2e',
+    color: colors.text,
   },
   prValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#b8860b',
+    color: colors.goldDark,
   },
 
   // Comparison Badges
@@ -1138,42 +1139,42 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   badgeUp: {
-    backgroundColor: '#d4edda',
+    backgroundColor: colors.successSubtle,
   },
   badgeDown: {
-    backgroundColor: '#f8d7da',
+    backgroundColor: colors.errorSubtle,
   },
   badgeNeutral: {
-    backgroundColor: '#e2e3e5',
+    backgroundColor: colors.surfaceHighest,
   },
   badgeTextUp: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#155724',
+    color: colors.success,
   },
   badgeTextDown: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#721c24',
+    color: colors.error,
   },
   badgeTextNeutral: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#383d41',
+    color: colors.textSecondary,
   },
 
   // Top Exercises
   topExercisesContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
   },
   topExercisesTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     marginBottom: 12,
   },
   topExerciseRow: {
@@ -1181,58 +1182,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f1f3f5',
+    borderTopColor: colors.borderSubtle,
   },
   topExerciseRank: {
     width: 24,
     fontSize: 16,
     fontWeight: '700',
-    color: '#3a0ca3',
+    color: colors.primaryDark,
   },
   topExerciseName: {
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#1a1a2e',
+    color: colors.text,
   },
   topExerciseVolume: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
 
   // Insight Card
   insightCard: {
-    backgroundColor: '#edf2ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 12,
     padding: 16,
   },
   insightCardText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1a1a2e',
+    color: colors.text,
     lineHeight: 22,
   },
 
   // Next Time Suggestion
   nextTimeSuggestion: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
   },
   nextTimeLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 6,
   },
   nextTimeText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1a1a2e',
+    color: colors.text,
     lineHeight: 22,
   },
 
@@ -1245,13 +1246,13 @@ const styles = StyleSheet.create({
   guardrailTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#e65100',
+    color: colors.amber,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   guardrailCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff8e1',
+    backgroundColor: colors.goldSubtle,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -1264,13 +1265,13 @@ const styles = StyleSheet.create({
   },
   guardrailMessage: {
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
     lineHeight: 20,
   },
 
   // Back to Home
   backToHomeButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 12,
@@ -1278,24 +1279,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backToHomeText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 18,
     fontWeight: '700',
   },
   // Phase 3: Coaching
   coachingSection: {
     width: '100%',
-    backgroundColor: '#f0f4ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 14,
     padding: 18,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#d0dafe',
+    borderColor: colors.border,
   },
   coachingSectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#4361ee',
+    color: colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
@@ -1303,7 +1304,7 @@ const styles = StyleSheet.create({
   coachingSectionMessage: {
     fontSize: 14,
     lineHeight: 21,
-    color: '#212529',
+    color: colors.text,
   },
   coachingActionsList: {
     marginTop: 10,
@@ -1318,13 +1319,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     marginTop: 6,
   },
   coachingActionItemText: {
     flex: 1,
     fontSize: 13,
-    color: '#212529',
+    color: colors.text,
     lineHeight: 18,
   },
   // Badge unlock styles
@@ -1336,23 +1337,23 @@ const styles = StyleSheet.create({
   badgeUnlockTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#b8860b',
+    color: colors.goldDark,
     textTransform: 'uppercase',
     textAlign: 'center',
     marginBottom: 8,
   },
   badgeUnlockCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#ffd700',
+    borderColor: colors.gold,
     alignItems: 'center',
   },
   badgeUnlockName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     textTransform: 'capitalize',
   },
 
@@ -1360,7 +1361,7 @@ const styles = StyleSheet.create({
   timeOfDayBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#edf2ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -1373,7 +1374,7 @@ const styles = StyleSheet.create({
   timeOfDayText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4361ee',
+    color: colors.primary,
   },
 
   // Workout Number
@@ -1383,7 +1384,7 @@ const styles = StyleSheet.create({
   workoutNumberText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -1391,11 +1392,11 @@ const styles = StyleSheet.create({
   // Intensity Meter
   intensityContainer: {
     width: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
     marginBottom: 16,
   },
   intensityHeader: {
@@ -1407,7 +1408,7 @@ const styles = StyleSheet.create({
   intensityLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   intensityLevel: {
@@ -1416,7 +1417,7 @@ const styles = StyleSheet.create({
   },
   intensityBarBg: {
     height: 8,
-    backgroundColor: '#f1f3f5',
+    backgroundColor: colors.surfaceHighest,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -1435,23 +1436,23 @@ const styles = StyleSheet.create({
   },
   averageChip: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
   },
   averageValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#3a0ca3',
+    color: colors.primaryDark,
     marginBottom: 2,
   },
   averageLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
 
@@ -1465,7 +1466,7 @@ const styles = StyleSheet.create({
   motivationalText: {
     fontSize: 14,
     fontStyle: 'italic',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

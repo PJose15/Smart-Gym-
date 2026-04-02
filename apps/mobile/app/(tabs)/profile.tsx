@@ -843,11 +843,11 @@ export default function ProfileScreen() {
             {selectedBadge && (
               <View style={[
                 styles.badgeRarityTag,
-                { backgroundColor: (RARITY_COLORS[selectedBadge.rarity] ?? '#6c757d') + '20' },
+                { backgroundColor: (RARITY_COLORS[selectedBadge.rarity] ?? colors.textSecondary) + '20' },
               ]}>
                 <Text style={[
                   styles.badgeRarityText,
-                  { color: RARITY_COLORS[selectedBadge.rarity] ?? '#6c757d' },
+                  { color: RARITY_COLORS[selectedBadge.rarity] ?? colors.textSecondary },
                 ]}>
                   {RARITY_LABELS[selectedBadge.rarity] ?? selectedBadge.rarity}
                 </Text>
@@ -1271,7 +1271,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   errorBanner: {
-    backgroundColor: '#fce4e6',
+    backgroundColor: colors.errorSubtle,
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -1444,7 +1444,7 @@ const styles = StyleSheet.create({
   streakCard: {
     padding: spacing.md,
     borderLeftWidth: 4,
-    borderLeftColor: '#ff6b35',
+    borderLeftColor: colors.amber,
   },
   streakRow: {
     flexDirection: 'row',
@@ -1457,11 +1457,11 @@ const styles = StyleSheet.create({
   streakCount: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#ff6b35',
+    color: colors.amber,
     lineHeight: 26,
   },
   streakBonusBadge: {
-    backgroundColor: '#ff6b35',
+    backgroundColor: colors.amber,
     borderRadius: 12,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
@@ -1473,7 +1473,7 @@ const styles = StyleSheet.create({
   },
   streakNudge: {
     marginTop: spacing.sm,
-    color: '#ff6b35',
+    color: colors.amber,
     fontStyle: 'italic',
   },
   // Badge styles

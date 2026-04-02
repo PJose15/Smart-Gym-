@@ -387,11 +387,11 @@ export default function ExerciseDetailScreen() {
         {progressPercent !== null && Math.abs(progressPercent) >= 1 && (
           <View style={[
             styles.progressCallout,
-            { backgroundColor: progressPercent >= 0 ? '#d4edda' : '#f8d7da' },
+            { backgroundColor: progressPercent >= 0 ? colors.successSubtle : colors.errorSubtle },
           ]}>
             <Text style={[
               styles.progressText,
-              { color: progressPercent >= 0 ? '#155724' : '#721c24' },
+              { color: progressPercent >= 0 ? colors.success : colors.error },
             ]}>
               {progressPercent >= 0 ? '+' : ''}{Math.round(progressPercent)}% weight improvement since first session
             </Text>
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.dark,
+    color: colors.text,
     marginBottom: 8,
   },
   emptySubtitle: {
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.surfaceHighest,
   },
   periodBtnActive: {
     backgroundColor: colors.primary,
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
   curveBarContainer: {
     flex: 1,
     height: 20,
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.surfaceHighest,
     borderRadius: 4,
     marginHorizontal: 8,
     overflow: 'hidden',

@@ -774,7 +774,7 @@ export default function HomeScreen() {
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
         }
       >
         {error && (
@@ -1205,7 +1205,7 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     alignItems: 'center' as const,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
   quickStatValue: {
     fontSize: 20,
@@ -1220,7 +1220,7 @@ const styles = StyleSheet.create({
   goalBanner: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    backgroundColor: '#eef2ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 20,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -1234,12 +1234,12 @@ const styles = StyleSheet.create({
   goalText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: '#4338ca',
+    color: colors.primaryDark,
   },
   goalBannerCta: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    backgroundColor: '#f5f3ff',
+    backgroundColor: colors.purpleSubtle,
     borderRadius: 20,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -1247,16 +1247,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#e0e7ff',
+    borderColor: colors.border,
   },
   goalCtaText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: '#6366f1',
+    color: colors.purple,
   },
   goalCtaArrow: {
     fontSize: 14,
-    color: '#6366f1',
+    color: colors.purple,
   },
   durationEstimate: {
     marginTop: -2,
@@ -1266,13 +1266,13 @@ const styles = StyleSheet.create({
   trainingTipCard: {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
-    backgroundColor: '#fffbeb',
+    backgroundColor: colors.goldSubtle,
     borderRadius: 12,
     padding: spacing.sm,
     gap: spacing.sm,
     marginTop: spacing.sm,
     borderWidth: 1,
-    borderColor: '#fef3c7',
+    borderColor: colors.goldSubtle,
   },
   trainingTipIcon: {
     fontSize: 16,
@@ -1281,11 +1281,11 @@ const styles = StyleSheet.create({
   trainingTipText: {
     flex: 1,
     fontSize: 13,
-    color: '#92400e',
+    color: colors.goldDark,
     lineHeight: 18,
   },
   errorBanner: {
-    backgroundColor: '#fce4e6',
+    backgroundColor: colors.errorSubtle,
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -1375,9 +1375,9 @@ const styles = StyleSheet.create({
   restDayCard: {
     padding: spacing.lg,
     alignItems: 'center' as const,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: colors.successSubtle,
     borderWidth: 1,
-    borderColor: '#bbf7d0',
+    borderColor: colors.successSubtle,
   },
   restDayEmoji: {
     fontSize: 36,
@@ -1386,7 +1386,7 @@ const styles = StyleSheet.create({
   restDayTitle: {
     fontWeight: '700' as const,
     fontSize: 18,
-    color: '#166534',
+    color: colors.success,
     marginBottom: spacing.xs,
   },
   restDaySubtitle: {
@@ -1395,19 +1395,19 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   restDayNextPreview: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     padding: spacing.md,
     width: '100%' as const,
     alignItems: 'center' as const,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
   restDayNextLabel: {
     fontSize: 10,
     fontWeight: '700' as const,
-    color: '#9ca3af',
+    color: colors.textDisabled,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
     marginBottom: 4,
@@ -1421,7 +1421,7 @@ const styles = StyleSheet.create({
   restDayTipBox: {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
-    backgroundColor: '#ecfdf5',
+    backgroundColor: colors.successSubtle,
     borderRadius: 10,
     padding: spacing.sm,
     width: '100%' as const,
@@ -1435,12 +1435,12 @@ const styles = StyleSheet.create({
   restDayTipText: {
     flex: 1,
     fontSize: 13,
-    color: '#166534',
+    color: colors.success,
     lineHeight: 18,
   },
   restDayCoaching: {
     width: '100%' as const,
-    backgroundColor: '#f0f4ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 10,
     padding: spacing.md,
     marginTop: spacing.xs,
@@ -1449,9 +1449,9 @@ const styles = StyleSheet.create({
   prBanner: {
     padding: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: '#fffbeb',
+    backgroundColor: colors.goldSubtle,
     borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
+    borderLeftColor: colors.gold,
   },
   prBannerHeader: {
     flexDirection: 'row' as const,
@@ -1466,11 +1466,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '700' as const,
-    color: '#92400e',
+    color: colors.goldDark,
   },
   prBannerDismiss: {
     fontSize: 16,
-    color: '#92400e',
+    color: colors.goldDark,
     opacity: 0.6,
     padding: 4,
   },
@@ -1481,7 +1481,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   prBannerTypeBadge: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: colors.goldSubtle,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -1489,7 +1489,7 @@ const styles = StyleSheet.create({
   prBannerTypeText: {
     fontSize: 11,
     fontWeight: '700' as const,
-    color: '#92400e',
+    color: colors.goldDark,
     textTransform: 'uppercase' as const,
   },
   prBannerExercise: {
@@ -1501,19 +1501,19 @@ const styles = StyleSheet.create({
   prBannerValue: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: '#92400e',
+    color: colors.goldDark,
   },
   // Weekly Progress Summary
   weeklyCard: {
     padding: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: '#f0faf7',
+    backgroundColor: colors.successSubtle,
     borderLeftWidth: 4,
-    borderLeftColor: '#2a9d8f',
+    borderLeftColor: colors.success,
   },
   weeklyTitle: {
     fontWeight: '700',
-    color: '#2a9d8f',
+    color: colors.success,
     marginBottom: spacing.sm,
     fontSize: 13,
     textTransform: 'uppercase' as const,
@@ -1531,29 +1531,29 @@ const styles = StyleSheet.create({
   weeklyStatValue: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: '#1a1a2e',
+    color: colors.text,
   },
   weeklyStatGoal: {
     fontSize: 16,
     fontWeight: '400' as const,
-    color: '#999',
+    color: colors.textMuted,
   },
   weeklyDivider: {
     width: 1,
     height: 32,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: colors.border,
   },
   weeklyBarBg: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: colors.border,
     overflow: 'hidden' as const,
     marginBottom: spacing.xs,
   },
   weeklyBarFill: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2a9d8f',
+    backgroundColor: colors.success,
   },
   weeklyBarLabel: {
     textAlign: 'center' as const,
@@ -1563,13 +1563,13 @@ const styles = StyleSheet.create({
   guardrailBanner: {
     padding: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: '#fff8e1',
+    backgroundColor: colors.amberSubtle,
     borderLeftWidth: 4,
-    borderLeftColor: '#ffa726',
+    borderLeftColor: colors.amber,
   },
   guardrailTitle: {
     fontWeight: '700',
-    color: '#e65100',
+    color: colors.amber,
     marginBottom: spacing.sm,
   },
   guardrailItem: {
@@ -1588,16 +1588,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
   },
   guardrailDotMedium: {
-    backgroundColor: '#ffa726',
+    backgroundColor: colors.amber,
   },
   guardrailDotLow: {
-    backgroundColor: '#66bb6a',
+    backgroundColor: colors.success,
   },
   guardrailMessage: {
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
-    color: '#333',
+    color: colors.textSecondary,
   },
   guardrailActions: {
     flexDirection: 'row',
@@ -1612,7 +1612,7 @@ const styles = StyleSheet.create({
   coachNotesBanner: {
     padding: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: colors.primarySubtle,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
   },
@@ -1636,7 +1636,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    backgroundColor: '#fff3e0',
+    backgroundColor: colors.amberSubtle,
     borderRadius: 20,
     alignSelf: 'flex-start',
   },
@@ -1647,23 +1647,23 @@ const styles = StyleSheet.create({
   streakBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ff6b35',
+    color: colors.amber,
   },
   streakBadgeNudge: {
     fontSize: 13,
-    color: '#ff6b35',
+    color: colors.amber,
     fontStyle: 'italic',
   },
   // Recent Badge CTA
   recentBadgeCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3e8ff',
+    backgroundColor: colors.purpleSubtle,
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: '#7b2ff7' + '30',
+    borderColor: colors.purple + '30',
     gap: spacing.sm,
   },
   recentBadgeEmoji: {
@@ -1672,7 +1672,7 @@ const styles = StyleSheet.create({
   recentBadgeTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#7b2ff7',
+    color: colors.purple,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
@@ -1686,7 +1686,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#edf2ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -1700,12 +1700,12 @@ const styles = StyleSheet.create({
   },
   // Phase 3: Coaching Card
   coachingCard: {
-    backgroundColor: '#f0f4ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 14,
     padding: spacing.md,
     marginTop: spacing.sm,
     borderWidth: 1,
-    borderColor: '#d0dafe',
+    borderColor: colors.border,
   },
   coachingTitle: {
     fontSize: 13,

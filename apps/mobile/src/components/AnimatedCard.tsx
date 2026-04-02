@@ -52,7 +52,7 @@ export function AnimatedCard({ children, index = 0, delay, style }: AnimatedCard
           padding: 16,
           shadowColor: colors.black,
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.12,
+          shadowOpacity: 0.4,
           shadowRadius: 8,
           elevation: 4,
           opacity,

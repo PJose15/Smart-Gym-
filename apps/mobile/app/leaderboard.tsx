@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.xs,
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   rowHighlight: {
-    backgroundColor: '#edf2ff',
+    backgroundColor: colors.primarySubtle,
     borderColor: colors.primary,
     borderWidth: 2,
   },
@@ -309,13 +309,13 @@ const styles = StyleSheet.create({
   points: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#3a0ca3',
+    color: colors.primaryDark,
   },
   pointsHighlight: {
     color: colors.primary,
   },
   errorBanner: {
-    backgroundColor: '#fce4e6',
+    backgroundColor: colors.errorSubtle,
     borderRadius: 12,
     padding: spacing.md,
     marginHorizontal: spacing.md,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   positionPoints: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#3a0ca3',
+    color: colors.primaryDark,
     marginBottom: 2,
   },
   positionGap: {

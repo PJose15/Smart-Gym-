@@ -30,6 +30,7 @@ import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlag
 import { trackEvent } from '../../src/lib/events';
 import { logAiDecision } from '../../src/lib/aiAudit';
 import { getWeightUnit } from '../../src/lib/weightUnit';
+import { colors } from '../../src/theme/colors';
 
 // ─── Helpers ────────────────────────────────────────────
 
@@ -44,17 +45,17 @@ function getConfidenceLabel(confidence: number): string {
 }
 
 function getConfidenceColor(confidence: number): string {
-  if (confidence >= 0.75) return '#2a9d8f';
-  if (confidence >= 0.4) return '#e9c46a';
-  return '#adb5bd';
+  if (confidence >= 0.75) return colors.success;
+  if (confidence >= 0.4) return colors.gold;
+  return colors.textDisabled;
 }
 
 // ─── Session intent config ─────────────────────────────
 
 const INTENT_CONFIG: Record<string, { label: string; color: string; emoji: string }> = {
-  light: { label: 'Light', color: '#2a9d8f', emoji: '\uD83C\uDF3F' },
-  maintain: { label: 'Maintain', color: '#e9c46a', emoji: '\u2696\uFE0F' },
-  push: { label: 'Push', color: '#e63946', emoji: '\uD83D\uDD25' },
+  light: { label: 'Light', color: colors.success, emoji: '\uD83C\uDF3F' },
+  maintain: { label: 'Maintain', color: colors.gold, emoji: '\u2696\uFE0F' },
+  push: { label: 'Push', color: colors.error, emoji: '\uD83D\uDD25' },
 };
 
 // ─── Sub-components ─────────────────────────────────────
@@ -202,7 +203,7 @@ function AddSetForm({
       <TextInput
         style={styles.addSetInput}
         placeholder="kg"
-        placeholderTextColor="#adb5bd"
+        placeholderTextColor={colors.textDisabled}
         keyboardType="numeric"
         value={weight}
         onChangeText={setWeight}
@@ -210,7 +211,7 @@ function AddSetForm({
       <TextInput
         style={styles.addSetInput}
         placeholder="reps"
-        placeholderTextColor="#adb5bd"
+        placeholderTextColor={colors.textDisabled}
         keyboardType="numeric"
         value={reps}
         onChangeText={setReps}
@@ -218,7 +219,7 @@ function AddSetForm({
       <TextInput
         style={[styles.addSetInput, styles.addSetInputSmall]}
         placeholder="RPE"
-        placeholderTextColor="#adb5bd"
+        placeholderTextColor={colors.textDisabled}
         keyboardType="numeric"
         value={rpe}
         onChangeText={setRpe}
@@ -230,7 +231,7 @@ function AddSetForm({
         disabled={isLogging}
       >
         {isLogging ? (
-          <ActivityIndicator size="small" color="#ffffff" />
+          <ActivityIndicator size="small" color={colors.white} />
         ) : (
           <Text style={styles.logSetButtonText}>Log</Text>
         )}
@@ -518,7 +519,7 @@ function AddExerciseModal({
             <TextInput
               style={styles.modalInput}
               placeholder="e.g. Bench Press"
-              placeholderTextColor="#adb5bd"
+              placeholderTextColor={colors.textDisabled}
               value={name}
               onChangeText={setName}
               autoFocus
@@ -574,7 +575,7 @@ function AddExerciseModal({
                 disabled={isAdding}
               >
                 {isAdding ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
+                  <ActivityIndicator size="small" color={colors.white} />
                 ) : (
                   <Text style={styles.modalAddText}>Add Exercise</Text>
                 )}
@@ -1218,7 +1219,7 @@ export default function ActiveWorkoutScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4361ee" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading workout...</Text>
       </View>
     );
@@ -1366,7 +1367,7 @@ export default function ActiveWorkoutScreen() {
           disabled={finishing}
         >
           {finishing ? (
-            <ActivityIndicator size="small" color="#ffffff" />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
             <Text style={styles.finishButtonText}>Finish Workout</Text>
           )}
@@ -1403,7 +1404,7 @@ export default function ActiveWorkoutScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -1417,7 +1418,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   workoutHeader: {
     flexDirection: 'row',
@@ -1427,17 +1428,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginBottom: 0,
   },
   elapsedContainer: {
     alignItems: 'center',
-    backgroundColor: '#4361ee15',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1445,11 +1446,11 @@ const styles = StyleSheet.create({
   elapsedTime: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#4361ee',
+    color: colors.primary,
   },
   elapsedLabel: {
     fontSize: 10,
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -1477,7 +1478,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 10,
     marginBottom: 10,
@@ -1494,16 +1495,16 @@ const styles = StyleSheet.create({
   liveStatValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
   },
   liveStatLabel: {
     fontSize: 11,
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   liveStatDivider: {
     width: 1,
     height: 28,
-    backgroundColor: '#dee2e6',
+    backgroundColor: colors.border,
   },
   // Session progress bar
   progressContainer: {
@@ -1516,33 +1517,33 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    color: '#6c757d',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   progressBarBg: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#dee2e6',
+    backgroundColor: colors.surfaceHighest,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
     borderRadius: 2,
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
   },
 
   // Loading / Error
   loadingText: {
     fontSize: 16,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginTop: 12,
   },
   errorIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#e63946',
-    color: '#ffffff',
+    backgroundColor: colors.error,
+    color: colors.white,
     textAlign: 'center',
     lineHeight: 48,
     fontSize: 24,
@@ -1553,24 +1554,24 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
-    color: '#6c757d',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 12,
   },
   retryButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1579,35 +1580,35 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButtonText: {
-    color: '#4361ee',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
 
   // Empty state
   emptyState: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
   },
   emptyStateText: {
     fontSize: 15,
-    color: '#6c757d',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 
   // Exercise Card
   exerciseCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
   },
   exerciseHeader: {
     marginBottom: 12,
@@ -1615,11 +1616,11 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
   },
   machineName: {
     fontSize: 13,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginTop: 2,
   },
 
@@ -1631,51 +1632,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: colors.border,
     marginBottom: 4,
   },
   setHeaderText: {
     flex: 1,
     fontSize: 12,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   setRow: {
     flexDirection: 'row',
     paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: colors.border,
   },
   setNumber: {
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: '#4361ee',
+    color: colors.primary,
   },
   setValue: {
     flex: 1,
     fontSize: 14,
-    color: '#212529',
+    color: colors.text,
   },
   setRpe: {
     flex: 1,
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   noSetsText: {
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.textSecondary,
     fontStyle: 'italic',
     marginBottom: 12,
   },
 
   // Suggestion Card
   suggestionCard: {
-    backgroundColor: '#f0f0ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#d0d0ff',
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
@@ -1688,7 +1689,7 @@ const styles = StyleSheet.create({
   suggestionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
   },
   confidenceBadge: {
     paddingHorizontal: 10,
@@ -1698,34 +1699,34 @@ const styles = StyleSheet.create({
   confidenceBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.white,
   },
   suggestionValues: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
     marginBottom: 6,
   },
   suggestionReason: {
     fontSize: 13,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   suggestionSafetyNote: {
     fontSize: 13,
-    color: '#e63946',
+    color: colors.error,
     fontStyle: 'italic',
     marginBottom: 8,
   },
   suggestionApplyButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 6,
   },
   suggestionApplyButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -1733,13 +1734,13 @@ const styles = StyleSheet.create({
   // Add Set
   addSetSection: {
     borderTopWidth: 1,
-    borderTopColor: '#dee2e6',
+    borderTopColor: colors.border,
     paddingTop: 12,
   },
   addSetLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
@@ -1752,18 +1753,18 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 16,
-    color: '#212529',
-    backgroundColor: '#f8f9fa',
+    color: colors.text,
+    backgroundColor: colors.surfaceElevated,
   },
   addSetInputSmall: {
     flex: 0.7,
   },
   logSetButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     height: 44,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -1771,27 +1772,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logSetButtonDisabled: {
-    backgroundColor: '#a0b0ee',
+    backgroundColor: colors.primaryLight,
   },
   logSetButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
 
   // Finish Button
   finishButton: {
-    backgroundColor: '#2a9d8f',
+    backgroundColor: colors.success,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
   },
   finishButtonDisabled: {
-    backgroundColor: '#8ecfc7',
+    backgroundColor: colors.successLight,
   },
   finishButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -1804,7 +1805,7 @@ const styles = StyleSheet.create({
     right: 16,
   },
   restTimerCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.surfaceHighest,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
@@ -1815,7 +1816,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   restTimerCardDone: {
-    backgroundColor: '#2a9d8f',
+    backgroundColor: colors.success,
   },
   restTimerLabel: {
     fontSize: 13,
@@ -1828,12 +1829,12 @@ const styles = StyleSheet.create({
   restTimerDisplay: {
     fontSize: 36,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.white,
     fontVariant: ['tabular-nums'],
     marginBottom: 8,
   },
   restTimerDisplayDone: {
-    color: '#ffffff',
+    color: colors.white,
   },
   restTimerDurations: {
     flexDirection: 'row',
@@ -1847,7 +1848,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   restDurationChipText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1869,7 +1870,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#3a0ca3',
+    backgroundColor: colors.primaryDark,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 6,
@@ -1880,7 +1881,7 @@ const styles = StyleSheet.create({
   },
   fabText: {
     fontSize: 28,
-    color: '#ffffff',
+    color: colors.white,
     fontWeight: '600',
     lineHeight: 30,
   },
@@ -1888,14 +1889,14 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   modalContainer: {
     width: '100%',
   },
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
@@ -1904,25 +1905,25 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     marginBottom: 20,
   },
   modalLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   modalInput: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     fontSize: 16,
-    color: '#212529',
-    backgroundColor: '#f8f9fa',
+    color: colors.text,
+    backgroundColor: colors.surfaceElevated,
     marginBottom: 16,
   },
   machineList: {
@@ -1934,24 +1935,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
     marginBottom: 8,
   },
   machineItemSelected: {
-    backgroundColor: '#4361ee',
-    borderColor: '#4361ee',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   machineItemText: {
     fontSize: 15,
-    color: '#212529',
+    color: colors.text,
   },
   machineItemTextSelected: {
-    color: '#ffffff',
+    color: colors.white,
     fontWeight: '600',
   },
   emptyMachineText: {
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.textSecondary,
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 12,
@@ -1966,32 +1967,32 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
   },
   modalCancelText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   modalAddButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
   },
   modalAddButtonDisabled: {
-    backgroundColor: '#a0b0ee',
+    backgroundColor: colors.primaryLight,
   },
   modalAddText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.white,
   },
 
   // ─── Form Checklist Styles ─────────────────────────
   checklistCard: {
-    backgroundColor: '#f0f4ff',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 10,
     padding: 12,
     marginTop: 8,
@@ -2000,7 +2001,7 @@ const styles = StyleSheet.create({
   checklistTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#4361ee',
+    color: colors.primary,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -2014,18 +2015,18 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 14,
-    backgroundColor: '#dde4ff',
+    backgroundColor: colors.surfaceHighest,
   },
   checklistTabActive: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
   },
   checklistTabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4361ee',
+    color: colors.primary,
   },
   checklistTabTextActive: {
-    color: '#ffffff',
+    color: colors.white,
   },
   checklistItem: {
     flexDirection: 'row',
@@ -2034,13 +2035,13 @@ const styles = StyleSheet.create({
   },
   checklistBullet: {
     fontSize: 14,
-    color: '#4361ee',
+    color: colors.primary,
     marginRight: 6,
     lineHeight: 18,
   },
   checklistItemText: {
     fontSize: 13,
-    color: '#1a1a2e',
+    color: colors.text,
     flex: 1,
     lineHeight: 18,
   },
@@ -2050,13 +2051,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginTop: 4,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 8,
   },
   feedbackLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginBottom: 6,
   },
   feedbackChips: {
@@ -2071,38 +2072,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackChipOk: {
-    backgroundColor: '#d4edda',
-    borderColor: '#28a745',
+    backgroundColor: colors.successSubtle,
+    borderColor: colors.success,
   },
   feedbackChipUnstable: {
-    backgroundColor: '#fff3cd',
-    borderColor: '#ffc107',
+    backgroundColor: colors.goldSubtle,
+    borderColor: colors.gold,
   },
   feedbackChipDiscomfort: {
-    backgroundColor: '#f8d7da',
-    borderColor: '#dc3545',
+    backgroundColor: colors.errorSubtle,
+    borderColor: colors.error,
   },
   feedbackChipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
   },
   feedbackBodyChip: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: '#e2e3e5',
+    backgroundColor: colors.surfaceHighest,
     borderWidth: 1,
-    borderColor: '#adb5bd',
+    borderColor: colors.border,
   },
   feedbackBodyChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#495057',
+    color: colors.textMuted,
   },
   feedbackDiscomfortWarning: {
     fontSize: 12,
-    color: '#dc3545',
+    color: colors.error,
     fontWeight: '600',
     marginBottom: 8,
     lineHeight: 18,
@@ -2115,24 +2116,24 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   safetyNudgeGentle: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: colors.primarySubtle,
     borderLeftWidth: 3,
-    borderLeftColor: '#42a5f5',
+    borderLeftColor: colors.primary,
   },
   safetyNudgeModerate: {
-    backgroundColor: '#fff8e1',
+    backgroundColor: colors.goldSubtle,
     borderLeftWidth: 3,
-    borderLeftColor: '#ffa726',
+    borderLeftColor: colors.gold,
   },
   safetyNudgeStrong: {
-    backgroundColor: '#fce4e6',
+    backgroundColor: colors.errorSubtle,
     borderLeftWidth: 3,
-    borderLeftColor: '#e53935',
+    borderLeftColor: colors.error,
   },
   safetyNudgeText: {
     fontSize: 13,
     lineHeight: 19,
-    color: '#333',
+    color: colors.text,
     fontWeight: '500',
   },
 });

@@ -68,7 +68,7 @@ export function Shimmer({ width, height, borderRadius = 4, style }: ShimmerProps
           width,
           height,
           borderRadius,
-          backgroundColor: colors.border,
+          backgroundColor: colors.surfaceHighest,
           overflow: 'hidden',
         },
         style,
@@ -90,7 +90,7 @@ export function Shimmer({ width, height, borderRadius = 4, style }: ShimmerProps
         ]}
       >
         <LinearGradient
-          colors={['transparent', 'rgba(255,255,255,0.45)', 'transparent']}
+          colors={['transparent', 'rgba(255,255,255,0.10)', 'transparent']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={styles.gradient}

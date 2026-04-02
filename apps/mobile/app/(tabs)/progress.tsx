@@ -27,6 +27,7 @@ import {
 } from '@nexera/utils';
 import type { TrendDataPoint, SessionForTrend } from '@nexera/utils';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
+import { colors } from '../../src/theme/colors';
 import { SkeletonGate, ProgressScreenSkeleton } from '../../src/components/skeleton';
 import { MiniChart } from '../../src/components/MiniChart';
 import type { WorkoutSet } from '@nexera/types';
@@ -408,7 +409,7 @@ export default function ProgressScreen() {
   }, [calendarDates]);
 
   const trendBadgeColor = (dir: 'increasing' | 'decreasing' | 'stable') =>
-    dir === 'increasing' ? '#2a9d8f' : dir === 'decreasing' ? '#e63946' : '#6c757d';
+    dir === 'increasing' ? colors.success : dir === 'decreasing' ? colors.error : colors.textSecondary;
   const trendArrow = (dir: 'increasing' | 'decreasing' | 'stable') =>
     dir === 'increasing' ? '↑' : dir === 'decreasing' ? '↓' : '→';
 
@@ -454,7 +455,7 @@ export default function ProgressScreen() {
                 <Text style={styles.trendBadgeText}>{trendArrow(volumeDirection)}</Text>
               </View>
             </View>
-            <MiniChart data={weeklyVolumeTrend} label="Weekly Volume" unit="kg" color="#4361ee" />
+            <MiniChart data={weeklyVolumeTrend} label="Weekly Volume" unit="kg" color={colors.primary} />
           </View>
           <View style={styles.trendCard}>
             <View style={styles.trendHeader}>
@@ -463,7 +464,7 @@ export default function ProgressScreen() {
                 <Text style={styles.trendBadgeText}>{trendArrow(freqDirection)}</Text>
               </View>
             </View>
-            <MiniChart data={weeklyFrequencyTrend} label="Weekly Frequency" unit="sessions" color="#2a9d8f" />
+            <MiniChart data={weeklyFrequencyTrend} label="Weekly Frequency" unit="sessions" color={colors.success} />
           </View>
         </View>
       )}
@@ -484,7 +485,7 @@ export default function ProgressScreen() {
             </View>
             <View style={styles.streakDivider} />
             <View style={styles.streakItem}>
-              <Text style={[styles.streakValue, { color: streak.currentWeekActive ? '#2a9d8f' : '#f4a261' }]}>
+              <Text style={[styles.streakValue, { color: streak.currentWeekActive ? colors.success : colors.gold }]}>
                 {streak.currentWeekActive ? '✓' : '○'}
               </Text>
               <Text style={styles.streakLabel}>This{'\n'}Week</Text>
@@ -686,7 +687,7 @@ export default function ProgressScreen() {
               const chartLabel =
                 chartMetric === '1rm' ? 'Est. 1RM' : chartMetric === 'volume' ? 'Session Volume' : 'Best Weight';
               const chartColor =
-                chartMetric === '1rm' ? '#4361ee' : chartMetric === 'volume' ? '#2a9d8f' : '#3a0ca3';
+                chartMetric === '1rm' ? colors.primary : chartMetric === 'volume' ? colors.success : colors.primaryDark;
               return (
                 <MiniChart
                   data={trendData}
@@ -775,7 +776,8 @@ export default function ProgressScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#4361ee"
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       />
@@ -813,12 +815,12 @@ function StaggeredCard({ children, index }: { children: React.ReactNode; index: 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   heading: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 4,
@@ -834,18 +836,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.surfaceHighest,
   },
   periodBtnActive: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
   },
   periodBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   periodBtnTextActive: {
-    color: '#ffffff',
+    color: colors.white,
   },
   listContent: {
     padding: 20,
@@ -857,45 +859,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.text,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: '#6c757d',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
   errorText: {
-    color: '#e63946',
+    color: colors.error,
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 10,
   },
   retryButtonText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
   // ─── Card ───────────────────────────────────────────────
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     marginBottom: 14,
@@ -916,22 +918,22 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
   },
   sessionCount: {
     fontSize: 13,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   prBadge: {
-    backgroundColor: '#2a9d8f',
+    backgroundColor: colors.success,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
     marginLeft: 12,
   },
   prBadgeText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -943,7 +945,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#dee2e6',
+    borderTopColor: colors.border,
   },
   prItem: {
     alignItems: 'center',
@@ -951,7 +953,7 @@ const styles = StyleSheet.create({
   },
   prLabel: {
     fontSize: 11,
-    color: '#6c757d',
+    color: colors.textSecondary,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -960,7 +962,7 @@ const styles = StyleSheet.create({
   prValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
   },
   // ─── Drill-down ────────────────────────────────────────
   drillDownLink: {
@@ -970,12 +972,12 @@ const styles = StyleSheet.create({
   drillDownText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4361ee',
+    color: colors.primary,
   },
   // ─── Expand ─────────────────────────────────────────────
   expandIndicator: {
     fontSize: 13,
-    color: '#4361ee',
+    color: colors.primary,
     textAlign: 'center',
     marginTop: 12,
     fontWeight: '500',
@@ -984,7 +986,7 @@ const styles = StyleSheet.create({
   sessionList: {
     marginTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#dee2e6',
+    borderTopColor: colors.border,
     paddingTop: 10,
   },
   sessionEntry: {
@@ -993,34 +995,34 @@ const styles = StyleSheet.create({
   sessionDate: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   noSetsText: {
     fontSize: 13,
-    color: '#6c757d',
+    color: colors.textSecondary,
     fontStyle: 'italic',
     paddingLeft: 8,
   },
   setsTable: {
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: colors.border,
     borderRadius: 8,
     overflow: 'hidden',
   },
   setsTableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: colors.border,
   },
   setsTableHeaderText: {
     flex: 1,
     fontSize: 11,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -1029,24 +1031,24 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: colors.border,
   },
   setNumber: {
     flex: 1,
     fontSize: 14,
-    color: '#4361ee',
+    color: colors.primary,
     fontWeight: '600',
   },
   setDetail: {
     flex: 1,
     fontSize: 14,
-    color: '#212529',
+    color: colors.text,
     fontWeight: '500',
   },
   // ─── Chart Toggle ─────────────────────────────────────────
   chartToggleRow: {
     flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 8,
     padding: 3,
     marginBottom: 8,
@@ -1058,15 +1060,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chartToggleBtnActive: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
   },
   chartToggleText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#888',
+    color: colors.textMuted,
   },
   chartToggleTextActive: {
-    color: '#ffffff',
+    color: colors.white,
   },
   // ─── Stats Summary ────────────────────────────────────────
   statsRow: {
@@ -1076,7 +1078,7 @@ const styles = StyleSheet.create({
   },
   statPill: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
@@ -1089,12 +1091,12 @@ const styles = StyleSheet.create({
   statPillValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
   },
   statPillLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
     marginTop: 2,
@@ -1109,19 +1111,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
     marginBottom: 8,
   },
   trendsToggle: {
     fontSize: 14,
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   trendsContent: {
     gap: 12,
     marginBottom: 16,
   },
   trendCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -1139,7 +1141,7 @@ const styles = StyleSheet.create({
   trendLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
   },
   trendBadge: {
     paddingHorizontal: 8,
@@ -1147,13 +1149,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   trendBadgeText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 13,
     fontWeight: '700',
   },
   // ─── Streak ───────────────────────────────────────────────
   streakCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -1175,12 +1177,12 @@ const styles = StyleSheet.create({
   streakValue: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#4361ee',
+    color: colors.primary,
   },
   streakLabel: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#6c757d',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 15,
@@ -1188,11 +1190,11 @@ const styles = StyleSheet.create({
   streakDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#dee2e6',
+    backgroundColor: colors.border,
   },
   // ─── Muscle Groups ────────────────────────────────────────
   muscleCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -1211,32 +1213,32 @@ const styles = StyleSheet.create({
     width: 80,
     fontSize: 12,
     fontWeight: '600',
-    color: '#495057',
+    color: colors.textMuted,
     textTransform: 'capitalize',
   },
   muscleBarBg: {
     flex: 1,
     height: 8,
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.surfaceHighest,
     borderRadius: 4,
     marginHorizontal: 8,
     overflow: 'hidden',
   },
   muscleBarFill: {
     height: '100%',
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     borderRadius: 4,
   },
   muscleCount: {
     width: 28,
     fontSize: 12,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
     textAlign: 'right',
   },
   // ─── PR Showcase ──────────────────────────────────────────
   prShowcaseCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -1251,19 +1253,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: colors.border,
   },
   prShowcaseRank: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   prShowcaseRankText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -1273,21 +1275,21 @@ const styles = StyleSheet.create({
   prShowcaseName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
   },
   prShowcaseDetail: {
     fontSize: 11,
-    color: '#6c757d',
+    color: colors.textSecondary,
     marginTop: 1,
   },
   prShowcaseValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#2a9d8f',
+    color: colors.success,
   },
   // ─── Consistency Calendar ─────────────────────────────────
   calendarCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -1307,7 +1309,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '600',
-    color: '#6c757d',
+    color: colors.textSecondary,
   },
   calendarWeekRow: {
     flexDirection: 'row',
@@ -1318,16 +1320,16 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.surfaceHighest,
   },
   calendarDotActive: {
-    backgroundColor: '#4361ee',
+    backgroundColor: colors.primary,
   },
   // ─── Breakdown Label ──────────────────────────────────────
   breakdownLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#212529',
+    color: colors.text,
     marginTop: 4,
     marginBottom: 12,
   },

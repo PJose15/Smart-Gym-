@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   // ─── Camera layout ─────────────────────────────────
   cameraContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.black,
   },
   cameraSection: {
     flex: 1,
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     padding: spacing.lg,
     alignItems: 'center',
     borderTopLeftRadius: 16,

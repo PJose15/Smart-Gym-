@@ -5,10 +5,10 @@ import type { BadgeWithStatus } from '@nexera/types';
 // ─── Rarity Display Constants ───────────────────────────
 
 export const RARITY_COLORS: Record<string, string> = {
-  common: '#6c757d',
-  rare: '#4361ee',
-  epic: '#7b2ff7',
-  legendary: '#ff6b35',
+  common: '#B4B2A9',
+  rare: '#3B8BD4',
+  epic: '#7F77DD',
+  legendary: '#D85A30',
 };
 
 export const RARITY_LABELS: Record<string, string> = {

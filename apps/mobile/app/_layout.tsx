@@ -45,7 +45,7 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.dark },

@@ -132,12 +132,12 @@ const styles = StyleSheet.create({
   },
   explanationCard: {
     borderLeftWidth: 4,
-    borderLeftColor: '#e0e0e0',
+    borderLeftColor: colors.border,
     marginTop: spacing.sm,
   },
   coachingCard: {
     borderLeftWidth: 4,
-    borderLeftColor: '#e0e0e0',
+    borderLeftColor: colors.border,
   },
   chipRow: {
     flexDirection: 'row',

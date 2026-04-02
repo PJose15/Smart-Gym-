@@ -47,7 +47,7 @@ interface MachineHistory {
 // ─── Difficulty labels ────────────────────────────────
 const DIFFICULTY_CONFIG: Record<string, { label: string; color: string }> = {
   beginner: { label: 'Beginner', color: colors.success },
-  intermediate: { label: 'Intermediate', color: '#e9c46a' },
+  intermediate: { label: 'Intermediate', color: colors.gold },
   advanced: { label: 'Advanced', color: colors.error },
 };
 
@@ -800,14 +800,14 @@ const styles = StyleSheet.create({
 
   // Alternatives button
   alternativesButton: {
-    backgroundColor: '#edf2ff',
+    backgroundColor: colors.primarySubtle,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
     borderWidth: 1,
-    borderColor: '#c5cae9',
+    borderColor: colors.borderSubtle,
   },
   alternativesButtonText: {
     color: colors.primary,
@@ -818,7 +818,7 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.dark,
+    color: colors.text,
   },
   modalClose: {
     fontSize: 16,
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
   alternativeName: {
     fontSize: 17,
     fontWeight: '700',
-    color: colors.dark,
+    color: colors.text,
     marginBottom: spacing.xs,
   },
   alternativeReasons: {

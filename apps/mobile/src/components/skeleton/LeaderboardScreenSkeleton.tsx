@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   rowHighlight: {
-    backgroundColor: '#edf2ff',
+    backgroundColor: colors.primarySubtle,
     borderColor: colors.primary,
     borderWidth: 1,
     borderRadius: 8,
