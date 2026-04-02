@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
+import { BlurView } from 'expo-blur';
 import { parseQrCode } from '@nexera/utils';
 import { Button, Text } from '../../src/components';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
@@ -348,12 +350,13 @@ export default function ScanScreen() {
       </View>
 
       {/* Bottom context panel */}
-      <View style={styles.bottomPanel}>
-        <ScrollView
-          horizontal={false}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.bottomPanelContent}
-        >
+      {Platform.OS === 'ios' ? (
+        <BlurView tint="dark" intensity={60} style={styles.bottomPanel}>
+          <ScrollView
+            horizontal={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.bottomPanelContent}
+          >
           {/* 1. Scan Stats Strip */}
           <View style={styles.statsStrip}>
             <View style={styles.statPill}>
@@ -433,8 +436,97 @@ export default function ScanScreen() {
               {todayTip}
             </Text>
           </View>
-        </ScrollView>
-      </View>
+          </ScrollView>
+        </BlurView>
+      ) : (
+        <View style={[styles.bottomPanel, styles.bottomPanelAndroid]}>
+          <ScrollView
+            horizontal={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.bottomPanelContent}
+          >
+            {/* 1. Scan Stats Strip */}
+            <View style={styles.statsStrip}>
+              <View style={styles.statPill}>
+                <Text variant="label" style={styles.statValue}>{scanCountToday}</Text>
+                <Text variant="caption" color="textSecondary">scans today</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statPill}>
+                <Text variant="label" style={styles.statValue}>{totalUniqueMachines}</Text>
+                <Text variant="caption" color="textSecondary">machines used</Text>
+              </View>
+              {loadingContext && (
+                <>
+                  <View style={styles.statDivider} />
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </>
+              )}
+            </View>
+
+            {/* 2. Today's Program Machine */}
+            {programMachine && (
+              <TouchableOpacity
+                style={styles.programCard}
+                onPress={() => {
+                  if (programMachine.qr_slug) {
+                    router.push(`/machine/${programMachine.qr_slug}` as any);
+                  }
+                }}
+              >
+                <Text variant="caption" color="primary" style={styles.programLabel}>
+                  Up next in your program
+                </Text>
+                <Text variant="body" style={styles.programName}>
+                  {programMachine.machine_name}
+                </Text>
+                <Text variant="caption" color="textSecondary">
+                  {programMachine.exercise_name}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* 3. Recently Used Machines (horizontal) */}
+            {recentMachines.length > 0 && (
+              <View style={styles.recentSection}>
+                <Text variant="caption" color="textSecondary" style={styles.recentLabel}>
+                  Quick access — recently used
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.recentScroll}
+                >
+                  {recentMachines.map((m) => (
+                    <TouchableOpacity
+                      key={m.machine_id}
+                      style={styles.recentChip}
+                      onPress={() => router.push(`/machine/${m.qr_slug}` as any)}
+                    >
+                      <Text variant="caption" style={styles.recentChipName} numberOfLines={1}>
+                        {m.machine_name}
+                      </Text>
+                      <Text variant="caption" color="textSecondary" style={styles.recentChipTime}>
+                        {timeSince(m.last_used)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* 4. Scan Tip */}
+            <View style={styles.tipRow}>
+              <Text variant="caption" color="textSecondary" style={styles.tipIcon}>
+                {'💡'}
+              </Text>
+              <Text variant="caption" color="textSecondary" style={styles.tipTextSmall}>
+                {todayTip}
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      )}
 
       {/* Error overlay */}
       {error && (
@@ -521,11 +613,15 @@ const styles = StyleSheet.create({
   },
   // ─── Bottom context panel ──────────────────────────
   bottomPanel: {
-    backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: 260,
     paddingTop: spacing.md,
+    overflow: 'hidden',
+  },
+  bottomPanelAndroid: {
+    backgroundColor: colors.background,
+    opacity: 0.95,
   },
   bottomPanelContent: {
     paddingHorizontal: spacing.md,

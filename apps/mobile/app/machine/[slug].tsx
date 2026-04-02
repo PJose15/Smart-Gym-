@@ -9,8 +9,10 @@ import {
   Alert,
   Modal,
   FlatList,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { BlurView } from 'expo-blur';
 import { supabase } from '../../src/lib/supabase';
 import type { Machine, WorkoutStatus, AlternativeResult } from '@nexera/types';
 import { getMachineAlternatives } from '@nexera/ai-assist';
@@ -563,6 +565,59 @@ export default function MachineDetailScreen() {
       transparent
       onRequestClose={() => setShowAlternatives(false)}
     >
+      {Platform.OS === 'ios' ? (
+        <BlurView tint="dark" intensity={40} style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Alternative Machines</Text>
+              <TouchableOpacity onPress={() => setShowAlternatives(false)}>
+                <Text style={styles.modalClose}>Close</Text>
+              </TouchableOpacity>
+            </View>
+
+            {loadingAlternatives ? (
+              <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 24 }} />
+            ) : alternatives.length === 0 ? (
+              <View style={styles.emptyAlternatives}>
+                <Text style={styles.emptyAlternativesText}>
+                  No similar machines found in this gym. Try asking a trainer for exercise swaps.
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={alternatives}
+                keyExtractor={(item) => item.machine.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.alternativeCard}
+                    onPress={() => {
+                      setShowAlternatives(false);
+                      router.push(`/machine/${item.machine.qr_slug}`);
+                    }}
+                  >
+                    <Text style={styles.alternativeName}>{item.machine.name}</Text>
+                    <View style={styles.alternativeReasons}>
+                      {item.reasons.filter((r) => r !== 'Higher difficulty').map((reason, i) => (
+                        <View key={i} style={styles.reasonChip}>
+                          <Text style={styles.reasonText}>{reason}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    {item.machine.primary_muscles.length > 0 && (
+                      <View style={styles.alternativeMuscles}>
+                        {item.machine.primary_muscles.slice(0, 3).map((m) => (
+                          <Text key={m} style={styles.alternativeMuscleText}>{m}</Text>
+                        ))}
+                      </View>
+                    )}
+                    <Text style={styles.alternativeAction}>Open</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </BlurView>
+      ) : (
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -614,6 +669,7 @@ export default function MachineDetailScreen() {
           )}
         </View>
       </View>
+      )}
     </Modal>
     </AnimatedScreen>
   );

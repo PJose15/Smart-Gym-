@@ -15,6 +15,7 @@ import {
   Vibration,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { BlurView } from 'expo-blur';
 import { supabase } from '../../src/lib/supabase';
 import type {
   Workout,
@@ -507,9 +508,88 @@ function AddExerciseModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
+      {Platform.OS === 'ios' ? (
+        <BlurView tint="dark" intensity={40} style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior="padding"
+            style={styles.modalContainer}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Add Exercise</Text>
+
+              <Text style={styles.modalLabel}>Exercise Name</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="e.g. Bench Press"
+                placeholderTextColor={colors.textDisabled}
+                value={name}
+                onChangeText={setName}
+                autoFocus
+              />
+
+              <Text style={styles.modalLabel}>Machine (optional)</Text>
+              <FlatList
+                data={machines}
+                keyExtractor={(item) => item.id}
+                style={styles.machineList}
+                ListEmptyComponent={
+                  <Text style={styles.emptyMachineText}>No machines available</Text>
+                }
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.machineItem,
+                      selectedMachineId === item.id && styles.machineItemSelected,
+                    ]}
+                    onPress={() =>
+                      setSelectedMachineId(
+                        selectedMachineId === item.id ? undefined : item.id,
+                      )
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.machineItemText,
+                        selectedMachineId === item.id &&
+                        styles.machineItemTextSelected,
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.modalCancelButton}
+                  onPress={onClose}
+                  disabled={isAdding}
+                >
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalAddButton,
+                    isAdding && styles.modalAddButtonDisabled,
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={isAdding}
+                >
+                  {isAdding ? (
+                    <ActivityIndicator size="small" color={colors.white} />
+                  ) : (
+                    <Text style={styles.modalAddText}>Add Exercise</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </BlurView>
+      ) : (
       <View style={styles.modalOverlay}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={undefined}
           style={styles.modalContainer}
         >
           <View style={styles.modalContent}>
@@ -584,6 +664,7 @@ function AddExerciseModal({
           </View>
         </KeyboardAvoidingView>
       </View>
+      )}
     </Modal>
   );
 }

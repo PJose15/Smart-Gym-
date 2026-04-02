@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Platform, View, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { colors } from '../../src/theme/colors';
 
 const USE_NATIVE = Platform.OS !== 'web';
@@ -105,8 +106,12 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.textSecondary,
         headerStyle: { backgroundColor: colors.dark },
         headerTintColor: colors.white,
+        tabBarBackground: () =>
+          Platform.OS === 'ios' ? (
+            <BlurView tint="dark" intensity={80} style={StyleSheet.absoluteFill} />
+          ) : null,
         tabBarStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.background,
           height: 65,
           paddingBottom: 8,
           paddingTop: 4,
@@ -116,6 +121,7 @@ export default function TabLayout() {
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.1,
           shadowRadius: 12,
+          ...(Platform.OS === 'ios' ? { position: 'absolute' as const } : {}),
         },
       }}
     >
