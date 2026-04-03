@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { sessionUpsertSchema } from '@/lib/validation/session';
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { verifyMember } from '@/lib/auth/verifyMember';
 
 /**
  * POST /api/sessions
@@ -28,7 +20,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { gym_id, machine_id, member_id, session_date, workout_mode, set } = parsed.data;
-    const admin = getAdminClient();
+
+    // Verify the authenticated user owns this member_id
+    const authResult = await verifyMember(member_id);
+    if (authResult instanceof NextResponse) return authResult;
+
+    const { admin } = authResult;
 
     // Find existing session for this member+machine+date
     const { data: existing } = await admin

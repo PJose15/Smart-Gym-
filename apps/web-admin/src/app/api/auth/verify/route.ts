@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { otpSchema } from '@/lib/validation/auth';
 import { checkRateLimit } from '@/lib/rateLimit';
 
@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
     if (limited) return limited;
 
     const admin = getAdminClient();
-    const isDev = process.env.NEXT_PUBLIC_DEV_OTP === 'true';
+    // Double-gate: BOTH conditions must be true. Production can never use dev bypass.
+    const isDev =
+      process.env.NODE_ENV !== 'production' &&
+      process.env.NEXT_PUBLIC_DEV_OTP === 'true';
 
     let userId: string;
 
@@ -151,9 +154,8 @@ interface MemberRecord {
   gym_id: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function findOrCreateMember(
-  admin: any,
+  admin: SupabaseClient,
   input: MemberInput
 ): Promise<MemberRecord | null> {
   const { userId, phone, name, gymId } = input;

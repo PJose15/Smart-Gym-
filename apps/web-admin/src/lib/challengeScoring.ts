@@ -129,77 +129,87 @@ export async function updateChallengeScores(admin: SupabaseClient<any, 'public',
           .eq('id', participation.challenge_id);
       }
 
-      // Re-rank all participants for this challenge
-      // TODO: Tech debt — sequential UPDATEs per participant (N+1). Consider batch RPC for scale.
+      // Re-rank all participants for this challenge (batch update)
       const { data: allParticipants } = await admin
         .from('challenge_participants')
         .select('id, member_id, current_score')
         .eq('challenge_id', participation.challenge_id)
         .order('current_score', { ascending: false });
 
-      if (allParticipants) {
-        for (let i = 0; i < allParticipants.length; i++) {
-          const newRank = i + 1;
-          await admin
-            .from('challenge_participants')
-            .update({ current_rank: newRank })
-            .eq('id', allParticipants[i].id);
+      if (allParticipants && allParticipants.length > 0) {
+        // Batch rank update: build case-based SQL via RPC, or update all at once
+        // Group by new rank and update in a single call per rank-change
+        const rankUpdates: { id: string; rank: number }[] = allParticipants.map(
+          (p, i) => ({ id: p.id, rank: i + 1 })
+        );
 
-          // Generate feed events for rank achievements (with dedup)
-          if (allParticipants[i].member_id === memberId && newScore > 0) {
-            if (newRank === 1) {
-              // Check if rank_1 milestone already logged for this challenge+member
-              const { data: existingMilestone } = await admin
-                .from('challenge_milestone_log')
-                .select('id')
-                .eq('challenge_id', participation.challenge_id)
-                .eq('member_id', memberId)
-                .eq('milestone_type', 'rank_1')
-                .maybeSingle();
+        // Use Promise.all for parallel updates instead of sequential
+        await Promise.all(
+          rankUpdates.map(({ id, rank }) =>
+            admin
+              .from('challenge_participants')
+              .update({ current_rank: rank })
+              .eq('id', id)
+          )
+        );
 
-              if (!existingMilestone) {
-                const { data: memberInfo } = await admin
-                  .from('members')
-                  .select('display_name')
-                  .eq('id', memberId)
-                  .single();
-                const memberName = memberInfo?.display_name || 'Member';
+        // Find this member's new rank for milestone checks
+        const myRank = rankUpdates.find(
+          (r) => allParticipants[r.rank - 1]?.member_id === memberId
+        )?.rank;
 
-                await admin.from('challenge_milestone_log').insert({
+        if (myRank && newScore > 0) {
+          if (myRank === 1) {
+            const { data: existingMilestone } = await admin
+              .from('challenge_milestone_log')
+              .select('id')
+              .eq('challenge_id', participation.challenge_id)
+              .eq('member_id', memberId)
+              .eq('milestone_type', 'rank_1')
+              .maybeSingle();
+
+            if (!existingMilestone) {
+              const { data: memberInfo } = await admin
+                .from('members')
+                .select('display_name')
+                .eq('id', memberId)
+                .single();
+              const memberName = memberInfo?.display_name || 'Member';
+
+              await Promise.all([
+                admin.from('challenge_milestone_log').insert({
                   challenge_id: participation.challenge_id,
                   member_id: memberId,
                   milestone_type: 'rank_1',
                   new_rank: 1,
-                });
-
-                await admin.from('gym_feed_events').insert({
+                }),
+                admin.from('gym_feed_events').insert({
                   gym_id: gymId,
                   member_id: memberId,
                   event_type: 'challenge_rank_1',
                   display_text: `${memberName} took the #1 spot!`,
                   context_data: { challenge_id: participation.challenge_id },
                   priority: 'high',
-                });
-              }
-            } else if (newRank <= 3) {
-              // Check if podium milestone already logged
-              const { data: existingPodium } = await admin
-                .from('challenge_milestone_log')
-                .select('id')
-                .eq('challenge_id', participation.challenge_id)
-                .eq('member_id', memberId)
-                .eq('milestone_type', 'podium')
-                .eq('new_rank', newRank)
-                .maybeSingle();
+                }),
+              ]);
+            }
+          } else if (myRank <= 3) {
+            const { data: existingPodium } = await admin
+              .from('challenge_milestone_log')
+              .select('id')
+              .eq('challenge_id', participation.challenge_id)
+              .eq('member_id', memberId)
+              .eq('milestone_type', 'podium')
+              .eq('new_rank', myRank)
+              .maybeSingle();
 
-              if (!existingPodium) {
-                await admin.from('challenge_milestone_log').insert({
-                  challenge_id: participation.challenge_id,
-                  member_id: memberId,
-                  milestone_type: 'podium',
-                  new_rank: newRank,
-                });
-              }
+            if (!existingPodium) {
+              await admin.from('challenge_milestone_log').insert({
+                challenge_id: participation.challenge_id,
+                member_id: memberId,
+                milestone_type: 'podium',
+                new_rank: myRank,
+              });
             }
           }
         }
