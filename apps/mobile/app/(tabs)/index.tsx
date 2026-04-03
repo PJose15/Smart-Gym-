@@ -21,6 +21,7 @@ import { getUserRank } from '../../src/lib/leaderboardService';
 import type { BadgeWithStatus } from '@nexera/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PRDetection } from '@nexera/types';
+import { deduper } from '../../src/lib/requestDeduper';
 import { Button, Text } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
@@ -99,6 +100,7 @@ export default function HomeScreen() {
   const [activeWorkout, setActiveWorkout] = useState<ActiveWorkout | null>(null);
   const [explanation, setExplanation] = useState<TodayExplanation | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardrails, setGuardrails] = useState<GuardrailInsight[]>([]);
   const [unreadNotes, setUnreadNotes] = useState(0);
@@ -147,14 +149,17 @@ export default function HomeScreen() {
         await refreshFeatureFlags();
       }
 
-      // Load profile name
+      // Load profile name + avatar
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, avatar_url')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (mountedRef.current) setUserName(profileData?.full_name || null);
+      if (mountedRef.current) {
+        setUserName(profileData?.full_name || null);
+        setAvatarUrl(profileData?.avatar_url || null);
+      }
 
       // Load unseen PRs from local storage
       try {
@@ -288,26 +293,44 @@ export default function HomeScreen() {
         }
       }
 
-      // Load program assignment
-      const { data: assignment } = await supabase
-        .from('member_program_assignments')
-        .select('program_id, assigned_at')
-        .eq('profile_id', user.id)
+      // Load active program from ai_programs via member record
+      const { data: memberRecord } = await supabase
+        .from('members')
+        .select('id')
+        .eq('user_id', user.id)
         .eq('gym_id', gymId)
-        .limit(1)
         .maybeSingle();
 
-      if (!assignment) {
+      if (!memberRecord) {
         if (mountedRef.current) setLoading(false);
         return;
       }
 
-      // Load program days
-      const { data: days } = await supabase
-        .from('program_days')
-        .select('id, program_id, day_number, name')
-        .eq('program_id', assignment.program_id)
-        .order('day_number');
+      const { data: activeProgram } = await supabase
+        .from('ai_programs')
+        .select('id, program_data, sessions_per_week, day_number, created_at')
+        .eq('member_id', memberRecord.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!activeProgram?.program_data) {
+        if (mountedRef.current) setLoading(false);
+        return;
+      }
+
+      // Parse days from program_data JSON
+      const days = ((activeProgram.program_data as any)?.days ?? []).map((d: any, idx: number) => ({
+          id: `day-${idx}`,
+          program_id: activeProgram.id,
+          day_number: d.day_number ?? idx + 1,
+          name: d.name ?? `Day ${idx + 1}`,
+          exercises: d.exercises ?? [],
+        }));
+
+      // Use created_at as assignment date for day cycling
+      const assignment = { assigned_at: activeProgram.created_at };
 
       if (!days || days.length === 0) {
         if (mountedRef.current) setLoading(false);
@@ -359,19 +382,19 @@ export default function HomeScreen() {
       }
 
       const todayDayNumber = getTodaysProgramDay(assignment.assigned_at, days.length);
-      const todayDay = days.find((d) => d.day_number === todayDayNumber) || days[0];
+      const todayDay = days.find((d: any) => d.day_number === todayDayNumber) || days[0];
 
       // Set program day context (always-visible)
       if (mountedRef.current) setProgramDayContext({ dayNumber: todayDayNumber, totalDays: days.length });
 
-      // Load exercises for today
-      const { data: exercises } = await supabase
-        .from('program_exercises')
-        .select('id, exercise_name, default_sets, default_reps, machine_id')
-        .eq('program_day_id', todayDay.id)
-        .order('order_index');
-
-      const todayExercises = exercises || [];
+      // Exercises come from parsed program_data JSON
+      const todayExercises = (todayDay.exercises ?? []).map((ex: any, i: number) => ({
+        id: `ex-${i}`,
+        exercise_name: ex.exercise_name ?? 'Unknown',
+        default_sets: ex.default_sets ?? 3,
+        default_reps: ex.default_reps ?? 10,
+        machine_id: ex.machine_id ?? null,
+      }));
 
       if (mountedRef.current) {
         setTodayWorkout({
@@ -397,17 +420,12 @@ export default function HomeScreen() {
         if (done) {
           // Load tomorrow's program day preview
           const tomorrowDayNumber = (todayDayNumber % days.length) + 1;
-          const tomorrowDay = days.find((d) => d.day_number === tomorrowDayNumber) || days[0];
-
-          const { count: nextExCount } = await supabase
-            .from('program_exercises')
-            .select('id', { count: 'exact', head: true })
-            .eq('program_day_id', tomorrowDay.id);
+          const tomorrowDay = days.find((d: any) => d.day_number === tomorrowDayNumber) || days[0];
 
           if (mountedRef.current) {
             setNextDayPreview({
               name: tomorrowDay.name,
-              exerciseCount: nextExCount ?? 0,
+              exerciseCount: tomorrowDay.exercises?.length ?? 0,
             });
           }
         }
@@ -429,8 +447,8 @@ export default function HomeScreen() {
         // find when that muscle was last worked
         const muscleGaps: Record<string, number> = {};
         const machineIds = todayExercises
-          .map((e) => e.machine_id)
-          .filter((id): id is string => id !== null);
+          .map((e: any) => e.machine_id)
+          .filter((id: any): id is string => id !== null);
 
         if (machineIds.length > 0) {
           const { data: machines } = await supabase
@@ -473,7 +491,7 @@ export default function HomeScreen() {
         try {
           const exp = await getTodayExplanation({
             programDay: todayDay,
-            exercises: todayExercises.map((e) => ({
+            exercises: todayExercises.map((e: any) => ({
               id: e.id,
               program_day_id: todayDay.id,
               machine_id: e.machine_id,
@@ -687,7 +705,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       mountedRef.current = true;
-      loadHome();
+      deduper.dedupe('home:load', loadHome).catch(() => {});
       return () => {
         mountedRef.current = false;
       };
@@ -696,7 +714,8 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadHome();
+    deduper.clear('home:load');
+    await deduper.dedupe('home:load', loadHome).catch(() => {});
     setRefreshing(false);
   }, [loadHome]);
 
@@ -794,8 +813,8 @@ export default function HomeScreen() {
         <HeroZone
           hero={heroState}
           firstName={userName?.split(' ')[0] || 'there'}
-          avatarUrl={null}
-          level={1}
+          avatarUrl={avatarUrl}
+          level={levelData?.current.level ?? 1}
           streak={streak?.currentStreak ?? 0}
         />
 
@@ -847,8 +866,8 @@ export default function HomeScreen() {
           weeklyWorkouts={weeklyWorkouts}
           weeklyGoal={weeklyGoal || 3}
           weeklyVolume={weeklyVolume}
-          level={1}
-          score={0}
+          level={levelData?.current.level ?? 1}
+          score={memberScore}
         />
 
         {/* GUARDRAILS — Training nudge */}
@@ -889,6 +908,7 @@ export default function HomeScreen() {
           recentBadgeIcon={recentBadges[0]?.icon_emoji}
           recentBadgeName={recentBadges[0]?.name}
           coachNotesCount={unreadNotes}
+          leaderboardEnabled={isFeatureEnabled('leaderboard_enabled')}
         />
 
         {/* TRAINING TIP */}

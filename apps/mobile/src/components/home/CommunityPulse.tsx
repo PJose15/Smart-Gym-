@@ -13,11 +13,12 @@ interface CommunityPulseProps {
   recentBadgeIcon?: string;
   recentBadgeName?: string;
   coachNotesCount: number;
+  leaderboardEnabled?: boolean;
 }
 
-export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNotesCount }: CommunityPulseProps) {
+export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNotesCount, leaderboardEnabled }: CommunityPulseProps) {
   const router = useRouter();
-  const hasContent = rank || recentBadgeName || coachNotesCount > 0;
+  const hasContent = rank || recentBadgeName || coachNotesCount > 0 || leaderboardEnabled;
 
   if (!hasContent) return null;
 
@@ -26,7 +27,7 @@ export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNo
       <Text style={styles.sectionTitle}>Activity</Text>
 
       <View style={styles.items}>
-        {rank && (
+        {rank ? (
           <TouchableOpacity
             style={styles.item}
             onPress={() => router.push('/leaderboard')}
@@ -40,7 +41,19 @@ export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNo
               <Text style={styles.itemAction}>View Leaderboard →</Text>
             </View>
           </TouchableOpacity>
-        )}
+        ) : leaderboardEnabled ? (
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => router.push('/leaderboard')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.itemIcon}>{'\uD83C\uDFC6'}</Text>
+            <View style={styles.itemContent}>
+              <Text style={styles.itemTitle}>Leaderboard</Text>
+              <Text style={styles.itemAction}>See how you compare →</Text>
+            </View>
+          </TouchableOpacity>
+        ) : null}
 
         {recentBadgeName && (
           <TouchableOpacity

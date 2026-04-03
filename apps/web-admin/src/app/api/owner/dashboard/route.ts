@@ -25,6 +25,7 @@ export async function GET() {
       workoutsThisWeekRes,
       workoutsLastWeekRes,
       machinesRes,
+      maintenanceRes,
       machineUsageRes,
       peakHoursRes,
     ] = await Promise.all([
@@ -33,6 +34,7 @@ export async function GET() {
       admin.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('gym_id', gym_id).gte('session_date', weekAgoDate),
       admin.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('gym_id', gym_id).gte('session_date', twoWeeksAgoDate).lt('session_date', weekAgoDate),
       admin.from('machines').select('id', { count: 'exact', head: true }).eq('gym_id', gym_id),
+      admin.from('machines').select('id', { count: 'exact', head: true }).eq('gym_id', gym_id).eq('maintenance_status', 'in_maintenance'),
       // Machine usage this week — workout_sessions has machine_id directly
       admin
         .from('workout_sessions')
@@ -66,7 +68,7 @@ export async function GET() {
       workouts_this_week: thisWeekCount,
       workouts_change_pct: changePct,
       total_machines: machinesRes.count ?? 0,
-      machines_needing_maintenance: 0, // Simplified for MVP
+      machines_needing_maintenance: maintenanceRes.count ?? 0,
       revenue_placeholder: 'Coming Soon',
     };
 

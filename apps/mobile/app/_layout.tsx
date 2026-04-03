@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { OfflineBanner } from '../src/components/OfflineBanner';
 import { colors } from '../src/theme/colors';
 import {
   registerForPushNotifications,
@@ -14,8 +15,10 @@ import {
   refreshFeatureFlags,
   needsRefresh,
 } from '../src/lib/featureFlags';
+import { useOfflineSync } from '../src/lib/hooks/useOfflineSync';
 
 export default function RootLayout() {
+  useOfflineSync();
   const lastResponseHandled = useRef(false);
 
   useEffect(() => {
@@ -46,6 +49,7 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <StatusBar style="light" />
+      <OfflineBanner />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.dark },

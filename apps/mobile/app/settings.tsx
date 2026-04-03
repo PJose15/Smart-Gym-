@@ -6,10 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../src/lib/supabase';
 import { getWeightUnit, saveWeightUnit } from '../src/lib/weightUnit';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../src/lib/featureFlags';
@@ -80,6 +83,8 @@ export default function SettingsScreen() {
   const [notificationsLoaded, setNotificationsLoaded] = useState(false);
   const [showTrainingProfile, setShowTrainingProfile] = useState(false);
   const [trainingProfile, setTrainingProfile] = useState<TrainingProfileState>(DEFAULT_TRAINING_PROFILE);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadSettings = useCallback(async () => {
@@ -96,13 +101,14 @@ export default function SettingsScreen() {
         await refreshFeatureFlags();
       }
 
-      // Load profile name
+      // Load profile name + avatar
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, avatar_url')
         .eq('id', user.id)
         .maybeSingle();
       setFullName(profileData?.full_name || '');
+      setAvatarUrl(profileData?.avatar_url || null);
 
       // Load weight unit
       const savedUnit = await getWeightUnit();
@@ -206,6 +212,18 @@ export default function SettingsScreen() {
   const handleToggleWeightUnit = async (newUnit: WeightUnit) => {
     setWeightUnit(newUnit);
     await saveWeightUnit(newUnit);
+    // Sync to cloud if gym membership exists
+    if (userId && gymId) {
+      supabase
+        .from('user_training_profiles')
+        .upsert(
+          { profile_id: userId, gym_id: gymId, units: newUnit },
+          { onConflict: 'gym_id,profile_id' },
+        )
+        .then(({ error: syncErr }) => {
+          if (syncErr) console.warn('[settings] unit sync failed:', syncErr.message);
+        });
+    }
   };
 
   const handleToggleNotifications = async (enabled: boolean) => {
@@ -292,6 +310,61 @@ export default function SettingsScreen() {
     });
   };
 
+  const handleAvatarUpload = async () => {
+    if (!userId) return;
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow access to your photo library.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    const path = `${userId}/avatar.${ext}`;
+
+    setUploadingAvatar(true);
+    try {
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(path, blob, { contentType: mimeType, upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path);
+
+      const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update({ avatar_url: newUrl })
+        .eq('id', userId);
+
+      if (updateErr) throw updateErr;
+
+      setAvatarUrl(newUrl);
+    } catch (err: unknown) {
+      Alert.alert('Upload Failed', err instanceof Error ? err.message : 'Could not upload avatar.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSignOut = async () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
@@ -331,6 +404,28 @@ export default function SettingsScreen() {
             <Text variant="caption" style={styles.errorText}>{error}</Text>
           </View>
         )}
+
+        {/* Avatar */}
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar} style={styles.avatarTouchable}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarPlaceholderText}>
+                  {fullName ? fullName[0].toUpperCase() : '?'}
+                </Text>
+              </View>
+            )}
+            {uploadingAvatar ? (
+              <ActivityIndicator size="small" color={colors.primary} style={styles.avatarOverlay} />
+            ) : (
+              <View style={styles.avatarBadge}>
+                <Text style={styles.avatarBadgeText}>Edit</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
 
         {/* Edit Name */}
         <View style={styles.section}>
@@ -682,6 +777,52 @@ const styles = StyleSheet.create({
     color: colors.text,
     width: 70,
     textAlign: 'center',
+  },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  avatarTouchable: {
+    position: 'relative',
+  },
+  avatar: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+  },
+  avatarPlaceholder: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarPlaceholderText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  avatarOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+  },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.surface,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  avatarBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
   },
   errorBanner: {
     backgroundColor: colors.errorSubtle,

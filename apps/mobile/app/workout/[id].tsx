@@ -31,6 +31,8 @@ import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlag
 import { trackEvent } from '../../src/lib/events';
 import { logAiDecision } from '../../src/lib/aiAudit';
 import { getWeightUnit } from '../../src/lib/weightUnit';
+import { retryWithBackoff } from '../../src/lib/retry';
+import { enqueueEvent } from '../../src/lib/offlineQueue';
 import { colors } from '../../src/theme/colors';
 
 // ─── Helpers ────────────────────────────────────────────
@@ -855,6 +857,8 @@ export default function ActiveWorkoutScreen() {
             .from('workout_exercises')
             .select('id, workout_id, sets(*), workouts!inner(profile_id, status, finished_at)')
             .eq('machine_id', exercise.machine_id)
+            .eq('workouts.profile_id', workout.profile_id)
+            .eq('workouts.status', 'completed')
             .neq('workout_id', workout.id)
             .order('created_at', { ascending: false })
             .limit(1);
@@ -1083,25 +1087,30 @@ export default function ActiveWorkoutScreen() {
       ),
     );
 
+    const insertPayload: Record<string, unknown> = {
+      workout_exercise_id: exerciseId,
+      set_number: nextSetNumber,
+      reps,
+      weight_kg: weight,
+      logged_at: now,
+    };
+    if (rpe !== undefined) {
+      insertPayload.rpe = rpe;
+    }
+
     try {
-      const insertPayload: Record<string, unknown> = {
-        workout_exercise_id: exerciseId,
-        set_number: nextSetNumber,
-        reps,
-        weight_kg: weight,
-        logged_at: now,
-      };
-      if (rpe !== undefined) {
-        insertPayload.rpe = rpe;
-      }
-
-      const { data, error: insertError } = await supabase
-        .from('sets')
-        .insert(insertPayload)
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
+      const { data } = await retryWithBackoff(
+        async () => {
+          const res = await supabase
+            .from('sets')
+            .insert(insertPayload)
+            .select()
+            .single();
+          if (res.error) throw res.error;
+          return res;
+        },
+        { maxRetries: 2, baseDelayMs: 300 },
+      );
 
       // Reconcile: replace temp set with server response
       const serverSet = data as WorkoutSet;
@@ -1136,6 +1145,9 @@ export default function ActiveWorkoutScreen() {
         computeSuggestion(exerciseId);
       }
     } catch (err: unknown) {
+      // Queue for offline replay instead of losing data
+      await enqueueEvent('sets', insertPayload).catch(() => {});
+
       // Rollback optimistic update
       setExercises((prev) =>
         prev.map((ex) =>
@@ -1145,8 +1157,8 @@ export default function ActiveWorkoutScreen() {
         ),
       );
       Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to log set. Please try again.',
+        'Saved Offline',
+        'Set queued and will sync when you\'re back online.',
       );
     } finally {
       setLoggingExerciseId(null);
