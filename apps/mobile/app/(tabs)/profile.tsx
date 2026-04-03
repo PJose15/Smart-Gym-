@@ -39,6 +39,7 @@ import type { UserGoal, WeightUnit, BadgeWithStatus } from '@nexera/types';
 interface Profile {
   id: string;
   full_name: string | null;
+  avatar_url: string | null;
   email: string;
 }
 
@@ -156,7 +157,7 @@ export default function ProfileScreen() {
 
       const { data: profileData, error: profileErr } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, avatar_url')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -165,6 +166,7 @@ export default function ProfileScreen() {
       setProfile({
         id: user.id,
         full_name: profileData?.full_name || null,
+        avatar_url: profileData?.avatar_url || null,
         email: user.email || '',
       });
 
@@ -402,6 +404,7 @@ export default function ProfileScreen() {
           levelProgress={levelProgress}
           streak={streak?.currentStreak ?? 0}
           totalSessions={lifetimeStats?.totalWorkouts ?? 0}
+          avatarUrl={profile.avatar_url}
         />
 
         <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />

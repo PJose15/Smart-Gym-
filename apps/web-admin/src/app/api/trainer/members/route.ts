@@ -22,6 +22,15 @@ export async function GET() {
 
     const memberIds = members.map((m) => m.id);
 
+    // Get active programs for all members
+    const { data: activePrograms } = await admin
+      .from('ai_programs')
+      .select('member_id')
+      .in('member_id', memberIds)
+      .eq('is_active', true);
+
+    const programMembers = new Set((activePrograms ?? []).map((p) => p.member_id));
+
     // Get completed sessions count
     const { data: sessionRows } = await admin
       .from('workout_sessions')
@@ -54,7 +63,7 @@ export async function GET() {
         total_sessions: sessionCounts.get(m.id) ?? 0,
         current_streak: m.current_streak ?? 0,
         status,
-        has_program: false, // No program assignment system yet
+        has_program: programMembers.has(m.id),
       };
     });
 

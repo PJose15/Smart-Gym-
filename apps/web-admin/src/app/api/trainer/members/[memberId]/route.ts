@@ -18,14 +18,14 @@ export async function GET(
       .select('id, user_id, display_name, avatar_url, last_session_date, current_streak, smartgym_score, joined_gym_at')
       .eq('id', memberId)
       .eq('gym_id', gym_id)
-      .single();
+      .maybeSingle();
 
     if (!member) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
     // Parallel queries
-    const [profileRes, sessionsRes, volumeRes, trainingProfileRes, bodyMetricsRes, topMachinesRes] = await Promise.all([
+    const [profileRes, sessionsRes, volumeRes, trainingProfileRes, bodyMetricsRes, topMachinesRes, programRes] = await Promise.all([
       // User email
       admin.from('users').select('email').eq('id', member.user_id).single(),
 
@@ -70,6 +70,16 @@ export async function GET(
         .eq('gym_id', gym_id)
         .not('machine_id', 'is', null)
         .not('completed_at', 'is', null),
+
+      // Active program
+      admin
+        .from('ai_programs')
+        .select('id, title, goal, week_number, duration_weeks, sessions_completed, sessions_total, on_track, generated_by, trainer_approved')
+        .eq('member_id', memberId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     // Calculate total volume
@@ -108,7 +118,23 @@ export async function GET(
       experience: trainingProfileRes.data?.experience ?? null,
       body_metrics: bodyMetricsRes.data ?? null,
       top_machines: topMachines,
-      program: null, // Program tables don't exist yet
+      program: programRes.data
+        ? {
+            id: programRes.data.id,
+            title: programRes.data.title,
+            goal: programRes.data.goal,
+            week: programRes.data.week_number,
+            total_weeks: programRes.data.duration_weeks,
+            sessions_completed: programRes.data.sessions_completed,
+            sessions_total: programRes.data.sessions_total,
+            progress: programRes.data.sessions_total > 0
+              ? Math.round((programRes.data.sessions_completed / programRes.data.sessions_total) * 100)
+              : 0,
+            on_track: programRes.data.on_track,
+            generated_by: programRes.data.generated_by,
+            trainer_approved: programRes.data.trainer_approved,
+          }
+        : null,
     });
   } catch (err) {
     console.error('[trainer/members/[memberId]] Error:', err);

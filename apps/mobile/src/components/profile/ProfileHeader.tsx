@@ -1,4 +1,4 @@
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
@@ -12,6 +12,7 @@ interface ProfileHeaderProps {
   levelProgress: LevelProgress | null;
   streak: number;
   totalSessions: number;
+  avatarUrl?: string | null;
 }
 
 function getInitials(name: string | null): string {
@@ -30,6 +31,7 @@ export function ProfileHeader({
   levelProgress,
   streak,
   totalSessions,
+  avatarUrl,
 }: ProfileHeaderProps) {
   const router = useRouter();
 
@@ -47,7 +49,11 @@ export function ProfileHeader({
       </View>
 
       <View style={styles.avatarCircle}>
-        <Text style={styles.avatarText}>{getInitials(fullName)}</Text>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+        ) : (
+          <Text style={styles.avatarText}>{getInitials(fullName)}</Text>
+        )}
       </View>
 
       <Text variant="heading" style={styles.name}>
@@ -146,6 +152,11 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 28,
     fontWeight: '700',
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   name: {
     marginBottom: spacing.xs,

@@ -183,48 +183,60 @@ export default function ScanScreen() {
 
   async function loadProgramMachine(profileId: string): Promise<TodayProgramMachine | null> {
     try {
-      // Get current program assignment
-      const { data: assignment } = await supabase
-        .from('member_program_assignments')
-        .select('program_id, assigned_at')
-        .eq('profile_id', profileId)
-        .eq('status', 'active')
+      // Get member record for this user
+      const { data: memberRecord } = await supabase
+        .from('members')
+        .select('id')
+        .eq('user_id', profileId)
         .limit(1)
         .maybeSingle();
 
-      if (!assignment) return null;
+      if (!memberRecord) return null;
 
-      // Get program days
-      const { data: days } = await supabase
-        .from('program_days')
-        .select('id, day_number')
-        .eq('program_id', assignment.program_id)
-        .order('day_number')
-        .limit(30);
+      // Get active AI program
+      const { data: activeProgram } = await supabase
+        .from('ai_programs')
+        .select('program_data, created_at, sessions_per_week')
+        .eq('member_id', memberRecord.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (!days || days.length === 0) return null;
+      if (!activeProgram?.program_data) return null;
+
+      const days = (activeProgram.program_data as any)?.days ?? [];
+      if (days.length === 0) return null;
 
       // Determine today's day in the cycle
-      const assignedDate = new Date(assignment.assigned_at);
+      const assignedDate = new Date(activeProgram.created_at);
       const daysSinceAssigned = Math.floor((Date.now() - assignedDate.getTime()) / (1000 * 60 * 60 * 24));
       const todayIndex = daysSinceAssigned % days.length;
       const todayDay = days[todayIndex];
 
-      // Get first exercise of today's program day
-      const { data: exercises } = await supabase
-        .from('program_day_exercises')
-        .select('exercise_name, machine_id, machines(name, qr_slug)')
-        .eq('program_day_id', todayDay.id)
-        .order('order_index')
-        .limit(1);
+      const exercises = todayDay?.exercises ?? [];
+      if (exercises.length === 0) return null;
 
-      if (!exercises || exercises.length === 0) return null;
+      const ex = exercises[0];
+      // If exercise has a machine_id, look up the machine details
+      if (ex.machine_id) {
+        const { data: machine } = await supabase
+          .from('machines')
+          .select('name, qr_slug')
+          .eq('id', ex.machine_id)
+          .maybeSingle();
 
-      const ex = exercises[0] as any;
+        return {
+          exercise_name: ex.exercise_name ?? 'Unknown',
+          machine_name: machine?.name ?? ex.exercise_name ?? 'Unknown',
+          qr_slug: machine?.qr_slug ?? '',
+        };
+      }
+
       return {
-        exercise_name: ex.exercise_name,
-        machine_name: ex.machines?.name ?? ex.exercise_name,
-        qr_slug: ex.machines?.qr_slug ?? '',
+        exercise_name: ex.exercise_name ?? 'Unknown',
+        machine_name: ex.exercise_name ?? 'Unknown',
+        qr_slug: '',
       };
     } catch {
       return null;
