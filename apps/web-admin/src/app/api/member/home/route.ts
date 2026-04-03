@@ -126,10 +126,10 @@ export async function GET(request: NextRequest) {
       ]),
 
       // 8. Readiness score
-      getReadinessScore(member_id, gym_id, admin).catch(() => null),
+      getReadinessScore(member_id, gym_id, admin).catch((e) => { console.error('[home] readiness error:', e); return null; }),
 
       // 9. Muscle map (cached daily)
-      getMuscleMap(member_id, gym_id, admin).catch(() => null),
+      getMuscleMap(member_id, gym_id, admin).catch((e) => { console.error('[home] muscle-map error:', e); return null; }),
 
       // 10. Unread check-in (UI_009)
       admin

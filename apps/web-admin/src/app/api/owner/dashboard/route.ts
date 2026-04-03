@@ -69,7 +69,7 @@ export async function GET() {
       workouts_change_pct: changePct,
       total_machines: machinesRes.count ?? 0,
       machines_needing_maintenance: maintenanceRes.count ?? 0,
-      revenue_placeholder: 'Coming Soon',
+      // Revenue tracking deferred until Stripe integration
     };
 
     // Machine performance aggregation

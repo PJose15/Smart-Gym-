@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 /**
  * Simple in-memory sliding window rate limiter.
  * Tracks requests per key (e.g., member_id) within a window.
+ *
+ * LIMITATION: State resets on server restart and is not shared across
+ * serverless instances. Production should use Redis or DB-backed rate limiting.
  */
 const windows = new Map<string, number[]>();
 

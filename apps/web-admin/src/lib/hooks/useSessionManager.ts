@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { getNextSetSuggestion, toKg, fromKg } from '@nexera/ai-assist';
 import type { NextSetSuggestion, WorkoutSet } from '@nexera/types';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
@@ -38,6 +38,37 @@ export function useSessionManager() {
     error: null,
   });
 
+  // Fetch previous session's sets for this member + machine
+  const [previousSets, setPreviousSets] = useState<WorkoutSet[]>([]);
+  const fetchedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!machine || !member) return;
+    const key = `${member.id}:${machine.id}`;
+    if (fetchedRef.current === key) return;
+    fetchedRef.current = key;
+
+    fetch(`/api/member/${member.id}/sessions?machine_id=${machine.id}&limit=1`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const session = data?.sessions?.[0];
+        if (session?.workout_sets?.length) {
+          setPreviousSets(
+            session.workout_sets.map((s: { id: string; set_number: number; reps: number; weight_kg?: number; weight_lbs?: number; rpe?: number | null; logged_at?: string }) => ({
+              id: s.id,
+              workout_exercise_id: '',
+              set_number: s.set_number,
+              reps: s.reps,
+              weight_kg: s.weight_kg ?? toKg(s.weight_lbs ?? 0, 'lbs'),
+              rpe: s.rpe ?? null,
+              logged_at: s.logged_at ?? '',
+            }))
+          );
+        }
+      })
+      .catch(() => { /* non-critical — suggestion still works without history */ });
+  }, [machine, member]);
+
   // Get PR timezone session date
   const sessionDate = useMemo(() => {
     return new Date().toLocaleDateString('en-CA', {
@@ -73,7 +104,7 @@ export function useSessionManager() {
 
       const result = getNextSetSuggestion({
         currentSets,
-        previousSets: [], // TODO: fetch from historical data
+        previousSets,
         goal: (member.primary_goal as 'hypertrophy' | 'strength' | 'endurance' | 'general') || 'general',
         unit: 'lbs',
         experience: (member.experience_level as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
@@ -90,7 +121,7 @@ export function useSessionManager() {
     } catch {
       return null;
     }
-  }, [state.sets, member, weightIncrement]);
+  }, [state.sets, member, weightIncrement, previousSets]);
 
   const logSet = useCallback(
     async (set: { weight_lbs: number; reps: number; rpe?: number | null; notes?: string }) => {

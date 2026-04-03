@@ -71,7 +71,6 @@ export interface OwnerDashboardMetrics {
   workouts_change_pct: number;
   total_machines: number;
   machines_needing_maintenance: number;
-  revenue_placeholder: string;
 }
 
 export interface MachinePerformance {

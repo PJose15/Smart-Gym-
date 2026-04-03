@@ -77,7 +77,6 @@ export default function OwnerDashboardPage() {
         <MetricCard title="Total Members" value={metrics.total_members} subtitle={`${metrics.active_members_7d} active this week`} flashOnIncrease />
         <MetricCard title="Workouts This Week" value={metrics.workouts_this_week} change={metrics.workouts_change_pct} flashOnIncrease />
         <MetricCard title="Machines" value={metrics.total_machines} subtitle={`${metrics.machines_needing_maintenance} need maintenance`} />
-        <MetricCard title="Revenue" value="Coming Soon" placeholder />
       </div>
 
       {/* Sessions Today — hourly chart */}
