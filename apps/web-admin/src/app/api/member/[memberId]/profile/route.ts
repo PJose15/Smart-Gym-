@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { computeLevelProgress } from '@nexera/ai-assist';
 
 export const dynamic = 'force-dynamic';
@@ -135,5 +136,43 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   } catch (err) {
     console.error('[member/profile] Error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/** PATCH /api/member/[memberId]/profile — Update profile fields */
+export async function PATCH(
+  req: NextRequest,
+  { params }: RouteParams
+) {
+  try {
+    const { memberId } = await params;
+
+    const rl = checkRateLimit(`profile-update:${memberId}`, 10, 60_000);
+    if (rl) return rl;
+
+    const auth = await verifyMember(memberId);
+    if (auth instanceof NextResponse) return auth;
+    const { admin } = auth;
+
+    const body = await req.json();
+    const allowed = ['display_name', 'primary_goal', 'experience_level', 'injuries_or_limitations'];
+    const updates: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (key in body) updates[key] = body[key];
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+    }
+
+    const { error } = await admin
+      .from('members')
+      .update(updates)
+      .eq('id', memberId);
+
+    if (error) return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

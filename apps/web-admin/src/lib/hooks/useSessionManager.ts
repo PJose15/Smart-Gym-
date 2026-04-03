@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { getNextSetSuggestion, toKg, fromKg } from '@nexera/ai-assist';
 import type { NextSetSuggestion, WorkoutSet } from '@nexera/types';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
+import { enqueueSet } from '@/lib/stores/offlineQueueStore';
 
 interface SetEntry {
   set_number: number;
@@ -138,11 +139,47 @@ export function useSessionManager() {
 
         return data;
       } catch {
-        setState((s) => ({
-          ...s,
-          loading: false,
-          error: 'Network error. Try again.',
-        }));
+        // Network failure — save to offline queue so the set isn't lost
+        try {
+          await enqueueSet({
+            gym_id: machine.gym_id,
+            machine_id: machine.id,
+            member_id: member.id,
+            session_date: sessionDate,
+            workout_mode: 'free',
+            set: {
+              weight_lbs: set.weight_lbs,
+              reps: set.reps,
+              rpe: set.rpe ?? null,
+            },
+          });
+          // Update UI optimistically so user sees the set was captured
+          const newSetEntry: SetEntry = {
+            set_number: state.sets.length + 1,
+            weight_lbs: set.weight_lbs,
+            reps: set.reps,
+            rpe: set.rpe ?? null,
+            notes: set.notes || null,
+            logged_at: new Date().toISOString(),
+          };
+          const volume = set.weight_lbs * set.reps;
+          setState((s) => ({
+            ...s,
+            sets: [...s.sets, newSetEntry],
+            setsCount: s.setsCount + 1,
+            totalVolumeLbs: s.totalVolumeLbs + volume,
+            bestWeightLbs: Math.max(s.bestWeightLbs, set.weight_lbs),
+            bestReps: Math.max(s.bestReps, set.reps),
+            loading: false,
+            error: 'Saved offline — will sync when connected.',
+          }));
+        } catch {
+          setState((s) => ({
+            ...s,
+            loading: false,
+            error: 'Network error. Try again.',
+          }));
+        }
         return null;
       }
     },

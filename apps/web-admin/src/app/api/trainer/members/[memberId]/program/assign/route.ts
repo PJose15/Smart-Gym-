@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 
+/** Shape returned by Supabase join: program_days(*, program_exercises(*)) */
+interface ProgramExerciseRow {
+  exercise_name: string | null;
+  machine_id: string | null;
+  order_index: number | null;
+  default_sets: number | null;
+  default_reps: number | null;
+}
+
+interface ProgramDayRow {
+  day_number: number | null;
+  name: string | null;
+  program_exercises: ProgramExerciseRow[];
+}
+
 /**
  * POST /api/trainer/members/[memberId]/program/assign
  * Assigns a trainer-created program to a member.
@@ -73,14 +88,15 @@ export async function POST(
     }
 
     // Convert trainer program structure to program_data JSON
-    const days = ((trainerProgram.program_days as any[]) ?? [])
-      .sort((a: any, b: any) => (a.day_number ?? 0) - (b.day_number ?? 0))
-      .map((day: any) => ({
+    const programDays = (trainerProgram.program_days ?? []) as ProgramDayRow[];
+    const days = programDays
+      .sort((a, b) => (a.day_number ?? 0) - (b.day_number ?? 0))
+      .map((day) => ({
         day_number: day.day_number ?? 1,
         name: day.name ?? 'Untitled Day',
-        exercises: ((day.program_exercises as any[]) ?? [])
-          .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
-          .map((ex: any) => ({
+        exercises: (day.program_exercises ?? [])
+          .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+          .map((ex) => ({
             exercise_name: ex.exercise_name ?? 'Unknown Exercise',
             machine_id: ex.machine_id ?? null,
             default_sets: ex.default_sets ?? 3,

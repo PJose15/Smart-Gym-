@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     // 1. Fetch program row — scoped to this member
     const { data: program, error: progErr } = await admin
       .from('ai_programs')
-      .select('program_data, sessions_per_week')
+      .select('program_data, sessions_per_week, duration_weeks')
       .eq('id', program_id)
       .eq('member_id', member_id)
       .maybeSingle();
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ complete: false });
     }
 
-    const { program_data, sessions_per_week } = program;
+    const { program_data, sessions_per_week, duration_weeks } = program;
     if (!Array.isArray(program_data?.days) || !sessions_per_week || sessions_per_week < 1) {
       return NextResponse.json({ complete: false });
     }
@@ -119,15 +119,35 @@ export async function GET(req: NextRequest) {
     );
     const prs_hit = sessions.filter((s) => s.is_personal_best).length;
 
-    // next_session_day/is_rest_day are stubs: computing the next session day
-    // requires calendar-to-program-day mapping (which weekday corresponds to
-    // which program day) — data the system doesn't currently store.
-    // DayCompleteRitual handles null gracefully (hides rest message).
+    // Compute next session day from program schedule
+    const isLastDayOfWeek = dayIndex + 1 >= sessions_per_week;
+    const totalWeeks = duration_weeks ?? null;
+    const programFinished = isLastDayOfWeek && totalWeeks && week_number >= totalWeeks;
+
+    let next_session_day: string | null = null;
+    let is_rest_day = false;
+
+    if (programFinished) {
+      // Program complete — no next session
+      next_session_day = null;
+      is_rest_day = false;
+    } else if (isLastDayOfWeek) {
+      // Last session of the week → rest days until next week
+      next_session_day = `Week ${week_number + 1}, Day 1`;
+      is_rest_day = true;
+    } else {
+      // More sessions this week
+      const nextDayNum = day_number + 1;
+      next_session_day = `Day ${nextDayNum}`;
+      // Rest day between sessions when schedule isn't daily
+      is_rest_day = sessions_per_week < 7;
+    }
+
     return NextResponse.json({
       complete: true,
       stats: { machines_count, total_volume_lbs, prs_hit },
-      next_session_day: null,
-      is_rest_day: false,
+      next_session_day,
+      is_rest_day,
     });
   } catch (err) {
     console.error('day-complete: unexpected error', err);
