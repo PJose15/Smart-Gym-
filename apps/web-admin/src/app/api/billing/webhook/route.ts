@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
-      console.error('[billing/webhook] Signature verification failed:', err);
+      console.error('[billing/webhook] Signature verification failed:', err instanceof Error ? err.message : 'Unknown error');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
@@ -39,26 +39,26 @@ export async function POST(request: Request) {
           triggerUptimizeAIAgent('retention-agent', {
             event: 'subscription-cancelled',
             gym_id: gymId,
-          }).catch(err => console.error('[webhook] retention-agent trigger failed:', err));
+          }).catch(err => console.error('[webhook] retention-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
           break;
         case 'payment_failed':
           triggerUptimizeAIAgent('revenue-agent', {
             event: 'payment-failed',
             gym_id: gymId,
-          }).catch(err => console.error('[webhook] revenue-agent trigger failed:', err));
+          }).catch(err => console.error('[webhook] revenue-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
           break;
         case 'trial_ending':
           triggerUptimizeAIAgent('engagement-agent', {
             event: 'trial-ending-soon',
             gym_id: gymId,
-          }).catch(err => console.error('[webhook] engagement-agent trigger failed:', err));
+          }).catch(err => console.error('[webhook] engagement-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
           break;
       }
     }
 
     return NextResponse.json({ received: true, action: result.action });
   } catch (err) {
-    console.error('[billing/webhook] Error:', err);
+    console.error('[billing/webhook] Error:', err instanceof Error ? err.message : 'Unknown error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

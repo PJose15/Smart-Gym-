@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../src/lib/supabase';
 import { getWeightUnit, saveWeightUnit } from '../src/lib/weightUnit';
-import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../src/lib/featureFlags';
+import { isFeatureEnabled, needsRefresh, refreshFeatureFlags, clearFlagCache } from '../src/lib/featureFlags';
 import { unregisterPushToken } from '../src/lib/notificationService';
 import { Button, Text, Card } from '../src/components';
 import { AnimatedScreen } from '../src/components/AnimatedScreen';
@@ -373,6 +373,7 @@ export default function SettingsScreen() {
         style: 'destructive',
         onPress: async () => {
           await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
+          clearFlagCache();
           await unregisterPushToken();
           await supabase.auth.signOut();
           router.replace('/auth');

@@ -3,6 +3,15 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { computeLevelProgress } from '@nexera/ai-assist';
 
+interface AchievementDef {
+  code: string;
+  title: string;
+  description: string;
+  category: string;
+  icon_name: string;
+  points: number;
+}
+
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
@@ -125,12 +134,18 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         current: member.current_streak,
         best: member.best_streak,
       },
-      achievements: achievements.map((a) => ({
-        code: a.achievement_code,
-        earned_at: a.earned_at,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(a.achievement_definitions as any),
-      })),
+      achievements: achievements.map((a) => {
+        const def = a.achievement_definitions as unknown as AchievementDef | null;
+        return {
+          code: def?.code ?? a.achievement_code,
+          earned_at: a.earned_at,
+          title: def?.title ?? null,
+          description: def?.description ?? null,
+          category: def?.category ?? null,
+          icon_name: def?.icon_name ?? null,
+          points: def?.points ?? 0,
+        };
+      }),
       favorite_machines: favoriteMachines,
     });
   } catch (err) {

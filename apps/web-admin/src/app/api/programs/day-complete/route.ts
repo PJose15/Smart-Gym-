@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     if (progErr) {
-      console.error('day-complete: program fetch error', progErr);
+      console.error('day-complete: program fetch error', progErr?.message ?? 'Unknown error');
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
     if (!program) {
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
       .lt('created_at', tomorrow.toISOString());
 
     if (sessErr) {
-      console.error('day-complete: sessions fetch error', sessErr);
+      console.error('day-complete: sessions fetch error', sessErr?.message ?? 'Unknown error');
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
     if (!sessions) {
@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
       is_rest_day,
     });
   } catch (err) {
-    console.error('day-complete: unexpected error', err);
+    console.error('day-complete: unexpected error', err instanceof Error ? err.message : 'Unknown error');
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

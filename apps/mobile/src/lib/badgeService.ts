@@ -113,7 +113,7 @@ export async function checkAndUnlockBadges(
   const queryError = workoutCountResult.error ?? volumeResult.error ?? pointsResult.error
     ?? workoutDatesResult.error ?? prCountResult.error ?? existingBadgesResult.error;
   if (queryError) {
-    console.warn('[badges] stat query failed:', queryError.message);
+    if (__DEV__) console.warn('[badges] stat query failed:', queryError.message);
     return [];
   }
 

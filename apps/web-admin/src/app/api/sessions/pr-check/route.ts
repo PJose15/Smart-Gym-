@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 function getAdminClient() {
@@ -127,8 +127,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function markPR(admin: any, sessionId: string, type: string, value: number, previousBest: number | null) {
+async function markPR(admin: SupabaseClient, sessionId: string, type: string, value: number, previousBest: number | null) {
   await admin
     .from('workout_sessions')
     .update({
@@ -143,8 +142,7 @@ async function markPR(admin: any, sessionId: string, type: string, value: number
     .eq('id', sessionId);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function insertFeedEvent(admin: any, sessionId: string, memberId: string, machineId: string, prType: string) {
+async function insertFeedEvent(admin: SupabaseClient, sessionId: string, memberId: string, machineId: string, prType: string) {
   // Get gym_id from session
   const { data: session } = await admin
     .from('workout_sessions')

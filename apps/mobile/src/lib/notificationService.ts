@@ -80,7 +80,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
         },
         { onConflict: 'profile_id,expo_push_token' },
       );
-      if (upsertErr) console.warn('[pushToken] upsert failed:', upsertErr.message);
+      if (upsertErr && __DEV__) console.warn('[pushToken] upsert failed:', upsertErr.message);
       trackEvent('push_token_registered');
     }
 

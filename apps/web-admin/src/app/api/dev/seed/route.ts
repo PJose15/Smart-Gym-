@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
@@ -83,8 +84,7 @@ export async function POST(req: Request) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function seedGymData(admin: any, gymId: string, ownerId: string, ownerEmail: string) {
+async function seedGymData(admin: SupabaseClient, gymId: string, ownerId: string, ownerEmail: string) {
   const results: string[] = []
 
   // 4. Gym membership for owner

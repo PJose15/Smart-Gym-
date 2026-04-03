@@ -44,7 +44,7 @@ export function trackEvent(
         event_props: props ?? {},
       });
     } catch (err) {
-      console.warn('[events]', err);
+      if (__DEV__) console.warn('[events]', err);
     }
   })();
 }

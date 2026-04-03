@@ -743,7 +743,12 @@ export default function ProgressScreen() {
     <SkeletonGate loading={loading} skeleton={<ProgressScreenSkeleton />}>
     <AnimatedScreen>
     <View style={styles.container}>
-      <Text style={styles.heading}>Your Progress</Text>
+      <View style={styles.headingRow}>
+        <Text style={styles.heading}>Your Progress</Text>
+        <TouchableOpacity onPress={() => router.push('/leaderboard')} style={styles.leaderboardLink}>
+          <Text style={styles.leaderboardLinkText}>Leaderboard</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.periodRow}>
         {PERIOD_OPTIONS.map((opt) => (
           <TouchableOpacity
@@ -817,13 +822,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  headingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 4,
+  },
   heading: {
     fontSize: 24,
     fontWeight: '700',
     color: colors.text,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 4,
+  },
+  leaderboardLink: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  leaderboardLinkText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
   periodRow: {
     flexDirection: 'row',

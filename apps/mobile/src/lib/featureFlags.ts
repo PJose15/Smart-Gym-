@@ -46,7 +46,7 @@ export async function refreshFeatureFlags(): Promise<void> {
     flagCache = resolved;
     lastFetch = Date.now();
   } catch (err) {
-    console.warn('[flags] refresh failed:', err);
+    if (__DEV__) console.warn('[flags] refresh failed:', err);
   }
 }
 

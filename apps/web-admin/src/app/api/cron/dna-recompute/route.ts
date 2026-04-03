@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ recomputed, errors, total: members.length });
   } catch (err) {
-    console.error('[dna-recompute] Error:', err);
+    console.error('[dna-recompute] Error:', err instanceof Error ? err.message : 'Unknown error');
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

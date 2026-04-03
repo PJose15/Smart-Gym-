@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (createError || !newUser.user) {
-          console.error('Dev user creation error:', createError);
+          console.error('Dev user creation error:', createError?.message ?? 'Unknown error');
           return NextResponse.json(
             { error: 'Failed to create user' },
             { status: 500 }
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('Verify error:', err);
+    console.error('Verify error:', err instanceof Error ? err.message : 'Unknown error');
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -186,7 +186,7 @@ async function findOrCreateMember(
         .single();
 
       if (updateError) {
-        console.error('Member link error:', updateError);
+        console.error('Member link error:', updateError?.message ?? 'Unknown error');
         return null;
       }
       return updated;
@@ -211,7 +211,7 @@ async function findOrCreateMember(
     .single();
 
   if (createError) {
-    console.error('Member creation error:', createError);
+    console.error('Member creation error:', createError?.message ?? 'Unknown error');
     return null;
   }
 

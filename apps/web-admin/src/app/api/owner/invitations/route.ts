@@ -18,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json(invitations ?? []);
   } catch (err) {
-    console.error('[owner/invitations GET] Error:', err);
+    console.error('[owner/invitations GET] Error:', err instanceof Error ? err.message : 'Unknown error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     // MVP: No email sending — just create the record
     return NextResponse.json(invitation, { status: 201 });
   } catch (err) {
-    console.error('[owner/invitations POST] Error:', err);
+    console.error('[owner/invitations POST] Error:', err instanceof Error ? err.message : 'Unknown error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

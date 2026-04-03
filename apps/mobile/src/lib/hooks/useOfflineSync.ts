@@ -3,13 +3,14 @@
  * Mount once (e.g. in root layout) — it subscribes to NetInfo
  * and replays queued inserts via Supabase on reconnect.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import NetInfo from '@react-native-community/netinfo';
 import { flushQueue, getQueueSize } from '../offlineQueue';
 import { supabase } from '../supabase';
 
-export function useOfflineSync() {
+export function useOfflineSync(): { isSyncing: boolean } {
   const wasOffline = useRef(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(async (state) => {
@@ -28,19 +29,24 @@ export function useOfflineSync() {
         const size = await getQueueSize();
         if (size === 0) return;
 
+        setIsSyncing(true);
         const { flushed, remaining } = await flushQueue(async (table, payload) => {
           const { error } = await supabase.from(table).insert(payload);
           return !error;
         });
 
-        if (flushed > 0) {
+        if (flushed > 0 && __DEV__) {
           console.log(`[offlineSync] Flushed ${flushed} items, ${remaining} remaining`);
         }
       } catch (err) {
-        console.warn('[offlineSync] Flush failed:', err instanceof Error ? err.message : err);
+        if (__DEV__) console.warn('[offlineSync] Flush failed:', err instanceof Error ? err.message : err);
+      } finally {
+        setIsSyncing(false);
       }
     });
 
     return unsubscribe;
   }, []);
+
+  return { isSyncing };
 }

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 
+interface MachineJoin {
+  name: string;
+}
+
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
@@ -155,8 +159,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       return {
         id: s.id,
         date: s.session_date,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        machine_name: (s.machines as any)?.name ?? null,
+        machine_name: (s.machines as unknown as MachineJoin | null)?.name ?? null,
         volume_lbs: Math.round(Number(s.total_volume_lbs) || 0),
         sets: s.sets_count || 0,
         duration_min: durationMin,

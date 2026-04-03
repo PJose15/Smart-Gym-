@@ -26,9 +26,9 @@ export function logAiDecision(
         inputs,
         outputs,
       });
-      if (insertErr) console.warn('[aiAudit] insert failed:', insertErr.message);
+      if (insertErr && __DEV__) console.warn('[aiAudit] insert failed:', insertErr.message);
     } catch (err) {
-      console.warn('[aiAudit]', err);
+      if (__DEV__) console.warn('[aiAudit]', err);
     }
   })();
 }
