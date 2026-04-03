@@ -1,14 +1,76 @@
 import { updateSession } from '@/lib/supabase/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const CSRF_EXEMPT = [
+  '/api/billing/webhook',
+  '/api/cron/',
+  '/api/agents/',
+  '/api/health',
+  '/api/dev/',
+]
+
+function isCsrfExempt(pathname: string): boolean {
+  return CSRF_EXEMPT.some(
+    (p) => pathname === p || pathname.startsWith(p)
+  )
+}
+
+function getAllowedOrigin(): string {
+  return process.env.NEXT_PUBLIC_APP_URL || ''
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // /m/* (mobile scan flow) and /api/* routes skip session middleware
-  if (pathname.startsWith('/m/') || pathname.startsWith('/api/')) {
+  // /m/* (mobile scan flow) skips all middleware
+  if (pathname.startsWith('/m/')) {
     return NextResponse.next()
   }
 
+  // API routes: CORS + CSRF protection
+  if (pathname.startsWith('/api/')) {
+    const allowedOrigin = getAllowedOrigin()
+    const origin = request.headers.get('origin')
+
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': allowedOrigin,
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Max-Age': '86400',
+          'Vary': 'Origin',
+        },
+      })
+    }
+
+    const response = NextResponse.next()
+
+    // Add CORS headers to all API responses
+    if (allowedOrigin) {
+      response.headers.set('Access-Control-Allow-Origin', allowedOrigin)
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+      response.headers.set('Vary', 'Origin')
+    }
+
+    // CSRF: validate Origin on state-changing methods
+    const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)
+    if (isStateChanging && !isCsrfExempt(pathname)) {
+      if (origin && allowedOrigin && origin !== allowedOrigin) {
+        return NextResponse.json(
+          { error: 'CSRF origin mismatch' },
+          { status: 403 }
+        )
+      }
+    }
+
+    return response
+  }
+
+  // Page routes: session middleware
   return await updateSession(request)
 }
 

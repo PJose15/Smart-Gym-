@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { otpSchema } from '@/lib/validation/auth';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
   return createClient(
@@ -29,6 +30,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { phone, code, gym_id, name } = parsed.data;
+
+    const limited = checkRateLimit(`auth-verify:${phone}`, 10, 900_000);
+    if (limited) return limited;
+
     const admin = getAdminClient();
     const isDev = process.env.NEXT_PUBLIC_DEV_OTP === 'true';
 

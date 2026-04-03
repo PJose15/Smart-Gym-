@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { lookupSchema } from '@/lib/validation/auth';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
   return createClient(
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { phone, gym_id } = parsed.data;
+
+    const limited = checkRateLimit(`auth-lookup:${phone}`, 20, 300_000);
+    if (limited) return limited;
+
     const admin = getAdminClient();
 
     // Look up member by phone in this gym
