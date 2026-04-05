@@ -10,7 +10,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "build:android": "eas build --platform android --profile preview",
-    "build:ios": "eas build --platform ios --profile preview"
+    "build:ios": "eas build --platform ios --profile preview",
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -42,7 +43,13 @@
     "react-native-web": "~0.19.13"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/react": "~18.3.12",
+    "@types/react-test-renderer": "^18.3.1",
+    "jest": "^29.7.0",
+    "jest-expo": "^52.0.6",
+    "react-test-renderer": "^18.3.1",
+    "ts-jest": "29",
     "typescript": "^5.6.3"
   }
 }
