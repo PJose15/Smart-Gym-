@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 /**
  * PATCH /api/ai/programs/[programId] — trainer edits AI program
@@ -11,6 +12,8 @@ export async function PATCH(
 ) {
   try {
     const { programId } = await params;
+    const uuidError = validateUUIDs({ programId });
+    if (uuidError) return uuidError;
 
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;

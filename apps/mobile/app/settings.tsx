@@ -17,6 +17,7 @@ import { supabase } from '../src/lib/supabase';
 import { getWeightUnit, saveWeightUnit } from '../src/lib/weightUnit';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags, clearFlagCache } from '../src/lib/featureFlags';
 import { unregisterPushToken } from '../src/lib/notificationService';
+import { clearAllCaches } from '../src/lib/cacheManager';
 import { Button, Text, Card } from '../src/components';
 import { AnimatedScreen } from '../src/components/AnimatedScreen';
 import { colors } from '../src/theme/colors';
@@ -372,6 +373,7 @@ export default function SettingsScreen() {
         text: 'Sign Out',
         style: 'destructive',
         onPress: async () => {
+          await clearAllCaches();
           await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
           clearFlagCache();
           await unregisterPushToken();

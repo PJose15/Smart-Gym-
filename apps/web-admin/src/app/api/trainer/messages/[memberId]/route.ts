@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function GET(
   _req: NextRequest,
@@ -11,6 +12,8 @@ export async function GET(
 
     const { admin, user_id, gym_id } = result;
     const { memberId } = params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
 
     // Fetch full thread
     const { data: messages } = await admin

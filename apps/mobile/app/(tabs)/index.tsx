@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -135,11 +135,18 @@ export default function HomeScreen() {
 
   const mountedRef = useRef(true);
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const loadHome = useCallback(async () => {
+    // Cancel any in-flight load
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       setError(null);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!user || controller.signal.aborted) {
         if (mountedRef.current) setLoading(false);
         return;
       }
@@ -203,6 +210,7 @@ export default function HomeScreen() {
       }
 
       const gymId = memberData.gym_id;
+      if (controller.signal.aborted) return;
       if (mountedRef.current) setGymId(gymId);
 
       // Load member score and level
@@ -321,7 +329,9 @@ export default function HomeScreen() {
       }
 
       // Parse days from program_data JSON
-      const days = ((activeProgram.program_data as any)?.days ?? []).map((d: any, idx: number) => ({
+      interface ProgramDay { day_number?: number; name?: string; exercises?: Array<{ exercise_name?: string; default_sets?: number; default_reps?: number; machine_id?: string | null }> }
+      const programData = activeProgram.program_data as { days?: ProgramDay[] } | null;
+      const days = (programData?.days ?? []).map((d, idx) => ({
           id: `day-${idx}`,
           program_id: activeProgram.id,
           day_number: d.day_number ?? idx + 1,
@@ -432,6 +442,9 @@ export default function HomeScreen() {
       } catch (err) {
         console.warn('[home] rest day check failed:', err instanceof Error ? err.message : err);
       }
+
+      // Bail out early if this load was superseded
+      if (controller.signal.aborted) return;
 
       // Load "Why This Today" explanation if feature enabled
       if (isFeatureEnabled('why_this_today_enabled') && todayExercises.length > 0) {
@@ -708,6 +721,7 @@ export default function HomeScreen() {
       deduper.dedupe('home:load', loadHome).catch(() => {});
       return () => {
         mountedRef.current = false;
+        abortRef.current?.abort();
       };
     }, [loadHome]),
   );
@@ -766,8 +780,8 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // Compute hero state from loaded data
-  const heroInput: HeroInput = {
+  // Compute hero state from loaded data (memoized to prevent unnecessary re-renders)
+  const heroInput = useMemo<HeroInput>(() => ({
     firstName: userName?.split(' ')[0] || 'there',
     streak: streak?.currentStreak ?? 0,
     todaySessionCount: todayDone ? 1 : 0,
@@ -789,7 +803,7 @@ export default function HomeScreen() {
     score: memberScore,
     level: levelData?.current.level ?? 1,
     levelName: levelData?.current.name,
-  };
+  }), [userName, streak, todayDone, todayWorkout, programDayContext, lastSessionDate, unseenPRs, weeklyVolume, weeklyWorkouts, memberScore, levelData]);
 
   const heroState = computeHeroState(heroInput);
 

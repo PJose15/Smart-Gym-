@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>;
@@ -12,6 +13,8 @@ export async function GET(
 ) {
   try {
     const { sessionId } = await params;
+    const uuidError = validateUUIDs({ sessionId });
+    if (uuidError) return uuidError;
 
     const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();

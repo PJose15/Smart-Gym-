@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { gymId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ gymId: params.gymId });
+    if (uuidError) return uuidError;
     const rl = checkRateLimit(`create-challenge:${params.gymId}`, 5, 60_000);
     if (rl) return rl;
 

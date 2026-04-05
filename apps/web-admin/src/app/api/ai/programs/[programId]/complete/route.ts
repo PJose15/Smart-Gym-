@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 /**
  * POST /api/ai/programs/[programId]/complete — mark program finished
@@ -12,6 +13,8 @@ export async function POST(
 ) {
   try {
     const { programId } = await params;
+    const uuidError = validateUUIDs({ programId });
+    if (uuidError) return uuidError;
 
     const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();

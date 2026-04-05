@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { createMemberGoal } from '@/lib/social/memberGoals';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,8 @@ export async function POST(
 ) {
   try {
     const { eventId } = await params;
+    const uuidError = validateUUIDs({ eventId });
+    if (uuidError) return uuidError;
     const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {

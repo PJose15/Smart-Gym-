@@ -766,6 +766,9 @@ export default function ProgressScreen() {
         data={exercises}
         keyExtractor={(item) => item.exerciseName}
         renderItem={renderExerciseCard}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={6}
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={
           <View style={styles.emptyListMsg}>

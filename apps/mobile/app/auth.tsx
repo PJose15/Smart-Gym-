@@ -54,6 +54,7 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isReturningMember, setIsReturningMember] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
 
   // Animations
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -72,8 +73,17 @@ export default function AuthScreen() {
     animateStepIn();
   }, [step, animateStepIn]);
 
+  // OTP resend cooldown timer
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setTimeout(() => setOtpCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [otpCooldown]);
+
   // ─── Step 1: Send OTP ──────────────────────────────
   const handleSendOTP = async () => {
+    if (otpCooldown > 0) return;
+
     const trimmedPhone = phone.trim();
     if (!trimmedPhone) {
       setError('Please enter your phone number.');
@@ -93,6 +103,7 @@ export default function AuthScreen() {
       });
 
       if (otpError) throw otpError;
+      setOtpCooldown(30);
       setStep('otp');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to send verification code.');
@@ -344,6 +355,16 @@ export default function AuthScreen() {
                   ) : (
                     <Text style={styles.primaryBtnText}>Verify →</Text>
                   )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.secondaryBtn, otpCooldown > 0 && styles.disabledBtn]}
+                  onPress={handleSendOTP}
+                  disabled={otpCooldown > 0 || loading}
+                >
+                  <Text style={styles.secondaryBtnText}>
+                    {otpCooldown > 0 ? `Resend code in ${otpCooldown}s` : 'Resend code'}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity

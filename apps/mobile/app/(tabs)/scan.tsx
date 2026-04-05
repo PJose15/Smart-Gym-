@@ -18,6 +18,7 @@ import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { supabase } from '../../src/lib/supabase';
 import { trackEvent } from '../../src/lib/events';
+import { deduper } from '../../src/lib/requestDeduper';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 
@@ -60,6 +61,7 @@ export default function ScanScreen() {
   const [scanCountToday, setScanCountToday] = useState(0);
   const [totalUniqueMachines, setTotalUniqueMachines] = useState(0);
   const [loadingContext, setLoadingContext] = useState(true);
+  const [contextError, setContextError] = useState(false);
   const mountedRef = useRef(true);
 
   // Animated scan frame pulse
@@ -94,11 +96,13 @@ export default function ScanScreen() {
     useCallback(() => {
       setScanned(false);
       setError(null);
-      loadContext();
+      deduper.clear('scan:context');
+      deduper.dedupe('scan:context', loadContext).catch(() => {});
     }, []),
   );
 
   async function loadContext() {
+    setContextError(false);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !mountedRef.current) return;
@@ -176,6 +180,7 @@ export default function ScanScreen() {
       setProgramMachine(programResult);
     } catch (err) {
       console.warn('[scan] context load failed:', err);
+      if (mountedRef.current) setContextError(true);
     } finally {
       if (mountedRef.current) setLoadingContext(false);
     }

@@ -48,6 +48,10 @@ export async function middleware(request: NextRequest) {
 
     const response = NextResponse.next()
 
+    // Generate request ID for tracing
+    const requestId = request.headers.get('x-request-id') || crypto.randomUUID()
+    response.headers.set('x-request-id', requestId)
+
     // Add CORS headers to all API responses
     if (allowedOrigin) {
       response.headers.set('Access-Control-Allow-Origin', allowedOrigin)

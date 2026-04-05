@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getMachineLeaderboard } from '@/lib/social/machineLeaderboard';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,8 @@ export async function GET(
 ) {
   try {
     const { machineId } = await params;
+    const uuidError = validateUUIDs({ machineId });
+    if (uuidError) return uuidError;
     const { searchParams } = new URL(request.url);
     const gymId = searchParams.get('gym_id');
     const memberId = searchParams.get('member_id');

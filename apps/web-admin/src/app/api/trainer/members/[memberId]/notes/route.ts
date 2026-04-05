@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { trainerNoteSchema } from '@/lib/validation/staff';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
 
@@ -33,6 +36,8 @@ export async function POST(
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
 

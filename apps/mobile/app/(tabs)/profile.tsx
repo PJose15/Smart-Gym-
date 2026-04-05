@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../src/lib/supabase';
+import { deduper } from '../../src/lib/requestDeduper';
 import { getWeightUnit } from '../../src/lib/weightUnit';
 import { getPointsSummary } from '../../src/lib/pointsService';
 import { getStreak } from '../../src/lib/streakService';
@@ -296,7 +297,12 @@ export default function ProfileScreen() {
       }
 
       // Calculate volume and sets from exercises, plus machine frequency
-      const exercises = (exercisesResult.data ?? []) as any[];
+      interface ProfileExerciseRow {
+        machine_id: string | null;
+        sets: Array<{ weight_kg?: number; reps?: number }>;
+        machines?: { name: string; qr_slug?: string } | null;
+      }
+      const exercises = (exercisesResult.data ?? []) as ProfileExerciseRow[];
       let totalVolumeKg = 0;
       let totalSets = 0;
       const machineFreq = new Map<string, { name: string; count: number; slug: string }>();
@@ -348,13 +354,14 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadProfile();
+      deduper.dedupe('profile:load', loadProfile).catch(() => {});
     }, [loadProfile])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadProfile();
+    deduper.clear('profile:load');
+    await deduper.dedupe('profile:load', loadProfile).catch(() => {});
     setRefreshing(false);
   }, [loadProfile]);
 

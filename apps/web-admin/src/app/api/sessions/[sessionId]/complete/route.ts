@@ -6,6 +6,7 @@ import { updateChallengeScores } from '@/lib/challengeScoring';
 import { invalidateAndRefreshReadiness } from '@/lib/readiness/readinessCache';
 import { invalidateAndRefreshMuscleMap } from '@/lib/muscleMap/muscleMapCache';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 const completeSchema = z.object({
   member_id: z.string().uuid(),
@@ -23,6 +24,8 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { sessionId } = await params;
+    const uuidError = validateUUIDs({ sessionId });
+    if (uuidError) return uuidError;
     const body = await request.json();
     const parsed = completeSchema.safeParse(body);
 

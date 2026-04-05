@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -86,6 +86,7 @@ export default function MachineDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [startingWorkout, setStartingWorkout] = useState(false);
   const [commonMistakes, setCommonMistakes] = useState<string[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   // Alternatives state
   const [showAlternatives, setShowAlternatives] = useState(false);
@@ -158,7 +159,7 @@ export default function MachineDetailScreen() {
       setMachine(data as MachineWithGym);
     } catch (err: unknown) {
       clearTimeout(timeout);
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
         setError('Request timed out. Check your connection and try again.');
       } else {
         setError(err instanceof Error ? err.message : 'Failed to load machine');
@@ -391,8 +392,13 @@ export default function MachineDetailScreen() {
   return (
     <AnimatedScreen>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {machine.image_url && (
-        <Image source={{ uri: machine.image_url }} style={styles.image} resizeMode="cover" />
+      {machine.image_url && !imageError && (
+        <Image
+          source={{ uri: machine.image_url }}
+          style={styles.image}
+          resizeMode="cover"
+          onError={() => setImageError(true)}
+        />
       )}
 
       <Text variant="heading">{machine.name}</Text>

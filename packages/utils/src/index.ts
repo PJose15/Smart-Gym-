@@ -278,7 +278,7 @@ export function computeStrengthCurve(
 }
 
 /** Returns ISO week key like "2026-W09" */
-function getISOWeekKey(d: Date): string {
+export function getISOWeekKey(d: Date): string {
   const temp = new Date(d.getTime());
   temp.setHours(0, 0, 0, 0);
   temp.setDate(temp.getDate() + 3 - ((temp.getDay() + 6) % 7));

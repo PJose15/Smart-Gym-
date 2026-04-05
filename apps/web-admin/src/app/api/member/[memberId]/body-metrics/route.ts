@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const auth = await verifyMember(params.memberId);
     if (auth instanceof NextResponse) return auth;
     const { admin } = auth;
@@ -34,6 +37,8 @@ export async function POST(
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const rl = checkRateLimit(`body-metrics:${params.memberId}`, 10, 60_000);
     if (rl) return rl;
 

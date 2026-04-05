@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 const TIER_LIMITS: Record<string, number> = { starter: 5, growth: 25, pro: Infinity };
 
@@ -14,6 +15,8 @@ export async function POST(
 ) {
   try {
     const { gymId } = await params;
+    const uuidError = validateUUIDs({ gymId });
+    if (uuidError) return uuidError;
 
     const rl = checkRateLimit(`create-machine:${gymId}`, 10, 60_000);
     if (rl) return rl;

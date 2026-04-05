@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>;
@@ -12,6 +13,8 @@ export async function PATCH(
 ) {
   try {
     const { sessionId } = await params;
+    const uuidError = validateUUIDs({ sessionId });
+    if (uuidError) return uuidError;
 
     const rl = checkRateLimit(`trainer-note:${sessionId}`, 10, 60_000);
     if (rl) return rl;

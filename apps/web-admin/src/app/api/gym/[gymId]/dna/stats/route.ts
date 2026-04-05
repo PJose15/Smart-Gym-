@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,8 @@ export async function GET(
 ) {
   try {
     const { gymId } = await params;
+    const uuidError = validateUUIDs({ gymId });
+    if (uuidError) return uuidError;
 
     const authResult = await verifyStaff();
     if (authResult instanceof NextResponse) return authResult;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { challengeDetailSchema } from '@/lib/validation/challenge';
 import type { ChallengeDetail, ChallengeParticipant } from '@nexera/types';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ challengeId: string }>;
@@ -10,6 +11,8 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { challengeId } = await params;
+    const uuidError = validateUUIDs({ challengeId });
+    if (uuidError) return uuidError;
     const sp = request.nextUrl.searchParams;
     const parsed = challengeDetailSchema.safeParse({
       member_id: sp.get('member_id'),

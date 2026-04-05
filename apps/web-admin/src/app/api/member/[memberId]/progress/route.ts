@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface MachineJoin {
   name: string;
@@ -15,6 +16,8 @@ interface RouteParams {
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { memberId } = await params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
 
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;

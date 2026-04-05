@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 /**
  * POST /api/trainer/members/[memberId]/program/approve
@@ -12,6 +13,8 @@ export async function POST(
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const rl = checkRateLimit(`trainer-approve:${params.memberId}`, 10, 60_000);
     if (rl) return rl;
 

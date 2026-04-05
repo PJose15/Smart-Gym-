@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { getReadinessScore } from '@/lib/readiness/readinessCache';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ memberId: string }>;
@@ -14,6 +15,8 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { memberId } = await params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
 
     // Rate limit: 30 requests per minute per member
     const rl = checkRateLimit(`readiness:${memberId}`, 30, 60_000);

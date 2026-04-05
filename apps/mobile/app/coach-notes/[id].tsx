@@ -28,6 +28,7 @@ export default function CoachNoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [note, setNote] = useState<CoachNoteDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [acking, setAcking] = useState(false);
 
@@ -37,30 +38,40 @@ export default function CoachNoteDetailScreen() {
 
   async function fetchNote() {
     if (!id) return;
-    const { data, error } = await supabase
-      .from('coach_notes')
-      .select('id, source, title, body, meta, created_at, sent_at, trainer_profile:trainer_profile_id(full_name)')
-      .eq('id', id)
-      .single();
+    setError(null);
+    try {
+      const { data, error: fetchErr } = await supabase
+        .from('coach_notes')
+        .select('id, source, title, body, meta, created_at, sent_at, trainer_profile:trainer_profile_id(full_name)')
+        .eq('id', id)
+        .single();
 
-    if (!error && data) {
-      setNote(data as unknown as CoachNoteDetail);
-    }
-
-    // Check if already acknowledged
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user && id) {
-      const { data: ackData } = await supabase
-        .from('member_note_ack')
-        .select('id')
-        .eq('note_id', id)
-        .eq('profile_id', user.id)
-        .limit(1);
-      if (ackData && ackData.length > 0) {
-        setAcknowledged(true);
+      if (fetchErr || !data) {
+        setError('Failed to load note. Please try again.');
+        setLoading(false);
+        return;
       }
+
+      setNote(data as unknown as CoachNoteDetail);
+
+      // Check if already acknowledged
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && id) {
+        const { data: ackData } = await supabase
+          .from('member_note_ack')
+          .select('id')
+          .eq('note_id', id)
+          .eq('profile_id', user.id)
+          .limit(1);
+        if (ackData && ackData.length > 0) {
+          setAcknowledged(true);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load note');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const handleAcknowledge = useCallback(async () => {
@@ -104,6 +115,17 @@ export default function CoachNoteDetailScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => { setLoading(true); fetchNote(); }}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -293,6 +315,24 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     color: colors.textSecondary,
+  },
+  errorText: {
+    fontSize: 15,
+    color: colors.error,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
   ackContainer: {
     marginBottom: spacing.lg,

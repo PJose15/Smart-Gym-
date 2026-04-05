@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { z } from 'zod';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 const deleteSchema = z.object({
   member_id: z.string().uuid(),
@@ -13,6 +14,8 @@ interface RouteParams {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { commentId } = await params;
+    const uuidError = validateUUIDs({ commentId });
+    if (uuidError) return uuidError;
     const body = await request.json();
     const parsed = deleteSchema.safeParse(body);
 

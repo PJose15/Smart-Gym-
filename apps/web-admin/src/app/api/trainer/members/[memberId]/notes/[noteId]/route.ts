@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: { memberId: string; noteId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId, noteId: params.noteId });
+    if (uuidError) return uuidError;
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
 
@@ -42,6 +45,8 @@ export async function DELETE(
   { params }: { params: { memberId: string; noteId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId, noteId: params.noteId });
+    if (uuidError) return uuidError;
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
 

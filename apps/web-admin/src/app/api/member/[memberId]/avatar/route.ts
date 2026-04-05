@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ memberId: string }>;
@@ -40,6 +41,8 @@ function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { memberId } = await params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
 
     const rl = checkRateLimit(`avatar:${memberId}`, 10, 60_000);
     if (rl) return rl;

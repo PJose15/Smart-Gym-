@@ -148,6 +148,9 @@ export default function CoachNotesScreen() {
       <FlatList
         data={notes}
         keyExtractor={(item) => item.id}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={8}
         contentContainerStyle={notes.length === 0 ? styles.center : { paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={

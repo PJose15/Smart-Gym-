@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { getMuscleMap } from '@/lib/muscleMap/muscleMapCache';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ memberId: string }>;
@@ -13,6 +14,8 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { memberId } = await params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
 
     // Auth: verify the caller owns this member_id
     const authResult = await verifyMember(memberId);

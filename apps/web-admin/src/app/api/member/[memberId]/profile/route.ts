@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { computeLevelProgress } from '@nexera/ai-assist';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface AchievementDef {
   code: string;
@@ -22,6 +23,9 @@ interface RouteParams {
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { memberId } = await params;
+
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
 
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
@@ -161,6 +165,9 @@ export async function PATCH(
 ) {
   try {
     const { memberId } = await params;
+
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
 
     const rl = checkRateLimit(`profile-update:${memberId}`, 10, 60_000);
     if (rl) return rl;

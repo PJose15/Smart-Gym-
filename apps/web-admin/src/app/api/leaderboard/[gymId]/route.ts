@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { gymId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ gymId: params.gymId });
+    if (uuidError) return uuidError;
     const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

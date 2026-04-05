@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { createWorkoutSharePost } from '@/lib/social/workoutShare';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,8 @@ export async function POST(
 ) {
   try {
     const { memberId } = await params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
     // Rate limit: 5 shares per minute per member
     const rl = checkRateLimit(`workout-share:${memberId}`, 5, 60_000);
     if (rl) return rl;

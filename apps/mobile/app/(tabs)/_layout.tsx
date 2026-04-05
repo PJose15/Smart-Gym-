@@ -129,6 +129,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          tabBarAccessibilityLabel: 'Home tab',
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon name="home-outline" activeName="home" size={size} color={color} focused={focused} />
           ),
@@ -138,6 +139,7 @@ export default function TabLayout() {
         name="scan"
         options={{
           title: 'Scan',
+          tabBarAccessibilityLabel: 'Scan QR code tab',
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon name="qr-code-outline" activeName="qr-code" size={size} color={color} focused={focused} />
           ),
@@ -147,6 +149,7 @@ export default function TabLayout() {
         name="progress"
         options={{
           title: 'Progress',
+          tabBarAccessibilityLabel: 'Workout progress tab',
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon name="bar-chart-outline" activeName="bar-chart" size={size} color={color} focused={focused} />
           ),
@@ -156,6 +159,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          tabBarAccessibilityLabel: 'Profile tab',
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon name="person-outline" activeName="person" size={size} color={color} focused={focused} />
           ),

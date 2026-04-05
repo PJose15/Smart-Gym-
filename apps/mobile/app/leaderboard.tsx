@@ -182,6 +182,9 @@ export default function LeaderboardScreen() {
           data={entries}
           keyExtractor={(item) => item.profile_id}
           renderItem={renderItem}
+          maxToRenderPerBatch={15}
+          windowSize={5}
+          initialNumToRender={10}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }

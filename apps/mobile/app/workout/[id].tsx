@@ -14,7 +14,7 @@ import {
   Platform,
   Vibration,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { supabase } from '../../src/lib/supabase';
 import type {
@@ -725,6 +725,7 @@ function RestTimer({ secondsLeft, isRunning, onDismiss, onSetDuration }: RestTim
 export default function ActiveWorkoutScreen() {
   const { id: workoutId, intent: intentParam } = useLocalSearchParams<{ id: string; intent?: string }>();
   const router = useRouter();
+  const navigation = useNavigation();
   const sessionIntent = (['light', 'maintain', 'push'].includes(intentParam ?? '')
     ? intentParam as SessionIntent
     : 'push') as SessionIntent;
@@ -784,6 +785,23 @@ export default function ActiveWorkoutScreen() {
     };
     initFlags();
   }, []);
+
+  // ─── Back nav guard: confirm before leaving active workout ──
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      if (!workout || finishing) return; // Allow if no workout loaded or finishing
+      e.preventDefault();
+      Alert.alert(
+        'Leave workout?',
+        'Your current workout is still in progress. Are you sure you want to leave?',
+        [
+          { text: 'Stay', style: 'cancel' },
+          { text: 'Leave', style: 'destructive', onPress: () => navigation.dispatch(e.data.action) },
+        ],
+      );
+    });
+    return unsubscribe;
+  }, [navigation, workout, finishing]);
 
   // ─── Rest timer logic ─────────────────────────────────
   useEffect(() => {

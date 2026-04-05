@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySuperAdmin } from '@/lib/auth/verifySuperAdmin';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { gymId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ gymId: params.gymId });
+    if (uuidError) return uuidError;
     const result = await verifySuperAdmin();
     if (result instanceof NextResponse) return result;
     const { admin, user_id } = result;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 /**
  * GET /api/trainer/members/[memberId]/program
@@ -12,6 +13,8 @@ export async function GET(
 ) {
   try {
     const { memberId } = params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
     const rl = checkRateLimit(`trainer-prog:${memberId}`, 30, 60_000);
     if (rl) return rl;
 

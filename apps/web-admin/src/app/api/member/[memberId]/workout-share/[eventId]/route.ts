@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { updateWorkoutSharePost } from '@/lib/social/workoutShare';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,8 @@ export async function PATCH(
 ) {
   try {
     const { memberId, eventId } = await params;
+    const uuidError = validateUUIDs({ memberId, eventId });
+    if (uuidError) return uuidError;
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;

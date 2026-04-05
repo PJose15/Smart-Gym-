@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function POST(
   _req: NextRequest,
   { params }: { params: { challengeId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ challengeId: params.challengeId });
+    if (uuidError) return uuidError;
     const result = await verifyStaff('owner');
     if (result instanceof NextResponse) return result;
     const { admin } = result;

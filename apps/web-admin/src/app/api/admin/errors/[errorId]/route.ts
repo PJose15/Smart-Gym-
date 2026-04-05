@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifySuperAdmin } from '@/lib/auth/verifySuperAdmin';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function PATCH(
   _request: Request,
@@ -11,6 +12,8 @@ export async function PATCH(
   try {
     const { admin, email } = result;
     const { errorId } = await params;
+    const uuidError = validateUUIDs({ errorId });
+    if (uuidError) return uuidError;
 
     const { error } = await admin
       .from('error_log')

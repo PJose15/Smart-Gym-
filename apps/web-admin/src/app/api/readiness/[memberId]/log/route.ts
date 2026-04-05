@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const rl = checkRateLimit(`readiness-log:${params.memberId}`, 5, 60_000);
     if (rl) return rl;
 

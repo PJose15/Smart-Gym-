@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { challengeJoinSchema } from '@/lib/validation/challenge';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ challengeId: string }>;
@@ -9,6 +10,8 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { challengeId } = await params;
+    const uuidError = validateUUIDs({ challengeId });
+    if (uuidError) return uuidError;
     const body = await request.json();
     const parsed = challengeJoinSchema.safeParse(body);
 

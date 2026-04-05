@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 /** Shape returned by Supabase join: program_days(*, program_exercises(*)) */
 interface ProgramExerciseRow {
@@ -27,6 +28,8 @@ export async function POST(
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const rl = checkRateLimit(`trainer-assign:${params.memberId}`, 10, 60_000);
     if (rl) return rl;
 

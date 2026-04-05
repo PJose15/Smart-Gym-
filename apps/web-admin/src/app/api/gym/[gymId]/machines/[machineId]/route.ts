@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 interface RouteParams {
   params: Promise<{ gymId: string; machineId: string }>;
@@ -12,6 +13,8 @@ export async function PATCH(
 ) {
   try {
     const { gymId, machineId } = await params;
+    const uuidError = validateUUIDs({ gymId, machineId });
+    if (uuidError) return uuidError;
 
     const rl = checkRateLimit(`update-machine:${machineId}`, 10, 60_000);
     if (rl) return rl;
@@ -52,6 +55,8 @@ export async function DELETE(
 ) {
   try {
     const { gymId, machineId } = await params;
+    const uuidError = validateUUIDs({ gymId, machineId });
+    if (uuidError) return uuidError;
 
     const result = await verifyStaff('owner');
     if (result instanceof NextResponse) return result;

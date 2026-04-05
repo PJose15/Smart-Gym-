@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function GET(
   req: NextRequest,
@@ -11,6 +12,8 @@ export async function GET(
 
     const { admin, gym_id } = result;
     const { memberId } = params;
+    const uuidError = validateUUIDs({ memberId });
+    if (uuidError) return uuidError;
     const url = new URL(req.url);
     const offset = parseInt(url.searchParams.get('offset') ?? '0', 10);
     const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '20', 10), 50);

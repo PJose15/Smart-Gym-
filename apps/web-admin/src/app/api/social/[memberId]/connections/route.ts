@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { memberId: string } }
 ) {
   try {
+    const uuidError = validateUUIDs({ memberId: params.memberId });
+    if (uuidError) return uuidError;
     const auth = await verifyMember(params.memberId);
     if (auth instanceof NextResponse) return auth;
     const { admin } = auth;
