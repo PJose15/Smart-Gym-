@@ -41,13 +41,18 @@ $$;
 
 -- ─── M-8.4-7: Challenge join should verify member belongs to gym ───────────
 -- Add gym_id index on challenge_entries for efficient gym-scoped queries
-CREATE INDEX IF NOT EXISTS idx_challenge_entries_gym
-  ON challenge_entries(gym_id);
+DO $$
+BEGIN
+  CREATE INDEX IF NOT EXISTS idx_challenge_participants_gym ON challenge_participants(gym_id);
+EXCEPTION WHEN undefined_column OR undefined_table THEN
+  RAISE NOTICE 'challenge_participants.gym_id not found — skipping index';
+END;
+$$;
 
 -- ─── M-8.4-8: Feed should filter hidden events ────────────────────────────
 -- Add index to support priority filtering
 CREATE INDEX IF NOT EXISTS idx_feed_events_priority
-  ON feed_events(gym_id, priority)
+  ON gym_feed_events(gym_id, priority)
   WHERE priority != 'hidden';
 
 -- ─── M-8.5-4: Trainer RLS for DNA snapshots ───────────────────────────────
