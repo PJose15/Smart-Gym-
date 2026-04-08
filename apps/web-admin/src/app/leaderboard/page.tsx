@@ -11,7 +11,6 @@ interface LeaderboardRow {
   rank: number;
   profile_id: string;
   full_name: string;
-  email: string;
   total_points: number;
 }
 
@@ -149,14 +148,15 @@ export default function LeaderboardPage() {
       const profileIds = rankings.map((r: { profile_id: string }) => r.profile_id);
       const { data: members, error: membersErr } = await supabase
         .from('members')
-        .select('user_id, display_name, email')
+        .select('user_id, display_name, avatar_url')
+        .eq('gym_id', memberData.gym_id)
         .in('user_id', profileIds);
       if (membersErr) throw membersErr;
 
-      const profileMap = new Map<string, { full_name: string; email: string }>();
+      const profileMap = new Map<string, { full_name: string }>();
       for (const m of members ?? []) {
         if (m.user_id) {
-          profileMap.set(m.user_id, { full_name: m.display_name || 'Unknown', email: m.email || '' });
+          profileMap.set(m.user_id, { full_name: m.display_name || 'Unknown' });
         }
       }
 
@@ -165,7 +165,6 @@ export default function LeaderboardPage() {
           rank: index + 1,
           profile_id: r.profile_id,
           full_name: profileMap.get(r.profile_id)?.full_name || 'Unknown',
-          email: profileMap.get(r.profile_id)?.email || '',
           total_points: Number(r.total_points),
         }),
       );
@@ -240,7 +239,6 @@ export default function LeaderboardPage() {
                 <tr>
                   <th style={{ ...thStyle, width: 60 }}>Rank</th>
                   <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Email</th>
                   <th style={{ ...thStyle, textAlign: 'right' }}>Points</th>
                 </tr>
               </thead>
@@ -251,7 +249,6 @@ export default function LeaderboardPage() {
                       {rankMedals[row.rank] || `#${row.rank}`}
                     </td>
                     <td style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any }}>{row.full_name}</td>
-                    <td style={{ ...tdStyle, color: 'var(--color-text-muted)' }}>{row.email}</td>
                     <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 'var(--weight-bold)' as any, color: 'var(--color-purple-light)' }}>
                       {row.total_points.toLocaleString()}
                     </td>
@@ -259,7 +256,7 @@ export default function LeaderboardPage() {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td style={tdStyle} colSpan={4}>
+                    <td style={tdStyle} colSpan={3}>
                       <div style={{ textAlign: 'center', padding: 32, color: 'var(--color-text-muted)' }}>
                         No points recorded for this period yet.
                       </div>
