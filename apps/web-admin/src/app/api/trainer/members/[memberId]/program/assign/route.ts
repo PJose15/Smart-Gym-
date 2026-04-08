@@ -49,7 +49,7 @@ export async function POST(
     // Verify member belongs to this gym
     const { data: member } = await admin
       .from('members')
-      .select('id')
+      .select('id, experience_level')
       .eq('id', memberId)
       .eq('gym_id', gym_id)
       .maybeSingle();
@@ -114,6 +114,8 @@ export async function POST(
       .from('ai_programs')
       .insert({
         member_id: memberId,
+        gym_id,
+        experience_level: member.experience_level ?? 'beginner',
         title: trainerProgram.name,
         description: trainerProgram.description,
         goal: trainerProgram.goal,
