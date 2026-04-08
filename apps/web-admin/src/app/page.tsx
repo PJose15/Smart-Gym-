@@ -71,10 +71,10 @@ const activeDotStyle: CSSProperties = {
 
 interface RecentWorkout {
   id: string;
-  status: string;
-  started_at: string;
-  finished_at: string | null;
-  profiles: { email: string; full_name: string } | null;
+  session_date: string;
+  completed_at: string | null;
+  member_id: string;
+  members: { display_name: string } | null;
 }
 
 const sectionHeadingStyle: CSSProperties = {
@@ -188,9 +188,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboard() {
       try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayISO = todayStart.toISOString();
+        const todayDate = new Date().toISOString().slice(0, 10);
 
         const [machinesRes, programsRes, membersRes, sessionsRes, workoutsRes] =
           await Promise.all([
@@ -198,19 +196,20 @@ export default function DashboardPage() {
               .from('machines')
               .select('id', { count: 'exact', head: true }),
             supabase
-              .from('programs')
-              .select('id', { count: 'exact', head: true }),
-            supabase
-              .from('gym_members')
-              .select('id', { count: 'exact', head: true }),
-            supabase
-              .from('workouts')
+              .from('ai_programs')
               .select('id', { count: 'exact', head: true })
-              .gte('started_at', todayISO),
+              .eq('is_active', true),
             supabase
-              .from('workouts')
-              .select('id, status, started_at, finished_at, profiles(email, full_name)')
-              .order('started_at', { ascending: false })
+              .from('members')
+              .select('id', { count: 'exact', head: true }),
+            supabase
+              .from('workout_sessions')
+              .select('id', { count: 'exact', head: true })
+              .gte('session_date', todayDate),
+            supabase
+              .from('workout_sessions')
+              .select('id, session_date, completed_at, member_id, members(display_name)')
+              .order('session_date', { ascending: false })
               .limit(5),
           ]);
 
@@ -238,9 +237,9 @@ export default function DashboardPage() {
           (workoutsRes.data as unknown as RecentWorkout[]) ?? []
         );
 
-        // Count active (in_progress) workouts
+        // Count active (not yet completed) workouts
         const activeCount = ((workoutsRes.data ?? []) as unknown as RecentWorkout[])
-          .filter(w => w.status === 'in_progress').length;
+          .filter(w => w.completed_at === null).length;
         setActiveWorkouts(activeCount);
 
         setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
@@ -310,10 +309,10 @@ export default function DashboardPage() {
         )}
 
         <div className={styles.grid}>
-          <StatCard title="Total Machines" value={metrics.totalMachines ?? 0} change={12} trend="up" index={0} />
-          <StatCard title="Active Programs" value={metrics.activePrograms ?? 0} change={-3} trend="down" index={1} />
-          <StatCard title="Members" value={metrics.members ?? 0} change={8} trend="up" index={2} />
-          <StatCard title="Sessions Today" value={metrics.sessionsToday ?? 0} change={15} trend="up" index={3} />
+          <StatCard title="Total Machines" value={metrics.totalMachines ?? 0} index={0} />
+          <StatCard title="Active Programs" value={metrics.activePrograms ?? 0} index={1} />
+          <StatCard title="Members" value={metrics.members ?? 0} index={2} />
+          <StatCard title="Sessions Today" value={metrics.sessionsToday ?? 0} index={3} />
         </div>
 
         <h2 style={sectionHeadingStyle} className="title-animate">Recent Workouts</h2>
@@ -327,29 +326,30 @@ export default function DashboardPage() {
               <thead>
                 <tr>
                   <th style={thStyle}>Member</th>
-                  <th style={thStyle}>Email</th>
                   <th style={thStyle}>Status</th>
-                  <th style={thStyle}>Started</th>
-                  <th style={thStyle}>Finished</th>
+                  <th style={thStyle}>Date</th>
+                  <th style={thStyle}>Completed</th>
                 </tr>
               </thead>
               <tbody>
-                {recentWorkouts.map((w, i) => (
-                  <tr key={w.id} className={`row-stagger stagger-${i} table-row-hover`}>
-                    <td style={tdStyle}>{w.profiles?.full_name ?? 'Unknown'}</td>
-                    <td style={tdStyle}>{w.profiles?.email ?? '--'}</td>
-                    <td style={tdStyle}>
-                      <span
-                        style={getStatusBadgeStyle(w.status)}
-                        className={w.status === 'in_progress' ? 'status-pulse' : ''}
-                      >
-                        {w.status}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>{formatDate(w.started_at)}</td>
-                    <td style={tdStyle}>{w.finished_at ? formatDate(w.finished_at) : '--'}</td>
-                  </tr>
-                ))}
+                {recentWorkouts.map((w, i) => {
+                  const status = w.completed_at ? 'completed' : 'in_progress';
+                  return (
+                    <tr key={w.id} className={`row-stagger stagger-${i} table-row-hover`}>
+                      <td style={tdStyle}>{w.members?.display_name ?? 'Unknown'}</td>
+                      <td style={tdStyle}>
+                        <span
+                          style={getStatusBadgeStyle(status)}
+                          className={status === 'in_progress' ? 'status-pulse' : ''}
+                        >
+                          {status === 'in_progress' ? 'Active' : 'Completed'}
+                        </span>
+                      </td>
+                      <td style={tdStyle}>{formatDate(w.session_date)}</td>
+                      <td style={tdStyle}>{w.completed_at ? formatDate(w.completed_at) : '--'}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
