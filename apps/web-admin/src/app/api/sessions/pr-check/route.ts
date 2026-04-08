@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 function getAdminClient() {
@@ -25,6 +26,10 @@ const prCheckSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const body = await request.json();
     const parsed = prCheckSchema.safeParse(body);
 
@@ -37,6 +42,15 @@ export async function POST(request: NextRequest) {
 
     const { session_id, member_id, machine_id, weight_lbs, reps } = parsed.data;
     const admin = getAdminClient();
+
+    // Verify caller owns this member
+    const { data: memberCheck } = await admin
+      .from('members')
+      .select('id')
+      .eq('id', member_id)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // Get all previous sessions for this member on this machine (excluding current)
     const { data: history } = await admin

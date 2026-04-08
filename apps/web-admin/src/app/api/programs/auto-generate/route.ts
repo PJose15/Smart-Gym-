@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 function getAdminClient() {
   return createClient(
@@ -21,6 +22,10 @@ function getAdminClient() {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { member_id, gym_id } = await request.json();
 
     if (!member_id || !gym_id) {
@@ -28,6 +33,15 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getAdminClient();
+
+    // Verify caller owns this member
+    const { data: memberCheck } = await admin
+      .from('members')
+      .select('id')
+      .eq('id', member_id)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // Check feature flag
     const { data: flag } = await admin

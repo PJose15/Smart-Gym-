@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 function getAdminClient() {
@@ -24,6 +25,10 @@ const onboardSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const body = await request.json();
     const parsed = onboardSchema.safeParse(body);
 
@@ -36,6 +41,15 @@ export async function POST(request: NextRequest) {
 
     const { member_id, gym_id, primary_goal, experience_level } = parsed.data;
     const admin = getAdminClient();
+
+    // Verify caller owns this member
+    const { data: memberCheck } = await admin
+      .from('members')
+      .select('id')
+      .eq('id', member_id)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // Update member record
     const { error: updateError } = await admin

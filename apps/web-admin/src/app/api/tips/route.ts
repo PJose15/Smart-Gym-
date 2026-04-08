@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 function getAdminClient() {
   return createClient(
@@ -27,6 +28,10 @@ const STATIC_TIPS = [
  * 5. Static hardcoded
  */
 export async function GET(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { searchParams } = request.nextUrl;
   const category = searchParams.get('category');
   const experience = searchParams.get('experience');

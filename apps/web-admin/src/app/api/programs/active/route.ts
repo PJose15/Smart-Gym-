@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 function getAdminClient() {
   return createClient(
@@ -26,6 +27,10 @@ interface ProgramDay {
  * whether the current machine is in today's plan.
  */
 export async function GET(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { searchParams } = request.nextUrl;
   const memberId = searchParams.get('member_id');
   const machineId = searchParams.get('machine_id');
@@ -35,6 +40,15 @@ export async function GET(request: NextRequest) {
   }
 
   const admin = getAdminClient();
+
+  // Verify caller owns this member
+  const { data: memberCheck } = await admin
+    .from('members')
+    .select('id')
+    .eq('id', memberId)
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+  if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   // Fetch active program
   const { data: program } = await admin
