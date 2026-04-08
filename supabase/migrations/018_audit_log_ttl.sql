@@ -4,8 +4,8 @@
 -- Create index for efficient TTL queries (only if table exists)
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'ai_audit_log') THEN
-    CREATE INDEX IF NOT EXISTS idx_ai_audit_log_created_at ON ai_audit_log (created_at);
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'ai_audit_logs') THEN
+    CREATE INDEX IF NOT EXISTS idx_ai_audit_logs_created_at ON ai_audit_logs (created_at);
   END IF;
 END;
 $$;
@@ -17,7 +17,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  DELETE FROM ai_audit_log
+  DELETE FROM ai_audit_logs
   WHERE created_at < NOW() - INTERVAL '90 days';
 EXCEPTION WHEN undefined_table THEN
   NULL;
