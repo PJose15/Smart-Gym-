@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { getCoachingInsight, GeminiProvider } from '@nexera/ai-assist';
+
+const gemini = new GeminiProvider();
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,43 +29,73 @@ export async function POST(req: NextRequest) {
     // Verify member
     const { data: member } = await admin
       .from('members')
-      .select('id, user_id, display_name, primary_goal, experience_level')
+      .select('id, user_id, gym_id, display_name, primary_goal, experience_level')
       .eq('id', member_id)
       .eq('user_id', session.user.id)
       .maybeSingle();
 
     if (!member) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    // Get recent performance (14 days)
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    // Store user message
+    await admin.from('ai_coaching_sessions').insert({
+      member_id,
+      gym_id: member.gym_id,
+      message_role: 'user',
+      message_text: message,
+    });
+
+    // Fetch recent workout data for coaching context (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const { data: recentSessions } = await admin
       .from('workout_sessions')
-      .select('session_date, total_volume_lbs, is_personal_best, machine_id')
+      .select('id, session_date, completed_at, total_volume_lbs, is_personal_best')
       .eq('member_id', member_id)
-      .gte('created_at', twoWeeksAgo.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(20);
+      .gte('session_date', thirtyDaysAgo.toISOString().slice(0, 10))
+      .order('session_date', { ascending: false })
+      .limit(30);
 
-    const context = `Member: ${member.display_name || 'User'}, Goal: ${member.primary_goal || 'general'}, Level: ${member.experience_level || 'beginner'}. Recent sessions (14d): ${recentSessions?.length ?? 0} workouts.`;
+    const sessions = recentSessions ?? [];
 
-    // Store chat and return placeholder (AI integration requires OpenAI key)
-    const { data: chatRecord } = await admin
-      .from('ai_coaching_sessions')
-      .insert({
-        member_id,
-        message,
-        context_summary: context,
-        response: 'AI coaching response will be generated when OpenAI integration is configured.',
-        model: 'gpt-4o',
-      })
-      .select('id, response')
-      .single();
+    // Build CoachingInput
+    const workouts = sessions.map((s) => ({
+      id: s.id,
+      started_at: s.session_date,
+      finished_at: s.completed_at,
+      exercises: [] as Array<{ exercise_name: string; sets: Array<{ weight_kg: number; reps: number }> }>,
+    }));
+
+    const prs = sessions
+      .filter((s) => s.is_personal_best)
+      .map((s) => ({ exercise_name: 'workout session' }));
+
+    const completedWorkoutDates = sessions.map((s) => s.session_date);
+
+    // Generate AI coaching insight
+    const insight = await getCoachingInsight(
+      {
+        memberName: member.display_name || 'Member',
+        workouts,
+        prs,
+        feedbackTrends: { discomfort_count: 0, unstable_count: 0, ok_count: sessions.length },
+        completedWorkoutDates,
+      },
+      gemini,
+    );
+
+    // Store AI response
+    await admin.from('ai_coaching_sessions').insert({
+      member_id,
+      gym_id: member.gym_id,
+      message_role: 'assistant',
+      message_text: insight.message,
+    });
 
     return NextResponse.json({
-      session_id: chatRecord?.id,
-      response: chatRecord?.response ?? 'AI service unavailable.',
+      response: insight.message,
+      action_items: insight.action_items,
+      source: insight.source,
     });
   } catch {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
