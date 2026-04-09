@@ -291,19 +291,19 @@ export default function ProgressScreen() {
         );
       }
 
-      // Muscle groups from machine target_muscles
+      // Muscle groups from machine muscle_groups
       const uniqueMachineIds = [...new Set(
         fetched.filter(e => e.machine_id).map(e => e.machine_id!)
       )];
       if (uniqueMachineIds.length > 0) {
         backgroundTasks.push(
-          Promise.resolve(supabase.from('machines').select('id, target_muscles')
+          Promise.resolve(supabase.from('machines').select('id, muscle_groups')
             .in('id', uniqueMachineIds))
             .then(({ data: machineData }) => {
               if (!machineData) return;
               const machineMap = new Map<string, string[]>();
-              for (const m of machineData as Array<{ id: string; target_muscles: string[] }>) {
-                machineMap.set(m.id, m.target_muscles || []);
+              for (const m of machineData as Array<{ id: string; muscle_groups: string[] }>) {
+                machineMap.set(m.id, m.muscle_groups || []);
               }
               const muscleCountMap = new Map<string, Set<string>>();
               for (const ex of fetched) {

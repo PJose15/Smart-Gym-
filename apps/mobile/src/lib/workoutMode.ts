@@ -4,6 +4,7 @@
  */
 import { supabase } from './supabase';
 import { getTodaysProgramDay } from '@nexera/utils';
+import { getMemberId } from './memberData';
 
 export type WorkoutMode = 'ai-program' | 'trainer-program' | 'freestyle';
 
@@ -32,11 +33,15 @@ export interface ModeContext {
 }
 
 export async function detectWorkoutMode(userId: string): Promise<ModeContext> {
+  // Resolve member_id from user_id
+  const memberId = await getMemberId(userId);
+  if (!memberId) return { mode: 'freestyle' };
+
   // Check for active program assignment
   const { data: assignment } = await supabase
     .from('member_program_assignments')
-    .select('program_id, assigned_at, status')
-    .eq('profile_id', userId)
+    .select('program_id, assigned_at, ai_program_id')
+    .eq('member_id', memberId)
     .eq('status', 'active')
     .limit(1)
     .maybeSingle();
@@ -48,7 +53,7 @@ export async function detectWorkoutMode(userId: string): Promise<ModeContext> {
   // Load program details
   const { data: program } = await supabase
     .from('programs')
-    .select('id, name, trainer_id')
+    .select('id, name, created_by')
     .eq('id', assignment.program_id)
     .maybeSingle();
 
@@ -56,15 +61,16 @@ export async function detectWorkoutMode(userId: string): Promise<ModeContext> {
     return { mode: 'freestyle' };
   }
 
-  const mode: WorkoutMode = program.trainer_id ? 'trainer-program' : 'ai-program';
+  // If no ai_program_id, it's a trainer-created program
+  const mode: WorkoutMode = assignment.ai_program_id ? 'ai-program' : 'trainer-program';
 
   // Load trainer name if applicable
   let trainerName: string | undefined;
-  if (program.trainer_id) {
+  if (program.created_by && !assignment.ai_program_id) {
     const { data: trainer } = await supabase
       .from('profiles')
       .select('full_name')
-      .eq('id', program.trainer_id)
+      .eq('id', program.created_by)
       .maybeSingle();
     trainerName = trainer?.full_name ?? undefined;
   }

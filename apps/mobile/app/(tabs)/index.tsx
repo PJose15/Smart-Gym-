@@ -466,13 +466,13 @@ export default function HomeScreen() {
         if (machineIds.length > 0) {
           const { data: machines } = await supabase
             .from('machines')
-            .select('id, target_muscles')
+            .select('id, muscle_groups')
             .in('id', machineIds);
 
           if (machines) {
             const allMuscles = new Set<string>();
             for (const m of machines) {
-              for (const muscle of m.target_muscles) {
+              for (const muscle of m.muscle_groups) {
                 allMuscles.add(muscle);
               }
             }
@@ -552,11 +552,11 @@ export default function HomeScreen() {
             if (machineIds.length > 0) {
               const { data: machineData } = await supabase
                 .from('machines')
-                .select('id, primary_muscles')
+                .select('id, muscle_groups')
                 .in('id', machineIds);
               if (machineData) {
                 for (const m of machineData) {
-                  machineMap.set(m.id, m.primary_muscles ?? []);
+                  machineMap.set(m.id, m.muscle_groups ?? []);
                 }
               }
             }

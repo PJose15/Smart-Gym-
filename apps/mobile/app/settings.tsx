@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../src/lib/supabase';
+import { getMemberId } from '../src/lib/memberData';
 import { getWeightUnit, saveWeightUnit } from '../src/lib/weightUnit';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags, clearFlagCache } from '../src/lib/featureFlags';
 import { unregisterPushToken } from '../src/lib/notificationService';
@@ -166,12 +167,15 @@ export default function SettingsScreen() {
         // Notification preferences
         if (isFeatureEnabled('push_notifications')) {
           try {
-            const { data: prefData } = await supabase
-              .from('notification_preferences')
-              .select('enabled')
-              .eq('profile_id', user.id)
-              .maybeSingle();
-            setNotificationsEnabled(prefData?.enabled ?? true);
+            const memberId = await getMemberId(user.id);
+            if (memberId) {
+              const { data: prefData } = await supabase
+                .from('notification_preferences')
+                .select('enabled')
+                .eq('member_id', memberId)
+                .maybeSingle();
+              setNotificationsEnabled(prefData?.enabled ?? true);
+            }
           } catch {
             // Non-critical
           }
@@ -231,9 +235,11 @@ export default function SettingsScreen() {
     setNotificationsEnabled(enabled);
     if (!userId) return;
     try {
+      const memberId = await getMemberId(userId);
+      if (!memberId) return;
       const { error: upsertErr } = await supabase.from('notification_preferences').upsert(
-        { profile_id: userId, enabled, updated_at: new Date().toISOString() },
-        { onConflict: 'profile_id' },
+        { member_id: memberId, enabled, updated_at: new Date().toISOString() },
+        { onConflict: 'member_id' },
       );
       if (upsertErr) throw upsertErr;
     } catch (err) {

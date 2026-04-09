@@ -131,6 +131,7 @@ export interface Machine {
   gym_id: string;
   name: string;
   qr_slug: string;
+  muscle_groups: string[];
   target_muscles: string[];
   setup_steps: string[];
   safety_cues: string[];

@@ -18,6 +18,17 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+/** Helper: mock for getMemberId — supabase.from('members').select('id').eq(...).limit(1).maybeSingle() */
+function mockMemberId(memberId: string | null) {
+  const chain = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    maybeSingle: jest.fn().mockResolvedValue({ data: memberId ? { id: memberId } : null }),
+  };
+  return chain;
+}
+
 /** Helper: set up the mock chain for supabase.from(...).select(...).eq(...).eq(...).limit(...).maybeSingle() */
 function mockAssignment(data: any) {
   const chain = {
@@ -48,8 +59,18 @@ function mockList(data: any) {
 }
 
 describe('detectWorkoutMode', () => {
+  test('returns freestyle when no member found', async () => {
+    (supabase.from as jest.Mock).mockReturnValueOnce(mockMemberId(null));
+
+    const result = await detectWorkoutMode('user-1');
+    expect(result.mode).toBe('freestyle');
+    expect(result.programId).toBeUndefined();
+  });
+
   test('returns freestyle when no assignment', async () => {
-    (supabase.from as jest.Mock).mockReturnValueOnce(mockAssignment(null));
+    (supabase.from as jest.Mock)
+      .mockReturnValueOnce(mockMemberId('member-1'))
+      .mockReturnValueOnce(mockAssignment(null));
 
     const result = await detectWorkoutMode('user-1');
     expect(result.mode).toBe('freestyle');
@@ -58,10 +79,11 @@ describe('detectWorkoutMode', () => {
 
   test('returns freestyle when program not found', async () => {
     (supabase.from as jest.Mock)
+      .mockReturnValueOnce(mockMemberId('member-1'))
       .mockReturnValueOnce(mockAssignment({
         program_id: 'prog-1',
         assigned_at: '2025-06-01T00:00:00Z',
-        status: 'active',
+        ai_program_id: 'ai-1',
       }))
       .mockReturnValueOnce(mockProgram(null));
 
@@ -69,17 +91,18 @@ describe('detectWorkoutMode', () => {
     expect(result.mode).toBe('freestyle');
   });
 
-  test('returns ai-program when program has no trainer_id', async () => {
+  test('returns ai-program when assignment has ai_program_id', async () => {
     (supabase.from as jest.Mock)
+      .mockReturnValueOnce(mockMemberId('member-1'))
       .mockReturnValueOnce(mockAssignment({
         program_id: 'prog-1',
         assigned_at: '2025-06-01T00:00:00Z',
-        status: 'active',
+        ai_program_id: 'ai-1',
       }))
       .mockReturnValueOnce(mockProgram({
         id: 'prog-1',
         name: 'AI Strength',
-        trainer_id: null,
+        created_by: null,
       }))
       // program_days
       .mockReturnValueOnce(mockList([]))
@@ -91,17 +114,18 @@ describe('detectWorkoutMode', () => {
     expect(result.trainerName).toBeUndefined();
   });
 
-  test('returns trainer-program when program has trainer_id', async () => {
+  test('returns trainer-program when assignment has no ai_program_id', async () => {
     (supabase.from as jest.Mock)
+      .mockReturnValueOnce(mockMemberId('member-1'))
       .mockReturnValueOnce(mockAssignment({
         program_id: 'prog-1',
         assigned_at: '2025-06-01T00:00:00Z',
-        status: 'active',
+        ai_program_id: null,
       }))
       .mockReturnValueOnce(mockProgram({
         id: 'prog-1',
         name: 'Custom Plan',
-        trainer_id: 'trainer-1',
+        created_by: 'trainer-1',
       }))
       // trainer profile
       .mockReturnValueOnce(mockProgram({ full_name: 'Coach Mike' }))
@@ -118,15 +142,16 @@ describe('detectWorkoutMode', () => {
     const assignedAt = '2025-06-01T00:00:00Z';
 
     (supabase.from as jest.Mock)
+      .mockReturnValueOnce(mockMemberId('member-1'))
       .mockReturnValueOnce(mockAssignment({
         program_id: 'prog-1',
         assigned_at: assignedAt,
-        status: 'active',
+        ai_program_id: 'ai-1',
       }))
       .mockReturnValueOnce(mockProgram({
         id: 'prog-1',
         name: 'Hypertrophy',
-        trainer_id: null,
+        created_by: null,
       }))
       // program_days
       .mockReturnValueOnce(mockList([
@@ -151,15 +176,16 @@ describe('detectWorkoutMode', () => {
 
   test('returns no todayDay when days array is empty', async () => {
     (supabase.from as jest.Mock)
+      .mockReturnValueOnce(mockMemberId('member-1'))
       .mockReturnValueOnce(mockAssignment({
         program_id: 'prog-1',
         assigned_at: '2025-06-01T00:00:00Z',
-        status: 'active',
+        ai_program_id: 'ai-1',
       }))
       .mockReturnValueOnce(mockProgram({
         id: 'prog-1',
         name: 'Quick Start',
-        trainer_id: null,
+        created_by: null,
       }))
       .mockReturnValueOnce(mockList([]))
     ;

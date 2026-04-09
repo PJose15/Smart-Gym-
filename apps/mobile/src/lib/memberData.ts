@@ -6,6 +6,21 @@ import { supabase } from './supabase';
 import { computeLevelProgress } from '@nexera/ai-assist';
 import type { LevelProgress } from '@nexera/ai-assist';
 
+// ─── Member ID lookup ───────────────────────────────────
+// Cache tables (member_dna_cache, member_muscle_cache) and
+// member_program_assignments use member_id (FK to members),
+// not the auth user_id. This helper resolves the mapping.
+
+export async function getMemberId(userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('members')
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
 // ─── Level / XP ─────────────────────────────────────────
 
 export async function fetchMemberLevel(userId: string): Promise<LevelProgress | null> {
@@ -38,15 +53,18 @@ export interface DNACacheResult {
 }
 
 export async function fetchDNAResult(userId: string): Promise<DNACacheResult | null> {
+  const memberId = await getMemberId(userId);
+  if (!memberId) return null;
+
   const { data } = await supabase
     .from('member_dna_cache')
-    .select('result')
-    .eq('profile_id', userId)
+    .select('result_json')
+    .eq('member_id', memberId)
     .limit(1)
     .maybeSingle();
 
-  if (!data?.result) return null;
-  return data.result as DNACacheResult;
+  if (!data?.result_json) return null;
+  return data.result_json as DNACacheResult;
 }
 
 // ─── Muscle Map ─────────────────────────────────────────
@@ -70,13 +88,22 @@ export interface MuscleMapCacheResult {
 }
 
 export async function fetchMuscleMap(userId: string): Promise<MuscleMapCacheResult | null> {
+  const memberId = await getMemberId(userId);
+  if (!memberId) return null;
+
   const { data } = await supabase
     .from('member_muscle_cache')
-    .select('result')
-    .eq('profile_id', userId)
+    .select('muscle_states, recommendations, computed_at')
+    .eq('member_id', memberId)
     .limit(1)
     .maybeSingle();
 
-  if (!data?.result) return null;
-  return data.result as MuscleMapCacheResult;
+  if (!data?.muscle_states) return null;
+  const states = data.muscle_states as { muscles: MuscleMapEntry[]; balance_score: number };
+  return {
+    muscles: states.muscles ?? [],
+    balance_score: states.balance_score ?? 0,
+    recommendations: (data.recommendations as MuscleMapCacheResult['recommendations']) ?? { focus: [], ready_to_train: [] },
+    computed_at: data.computed_at as string,
+  };
 }

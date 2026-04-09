@@ -193,7 +193,7 @@ export default function MachineDetailScreen() {
       } else {
         const generated = await generateMachineMistakes({
           machineName: machine.name,
-          targetMuscles: machine.target_muscles,
+          targetMuscles: machine.muscle_groups,
           setupSteps: machine.setup_steps,
         });
         setCommonMistakes(generated);
@@ -307,7 +307,7 @@ export default function MachineDetailScreen() {
     // Fetch from Supabase
     const { data, error: fetchErr } = await supabase
       .from('machines')
-      .select('id, name, gym_id, qr_slug, target_muscles, setup_steps, safety_cues, image_url, common_mistakes, cue_version, cue_source, movement_pattern, equipment_type, difficulty, primary_muscles, secondary_muscles, tags, form_checklist_before, form_checklist_during, form_checklist_after, checklist_version, created_at')
+      .select('id, name, gym_id, qr_slug, muscle_groups, setup_steps, safety_cues, image_url, common_mistakes, cue_version, cue_source, movement_pattern, equipment_type, difficulty, secondary_muscles, tags, form_checklist_before, form_checklist_during, form_checklist_after, checklist_version, created_at')
       .eq('gym_id', gymId);
 
     if (fetchErr || !data) return [];
@@ -483,9 +483,9 @@ export default function MachineDetailScreen() {
         </View>
       )}
 
-      {machine.target_muscles.length > 0 && (
+      {machine.muscle_groups.length > 0 && (
         <View style={styles.chipsContainer}>
-          {machine.target_muscles.map((muscle, i: number) => (
+          {machine.muscle_groups.map((muscle, i: number) => (
             <View key={i} style={styles.chip}>
               <Text variant="caption" color="white">
                 {muscle}
@@ -700,9 +700,9 @@ export default function MachineDetailScreen() {
                         </View>
                       ))}
                     </View>
-                    {item.machine.primary_muscles.length > 0 && (
+                    {item.machine.muscle_groups.length > 0 && (
                       <View style={styles.alternativeMuscles}>
-                        {item.machine.primary_muscles.slice(0, 3).map((m) => (
+                        {item.machine.muscle_groups.slice(0, 3).map((m) => (
                           <Text key={m} style={styles.alternativeMuscleText}>{m}</Text>
                         ))}
                       </View>
@@ -752,9 +752,9 @@ export default function MachineDetailScreen() {
                       </View>
                     ))}
                   </View>
-                  {item.machine.primary_muscles.length > 0 && (
+                  {item.machine.muscle_groups.length > 0 && (
                     <View style={styles.alternativeMuscles}>
-                      {item.machine.primary_muscles.slice(0, 3).map((m) => (
+                      {item.machine.muscle_groups.slice(0, 3).map((m) => (
                         <Text key={m} style={styles.alternativeMuscleText}>{m}</Text>
                       ))}
                     </View>
