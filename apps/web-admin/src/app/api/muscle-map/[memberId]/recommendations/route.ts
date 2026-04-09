@@ -14,7 +14,7 @@ export async function GET(
     const { admin } = auth;
 
     const { data: cache } = await admin
-      .from('member_muscle_map_cache')
+      .from('member_muscle_cache')
       .select('muscle_group, recovery_state, last_trained_at')
       .eq('member_id', params.memberId);
 

@@ -28,7 +28,7 @@ interface RecentMachine {
   exercise_name: string;
   qr_slug: string;
   machine_name: string;
-  target_muscles: string[];
+  muscle_groups: string[];
   last_used: string;
 }
 
@@ -118,7 +118,7 @@ export default function ScanScreen() {
             machine_id,
             exercise_name,
             workouts!inner(profile_id, started_at, status),
-            machines!inner(qr_slug, name, target_muscles)
+            machines!inner(qr_slug, name, muscle_groups)
           `)
           .eq('workouts.profile_id', user.id)
           .eq('workouts.status', 'completed')
@@ -161,7 +161,7 @@ export default function ScanScreen() {
             exercise_name: row.exercise_name,
             qr_slug: row.machines?.qr_slug ?? mid,
             machine_name: row.machines?.name ?? row.exercise_name,
-            target_muscles: row.machines?.target_muscles ?? [],
+            muscle_groups: row.machines?.muscle_groups ?? [],
             last_used: row.workouts?.started_at ?? '',
           });
           if (deduped.length >= 5) break;
@@ -324,7 +324,7 @@ export default function ScanScreen() {
                   <View style={styles.recentInfo}>
                     <Text variant="body" style={styles.recentName}>{m.machine_name}</Text>
                     <Text variant="caption" color="textSecondary">
-                      {m.target_muscles.slice(0, 2).join(', ')}
+                      {m.muscle_groups.slice(0, 2).join(', ')}
                     </Text>
                   </View>
                   <Text variant="caption" color="textSecondary">{timeSince(m.last_used)}</Text>

@@ -570,7 +570,7 @@ export default function HomeScreen() {
                 .map((e: { exercise_name: string; machine_id: string | null; sets: WorkoutSet[] }) => ({
                   exercise_name: e.exercise_name,
                   machine_id: e.machine_id,
-                  primary_muscles: e.machine_id ? machineMap.get(e.machine_id) : undefined,
+                  muscle_groups: e.machine_id ? machineMap.get(e.machine_id) : undefined,
                   sets: (e.sets ?? []) as WorkoutSet[],
                 })),
             }));

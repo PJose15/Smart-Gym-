@@ -432,11 +432,11 @@ export default function WorkoutCompleteScreen() {
             if (machineIds.length > 0) {
               const { data: machData } = await supabase
                 .from('machines')
-                .select('id, primary_muscles')
+                .select('id, muscle_groups')
                 .in('id', machineIds)
                 .abortSignal(controller.signal);
               for (const m of machData ?? []) {
-                machineMap.set(m.id, m.primary_muscles ?? []);
+                machineMap.set(m.id, m.muscle_groups ?? []);
               }
             }
 
@@ -449,7 +449,7 @@ export default function WorkoutCompleteScreen() {
                 .map((e: { exercise_name: string; machine_id: string | null; sets: WorkoutSet[] }) => ({
                   exercise_name: e.exercise_name,
                   machine_id: e.machine_id,
-                  primary_muscles: e.machine_id ? machineMap.get(e.machine_id) : undefined,
+                  muscle_groups: e.machine_id ? machineMap.get(e.machine_id) : undefined,
                   sets: (e.sets ?? []) as WorkoutSet[],
                 })),
             }));
