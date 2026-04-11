@@ -2,6 +2,7 @@
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 
@@ -111,6 +112,7 @@ const statsChipStyle: CSSProperties = {
 // ─── Component ──────────────────────────────────────────
 
 export default function AnalyticsPage() {
+  const { authed } = useStaffAuth();
   const [contextCounts, setContextCounts] = useState<ContextCount[]>([]);
   const [dailyCounts, setDailyCounts] = useState<DailyCount[]>([]);
   const [conversion, setConversion] = useState<ConversionRow | null>(null);
@@ -119,8 +121,8 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    if (authed) fetchAnalytics();
+  }, [authed]);
 
   async function fetchAnalytics() {
     try {

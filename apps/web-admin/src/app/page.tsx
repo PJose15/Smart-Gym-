@@ -6,6 +6,7 @@ import styles from './page.module.css';
 import { StatCard } from './components/StatCard';
 import { AnimatedPage } from './components/AnimatedPage';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 
 interface DashboardMetrics {
   totalMachines: number | null;
@@ -173,6 +174,7 @@ function formatDate(dateStr: string): string {
 }
 
 export default function DashboardPage() {
+  const { authed } = useStaffAuth();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalMachines: null,
     activePrograms: null,
@@ -186,6 +188,7 @@ export default function DashboardPage() {
   const [activeWorkouts, setActiveWorkouts] = useState(0);
 
   useEffect(() => {
+    if (!authed) return;
     async function fetchDashboard() {
       try {
         const todayDate = new Date().toISOString().slice(0, 10);
@@ -251,7 +254,7 @@ export default function DashboardPage() {
     }
 
     fetchDashboard();
-  }, []);
+  }, [authed]);
 
   if (loading) {
     return (

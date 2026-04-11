@@ -2,6 +2,7 @@
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 
@@ -238,6 +239,7 @@ const statsChipStyle: CSSProperties = {
 // ─── Component ────────────────────────────────────────────
 
 export default function CopilotInboxPage() {
+  const { authed } = useStaffAuth();
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -249,8 +251,8 @@ export default function CopilotInboxPage() {
   const [featureEnabled, setFeatureEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
-    checkFeatureFlag();
-  }, []);
+    if (authed) checkFeatureFlag();
+  }, [authed]);
 
   useEffect(() => {
     if (featureEnabled) fetchDrafts();

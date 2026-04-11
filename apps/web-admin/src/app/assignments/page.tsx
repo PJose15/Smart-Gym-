@@ -2,6 +2,7 @@
 
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 
@@ -86,6 +87,7 @@ const statsChipStyle: CSSProperties = {
 // ─── Component ────────────────────────────────────────────
 
 export default function AssignmentsPage() {
+  const { authed } = useStaffAuth();
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -102,8 +104,8 @@ export default function AssignmentsPage() {
   const [featureEnabled, setFeatureEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
-    init();
-  }, []);
+    if (authed) init();
+  }, [authed]);
 
   async function init() {
     const { data } = await supabase

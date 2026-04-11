@@ -3,6 +3,7 @@
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 
@@ -280,6 +281,7 @@ function formatDate(dateStr: string): string {
 
 export default function MembersPage() {
   const router = useRouter();
+  const { authed } = useStaffAuth();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [gyms, setGyms] = useState<GymOption[]>([]);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
@@ -348,6 +350,7 @@ export default function MembersPage() {
   }
 
   useEffect(() => {
+    if (!authed) return;
     async function init() {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -356,7 +359,7 @@ export default function MembersPage() {
       setLoading(false);
     }
     init();
-  }, []);
+  }, [authed]);
 
   // ── Add-member form ───────────────────────────────────
 
