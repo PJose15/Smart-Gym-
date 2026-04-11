@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -28,12 +29,22 @@ export default function CoachNoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [note, setNote] = useState<CoachNoteDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [acking, setAcking] = useState(false);
 
   useEffect(() => {
     fetchNote();
+  }, [id]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchNote();
+    } finally {
+      setRefreshing(false);
+    }
   }, [id]);
 
   async function fetchNote() {
@@ -162,7 +173,17 @@ export default function CoachNoteDetailScreen() {
     : [];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+        />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.sourceChip}>{sourceLabel(note.source)}</Text>
         <Text style={styles.dateText}>{formatDate(note.sent_at ?? note.created_at)}</Text>

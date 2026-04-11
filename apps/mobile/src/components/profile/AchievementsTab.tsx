@@ -109,6 +109,13 @@ export function AchievementsTab({ badges, streak, totalPoints }: AchievementsTab
                   style={[styles.badgeCell, !badge.unlocked && styles.badgeLocked]}
                   onPress={() => setSelectedBadge(badge)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    badge.unlocked
+                      ? `${badge.name} badge, unlocked`
+                      : `${badge.name} badge, locked`
+                  }
+                  accessibilityHint="Shows badge details"
                 >
                   <Text style={styles.badgeEmoji}>
                     {badge.unlocked ? badge.icon_emoji : '\uD83D\uDD12'}

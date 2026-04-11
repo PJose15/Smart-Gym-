@@ -8,6 +8,8 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -400,7 +402,15 @@ export default function SettingsScreen() {
 
   return (
     <AnimatedScreen>
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Back button */}
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text variant="body" color="primary" style={styles.backText}>{'< Back'}</Text>
@@ -609,6 +619,9 @@ export default function SettingsScreen() {
                       key={opt.value}
                       style={[styles.chip, selected && styles.chipActive]}
                       onPress={() => toggleLimitation(opt.value)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: selected }}
+                      accessibilityLabel={opt.label}
                     >
                       <Text style={[styles.chipText, selected && styles.chipTextActive]}>
                         {opt.label}
@@ -638,6 +651,7 @@ export default function SettingsScreen() {
           />
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </AnimatedScreen>
   );
 }

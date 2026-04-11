@@ -840,7 +840,12 @@ export default function HomeScreen() {
               <Text style={styles.prBannerTitle}>
                 New PR{unseenPRs.length > 1 ? 's' : ''}!
               </Text>
-              <TouchableOpacity onPress={dismissPRs} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <TouchableOpacity
+                onPress={dismissPRs}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss PR celebration"
+              >
                 <Text style={styles.prBannerDismiss}>{'\u2715'}</Text>
               </TouchableOpacity>
             </View>

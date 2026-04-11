@@ -59,6 +59,9 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 disabled={disabled || loading}
+                accessibilityRole="button"
+                accessibilityLabel={title}
+                accessibilityState={{ disabled: !!disabled, busy: !!loading }}
             >
                 {loading ? (
                     <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />
