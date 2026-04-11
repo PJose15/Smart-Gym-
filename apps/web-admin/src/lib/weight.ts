@@ -66,3 +66,27 @@ export function formatVolume(lbs: number, unit: WeightUnit): string {
 export function unitLabel(unit: WeightUnit): string {
   return unit;
 }
+
+/**
+ * Reformat any `"<number> lbs"` substrings inside a text blob to the user's
+ * preferred weight unit. Storage is always lbs and server-generated feed
+ * descriptions bake `lbs` directly into the text, so this rewrites them at
+ * render time for non-`lbs` viewers.
+ *
+ * Passes through unchanged when `unit === 'lbs'` or the text has no matches.
+ * Numbers with commas (`12,500 lbs`) and decimals (`82.5 lbs`) are supported.
+ *
+ *   reformatWeightInText('Alice hit 225 lbs!', 'kg') // "Alice hit 102 kg!"
+ *   reformatWeightInText('12,500 lbs', 'kg')          // "5,670 kg"
+ *   reformatWeightInText('225 lbs', 'lbs')            // "225 lbs" (unchanged)
+ */
+export function reformatWeightInText(text: string, unit: WeightUnit): string {
+  if (unit === 'lbs') return text;
+  return text.replace(/([\d,]+(?:\.\d+)?)\s*lbs\b/g, (match, numStr: string) => {
+    const lbs = parseFloat(numStr.replace(/,/g, ''));
+    if (!Number.isFinite(lbs)) return match;
+    const value = convertFromLbs(lbs, unit);
+    const rounded = Math.round(value).toLocaleString();
+    return `${rounded} ${unit}`;
+  });
+}

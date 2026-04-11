@@ -4,6 +4,7 @@ import {
   formatWeight,
   formatVolume,
   unitLabel,
+  reformatWeightInText,
 } from '../weight';
 
 describe('convertFromLbs', () => {
@@ -78,5 +79,34 @@ describe('unitLabel', () => {
   it('returns the unit string', () => {
     expect(unitLabel('lbs')).toBe('lbs');
     expect(unitLabel('kg')).toBe('kg');
+  });
+});
+
+describe('reformatWeightInText', () => {
+  it('passes text through unchanged when unit is lbs', () => {
+    expect(reformatWeightInText('Alice hit 225 lbs!', 'lbs')).toBe('Alice hit 225 lbs!');
+  });
+
+  it('converts single lbs occurrence to kg', () => {
+    // 225 lbs → 102.06 kg → 102
+    expect(reformatWeightInText('Alice hit 225 lbs!', 'kg')).toBe('Alice hit 102 kg!');
+  });
+
+  it('converts comma-formatted volume', () => {
+    // 12,500 lbs → 5669.9 kg → 5,670
+    expect(reformatWeightInText('finished training — 12,500 lbs', 'kg')).toBe(
+      'finished training — 5,670 kg'
+    );
+  });
+
+  it('converts multiple occurrences in one string', () => {
+    // 180 lbs → 82; 200 lbs → 91
+    expect(reformatWeightInText('hit 180 lbs (target: 200 lbs)', 'kg')).toBe(
+      'hit 82 kg (target: 91 kg)'
+    );
+  });
+
+  it('leaves text with no lbs substring alone', () => {
+    expect(reformatWeightInText('3-day streak!', 'kg')).toBe('3-day streak!');
   });
 });

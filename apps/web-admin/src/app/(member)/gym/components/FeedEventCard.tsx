@@ -1,9 +1,11 @@
 'use client';
 
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, useMemo, useState } from 'react';
 import type { FeedEventFull, ReactionType } from '@nexera/types';
 import { ReactionBar } from './ReactionBar';
 import { CommentSection } from './CommentSection';
+import { useWeightUnit } from '@/lib/contexts/MemberContext';
+import { reformatWeightInText } from '@/lib/weight';
 
 interface FeedEventCardProps {
   event: FeedEventFull;
@@ -57,6 +59,13 @@ function timeAgo(dateStr: string): string {
 export function FeedEventCard({ event, memberId, onToggleReaction }: FeedEventCardProps) {
   const [showComments, setShowComments] = useState(false);
   const icon = EVENT_ICONS[event.event_type] || '\uD83D\uDCE2';
+  const unit = useWeightUnit();
+  // Feed descriptions are server-baked with lbs embedded. Rewrite any "N lbs"
+  // substrings at render time so kg viewers see their preferred unit.
+  const description = useMemo(
+    () => reformatWeightInText(event.description, unit),
+    [event.description, unit]
+  );
 
   return (
     <div style={event.is_pinned ? pinnedStyle : cardStyle}>
@@ -98,7 +107,7 @@ export function FeedEventCard({ event, memberId, onToggleReaction }: FeedEventCa
           )}
           <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
             <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{event.member_name}</span>{' '}
-            {event.description}
+            {description}
           </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 12, color: 'var(--color-text-muted)' }}>
             <span>{timeAgo(event.created_at)}</span>
