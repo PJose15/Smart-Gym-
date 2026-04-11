@@ -2,6 +2,8 @@
 
 import type { WeeklyStatsData } from '@nexera/types';
 import { CSSProperties } from 'react';
+import { useWeightUnit } from '@/lib/contexts/MemberContext';
+import { convertFromLbs, type WeightUnit } from '@/lib/weight';
 
 interface QuickStatsRowProps {
   stats: WeeklyStatsData;
@@ -23,12 +25,14 @@ const tileStyle: CSSProperties = {
 };
 
 export function QuickStatsRow({ stats }: QuickStatsRowProps) {
+  const unit = useWeightUnit();
+
   const tiles: StatTile[] = [
     { label: 'Sessions/wk', value: String(stats.sessions_this_week), color: '#3B82F6' },
-    { label: 'lbs/wk', value: formatVolume(stats.volume_this_week_lbs), color: '#10B981' },
+    { label: `${unit}/wk`, value: formatVolumeDisplay(stats.volume_this_week_lbs, unit), color: '#10B981' },
     { label: 'PRs/mo', value: String(stats.prs_this_month), color: '#FBBF24' },
     { label: 'All Sessions', value: String(stats.all_time_sessions), color: '#A78BFA' },
-    { label: 'Total lbs', value: formatVolume(stats.all_time_volume_lbs), color: '#F97316' },
+    { label: `Total ${unit}`, value: formatVolumeDisplay(stats.all_time_volume_lbs, unit), color: '#F97316' },
   ];
 
   return (
@@ -51,8 +55,15 @@ export function QuickStatsRow({ stats }: QuickStatsRowProps) {
   );
 }
 
-function formatVolume(lbs: number): string {
-  if (lbs >= 1000000) return `${(lbs / 1000000).toFixed(1)}M`;
-  if (lbs >= 1000) return `${(lbs / 1000).toFixed(1)}K`;
-  return String(Math.round(lbs));
+/**
+ * Stat-tile volume formatter. Returns a bare number (no unit suffix —
+ * the tile label already carries the unit). Uses M/K suffixes for
+ * readability at scale. Conversion happens before scale bucketing so
+ * the threshold is evaluated in the display unit.
+ */
+function formatVolumeDisplay(lbs: number, unit: WeightUnit): string {
+  const value = convertFromLbs(lbs, unit);
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return String(Math.round(value));
 }

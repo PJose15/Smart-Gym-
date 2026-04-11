@@ -3,6 +3,8 @@
 import { CSSProperties } from 'react';
 import type { FeedEventFull, ReactionType } from '@nexera/types';
 import { ReactionBar } from '@/app/(member)/gym/components/ReactionBar';
+import { useWeightUnit } from '@/lib/contexts/MemberContext';
+import { formatWeight } from '@/lib/weight';
 
 interface GoalReachedCardProps {
   event: FeedEventFull;
@@ -29,6 +31,7 @@ const cardStyle: CSSProperties = {
 };
 
 export function GoalReachedCard({ event, onToggleReaction }: GoalReachedCardProps) {
+  const unit = useWeightUnit();
   const ctx = event.context_data as {
     goal_id?: string;
     machine_name?: string;
@@ -100,7 +103,8 @@ export function GoalReachedCard({ event, onToggleReaction }: GoalReachedCardProp
                 borderRadius: 6,
                 padding: '3px 8px',
               }}>
-                🎯 {ctx.achieved_weight} lbs (target: {ctx.target_weight})
+                🎯 {formatWeight(ctx.achieved_weight, unit)} (target:{' '}
+                {formatWeight(ctx.target_weight, unit, { showUnit: false })})
               </div>
               {ctx.machine_name && (
                 <div style={{

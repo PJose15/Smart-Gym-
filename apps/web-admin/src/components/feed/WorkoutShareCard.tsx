@@ -3,6 +3,8 @@
 import { CSSProperties } from 'react';
 import type { FeedEventFull, ReactionType, WorkoutShareContext } from '@nexera/types';
 import { ReactionBar } from '@/app/(member)/gym/components/ReactionBar';
+import { useWeightUnit } from '@/lib/contexts/MemberContext';
+import { convertFromLbs } from '@/lib/weight';
 
 interface WorkoutShareCardProps {
   event: FeedEventFull;
@@ -37,6 +39,7 @@ const pulseKeyframes = `
 export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardProps) {
   const ctx = (event.context_data ?? {}) as unknown as WorkoutShareContext;
   const isTraining = ctx.share_status === 'training';
+  const unit = useWeightUnit();
 
   return (
     <>
@@ -136,7 +139,7 @@ export function WorkoutShareCard({ event, onToggleReaction }: WorkoutShareCardPr
                     borderRadius: 6,
                     padding: '3px 8px',
                   }}>
-                    💪 {ctx.volume_lbs.toLocaleString()} lbs
+                    💪 {Math.round(convertFromLbs(ctx.volume_lbs, unit)).toLocaleString()} {unit}
                   </div>
                 )}
                 {ctx.prs_hit > 0 && (

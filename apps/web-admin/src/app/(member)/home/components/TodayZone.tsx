@@ -2,6 +2,8 @@
 
 import type { ProgramContextData, TodaySessionData } from '@nexera/types';
 import { CSSProperties } from 'react';
+import { useWeightUnit } from '@/lib/contexts/MemberContext';
+import { convertFromLbs } from '@/lib/weight';
 
 interface TodayZoneProps {
   program: ProgramContextData | null;
@@ -25,6 +27,8 @@ const labelStyle: CSSProperties = {
 };
 
 export function TodayZone({ program, todaySessions }: TodayZoneProps) {
+  const unit = useWeightUnit();
+
   // Program mode
   if (program && !program.is_complete) {
     return (
@@ -93,7 +97,8 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
             }}>
               <span>{s.machine_name}</span>
               <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
-                {s.sets_count} sets · {Math.round(s.total_volume_lbs).toLocaleString()} lbs
+                {s.sets_count} sets ·{' '}
+                {Math.round(convertFromLbs(s.total_volume_lbs, unit)).toLocaleString()} {unit}
               </span>
             </div>
           ))}
