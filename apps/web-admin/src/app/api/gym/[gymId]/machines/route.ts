@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
 
 const TIER_LIMITS: Record<string, number> = { starter: 5, growth: 25, pro: Infinity };
+
+export const machineSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  category: z.string().trim().min(1).max(50),
+  muscle_groups: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
+  instructions: z.string().trim().max(5000).nullable().optional(),
+  demo_video_url: z.string().url().max(500).nullable().optional(),
+});
 
 interface RouteParams {
   params: Promise<{ gymId: string }>;
@@ -27,9 +36,11 @@ export async function POST(
 
     if (gym_id !== gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
-    const { name, category, muscle_groups, instructions, demo_video_url } = body;
-    if (!name || !category) return NextResponse.json({ error: 'name and category required' }, { status: 400 });
+    const parsed = machineSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+    const { name, category, muscle_groups, instructions, demo_video_url } = parsed.data;
 
     // Check tier limits
     const { data: gym } = await admin

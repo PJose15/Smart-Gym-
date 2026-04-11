@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+const createChallengeSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(2000).nullable().optional(),
+  challenge_type: z.enum(['most-sessions', 'most-volume', 'most-machines', 'streak']),
+  start_date: z.string().regex(ISO_DATE),
+  end_date: z.string().regex(ISO_DATE),
+  prize_description: z.string().trim().max(500).nullable().optional(),
+});
 
 export async function POST(
   req: NextRequest,
@@ -18,16 +30,11 @@ export async function POST(
     const { admin, gym_id, user_id } = result;
     if (gym_id !== params.gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
-    const { title, description, challenge_type, start_date, end_date, prize_description } = body;
-    if (!title || !challenge_type || !start_date || !end_date) {
-      return NextResponse.json({ error: 'title, challenge_type, start_date, end_date required' }, { status: 400 });
+    const parsed = createChallengeSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
-
-    const validTypes = ['most-sessions', 'most-volume', 'most-machines', 'streak'];
-    if (!validTypes.includes(challenge_type)) {
-      return NextResponse.json({ error: `Invalid challenge_type. Must be one of: ${validTypes.join(', ')}` }, { status: 400 });
-    }
+    const { title, description, challenge_type, start_date, end_date, prize_description } = parsed.data;
 
     const { data, error } = await admin.from('gym_challenges').insert({
       gym_id: params.gymId,

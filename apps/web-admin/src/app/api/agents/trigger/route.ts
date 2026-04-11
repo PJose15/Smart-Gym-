@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { checkAgentAccess } from '@/lib/billing/featureGate';
+
+const triggerPayloadSchema = z
+  .object({
+    event: z.string().max(100).optional(),
+  })
+  .passthrough();
+
+const triggerBodySchema = z.object({
+  agent_name: z.string().min(1).max(100),
+  payload: triggerPayloadSchema,
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -25,19 +37,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { agent_name, payload } = body;
-
-    if (!agent_name || typeof agent_name !== 'string') {
-      return NextResponse.json({ error: 'agent_name is required' }, { status: 400 });
+    const rawBody = await request.text();
+    if (rawBody.length > 50_000) {
+      return NextResponse.json({ error: 'payload too large' }, { status: 413 });
     }
+    let jsonBody: unknown;
+    try {
+      jsonBody = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+    const parsed = triggerBodySchema.safeParse(jsonBody);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+    const { agent_name, payload } = parsed.data;
 
     if (!KNOWN_AGENTS.includes(agent_name)) {
       return NextResponse.json({ error: `Unknown agent: ${agent_name}` }, { status: 400 });
-    }
-
-    if (!payload || typeof payload !== 'object') {
-      return NextResponse.json({ error: 'payload object is required' }, { status: 400 });
     }
 
     const gymId = payload.gym_id as string | undefined;

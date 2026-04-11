@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+
+const sessionNoteSchema = z.object({
+  note: z.string().trim().min(1).max(2000),
+});
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>;
@@ -23,11 +28,11 @@ export async function PATCH(
     if (result instanceof NextResponse) return result;
     const { admin, user_id, gym_id } = result;
 
-    const body = await req.json();
-    const { note } = body;
-    if (!note || typeof note !== 'string') {
-      return NextResponse.json({ error: 'note is required' }, { status: 400 });
+    const parsed = sessionNoteSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+    const { note } = parsed.data;
 
     // Verify session belongs to this gym
     const { data: ws } = await admin

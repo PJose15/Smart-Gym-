@@ -1,8 +1,14 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { sendCheckInToMember } from '@/lib/checkIn/sendCheckIn';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+
+const approveSchema = z.object({
+  final_message: z.string().trim().max(2000).optional(),
+  wrote_own: z.boolean().optional(),
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -23,9 +29,12 @@ export async function POST(
     if (staffResult instanceof NextResponse) return staffResult;
     const { user_id, admin } = staffResult;
 
-    const body = await request.json();
-    const finalMessage = body.final_message as string | undefined;
-    const wroteOwn = body.wrote_own === true;
+    const parsed = approveSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+    const finalMessage = parsed.data.final_message;
+    const wroteOwn = parsed.data.wrote_own === true;
 
     const rl = checkRateLimit(`checkin-approve:${user_id}`, 20, 60_000);
     if (rl) return rl;

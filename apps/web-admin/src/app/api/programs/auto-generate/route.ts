@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/lib/rateLimit';
+
+const autoGenerateSchema = z.object({
+  member_id: z.string().uuid(),
+  gym_id: z.string().uuid(),
+});
 
 function getAdminClient() {
   return createClient(
@@ -27,11 +33,11 @@ export async function POST(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { member_id, gym_id } = await request.json();
-
-    if (!member_id || !gym_id) {
-      return NextResponse.json({ eligible: false, reason: 'missing_params' });
+    const parsed = autoGenerateSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ eligible: false, reason: 'missing_params' }, { status: 400 });
     }
+    const { member_id, gym_id } = parsed.data;
 
     const rl = checkRateLimit(`auto-generate:${member_id}`, 3, 300_000);
     if (rl) return rl;

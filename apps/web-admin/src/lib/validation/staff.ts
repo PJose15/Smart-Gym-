@@ -36,8 +36,8 @@ export const gymSettingsSchema = z.object({
   // Branding
   primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color').optional(),
   secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color').optional(),
-  font_preference: z.string().optional(),
-  custom_domain: z.string().nullable().optional(),
+  font_preference: z.string().max(50).optional(),
+  custom_domain: z.string().max(253).regex(/^[a-z0-9.-]+$/i, 'Invalid domain').nullable().optional(),
   hide_smartgym_branding: z.boolean().optional(),
   // Public profile
   show_public_profile: z.boolean().optional(),
@@ -56,9 +56,9 @@ export const gymSettingsSchema = z.object({
   program_duration_weeks: z.number().refine(v => [4, 6, 8, 12].includes(v), 'Must be 4, 6, 8, or 12').optional(),
   // Operations
   at_risk_threshold_days: z.number().min(7).max(30).optional(),
-  gym_open_time: z.string().optional(),
-  gym_close_time: z.string().optional(),
-  timezone: z.string().optional(),
+  gym_open_time: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time').optional(),
+  gym_close_time: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time').optional(),
+  timezone: z.string().max(64).optional(),
   weight_unit: z.enum(['lbs', 'kg']).optional(),
   currency: z.string().max(3).optional(),
   // Equipment

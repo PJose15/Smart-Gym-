@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { computeLevelProgress } from '@nexera/ai-assist';
 import { validateUUIDs } from '@/lib/validation/uuid';
+
+const profilePatchSchema = z
+  .object({
+    display_name: z.string().trim().min(1).max(50).optional(),
+    primary_goal: z
+      .enum(['muscle-gain', 'strength', 'weight-loss', 'endurance', 'general-fitness'])
+      .optional(),
+    experience_level: z
+      .enum(['beginner', 'intermediate', 'advanced', 'athlete'])
+      .optional(),
+    injuries_or_limitations: z.string().trim().max(2000).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'At least one field required' });
 
 interface AchievementDef {
   code: string;
@@ -176,16 +190,11 @@ export async function PATCH(
     if (auth instanceof NextResponse) return auth;
     const { admin } = auth;
 
-    const body = await req.json();
-    const allowed = ['display_name', 'primary_goal', 'experience_level', 'injuries_or_limitations'];
-    const updates: Record<string, unknown> = {};
-    for (const key of allowed) {
-      if (key in body) updates[key] = body[key];
+    const parsed = profilePatchSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
-
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
-    }
+    const updates: Record<string, unknown> = { ...parsed.data };
 
     const { error } = await admin
       .from('members')

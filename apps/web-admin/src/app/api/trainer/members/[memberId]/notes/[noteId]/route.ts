@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+
+const noteUpdateSchema = z.object({
+  note_text: z.string().trim().min(1).max(2000),
+});
 
 export async function PUT(
   req: NextRequest,
@@ -14,18 +19,18 @@ export async function PUT(
     if (result instanceof NextResponse) return result;
 
     const { admin, user_id, gym_id } = result;
-    const body = await req.json();
-
-    if (!body.note_text || typeof body.note_text !== 'string' || body.note_text.trim().length === 0) {
-      return NextResponse.json({ error: 'note_text is required' }, { status: 400 });
+    const parsed = noteUpdateSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+    const { note_text } = parsed.data;
 
     const rl = checkRateLimit(`trainer-note-edit:${user_id}`, 30, 60_000);
     if (rl) return rl;
 
     const { data: note, error } = await admin
       .from('trainer_member_notes')
-      .update({ note_text: body.note_text.trim() })
+      .update({ note_text })
       .eq('id', params.noteId)
       .eq('trainer_id', user_id)
       .eq('member_id', params.memberId)

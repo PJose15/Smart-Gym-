@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+
+const bodyMetricsSchema = z
+  .object({
+    weight_lbs: z.number().positive().max(2000).optional(),
+    weight_kg: z.number().positive().max(900).optional(),
+    body_fat_percentage: z.number().min(0).max(70).optional(),
+    notes: z.string().trim().max(500).optional(),
+  })
+  .refine((v) => v.weight_lbs !== undefined || v.weight_kg !== undefined, {
+    message: 'weight_lbs or weight_kg required',
+  });
 
 export async function GET(
   req: NextRequest,
@@ -46,12 +58,11 @@ export async function POST(
     if (auth instanceof NextResponse) return auth;
     const { admin } = auth;
 
-    const body = await req.json();
-    const { weight_lbs, weight_kg, body_fat_percentage, notes } = body;
-
-    if (!weight_lbs && !weight_kg) {
-      return NextResponse.json({ error: 'weight_lbs or weight_kg required' }, { status: 400 });
+    const parsed = bodyMetricsSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+    const { weight_lbs, weight_kg, body_fat_percentage, notes } = parsed.data;
 
     const { data, error } = await admin
       .from('body_metrics')

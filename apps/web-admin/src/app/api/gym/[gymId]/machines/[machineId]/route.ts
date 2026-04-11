@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+
+const machineUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100),
+    category: z.string().trim().min(1).max(50),
+    muscle_groups: z.array(z.string().trim().min(1).max(50)).max(20),
+    instructions: z.string().trim().max(5000).nullable(),
+    demo_video_url: z.string().url().max(500).nullable(),
+    is_active: z.boolean(),
+  })
+  .partial();
 
 interface RouteParams {
   params: Promise<{ gymId: string; machineId: string }>;
@@ -25,12 +37,11 @@ export async function PATCH(
 
     if (gym_id !== gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
-    const allowed = ['name', 'category', 'muscle_groups', 'instructions', 'demo_video_url', 'is_active'];
-    const updates: Record<string, unknown> = {};
-    for (const key of allowed) {
-      if (key in body) updates[key] = body[key];
+    const parsed = machineUpdateSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+    const updates: Record<string, unknown> = { ...parsed.data };
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields' }, { status: 400 });

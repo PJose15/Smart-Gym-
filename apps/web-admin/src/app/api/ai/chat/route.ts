@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -6,12 +7,18 @@ import { getCoachingInsight, GeminiProvider } from '@nexera/ai-assist';
 
 const gemini = new GeminiProvider();
 
+const chatSchema = z.object({
+  member_id: z.string().uuid(),
+  message: z.string().trim().min(1).max(1000),
+});
+
 export async function POST(req: NextRequest) {
   try {
-    const { member_id, message } = await req.json();
-    if (!member_id || !message) {
-      return NextResponse.json({ error: 'member_id and message required' }, { status: 400 });
+    const parsed = chatSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+    const { member_id, message } = parsed.data;
 
     const rl = checkRateLimit(`ai-chat:${member_id}`, 10, 60_000);
     if (rl) return rl;
