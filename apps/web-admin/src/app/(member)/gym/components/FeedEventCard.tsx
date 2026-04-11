@@ -5,7 +5,7 @@ import type { FeedEventFull, ReactionType } from '@nexera/types';
 import { ReactionBar } from './ReactionBar';
 import { CommentSection } from './CommentSection';
 import { useWeightUnit } from '@/lib/contexts/MemberContext';
-import { reformatWeightInText } from '@/lib/weight';
+import { formatFeedEvent } from '@/lib/feed/formatFeedEvent';
 
 interface FeedEventCardProps {
   event: FeedEventFull;
@@ -60,11 +60,12 @@ export function FeedEventCard({ event, memberId, onToggleReaction }: FeedEventCa
   const [showComments, setShowComments] = useState(false);
   const icon = EVENT_ICONS[event.event_type] || '\uD83D\uDCE2';
   const unit = useWeightUnit();
-  // Feed descriptions are server-baked with lbs embedded. Rewrite any "N lbs"
-  // substrings at render time so kg viewers see their preferred unit.
+  // Feed descriptions are rebuilt client-side from `context_data` so the
+  // viewer's preferred weight unit is honored. Falls back to the server-baked
+  // `event.description` for event types without numeric fields.
   const description = useMemo(
-    () => reformatWeightInText(event.description, unit),
-    [event.description, unit]
+    () => formatFeedEvent(event, unit),
+    [event, unit]
   );
 
   return (

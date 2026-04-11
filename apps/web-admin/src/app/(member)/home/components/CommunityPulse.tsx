@@ -3,7 +3,7 @@
 import type { FeedEventData } from '@nexera/types';
 import { CSSProperties } from 'react';
 import { useWeightUnit } from '@/lib/contexts/MemberContext';
-import { reformatWeightInText } from '@/lib/weight';
+import { formatFeedEventData } from '@/lib/feed/formatFeedEvent';
 
 interface CommunityPulseProps {
   feed: FeedEventData[];
@@ -65,7 +65,7 @@ export function CommunityPulse({ feed }: CommunityPulseProps) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.3 }}>
                 <span style={{ fontWeight: 600 }}>{event.member_name}</span>{' '}
-                {reformatWeightInText(event.description, unit)}
+                {formatFeedEventData(event, unit)}
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 3, fontSize: 11, color: 'var(--color-text-muted)' }}>
                 <span>{timeAgo(event.created_at)}</span>

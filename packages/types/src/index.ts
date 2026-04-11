@@ -864,6 +864,12 @@ export interface FeedEventData {
   description: string;
   created_at: string;
   reaction_count: number;
+  /**
+   * Optional context payload used by client-side localized renderers
+   * (e.g. `formatFeedEvent` rebuilds the description from this in the
+   * viewer's preferred weight unit). Included for home-screen feed.
+   */
+  context_data?: Record<string, unknown>;
 }
 
 export interface WeeklyStatsData {

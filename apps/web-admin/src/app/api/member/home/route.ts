@@ -260,6 +260,7 @@ export async function GET(request: NextRequest) {
       description: e.display_text as string,
       created_at: e.created_at as string,
       reaction_count: (e.comment_count as number) || 0,
+      context_data: (e.context_data as Record<string, unknown>) || {},
     }));
 
     // Build stats
