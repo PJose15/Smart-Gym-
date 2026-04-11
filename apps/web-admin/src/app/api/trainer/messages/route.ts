@@ -11,14 +11,21 @@ export async function GET() {
 
     const { admin, user_id, gym_id } = result;
 
-    // Get all messages for this trainer, grouped by member
+    // Fetch the most recent 1000 messages for this trainer and group them
+    // by member in-memory to produce conversation previews. 1000 rows is
+    // a hard cap that covers any realistic active-conversation set for a
+    // single trainer; older messages (if any) still belong to conversations
+    // that will already appear in this window because we sort desc by
+    // sent_at. TODO: move to a DB-side RPC that returns one row per
+    // conversation once the messaging view matures.
     const { data: messages } = await admin
       .from('trainer_member_messages')
       .select('member_id, message_text, sent_at, read_at, sender_type')
       .eq('trainer_id', user_id)
       .eq('gym_id', gym_id)
       .eq('is_deleted_by_trainer', false)
-      .order('sent_at', { ascending: false });
+      .order('sent_at', { ascending: false })
+      .limit(1000);
 
     if (!messages || messages.length === 0) {
       return NextResponse.json([]);

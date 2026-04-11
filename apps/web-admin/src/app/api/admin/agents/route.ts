@@ -11,9 +11,13 @@ export async function GET() {
     const twentyFourHoursAgo = new Date(Date.now() - 86400000).toISOString();
 
     const [configsRes, actionsRes] = await Promise.all([
+      // Platform-wide agent configs — one row per gym × agent.
+      // Capped at 10000 (1000 gyms × 10 agents) to prevent unbounded
+      // growth as the fleet scales.
       admin
         .from('gym_agent_config')
-        .select('agent_id, enabled, fire_count, last_fired_at'),
+        .select('agent_id, enabled, fire_count, last_fired_at')
+        .limit(10000),
       admin
         .from('admin_actions_log')
         .select('action_type, target_type, details, created_at')

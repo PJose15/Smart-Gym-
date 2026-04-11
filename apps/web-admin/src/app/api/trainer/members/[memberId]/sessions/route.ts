@@ -15,17 +15,25 @@ export async function GET(
     const uuidError = validateUUIDs({ memberId });
     if (uuidError) return uuidError;
     const url = new URL(req.url);
-    const offset = parseInt(url.searchParams.get('offset') ?? '0', 10);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '20', 10), 50);
+    const offset = Math.max(0, parseInt(url.searchParams.get('offset') ?? '0', 10) || 0);
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') ?? '20', 10) || 20));
 
-    // Fetch all workout_session rows for this member.
-    // Each row represents one machine used on a given session_date.
+    // Each workout_session row = one machine on a given session_date. We
+    // aggregate rows into one logical "session" per date, so offset/limit
+    // operates at the DATE level rather than the ROW level. To keep the
+    // DB transfer bounded we estimate an upper bound of 40 machines per
+    // date (generous) and fetch at most (offset+limit)*40 rows, hard
+    // capped at 2000. Rows beyond this window represent older dates and
+    // will appear in subsequent paginated requests.
+    const rowCap = Math.min(2000, (offset + limit) * 40 + 40);
+
     const { data: rows } = await admin
       .from('workout_sessions')
       .select('id, session_date, sets_count, total_volume_lbs, total_reps, duration_seconds, completed_at, created_at')
       .eq('member_id', memberId)
       .eq('gym_id', gym_id)
-      .order('session_date', { ascending: false });
+      .order('session_date', { ascending: false })
+      .limit(rowCap);
 
     if (!rows || rows.length === 0) {
       return NextResponse.json([]);

@@ -10,8 +10,13 @@ export async function GET() {
 
     const { admin, gym_id } = result;
 
-    // Fetch active members + their most recent workout
-    // Use per-member last session via subquery ordering
+    // Fetch active members + their most recent workout.
+    // "At-risk" is computed from days-since-last-workout, so we only need
+    // sessions from the last 30 days: any member with no row in that
+    // window is already flagged (lastWorkoutAt = null). This bounds the
+    // query to one month of gym activity instead of all-time history.
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+
     const [membersRes, sessionsRes] = await Promise.all([
       admin
         .from('members')
@@ -22,8 +27,8 @@ export async function GET() {
         .from('workout_sessions')
         .select('member_id, created_at')
         .eq('gym_id', gym_id)
-        .order('created_at', { ascending: false })
-        .limit(10000),
+        .gte('created_at', thirtyDaysAgo)
+        .order('created_at', { ascending: false }),
     ]);
 
     const members = membersRes.data ?? [];

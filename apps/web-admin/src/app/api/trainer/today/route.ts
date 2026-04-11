@@ -13,12 +13,15 @@ export async function GET() {
     const now = new Date();
     const todayDate = now.toISOString().slice(0, 10);
 
-    // Get trainer's assigned members directly from the members table
+    // Get trainer's assigned members directly from the members table.
+    // Hard cap at 500 — a single trainer's roster never realistically
+    // exceeds this.
     const { data: members } = await admin
       .from('members')
       .select('id, user_id, display_name, avatar_url, last_session_date')
       .eq('gym_id', gym_id)
-      .eq('assigned_trainer_id', user_id);
+      .eq('assigned_trainer_id', user_id)
+      .limit(500);
 
     const memberMap = new Map((members ?? []).map((m) => [m.id, m]));
     const memberIds = (members ?? []).map((m) => m.id);

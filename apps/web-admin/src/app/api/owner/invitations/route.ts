@@ -15,7 +15,8 @@ export async function GET() {
       .from('trainer_invitations')
       .select('*')
       .eq('gym_id', gym_id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     return NextResponse.json(invitations ?? []);
   } catch (err) {

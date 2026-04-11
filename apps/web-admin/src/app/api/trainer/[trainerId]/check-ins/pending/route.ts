@@ -25,7 +25,9 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Pending check-ins (not yet approved/sent)
+    // Pending check-ins (not yet approved/sent). Cap at 100 — a single
+    // trainer should never realistically have more; if they do the UI can
+    // surface a "100+" state separately.
     const { data: pending } = await admin
       .from('weekly_checkins')
       .select(
@@ -34,7 +36,8 @@ export async function GET(
       .eq('trainer_id', trainerId)
       .eq('trainer_approved', false)
       .is('sent_at', null)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     // Recently sent (last 20)
     const { data: sent } = await admin

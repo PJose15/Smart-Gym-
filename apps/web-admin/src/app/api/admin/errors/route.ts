@@ -47,12 +47,16 @@ export async function GET(request: Request) {
         .select('id', { count: 'exact', head: true })
         .eq('resolved', true)
         .gte('occurred_at', twentyFourHoursAgo),
+      // Cap at 1000 rows — a realistic 24h unresolved error burst across
+      // the whole fleet rarely exceeds this, and the result is only used
+      // to compute a distinct gym_id count.
       admin
         .from('error_log')
         .select('gym_id')
         .eq('resolved', false)
         .gte('occurred_at', twentyFourHoursAgo)
-        .not('gym_id', 'is', null),
+        .not('gym_id', 'is', null)
+        .limit(1000),
     ]);
 
     const uniqueGyms = new Set((affectedGymsRes.data ?? []).map((r: { gym_id: string }) => r.gym_id));

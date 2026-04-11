@@ -13,24 +13,32 @@ export async function GET() {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
     const threeDaysFromNow = new Date(Date.now() + 3 * 86400000).toISOString();
 
+    // All gym_billing reads are capped to bound platform-wide growth.
+    // 5000 gyms is an order of magnitude beyond expected MVP scale.
+    // platform_daily_metrics is naturally bounded by the 30-day filter
+    // but we cap at 100 rows for defence in depth.
     const [billingRes, metricsRes, pastDueRes, trialEndingRes] = await Promise.all([
       admin
         .from('gym_billing')
-        .select('gym_id, tier, subscription_status, trial_ends_at'),
+        .select('gym_id, tier, subscription_status, trial_ends_at')
+        .limit(5000),
       admin
         .from('platform_daily_metrics')
         .select('date, mrr_usd')
         .gte('date', thirtyDaysAgo)
-        .order('date', { ascending: false }),
+        .order('date', { ascending: false })
+        .limit(100),
       admin
         .from('gym_billing')
         .select('gym_id, tier')
-        .eq('subscription_status', 'past_due'),
+        .eq('subscription_status', 'past_due')
+        .limit(5000),
       admin
         .from('gym_billing')
         .select('gym_id, tier, trial_ends_at')
         .eq('subscription_status', 'trialing')
-        .lte('trial_ends_at', threeDaysFromNow),
+        .lte('trial_ends_at', threeDaysFromNow)
+        .limit(5000),
     ]);
 
     const billingData = billingRes.data ?? [];

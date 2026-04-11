@@ -5,7 +5,7 @@ import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { memberId: string } }
 ) {
   try {
@@ -17,13 +17,21 @@ export async function GET(
     const { admin, user_id, gym_id } = result;
     const { memberId } = params;
 
+    const url = new URL(req.url);
+    const offset = Math.max(0, parseInt(url.searchParams.get('offset') ?? '0', 10) || 0);
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(url.searchParams.get('limit') ?? '50', 10) || 50),
+    );
+
     const { data: notes } = await admin
       .from('trainer_member_notes')
       .select('*')
       .eq('trainer_id', user_id)
       .eq('member_id', memberId)
       .eq('gym_id', gym_id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     return NextResponse.json(notes ?? []);
   } catch (err) {

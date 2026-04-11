@@ -9,12 +9,15 @@ export async function GET() {
 
     const { admin, user_id, gym_id } = result;
 
-    // Get members assigned to this trainer directly from the members table
+    // Get members assigned to this trainer directly from the members table.
+    // Hard cap at 500 — a single trainer realistically manages far fewer
+    // assigned members than this.
     const { data: members } = await admin
       .from('members')
       .select('id, user_id, display_name, avatar_url, last_session_date, current_streak')
       .eq('gym_id', gym_id)
-      .eq('assigned_trainer_id', user_id);
+      .eq('assigned_trainer_id', user_id)
+      .limit(500);
 
     if (!members || members.length === 0) {
       return NextResponse.json([]);
@@ -31,13 +34,18 @@ export async function GET() {
 
     const programMembers = new Set((activePrograms ?? []).map((p) => p.member_id));
 
-    // Get completed sessions count
+    // Fetch session rows to compute per-member totals. Hard cap at 5000
+    // rows so a trainer with long-tenured members does not pull the
+    // entire workout_sessions history. Members with more than ~5000
+    // combined sessions will show a slightly-under count; a dedicated
+    // materialized counter on members should replace this.
     const { data: sessionRows } = await admin
       .from('workout_sessions')
       .select('member_id')
       .eq('gym_id', gym_id)
       .in('member_id', memberIds)
-      .not('completed_at', 'is', null);
+      .not('completed_at', 'is', null)
+      .limit(5000);
 
     // Count sessions per member
     const sessionCounts = new Map<string, number>();
