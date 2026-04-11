@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { invalidateAndRefreshDNA } from '@/lib/dna/dnaCache';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,9 @@ export async function POST(
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
+
+    const rl = checkRateLimit(`dna-recompute:${memberId}`, 3, 300_000);
+    if (rl) return rl;
 
     const { data: member } = await admin
       .from('members')

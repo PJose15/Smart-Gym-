@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { feedCommentsQuerySchema, feedCommentSchema } from '@/lib/validation/feed';
+import { checkRateLimit } from '@/lib/rateLimit';
 import type { FeedComment } from '@nexera/types';
 
 export async function GET(request: NextRequest) {
@@ -93,6 +94,9 @@ export async function POST(request: NextRequest) {
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;
+
+    const rl = checkRateLimit(`feed-comment:${member_id}`, 20, 60_000);
+    if (rl) return rl;
 
     // Insert comment
     const { data: comment, error: insertErr } = await admin

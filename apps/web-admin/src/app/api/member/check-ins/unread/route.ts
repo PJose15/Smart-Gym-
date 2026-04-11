@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 /**
  * GET /api/member/check-ins/unread?member_id=...
@@ -54,6 +55,9 @@ export async function PATCH(request: NextRequest) {
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
+
+    const rl = checkRateLimit(`checkin-read:${memberId}`, 30, 60_000);
+    if (rl) return rl;
 
     await admin
       .from('weekly_checkins')

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { trainerMessageSchema } from '@/lib/validation/staff';
+import { checkRateLimit } from '@/lib/rateLimit';
 import type { ConversationPreview } from '@nexera/types';
 
 export async function GET() {
@@ -86,6 +87,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { member_id, message_text } = parsed.data;
+
+    const rl = checkRateLimit(`trainer-message:${user_id}`, 30, 60_000);
+    if (rl) return rl;
 
     const { data: msg, error } = await admin
       .from('trainer_member_messages')

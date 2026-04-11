@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(
   _req: NextRequest,
@@ -11,7 +12,10 @@ export async function POST(
     if (uuidError) return uuidError;
     const result = await verifyStaff('owner');
     if (result instanceof NextResponse) return result;
-    const { admin } = result;
+    const { admin, user_id } = result;
+
+    const rl = checkRateLimit(`challenge-complete:${user_id}`, 20, 60_000);
+    if (rl) return rl;
 
     // Get challenge
     const { data: challenge } = await admin

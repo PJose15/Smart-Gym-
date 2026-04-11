@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { z } from 'zod';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const deleteSchema = z.object({
   member_id: z.string().uuid(),
@@ -29,6 +30,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;
+
+    const rl = checkRateLimit(`feed-comment-delete:${member_id}`, 20, 60_000);
+    if (rl) return rl;
 
     // Verify comment belongs to member
     const { data: comment } = await admin

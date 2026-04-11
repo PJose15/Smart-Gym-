@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { sendCheckInToMember } from '@/lib/checkIn/sendCheckIn';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,9 @@ export async function POST(
     const body = await request.json();
     const finalMessage = body.final_message as string | undefined;
     const wroteOwn = body.wrote_own === true;
+
+    const rl = checkRateLimit(`checkin-approve:${user_id}`, 20, 60_000);
+    if (rl) return rl;
 
     // Verify this trainer owns this check-in
     const { data: checkIn } = await admin

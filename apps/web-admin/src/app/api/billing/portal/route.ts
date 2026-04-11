@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { createPortalSession } from '@/lib/billing/stripeHelpers';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST() {
   try {
     const result = await verifyStaff('owner');
     if (result instanceof NextResponse) return result;
 
-    const { admin, gym_id } = result;
+    const { admin, gym_id, user_id } = result;
+
+    const rl = checkRateLimit(`billing-portal:${user_id}`, 10, 300_000);
+    if (rl) return rl;
 
     const { data: billing } = await admin
       .from('gym_billing')

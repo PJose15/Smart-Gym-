@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,10 @@ export async function POST(req: Request) {
   if (!email) {
     return NextResponse.json({ error: 'Missing email in request body' }, { status: 400 })
   }
+
+  const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
+  const rl = checkRateLimit(`dev-seed:${ip}`, 3, 300_000)
+  if (rl) return rl
 
   try {
     // 1. Find the auth user

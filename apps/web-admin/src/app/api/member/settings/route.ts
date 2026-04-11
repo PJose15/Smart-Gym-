@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { memberSettingsSchema } from '@/lib/validation/staff';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 async function getAuthMember() {
   const supabase = await createServerSupabaseClient();
@@ -75,6 +76,9 @@ export async function PUT(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
+
+    const rl = checkRateLimit(`member-settings:${member_id}`, 10, 60_000);
+    if (rl) return rl;
 
     // Upsert settings
     const { data: settings, error } = await admin

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySuperAdmin } from '@/lib/auth/verifySuperAdmin';
 import { toggleFlag } from '@/lib/featureFlags';
 import { PLATFORM_FLAG_KEYS, CRITICAL_FLAGS } from '@nexera/types';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function PATCH(
   request: NextRequest,
@@ -28,6 +29,9 @@ export async function PATCH(
     if (isCritical && !isEnabled && !request.headers.get('x-confirm-critical')) {
       return NextResponse.json({ error: 'Critical flag requires confirmation', confirm: true }, { status: 409 });
     }
+
+    const rl = checkRateLimit(`admin-flag:${result.user_id}`, 30, 60_000);
+    if (rl) return rl;
 
     const updated = await toggleFlag(result.admin, flagKey, isEnabled, result.user_id);
     return NextResponse.json(updated);

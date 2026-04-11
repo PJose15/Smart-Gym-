@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sessionUpsertSchema } from '@/lib/validation/session';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 /**
  * POST /api/sessions
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
     if (authResult instanceof NextResponse) return authResult;
 
     const { admin } = authResult;
+
+    const rl = checkRateLimit(`sessions-upsert:${member_id}`, 120, 60_000);
+    if (rl) return rl;
 
     // Find existing session for this member+machine+date
     const { data: existing } = await admin

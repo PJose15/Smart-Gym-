@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { gymSettingsSchema } from '@/lib/validation/staff';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET() {
   try {
@@ -38,6 +39,9 @@ export async function PUT(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
+
+    const rl = checkRateLimit(`gym-settings:${gym_id}`, 20, 60_000);
+    if (rl) return rl;
 
     const { data: settings, error } = await admin
       .from('gym_settings')

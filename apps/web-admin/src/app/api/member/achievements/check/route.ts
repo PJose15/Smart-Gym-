@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkAchievementsForMember } from '@/lib/achievements';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const schema = z.object({
   member_id: z.string().uuid(),
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
     const authResult = await verifyMember(member_id);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
+
+    const rl = checkRateLimit(`achievement-check:${member_id}`, 30, 60_000);
+    if (rl) return rl;
 
     const result = await checkAchievementsForMember(admin, member_id, gym_id);
 

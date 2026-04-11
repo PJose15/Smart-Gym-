@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,9 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    const rl = checkRateLimit(`checkin-reply:${memberId}`, 5, 60_000);
+    if (rl) return rl;
 
     // Atomic update: set reply only if not already replied (prevents TOCTOU race)
     const { data: updated, error: updateErr } = await admin

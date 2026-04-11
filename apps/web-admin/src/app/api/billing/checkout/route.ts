@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkoutSchema } from '@/lib/validation/staff';
 import { createStripeCustomer, createCheckoutSession } from '@/lib/billing/stripeHelpers';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
     }
 
     const { tier, interval } = parsed.data;
+
+    const rl = checkRateLimit(`billing-checkout:${user_id}`, 5, 300_000);
+    if (rl) return rl;
 
     // Get or create stripe customer
     const { data: billing } = await admin

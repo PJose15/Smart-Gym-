@@ -7,6 +7,7 @@ import { invalidateAndRefreshReadiness } from '@/lib/readiness/readinessCache';
 import { invalidateAndRefreshMuscleMap } from '@/lib/muscleMap/muscleMapCache';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const completeSchema = z.object({
   member_id: z.string().uuid(),
@@ -39,6 +40,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const authResult = await verifyMember(member_id);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
+
+    const rl = checkRateLimit(`session-complete:${member_id}`, 10, 60_000);
+    if (rl) return rl;
 
     // Get the session
     const { data: session, error: sessionError } = await admin

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { trainerInvitationSchema } from '@/lib/validation/staff';
+import { checkRateLimit } from '@/lib/rateLimit';
 import crypto from 'crypto';
 
 export async function GET() {
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, trainer_name, permissions } = parsed.data;
+
+    const rl = checkRateLimit(`trainer-invite:${gym_id}`, 10, 300_000);
+    if (rl) return rl;
 
     // Generate unique token
     const token = crypto.randomBytes(32).toString('hex');

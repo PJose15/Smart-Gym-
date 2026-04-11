@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { trainerNoteSchema } from '@/lib/validation/staff';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(
   _req: NextRequest,
@@ -50,6 +51,9 @@ export async function POST(
     }
 
     const { note_type, note_text, session_id, is_visible_to_member } = parsed.data;
+
+    const rl = checkRateLimit(`trainer-note-create:${user_id}`, 30, 60_000);
+    if (rl) return rl;
 
     const { data: note, error } = await admin
       .from('trainer_member_notes')

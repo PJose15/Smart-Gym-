@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { scanEventSchema } from '@/lib/validation/session';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
   return createClient(
@@ -33,6 +34,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { machine_id, member_id, gym_id, workout_mode, was_in_program } = parsed.data;
+
+    const rl = checkRateLimit(`scan-event:${member_id}`, 30, 60_000);
+    if (rl) return rl;
+
     const admin = getAdminClient();
 
     const { data, error } = await admin
@@ -79,6 +84,9 @@ export async function PATCH(request: NextRequest) {
     if (!scan_event_id || typeof led_to_log !== 'boolean') {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+
+    const rl = checkRateLimit(`scan-event-patch:${session.user.id}`, 60, 60_000);
+    if (rl) return rl;
 
     const admin = getAdminClient();
 

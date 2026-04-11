@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,9 @@ export async function POST(
     const staffResult = await verifyStaff('owner');
     if (staffResult instanceof NextResponse) return staffResult;
     const { user_id, gym_id, admin } = staffResult;
+
+    const rl = checkRateLimit(`demo-video:${user_id}`, 5, 300_000);
+    if (rl) return rl;
 
     // Verify machine belongs to this gym
     const { data: machine } = await admin

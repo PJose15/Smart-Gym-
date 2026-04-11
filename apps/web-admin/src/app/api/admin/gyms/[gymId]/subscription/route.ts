@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySuperAdmin } from '@/lib/auth/verifySuperAdmin';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function PATCH(
   req: NextRequest,
@@ -24,6 +25,9 @@ export async function PATCH(
         { error: 'No fields to update' },
         { status: 400 }
       );
+
+    const rl = checkRateLimit(`admin-sub:${user_id}`, 20, 60_000);
+    if (rl) return rl;
 
     const { error } = await admin
       .from('gyms')

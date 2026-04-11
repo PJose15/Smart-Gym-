@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
   return createClient(
@@ -31,6 +32,9 @@ export async function POST(request: NextRequest) {
     if (!member_id || !gym_id) {
       return NextResponse.json({ eligible: false, reason: 'missing_params' });
     }
+
+    const rl = checkRateLimit(`auto-generate:${member_id}`, 3, 300_000);
+    if (rl) return rl;
 
     const admin = getAdminClient();
 

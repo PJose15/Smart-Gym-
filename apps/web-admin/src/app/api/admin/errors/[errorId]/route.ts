@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifySuperAdmin } from '@/lib/auth/verifySuperAdmin';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function PATCH(
   _request: Request,
@@ -14,6 +15,9 @@ export async function PATCH(
     const { errorId } = await params;
     const uuidError = validateUUIDs({ errorId });
     if (uuidError) return uuidError;
+
+    const rl = checkRateLimit(`admin-error-resolve:${result.user_id}`, 60, 60_000);
+    if (rl) return rl;
 
     const { error } = await admin
       .from('error_log')

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySuperAdmin } from '@/lib/auth/verifySuperAdmin';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function DELETE(
   _req: NextRequest,
@@ -18,6 +19,9 @@ export async function DELETE(
         { error: 'Cannot suspend yourself' },
         { status: 400 }
       );
+
+    const rl = checkRateLimit(`admin-ban:${user_id}`, 10, 60_000);
+    if (rl) return rl;
 
     const { error } = await admin.auth.admin.updateUserById(params.userId, {
       ban_duration: '876000h',

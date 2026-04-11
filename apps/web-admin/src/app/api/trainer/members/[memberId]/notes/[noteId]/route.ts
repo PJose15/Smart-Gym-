@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function PUT(
   req: NextRequest,
@@ -18,6 +19,9 @@ export async function PUT(
     if (!body.note_text || typeof body.note_text !== 'string' || body.note_text.trim().length === 0) {
       return NextResponse.json({ error: 'note_text is required' }, { status: 400 });
     }
+
+    const rl = checkRateLimit(`trainer-note-edit:${user_id}`, 30, 60_000);
+    if (rl) return rl;
 
     const { data: note, error } = await admin
       .from('trainer_member_notes')
@@ -51,6 +55,9 @@ export async function DELETE(
     if (result instanceof NextResponse) return result;
 
     const { admin, user_id, gym_id } = result;
+
+    const rl = checkRateLimit(`trainer-note-edit:${user_id}`, 30, 60_000);
+    if (rl) return rl;
 
     const { error } = await admin
       .from('trainer_member_notes')

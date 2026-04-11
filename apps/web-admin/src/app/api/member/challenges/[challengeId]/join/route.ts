@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { challengeJoinSchema } from '@/lib/validation/challenge';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 interface RouteParams {
   params: Promise<{ challengeId: string }>;
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;
+
+    const rl = checkRateLimit(`challenge-join:${member_id}`, 10, 60_000);
+    if (rl) return rl;
 
     // Verify member belongs to the specified gym
     const { data: memberRecord } = await admin

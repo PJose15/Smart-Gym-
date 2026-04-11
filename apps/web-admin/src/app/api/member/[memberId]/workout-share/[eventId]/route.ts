@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { updateWorkoutSharePost } from '@/lib/social/workoutShare';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,9 @@ export async function PATCH(
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
+
+    const rl = checkRateLimit(`workout-share-update:${memberId}`, 10, 60_000);
+    if (rl) return rl;
 
     const body = await request.json();
     await updateWorkoutSharePost(eventId, memberId, body.session_results, admin);

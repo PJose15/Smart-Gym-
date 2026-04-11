@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
   return createClient(
@@ -40,6 +41,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { member_id, gym_id, primary_goal, experience_level } = parsed.data;
+
+    const rl = checkRateLimit(`onboard:${session.user.id}`, 5, 60_000);
+    if (rl) return rl;
+
     const admin = getAdminClient();
 
     // Verify caller owns this member
