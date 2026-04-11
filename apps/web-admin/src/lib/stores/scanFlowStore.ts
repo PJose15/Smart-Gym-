@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { WeightUnit } from '@/lib/weight';
 
 // ── Flow Steps ─────────────────────────────────────────────
 export type FlowStep =
@@ -42,6 +43,12 @@ export interface MemberData {
   experience_level: string | null;
   onboarding_status: string;
   gym_id: string;
+  /**
+   * Member display preference for weight values. Sourced from
+   * `member_settings.weight_unit`; defaults to 'lbs'. Storage format is
+   * always lbs — this only affects UI rendering in the scan flow.
+   */
+  weight_unit: WeightUnit;
 }
 
 // ── Program Context (from active AI program) ────────────────

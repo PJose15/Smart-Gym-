@@ -112,6 +112,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Read weight unit preference (always populated; default 'lbs' on create).
+    // A missing row just falls back to 'lbs' so the scan flow never breaks.
+    const { data: settings } = await admin
+      .from('member_settings')
+      .select('weight_unit')
+      .eq('member_id', member.id)
+      .maybeSingle();
+
+    const weight_unit: 'lbs' | 'kg' =
+      settings?.weight_unit === 'kg' ? 'kg' : 'lbs';
+
     return NextResponse.json({
       success: true,
       member: {
@@ -124,6 +135,7 @@ export async function POST(request: NextRequest) {
         experience_level: member.experience_level,
         onboarding_status: member.onboarding_status,
         gym_id: member.gym_id,
+        weight_unit,
       },
     });
   } catch (err) {

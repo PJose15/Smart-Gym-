@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { PRResult } from '@/lib/hooks/usePRDetection';
 import { haptics } from '@/lib/ui/haptics';
+import { formatWeight, convertFromLbs, type WeightUnit } from '@/lib/weight';
 
 const PR_LABELS: Record<string, string> = {
   weight: 'WEIGHT PR',
@@ -17,9 +18,11 @@ interface PRBottomSheetProps {
   prResult: PRResult;
   machineName: string;
   onDismiss: () => void;
+  /** Display unit for weight values. PRResult values are always in lbs. */
+  weightUnit?: WeightUnit;
 }
 
-export function PRBottomSheet({ prResult, machineName, onDismiss }: PRBottomSheetProps) {
+export function PRBottomSheet({ prResult, machineName, onDismiss, weightUnit = 'lbs' }: PRBottomSheetProps) {
   const [exiting, setExiting] = useState(false);
   const onDismissRef = useRef(onDismiss);
   onDismissRef.current = onDismiss;
@@ -163,7 +166,7 @@ export function PRBottomSheet({ prResult, machineName, onDismiss }: PRBottomShee
                 lineHeight: 1.1,
               }}
             >
-              {prResult.value} lbs
+              {formatWeight(prResult.value, weightUnit)}
             </div>
 
             <div
@@ -176,7 +179,7 @@ export function PRBottomSheet({ prResult, machineName, onDismiss }: PRBottomShee
               {machineName}
               {improvement !== null && prResult.improvementPct !== null && (
                 <span style={{ color: 'var(--color-gold)', marginLeft: 'var(--space-2)' }}>
-                  +{improvement} lbs ({prResult.improvementPct}%)
+                  +{convertFromLbs(improvement, weightUnit).toFixed(weightUnit === 'kg' ? 1 : 0)} {weightUnit} ({prResult.improvementPct}%)
                 </span>
               )}
             </div>

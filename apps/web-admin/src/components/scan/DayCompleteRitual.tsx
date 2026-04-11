@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { haptics } from '@/lib/ui/haptics';
+import { convertFromLbs, type WeightUnit } from '@/lib/weight';
 
 export interface DayCompleteRitualProps {
   dayNumber: number;
@@ -10,6 +11,8 @@ export interface DayCompleteRitualProps {
   nextSessionDay: string | null;
   isRestDay: boolean;
   onComplete: () => void;
+  /** Display unit for volume; DB always stores lbs. Defaults to 'lbs'. */
+  weightUnit?: WeightUnit;
 }
 
 type Phase = 'blackout' | 'day-number' | 'complete' | 'stats' | 'rest-day' | 'done-btn';
@@ -52,6 +55,7 @@ export function DayCompleteRitual({
   nextSessionDay,
   isRestDay,
   onComplete,
+  weightUnit = 'lbs',
 }: DayCompleteRitualProps) {
   const [phase, setPhase] = useState<Phase>('blackout');
   const doneRef = useRef<HTMLButtonElement>(null);
@@ -117,10 +121,11 @@ export function DayCompleteRitual({
   const showRest = phaseIdx >= 4;
   const showDone = phaseIdx >= 5;
 
-  const k = stats.totalVolumeLbs / 1000;
-  const volumeDisplay = stats.totalVolumeLbs >= 1000
+  const volumeInUnit = convertFromLbs(stats.totalVolumeLbs, weightUnit);
+  const k = volumeInUnit / 1000;
+  const volumeDisplay = volumeInUnit >= 1000
     ? `${k % 1 === 0 ? Math.round(k) : k.toFixed(1)}k`
-    : `${stats.totalVolumeLbs}`;
+    : `${Math.round(volumeInUnit)}`;
 
   const machinesLabel = stats.machinesCount === 1 ? 'machine' : 'machines';
 
@@ -152,7 +157,7 @@ export function DayCompleteRitual({
       {showStats && (
         <div className="ritual-stats">
           <StatPill value={String(stats.machinesCount)} label={machinesLabel} delay={0} />
-          <StatPill value={volumeDisplay} label="lbs" delay={100} />
+          <StatPill value={volumeDisplay} label={weightUnit} delay={100} />
           <StatPill
             value={thirdPill.value}
             label={thirdPill.label}

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
 import { useCelebrationStore } from '@/lib/stores/celebrationStore';
 import { DayCompleteRitual, type DayCompleteRitualProps } from '@/components/scan/DayCompleteRitual';
+import { formatWeight, unitLabel, convertFromLbs } from '@/lib/weight';
 
 interface SessionSummary {
   sets_count: number;
@@ -18,6 +19,7 @@ type DayRitualData = Omit<DayCompleteRitualProps, 'onComplete'>;
 
 export function SessionComplete() {
   const { machine, member, sessionId, scanTimestamp, scanEventId, programContext, reset } = useScanFlowStore();
+  const unit = member?.weight_unit ?? 'lbs';
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [tip, setTip] = useState('');
   const [loading, setLoading] = useState(true);
@@ -165,6 +167,7 @@ export function SessionComplete() {
       {dayRitualData && (
         <DayCompleteRitual
           {...dayRitualData}
+          weightUnit={unit}
           onComplete={() => setDayRitualData(null)}
         />
       )}
@@ -201,9 +204,13 @@ export function SessionComplete() {
           }}
         >
           <StatBox label="Sets" value={String(summary.sets_count)} />
-          <StatBox label="Best" value={`${summary.best_weight_lbs} lbs`} />
+          <StatBox label="Best" value={formatWeight(summary.best_weight_lbs, unit)} />
           {/* Full locale-formatted number for detailed stats view (vs ritual's abbreviated "k" format for celebratory splash) */}
-          <StatBox label="Volume" value={`${Math.round(summary.total_volume_lbs).toLocaleString()}`} sub="lbs" />
+          <StatBox
+            label="Volume"
+            value={Math.round(convertFromLbs(summary.total_volume_lbs, unit)).toLocaleString()}
+            sub={unitLabel(unit)}
+          />
           {durationSeconds !== null && (
             <StatBox label="Duration" value={formatDuration(durationSeconds)} />
           )}

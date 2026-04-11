@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { PRResult } from '@/lib/hooks/usePRDetection';
+import { formatWeight, convertFromLbs, type WeightUnit } from '@/lib/weight';
 
 const PR_LABELS: Record<string, string> = {
   first_session: 'FIRST TIME!',
@@ -19,9 +20,11 @@ interface PRCelebrationProps {
   pr: PRResult;
   machineName: string;
   onDismiss: () => void;
+  /** Display unit for weight values. PRResult values are always in lbs. */
+  weightUnit?: WeightUnit;
 }
 
-export function PRCelebration({ pr, machineName, onDismiss }: PRCelebrationProps) {
+export function PRCelebration({ pr, machineName, onDismiss, weightUnit = 'lbs' }: PRCelebrationProps) {
   const [visible, setVisible] = useState(false);
   const [exiting, setExiting] = useState(false);
 
@@ -130,7 +133,7 @@ export function PRCelebration({ pr, machineName, onDismiss }: PRCelebrationProps
               marginBottom: 'var(--space-1)',
             }}
           >
-            {pr.value} lbs
+            {formatWeight(pr.value, weightUnit)}
           </div>
         )}
 
@@ -142,7 +145,9 @@ export function PRCelebration({ pr, machineName, onDismiss }: PRCelebrationProps
               color: 'var(--color-gold)',
             }}
           >
-            +{(pr.value - pr.previousValue).toFixed(0)} lbs (+{pr.improvementPct}%)
+            +{convertFromLbs(pr.value - pr.previousValue, weightUnit).toFixed(
+              weightUnit === 'kg' ? 1 : 0
+            )} {weightUnit} (+{pr.improvementPct}%)
           </p>
         )}
 

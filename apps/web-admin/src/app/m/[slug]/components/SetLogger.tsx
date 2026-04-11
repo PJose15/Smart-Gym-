@@ -12,6 +12,7 @@ import { PRBottomSheet } from '@/components/scan/PRBottomSheet';
 
 export function SetLogger() {
   const { machine, member, goTo, programContext, setProgramContext } = useScanFlowStore();
+  const unit = member?.weight_unit ?? 'lbs';
   const prDetection = usePRDetection();
   const session = useSessionManager();
 
@@ -111,6 +112,7 @@ export function SetLogger() {
         <PRCelebration
           pr={prDetection.activePR}
           machineName={machine.name}
+          weightUnit={unit}
           onDismiss={() => { prDetection.dismissPR(); setActiveTier('none'); }}
         />
       )}
@@ -120,6 +122,7 @@ export function SetLogger() {
         <PRBottomSheet
           prResult={prDetection.activePR}
           machineName={machine.name}
+          weightUnit={unit}
           onDismiss={() => { prDetection.dismissPR(); setActiveTier('none'); }}
         />
       )}
