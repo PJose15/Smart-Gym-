@@ -1,9 +1,10 @@
 'use client';
 
-import { useReducer, useEffect, useCallback, useRef, useState } from 'react';
+import { useReducer, useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import type { NextSetSuggestion } from '@nexera/types';
 import { setLogReducer, createInitialState, type SetLogStep } from '@/lib/scan/setLogStateMachine';
 import { haptics } from '@/lib/ui/haptics';
+import { convertFromLbs, convertToLbs, type WeightUnit } from '@/lib/weight';
 import { RollingNumber } from './RollingNumber';
 import { StepDot } from './StepDot';
 
@@ -26,10 +27,13 @@ interface ProgressiveSetFormProps {
   }) => Promise<unknown>;
   setNumber: number;
   previousSets: PreviousSet[];
+  /** Step size in the *display* unit (e.g. 5 lbs or 2.5 kg). */
   weightIncrement: number;
   loading: boolean;
   onDone: () => void;
   machineName: string;
+  /** Member's preferred weight unit. Storage remains lbs regardless. */
+  weightUnit?: WeightUnit;
 }
 
 // ── RPE options (6–10 scale) ─────────────────────────────────
@@ -41,6 +45,30 @@ const RPE_OPTIONS = [
   { value: 9, label: '9', description: 'Very Hard' },
   { value: 10, label: '10', description: 'Max' },
 ];
+
+// ── Helpers ──────────────────────────────────────────────────
+
+/**
+ * Snap an lbs value to a clean display-unit increment. Both the input
+ * suggestion and previous-set totals live in lbs storage format, so
+ * converting straight to kg gives odd values (e.g. 185 lbs → 83.9146 kg).
+ * Rounding to the nearest step on the display-unit grid keeps the stepper
+ * aligned with plate reality (2.5 / 5 kg or 5 / 10 lbs).
+ */
+function lbsToDisplayStep(lbs: number, unit: WeightUnit, step: number): number {
+  const value = convertFromLbs(lbs, unit);
+  if (step <= 0) return Math.round(value * 10) / 10;
+  return Math.round(value / step) * step;
+}
+
+/** Format a display-unit value for inline text (no unit suffix). */
+function formatDisplay(value: number, unit: WeightUnit): string {
+  if (unit === 'kg') {
+    // kg keeps one decimal when fractional, integer otherwise
+    return value % 1 === 0 ? String(value) : value.toFixed(1);
+  }
+  return String(Math.round(value));
+}
 
 // ── Component ────────────────────────────────────────────────
 
@@ -54,8 +82,10 @@ export function ProgressiveSetForm({
   loading,
   onDone,
   machineName,
+  weightUnit = 'lbs',
 }: ProgressiveSetFormProps) {
-  const initialWeight = suggestion?.suggested_weight ?? 0;
+  const initialWeightLbs = suggestion?.suggested_weight ?? 0;
+  const initialWeight = lbsToDisplayStep(initialWeightLbs, weightUnit, weightIncrement);
   const initialReps = targetReps ?? suggestion?.suggested_reps ?? 10;
 
   const [state, dispatch] = useReducer(
@@ -96,20 +126,26 @@ export function ProgressiveSetForm({
     appliedSuggestionRef.current = setNumber;
 
     if (suggestion.suggested_weight !== null) {
-      dispatch({ type: 'SET_WEIGHT', weight: suggestion.suggested_weight });
+      dispatch({
+        type: 'SET_WEIGHT',
+        weight: lbsToDisplayStep(suggestion.suggested_weight, weightUnit, weightIncrement),
+      });
     }
     if (suggestion.suggested_reps !== null) {
       dispatch({ type: 'SET_REPS', reps: suggestion.suggested_reps });
     }
-  }, [suggestion, setNumber]);
+  }, [suggestion, setNumber, weightUnit, weightIncrement]);
 
   const handleConfirm = useCallback(async () => {
     dispatch({ type: 'SUBMITTING' });
     haptics.light();
 
+    // Convert display-unit → lbs at the submit boundary. Storage is always lbs.
+    const weightLbs = convertToLbs(state.weight, weightUnit);
+
     try {
       await onSetLogged({
-        weight_lbs: state.weight,
+        weight_lbs: weightLbs,
         reps: state.reps,
         rpe: state.rpe,
       });
@@ -126,7 +162,21 @@ export function ProgressiveSetForm({
         message: 'Set could not be saved. Try again.',
       });
     }
-  }, [onSetLogged, state.weight, state.reps, state.rpe, targetReps]);
+  }, [onSetLogged, state.weight, state.reps, state.rpe, targetReps, weightUnit]);
+
+  // Project the lbs-native suggestion into display-unit space so RollingNumber
+  // can highlight the suggested-weight dot correctly.
+  const displaySuggestion = useMemo(() => {
+    if (!suggestion || suggestion.suggested_weight === null) return null;
+    return {
+      suggested_weight: lbsToDisplayStep(suggestion.suggested_weight, weightUnit, weightIncrement),
+    };
+  }, [suggestion, weightUnit, weightIncrement]);
+
+  // Max weight clamps for the stepper. Hard cap stays the same in lbs (1500);
+  // in kg it's ~680. RollingNumber's default max is 9999 which is effectively
+  // unbounded for kg, so we set a sane ceiling.
+  const maxWeight = weightUnit === 'kg' ? 700 : 1500;
 
   return (
     <div className="progressive-form">
@@ -155,8 +205,10 @@ export function ProgressiveSetForm({
             <RollingNumber
               value={state.weight}
               onChange={(w) => dispatch({ type: 'SET_WEIGHT', weight: w })}
-              unit="lbs"
+              unit={weightUnit}
               step={weightIncrement}
+              max={maxWeight}
+              suggestion={displaySuggestion}
             />
             {suggestion?.reason_text &&
               suggestion.reason_code !== 'INSUFFICIENT_DATA' && (
@@ -180,7 +232,7 @@ export function ProgressiveSetForm({
         {state.step === 'reps' && (
           <div className="form-step">
             <div className="step-label">
-              {state.weight} lbs &middot; Reps
+              {formatDisplay(state.weight, weightUnit)} {weightUnit} &middot; Reps
             </div>
             <RollingNumber
               value={state.reps}
@@ -271,7 +323,9 @@ export function ProgressiveSetForm({
         {state.step === 'confirm' && (
           <div className="form-step">
             <div className="set-summary-preview">
-              <span className="summary-weight">{state.weight} lbs</span>
+              <span className="summary-weight">
+                {formatDisplay(state.weight, weightUnit)} {weightUnit}
+              </span>
               <span className="summary-divider">&times;</span>
               <span className="summary-reps">{state.reps} reps</span>
               {state.rpe !== null && (
@@ -304,14 +358,20 @@ export function ProgressiveSetForm({
         )}
       </div>
 
-      {/* Logged sets history */}
+      {/* Logged sets history — always rendered in member's display unit */}
       {previousSets.length > 0 && (
         <div className="previous-sets">
           {previousSets.map((s) => (
             <div key={s.set_number} className="previous-set-row">
               <div className="previous-set-num">{s.set_number}</div>
               <div className="previous-set-detail">
-                <span className="previous-set-weight">{s.weight_lbs} lbs</span>
+                <span className="previous-set-weight">
+                  {formatDisplay(
+                    lbsToDisplayStep(s.weight_lbs, weightUnit, weightIncrement),
+                    weightUnit
+                  )}{' '}
+                  {weightUnit}
+                </span>
                 <span className="previous-set-x">&times;</span>
                 <span className="previous-set-reps">{s.reps}</span>
               </div>

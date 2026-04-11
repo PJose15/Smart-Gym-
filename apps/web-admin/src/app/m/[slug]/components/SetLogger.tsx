@@ -66,6 +66,19 @@ export function SetLogger() {
 
   const targetReps = programContext?.target_exercise?.default_reps ?? null;
 
+  // Resolve the member's preferred display unit. The scan store is populated
+  // by /api/auth/verify which always includes weight_unit (defaults to 'lbs').
+  const weightUnit = member?.weight_unit ?? 'lbs';
+
+  // Display-unit step. useSessionManager's increment is lbs-native
+  // (5 for upper body, 10 for lower). Map to the closest clean metric step.
+  const displayIncrement =
+    weightUnit === 'kg'
+      ? session.weightIncrement >= 10
+        ? 5
+        : 2.5
+      : session.weightIncrement;
+
   return (
     <div className="set-logger-wrapper">
       {/* Header */}
@@ -101,7 +114,8 @@ export function SetLogger() {
         onSetLogged={handleSetLogged}
         setNumber={session.setsCount + 1}
         previousSets={session.sets}
-        weightIncrement={session.weightIncrement}
+        weightIncrement={displayIncrement}
+        weightUnit={weightUnit}
         loading={session.loading}
         onDone={() => goTo('complete')}
         machineName={machine.name}
