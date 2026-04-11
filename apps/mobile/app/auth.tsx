@@ -144,7 +144,7 @@ export default function AuthScreen() {
 
       // Returning members skip intake
       if (isReturningMember) {
-        router.replace(params.returnTo ? (params.returnTo as `/${string}`) : '/(tabs)');
+        router.replace(params.returnTo ? (params.returnTo as any) : '/(tabs)');
         return;
       }
 
@@ -196,7 +196,7 @@ export default function AuthScreen() {
           .eq('gym_id', memberData.gym_id);
       }
 
-      router.replace(params.returnTo ? (params.returnTo as `/${string}`) : '/(tabs)');
+      router.replace(params.returnTo ? (params.returnTo as any) : '/(tabs)');
     } catch (err: unknown) {
       // Non-blocking — still navigate even if profile save fails
       console.warn('[onboarding] profile save failed:', err);

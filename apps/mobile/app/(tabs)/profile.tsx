@@ -267,7 +267,8 @@ export default function ProfileScreen() {
             exercise_name,
             machine_id,
             machines(name, qr_slug),
-            sets(weight_kg, reps)
+            sets(weight_kg, reps),
+            workouts!inner(profile_id)
           `)
           .eq('workouts.profile_id', userId)
           .limit(500),
@@ -302,7 +303,7 @@ export default function ProfileScreen() {
         sets: Array<{ weight_kg?: number; reps?: number }>;
         machines?: { name: string; qr_slug?: string } | null;
       }
-      const exercises = (exercisesResult.data ?? []) as ProfileExerciseRow[];
+      const exercises = (exercisesResult.data ?? []) as unknown as ProfileExerciseRow[];
       let totalVolumeKg = 0;
       let totalSets = 0;
       const machineFreq = new Map<string, { name: string; count: number; slug: string }>();

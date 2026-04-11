@@ -73,7 +73,7 @@ export default function RootLayout() {
   if (session === undefined) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.dark }}>
-        <ActivityIndicator size="large" color={colors.blue} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
