@@ -88,18 +88,12 @@ export async function checkGoalAchievement(
       achieved.push({ ...goal, is_achieved: true, achieved_at: now });
 
       // Create feed event for goal achievement
-      const { data: member } = await admin
-        .from('members')
-        .select('display_name')
-        .eq('id', memberId)
-        .single();
-      const name = member?.display_name ?? 'Member';
-
+      // UI renders member name bold span separately, so no name prefix here.
       await admin.from('gym_feed_events').insert({
         gym_id: gymId,
         member_id: memberId,
         event_type: 'goal_reached',
-        display_text: `${name} hit their goal${goal.machine_name ? ` on ${goal.machine_name}` : ''}${goal.target_weight_lbs ? ` — ${goal.target_weight_lbs} lbs` : ''}!`,
+        display_text: `hit their goal${goal.machine_name ? ` on ${goal.machine_name}` : ''}${goal.target_weight_lbs ? ` — ${goal.target_weight_lbs} lbs` : ''}!`,
         context_data: {
           goal_id: goal.id,
           machine_name: goal.machine_name,

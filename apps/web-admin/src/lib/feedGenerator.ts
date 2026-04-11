@@ -31,7 +31,8 @@ export async function generateSessionFeedEvents(admin: SupabaseClient<any, 'publ
       priority?: string;
     }> = [];
 
-    const name = input.display_name || 'Member';
+    // display_text is rendered after a bold member-name span by the UI,
+    // so producers must NOT prefix the member name here.
 
     // PR event (max 1 per member per day — dedup check)
     if (input.is_personal_best) {
@@ -49,7 +50,7 @@ export async function generateSessionFeedEvents(admin: SupabaseClient<any, 'publ
           gym_id: input.gym_id,
           member_id: input.member_id,
           event_type: 'pr_weight',
-          display_text: `${name} hit a new personal best${input.best_weight_lbs ? ` — ${input.best_weight_lbs} lbs` : ''}!`,
+          display_text: `hit a new personal best${input.best_weight_lbs ? ` — ${input.best_weight_lbs} lbs` : ''}!`,
           context_data: { best_weight_lbs: input.best_weight_lbs },
           priority: 'medium',
         });
@@ -62,7 +63,7 @@ export async function generateSessionFeedEvents(admin: SupabaseClient<any, 'publ
         gym_id: input.gym_id,
         member_id: input.member_id,
         event_type: 'streak_milestone',
-        display_text: `${name} is on a ${input.streak}-day streak!`,
+        display_text: `is on a ${input.streak}-day streak!`,
         context_data: { streak: input.streak },
         priority: 'medium',
       });
@@ -74,7 +75,7 @@ export async function generateSessionFeedEvents(admin: SupabaseClient<any, 'publ
         gym_id: input.gym_id,
         member_id: input.member_id,
         event_type: 'session_milestone',
-        display_text: `${name} completed ${input.total_sessions} sessions!`,
+        display_text: `completed ${input.total_sessions} sessions!`,
         context_data: { total_sessions: input.total_sessions },
         priority: 'medium',
       });
@@ -86,7 +87,7 @@ export async function generateSessionFeedEvents(admin: SupabaseClient<any, 'publ
         gym_id: input.gym_id,
         member_id: input.member_id,
         event_type: 'level_up',
-        display_text: `${name} reached Level ${input.new_level}!`,
+        display_text: `reached Level ${input.new_level}!`,
         context_data: { new_level: input.new_level },
         priority: 'high',
       });

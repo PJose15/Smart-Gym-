@@ -20,7 +20,6 @@ export async function createWorkoutSharePost(
     .eq('id', memberId)
     .single();
 
-  const name = member?.display_name ?? 'Member';
   const today = new Date().toISOString().split('T')[0];
 
   // Check if already shared today
@@ -51,7 +50,7 @@ export async function createWorkoutSharePost(
       gym_id: gymId,
       member_id: memberId,
       event_type: 'workout_share',
-      display_text: shareText || `${name} is training today`,
+      display_text: shareText || 'is training today',
       context_data: contextData,
       priority: 'low',
     })
@@ -106,14 +105,7 @@ export async function updateWorkoutSharePost(
     completed_at: new Date().toISOString(),
   };
 
-  // Build updated display text from member name, not string replacement
-  const { data: memberData } = await admin
-    .from('members')
-    .select('display_name')
-    .eq('id', memberId)
-    .single();
-  const memberName = memberData?.display_name ?? 'Member';
-
+  // Build updated display text; UI renders member name bold span separately.
   const parts: string[] = [];
   if (sessionResults.totalVolume > 0) {
     parts.push(`${sessionResults.totalVolume.toLocaleString()} lbs`);
@@ -122,7 +114,7 @@ export async function updateWorkoutSharePost(
     parts.push(`${sessionResults.prsHit} PR${sessionResults.prsHit > 1 ? 's' : ''}`);
   }
   const suffix = parts.length > 0 ? ` — ${parts.join(', ')}` : '';
-  const displayText = `${memberName} finished training${suffix}`;
+  const displayText = `finished training${suffix}`;
 
   await admin
     .from('gym_feed_events')

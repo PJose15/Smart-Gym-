@@ -96,17 +96,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Generate feed event
-    const { data: memberInfo } = await admin
-      .from('members')
-      .select('display_name')
-      .eq('id', member_id)
-      .single();
-
     await admin.from('gym_feed_events').insert({
       gym_id,
       member_id,
       event_type: 'challenge_joined',
-      display_text: `${memberInfo?.display_name || 'Member'} joined "${challenge.title}"`,
+      display_text: `joined "${challenge.title}"`,
       context_data: { challenge_id: challengeId },
       priority: 'medium',
     });

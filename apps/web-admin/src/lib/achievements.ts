@@ -141,7 +141,7 @@ export async function checkAchievementsForMember(
       gym_id,
       member_id,
       event_type: 'achievement_earned',
-      display_text: `${member.display_name || 'Member'} earned "${badgeTitle}"`,
+      display_text: `earned "${badgeTitle}"`,
       context_data: { achievement_code: code },
     });
 

@@ -169,13 +169,6 @@ export async function updateChallengeScores(admin: SupabaseClient<any, 'public',
               .maybeSingle();
 
             if (!existingMilestone) {
-              const { data: memberInfo } = await admin
-                .from('members')
-                .select('display_name')
-                .eq('id', memberId)
-                .single();
-              const memberName = memberInfo?.display_name || 'Member';
-
               await Promise.all([
                 admin.from('challenge_milestone_log').insert({
                   challenge_id: participation.challenge_id,
@@ -187,7 +180,7 @@ export async function updateChallengeScores(admin: SupabaseClient<any, 'public',
                   gym_id: gymId,
                   member_id: memberId,
                   event_type: 'challenge_rank_1',
-                  display_text: `${memberName} took the #1 spot!`,
+                  display_text: 'took the #1 spot!',
                   context_data: { challenge_id: participation.challenge_id },
                   priority: 'high',
                 }),
