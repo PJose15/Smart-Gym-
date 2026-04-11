@@ -93,7 +93,7 @@ afterEach(() => {
 
 // T1: Shows skeleton while loading
 test('T1: shows skeleton while member is loading', () => {
-  mockUseMember.mockReturnValue({ member: null, gym: null, loading: true });
+  mockUseMember.mockReturnValue({ member: null, gym: null, weightUnit: 'lbs', loading: true });
 
   const { container } = render(<ProgressPage />);
 
@@ -106,7 +106,7 @@ test('T1: shows skeleton while member is loading', () => {
 
 // T2: Shows "Not signed in" when no member
 test('T2: shows "Not signed in" when no member', () => {
-  mockUseMember.mockReturnValue({ member: null, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: null, gym: null, weightUnit: 'lbs', loading: false });
 
   const { container } = render(<ProgressPage />);
 
@@ -115,7 +115,7 @@ test('T2: shows "Not signed in" when no member', () => {
 
 // T3: Renders stats overview (workouts, volume, avg/week, streak)
 test('T3: renders stats overview cards', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -125,7 +125,7 @@ test('T3: renders stats overview cards', async () => {
 
   const text = result!.container.textContent!;
   expect(text).toContain('42');
-  expect(text).toContain('125.0K lbs');
+  expect(text).toContain('125.0k lbs');
   expect(text).toContain('3.5');
   expect(text).toContain('8d');
   expect(text).toContain('Workouts');
@@ -136,7 +136,7 @@ test('T3: renders stats overview cards', async () => {
 
 // T4: Renders volume chart bars (8 bars)
 test('T4: renders volume chart with 8 bars', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -153,7 +153,7 @@ test('T4: renders volume chart with 8 bars', async () => {
 
 // T5: Highlights last bar in blue
 test('T5: highlights last volume bar in blue', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -178,7 +178,7 @@ test('T5: highlights last volume bar in blue', async () => {
 
 // T6: Renders 30-day calendar dots
 test('T6: renders 30-day calendar with dots', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -194,7 +194,7 @@ test('T6: renders 30-day calendar with dots', async () => {
 
 // T7: Active calendar days have blue background
 test('T7: active calendar days have blue background', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -210,7 +210,7 @@ test('T7: active calendar days have blue background', async () => {
 
 // T8: Renders personal records list with est. 1RM
 test('T8: renders personal records with est 1RM', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -231,7 +231,7 @@ test('T8: renders personal records with est 1RM', async () => {
 
 // T9: Renders recent workouts with date and sets
 test('T9: renders recent workouts with date and sets', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -249,7 +249,7 @@ test('T9: renders recent workouts with date and sets', async () => {
 
 // T10: Shows error state and retry button
 test('T10: shows error state and retry button on fetch failure', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
   let result: ReturnType<typeof render>;
@@ -265,7 +265,7 @@ test('T10: shows error state and retry button on fetch failure', async () => {
 
 // T11: Retry button refetches data
 test('T11: retry button refetches data successfully', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
   let result: ReturnType<typeof render>;
@@ -288,7 +288,7 @@ test('T11: retry button refetches data successfully', async () => {
 
 // T12: Hides PR section when no personal records
 test('T12: hides PR section when no personal records', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess({ ...mockProgressData, personal_records: [] });
 
   let result: ReturnType<typeof render>;

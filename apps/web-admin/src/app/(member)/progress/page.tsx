@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useMember } from '@/lib/contexts/MemberContext';
+import { formatVolume, formatWeight } from '@/lib/weight';
 import { SkeletonGate } from '@/components/skeleton';
 
 interface WeeklyVolume {
@@ -69,12 +70,6 @@ function ProgressSkeleton() {
       <div style={{ height: 100, borderRadius: 12, backgroundColor: 'var(--color-surface-secondary, #1e1e2e)' }} />
     </div>
   );
-}
-
-function formatVolume(lbs: number): string {
-  if (lbs >= 1_000_000) return `${(lbs / 1_000_000).toFixed(1)}M`;
-  if (lbs >= 1_000) return `${(lbs / 1_000).toFixed(1)}K`;
-  return String(lbs);
 }
 
 /** Simple bar chart for weekly volume */
@@ -161,7 +156,7 @@ function WorkoutCalendar({ dates }: { dates: string[] }) {
 }
 
 export default function ProgressPage() {
-  const { member, loading: memberLoading } = useMember();
+  const { member, weightUnit, loading: memberLoading } = useMember();
   const [data, setData] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,7 +225,7 @@ export default function ProgressPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
               { label: 'Workouts', value: String(data.stats.total_workouts) },
-              { label: 'Volume', value: `${formatVolume(data.stats.total_volume_lbs)} lbs` },
+              { label: 'Volume', value: formatVolume(data.stats.total_volume_lbs, weightUnit) },
               { label: 'Avg / Week', value: String(data.stats.avg_per_week) },
               { label: 'Streak', value: `${data.stats.current_streak}d` },
             ].map((s) => (
@@ -272,7 +267,7 @@ export default function ProgressPage() {
                         {pr.machine_name}
                       </p>
                       <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-                        {pr.weight_lbs} lbs x {pr.reps}
+                        {formatWeight(pr.weight_lbs, weightUnit)} x {pr.reps}
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>

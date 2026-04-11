@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useMember } from '@/lib/contexts/MemberContext';
+import { formatVolume } from '@/lib/weight';
 import { MemberAvatar } from '@/components/ui/MemberAvatar';
 import { SkeletonGate } from '@/components/skeleton';
 import type { DNAResult } from '@nexera/types';
@@ -77,12 +78,6 @@ function ProfileSkeleton() {
   );
 }
 
-function formatVolume(lbs: number): string {
-  if (lbs >= 1_000_000) return `${(lbs / 1_000_000).toFixed(1)}M`;
-  if (lbs >= 1_000) return `${(lbs / 1_000).toFixed(1)}K`;
-  return String(lbs);
-}
-
 function formatDuration(min: number): string {
   if (min >= 60) {
     const h = Math.floor(min / 60);
@@ -114,7 +109,7 @@ const sectionTitle: React.CSSProperties = {
 };
 
 export default function ProfilePage() {
-  const { member, loading: memberLoading } = useMember();
+  const { member, weightUnit, loading: memberLoading } = useMember();
   const [dna, setDna] = useState<DNAResult | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -258,7 +253,7 @@ export default function ProfilePage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
                 { label: 'Workouts', value: String(profile.stats.total_workouts) },
-                { label: 'Volume', value: `${formatVolume(profile.stats.total_volume_lbs)} lbs` },
+                { label: 'Volume', value: formatVolume(profile.stats.total_volume_lbs, weightUnit) },
                 { label: 'Total Sets', value: String(profile.stats.total_sets) },
                 { label: 'Time', value: formatDuration(profile.stats.total_duration_min) },
               ].map((stat) => (

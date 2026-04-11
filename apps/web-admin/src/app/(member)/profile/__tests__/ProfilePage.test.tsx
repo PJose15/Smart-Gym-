@@ -107,7 +107,7 @@ afterEach(() => {
 
 // T1: Shows skeleton while loading (memberLoading=true)
 test('T1: shows skeleton while member is loading', () => {
-  mockUseMember.mockReturnValue({ member: null, gym: null, loading: true });
+  mockUseMember.mockReturnValue({ member: null, gym: null, weightUnit: 'lbs', loading: true });
 
   const { container } = render(<ProfilePage />);
 
@@ -120,7 +120,7 @@ test('T1: shows skeleton while member is loading', () => {
 
 // T2: Shows "Not signed in" when no member
 test('T2: shows "Not signed in" when no member', () => {
-  mockUseMember.mockReturnValue({ member: null, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: null, gym: null, weightUnit: 'lbs', loading: false });
 
   const { container } = render(<ProfilePage />);
 
@@ -129,7 +129,7 @@ test('T2: shows "Not signed in" when no member', () => {
 
 // T3: Renders member name and avatar after fetch
 test('T3: renders member name and avatar after fetch', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -143,7 +143,7 @@ test('T3: renders member name and avatar after fetch', async () => {
 
 // T4: Renders level badge with correct name and color
 test('T4: renders level badge with correct name and color', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -163,7 +163,7 @@ test('T4: renders level badge with correct name and color', async () => {
 
 // T5: Renders XP progress bar with correct width%
 test('T5: renders XP progress bar with correct width%', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -178,7 +178,7 @@ test('T5: renders XP progress bar with correct width%', async () => {
 
 // T6: Renders lifetime stats grid (workouts, volume, sets, time)
 test('T6: renders lifetime stats grid', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -188,7 +188,7 @@ test('T6: renders lifetime stats grid', async () => {
 
   const text = result!.container.textContent!;
   expect(text).toContain('42');
-  expect(text).toContain('125.0K lbs');
+  expect(text).toContain('125.0k lbs');
   expect(text).toContain('310');
   expect(text).toContain('30h 50m');
   expect(text).toContain('Workouts');
@@ -199,7 +199,7 @@ test('T6: renders lifetime stats grid', async () => {
 
 // T7: Renders streak card with current and best
 test('T7: renders streak card with current and best', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -216,7 +216,7 @@ test('T7: renders streak card with current and best', async () => {
 
 // T8: Renders favorite machines list
 test('T8: renders favorite machines list', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -236,7 +236,7 @@ test('T8: renders favorite machines list', async () => {
 
 // T9: Renders achievements/badges grid
 test('T9: renders achievements grid', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -254,7 +254,7 @@ test('T9: renders achievements grid', async () => {
 
 // T10: Shows "Member since" footer with formatted date
 test('T10: shows "Member since" footer with formatted date', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
   let result: ReturnType<typeof render>;
@@ -267,7 +267,7 @@ test('T10: shows "Member since" footer with formatted date', async () => {
 
 // T11: Shows error state and retry button on fetch failure
 test('T11: shows error state and retry button on fetch failure', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
   let result: ReturnType<typeof render>;
@@ -283,7 +283,7 @@ test('T11: shows error state and retry button on fetch failure', async () => {
 
 // T12: Retry button refetches data
 test('T12: retry button refetches data successfully', async () => {
-  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   // First fetch fails
   (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
