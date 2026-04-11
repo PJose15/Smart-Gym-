@@ -17,7 +17,7 @@ export async function GET() {
       admin.from('gyms').select('id', { count: 'exact', head: true }).eq('is_active', true),
       admin.from('members').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       admin.from('workout_sessions').select('id', { count: 'exact', head: true }).gte('session_date', today),
-      admin.from('platform_daily_metrics').select('*').gte('date', thirtyDaysAgo).order('date', { ascending: false }),
+      admin.from('platform_daily_metrics').select('date, mrr_usd, openai_cost_usd').gte('date', thirtyDaysAgo).order('date', { ascending: false }),
       admin.from('members').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo).eq('status', 'active'),
     ]);
 

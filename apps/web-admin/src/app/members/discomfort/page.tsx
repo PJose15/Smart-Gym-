@@ -104,7 +104,9 @@ export default function DiscomfortPage() {
         // Query the feedback_discomfort_summary view
         const { data, error: fetchError } = await supabase
           .from('feedback_discomfort_summary')
-          .select('*')
+          .select(
+            'gym_id, profile_id, full_name, discomfort_count_7d, unstable_count_7d, top_body_areas_7d, last_discomfort_at'
+          )
           .gte('discomfort_count_7d', 2)
           .order('discomfort_count_7d', { ascending: false });
 

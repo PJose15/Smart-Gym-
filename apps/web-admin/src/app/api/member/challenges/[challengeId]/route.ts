@@ -43,7 +43,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Get challenge — scoped to member's gym to prevent cross-gym data exposure
     const { data: challenge, error: challengeErr } = await admin
       .from('gym_challenges')
-      .select('*')
+      .select(
+        'id, title, description, challenge_type, start_date, end_date, is_active, top_score, entry_mode, prize_type, prize_description'
+      )
       .eq('id', challengeId)
       .eq('gym_id', memberInfo.gym_id)
       .single();

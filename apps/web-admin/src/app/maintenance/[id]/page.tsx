@@ -51,7 +51,7 @@ export default function MachineMaintenanceDetailPage() {
       // Fetch maintenance logs
       const { data: logsData, error: logsErr } = await supabase
         .from('maintenance_logs')
-        .select('*')
+        .select('id, machine_id, performed_at, performed_by, notes, created_at')
         .eq('machine_id', machineId)
         .order('performed_at', { ascending: false });
 

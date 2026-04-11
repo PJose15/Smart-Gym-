@@ -113,7 +113,7 @@ export default function BadgesPage() {
     try {
       const { data: badgeData, error: badgeErr } = await supabase
         .from('badges')
-        .select('*')
+        .select('id, slug, name, description, icon_emoji, criteria_type, criteria_value, rarity, sort_order')
         .order('sort_order');
 
       if (badgeErr) throw badgeErr;

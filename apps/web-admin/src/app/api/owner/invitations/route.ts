@@ -11,9 +11,13 @@ export async function GET() {
 
     const { admin, gym_id } = result;
 
+    // Explicit columns — intentionally omits `token` from listing for
+    // defence-in-depth. Tokens are only returned by POST on create.
     const { data: invitations } = await admin
       .from('trainer_invitations')
-      .select('*')
+      .select(
+        'id, gym_id, email, trainer_name, invited_by, permissions, status, expires_at, accepted_at, accepted_by, created_at'
+      )
       .eq('gym_id', gym_id)
       .order('created_at', { ascending: false })
       .limit(200);

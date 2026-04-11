@@ -143,7 +143,7 @@ export default function AtRiskPage() {
       const [profilesRes, workoutsRes, discomfortRes] = await Promise.all([
         supabase.from('profiles').select('id, full_name').in('id', memberIds),
         supabase.from('workouts').select('profile_id, finished_at').in('profile_id', memberIds).eq('status', 'completed').order('finished_at', { ascending: false }),
-        supabase.from('feedback_discomfort_summary').select('*').in('profile_id', memberIds),
+        supabase.from('feedback_discomfort_summary').select('profile_id, discomfort_count_7d, top_body_areas_7d').in('profile_id', memberIds),
       ]);
 
       if (profilesRes.error) throw profilesRes.error;
