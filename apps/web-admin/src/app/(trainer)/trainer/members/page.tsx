@@ -42,12 +42,16 @@ export default function TrainerMembersPage() {
   const [members, setMembers] = useState<TrainerMemberListItem[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/trainer/members')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed');
+        return r.json();
+      })
       .then((d) => { setMembers(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setError('Failed to load members.'); setLoading(false); });
   }, []);
 
   const filtered = members.filter((m) =>
@@ -55,6 +59,7 @@ export default function TrainerMembersPage() {
   );
 
   if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading members...</p>;
+  if (error) return <p style={{ color: 'var(--color-red-light)' }}>{error}</p>;
 
   return (
     <div>

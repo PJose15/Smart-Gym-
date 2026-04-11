@@ -42,16 +42,27 @@ export default function ChallengeDetailPage({ params }: PageProps) {
   const { member, gym } = useMember();
   const [data, setData] = useState<ChallengeDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!member) return;
     setLoading(true);
+    setLoadError(null);
     (async () => {
       try {
         const res = await fetch(`/api/member/challenges/${challengeId}?member_id=${member.id}`);
-        if (res.ok) setData(await res.json());
-      } catch { /* silent */ } finally {
+        if (res.status === 404) {
+          setData(null);
+        } else if (!res.ok) {
+          setLoadError('Failed to load challenge. Please try again.');
+        } else {
+          setData(await res.json());
+        }
+      } catch {
+        setLoadError('Network error. Check your connection and try again.');
+      } finally {
         setLoading(false);
       }
     })();
@@ -60,6 +71,7 @@ export default function ChallengeDetailPage({ params }: PageProps) {
   async function handleJoin() {
     if (!member || !gym) return;
     setJoining(true);
+    setJoinError(null);
     try {
       const res = await fetch(`/api/member/challenges/${challengeId}/join`, {
         method: 'POST',
@@ -68,14 +80,22 @@ export default function ChallengeDetailPage({ params }: PageProps) {
       });
       if (res.ok && data) {
         setData({ ...data, is_joined: true });
+      } else {
+        setJoinError('Failed to join challenge. Please try again.');
       }
-    } catch { /* silent */ } finally {
+    } catch {
+      setJoinError('Network error. Please try again.');
+    } finally {
       setJoining(false);
     }
   }
 
   if (!member || loading) {
     return <div style={{ padding: 16, textAlign: 'center', color: 'var(--color-text-muted)', paddingTop: 60 }}>Loading...</div>;
+  }
+
+  if (loadError) {
+    return <div style={{ padding: 16, textAlign: 'center', color: 'var(--color-red)', paddingTop: 60 }}>{loadError}</div>;
   }
 
   if (!data) {
@@ -133,9 +153,14 @@ export default function ChallengeDetailPage({ params }: PageProps) {
 
       {/* Join button */}
       {!data.is_joined && data.is_active && (
-        <button style={joinBtnStyle} onClick={handleJoin} disabled={joining}>
-          {joining ? 'Joining...' : 'Join Challenge'}
-        </button>
+        <>
+          <button style={joinBtnStyle} onClick={handleJoin} disabled={joining}>
+            {joining ? 'Joining...' : 'Join Challenge'}
+          </button>
+          {joinError && (
+            <p style={{ color: 'var(--color-red)', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{joinError}</p>
+          )}
+        </>
       )}
 
       {/* Participant leaderboard */}

@@ -18,12 +18,16 @@ export default function TrainerMessageThreadPage() {
   const memberId = params.memberId as string;
   const [messages, setMessages] = useState<TrainerMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/trainer/messages/${memberId}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed');
+        return r.json();
+      })
       .then((d) => { setMessages(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoadError('Failed to load messages.'); setLoading(false); });
   }, [memberId]);
 
   useRealtimeMessages(memberId, (msg: TrainerMessage) => {
@@ -46,6 +50,7 @@ export default function TrainerMessageThreadPage() {
   }
 
   if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading messages...</p>;
+  if (loadError) return <p style={{ color: 'var(--color-red-light)' }}>{loadError}</p>;
 
   return (
     <div style={pageStyle}>

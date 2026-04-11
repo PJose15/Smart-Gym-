@@ -45,19 +45,26 @@ export default function ChallengesListPage() {
   const [tab, setTab] = useState<Tab>('active');
   const [challenges, setChallenges] = useState<ChallengeListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [joining, setJoining] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!member || !gym) return;
     setLoading(true);
+    setLoadError(null);
     (async () => {
       try {
         const res = await fetch(`/api/member/challenges?member_id=${member.id}&gym_id=${gym.id}`);
-        if (res.ok) {
+        if (!res.ok) {
+          setLoadError('Failed to load challenges. Please try again.');
+        } else {
           const data = await res.json();
           setChallenges(data.challenges || []);
         }
-      } catch { /* silent */ } finally {
+      } catch {
+        setLoadError('Network error. Check your connection and try again.');
+      } finally {
         setLoading(false);
       }
     })();
@@ -66,6 +73,7 @@ export default function ChallengesListPage() {
   async function handleJoin(challengeId: string) {
     if (!member || !gym) return;
     setJoining(challengeId);
+    setJoinError(null);
     try {
       const res = await fetch(`/api/member/challenges/${challengeId}/join`, {
         method: 'POST',
@@ -76,8 +84,12 @@ export default function ChallengesListPage() {
         setChallenges(prev => prev.map(c =>
           c.challenge_id === challengeId ? { ...c, is_joined: true } : c
         ));
+      } else {
+        setJoinError('Failed to join. Please try again.');
       }
-    } catch { /* silent */ } finally {
+    } catch {
+      setJoinError('Network error. Please try again.');
+    } finally {
       setJoining(null);
     }
   }
@@ -99,8 +111,16 @@ export default function ChallengesListPage() {
         <button style={toggleBtnStyle(tab === 'completed')} onClick={() => setTab('completed')}>Completed</button>
       </div>
 
+      {joinError && (
+        <div style={{ padding: 10, marginBottom: 12, borderRadius: 8, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-red)', fontSize: 13, textAlign: 'center' }}>
+          {joinError}
+        </div>
+      )}
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)' }}>Loading...</div>
+      ) : loadError ? (
+        <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-red)', fontSize: 14 }}>{loadError}</div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)', fontSize: 14 }}>
           No {tab} challenges right now.

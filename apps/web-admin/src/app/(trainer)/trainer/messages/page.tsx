@@ -20,15 +20,20 @@ const cardStyle: CSSProperties = {
 export default function TrainerMessagesPage() {
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/trainer/messages')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed');
+        return r.json();
+      })
       .then((d) => { setConversations(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setError('Failed to load conversations.'); setLoading(false); });
   }, []);
 
   if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading conversations...</p>;
+  if (error) return <p style={{ color: 'var(--color-red-light)' }}>{error}</p>;
 
   return (
     <div>

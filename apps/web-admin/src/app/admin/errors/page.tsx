@@ -93,6 +93,7 @@ export default function AdminErrorsPage() {
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [resolving, setResolving] = useState<string | null>(null);
+  const [resolveErrorMsg, setResolveErrorMsg] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
     const params = new URLSearchParams({
@@ -113,12 +114,13 @@ export default function AdminErrorsPage() {
 
   async function resolveError(errorId: string) {
     setResolving(errorId);
+    setResolveErrorMsg(null);
     try {
       const res = await fetch(`/api/admin/errors/${errorId}`, { method: 'PATCH' });
       if (!res.ok) throw new Error('Failed');
       fetchData();
     } catch {
-      // Silently fail, user can retry
+      setResolveErrorMsg('Failed to resolve error. Please try again.');
     } finally {
       setResolving(null);
     }
@@ -147,6 +149,12 @@ export default function AdminErrorsPage() {
       <p style={{ margin: '0 0 16px', color: 'var(--color-text-muted)', fontSize: 14 }}>
         Platform error monitoring and resolution
       </p>
+
+      {resolveErrorMsg && (
+        <div style={{ padding: 10, marginBottom: 12, borderRadius: 8, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-red)', fontSize: 13 }}>
+          {resolveErrorMsg}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
         <MetricCard title="Unresolved (24h)" value={data.summary.unresolved_24h} />

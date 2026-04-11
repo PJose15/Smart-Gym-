@@ -32,7 +32,10 @@ export default function TrainerTodayPage() {
 
   useEffect(() => {
     fetch('/api/trainer/today')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed');
+        return r.json();
+      })
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
