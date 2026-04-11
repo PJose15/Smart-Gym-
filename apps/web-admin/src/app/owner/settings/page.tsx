@@ -63,14 +63,30 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 export default function OwnerSettingsPage() {
   const [settings, setSettings] = useState<GymSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    fetch('/api/owner/settings')
-      .then((r) => r.json())
-      .then((d) => { setSettings(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch('/api/owner/settings');
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        if (!cancelled) {
+          setSettings(d);
+          setLoadError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : 'Failed to load settings');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   function update(key: keyof GymSettings, value: string | number | boolean) {
@@ -84,22 +100,37 @@ export default function OwnerSettingsPage() {
     setSaving(true);
     setMsg('');
 
-    const res = await fetch('/api/owner/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
-    });
+    try {
+      const res = await fetch('/api/owner/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
 
-    if (res.ok) {
-      setMsg('Settings saved!');
-    } else {
-      setMsg('Failed to save settings.');
+      if (res.ok) {
+        setMsg('Settings saved!');
+      } else {
+        setMsg('Failed to save settings.');
+      }
+    } catch {
+      setMsg('Network error. Check your connection and try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading settings...</p>;
-  if (!settings) return <p style={{ color: 'var(--color-red-light)' }}>Failed to load settings.</p>;
+  if (!settings) return (
+    <div>
+      <p style={{ color: 'var(--color-red-light)', marginBottom: 12 }}>Failed to load settings{loadError ? `: ${loadError}` : '.'}</p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{ ...btnStyle }}
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div style={{ color: 'var(--color-text-primary)', maxWidth: 600 }}>

@@ -42,14 +42,30 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 export default function MemberSettingsPage() {
   const [settings, setSettings] = useState<MemberSettingsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    fetch('/api/member/settings')
-      .then((r) => r.json())
-      .then((d) => { setSettings(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch('/api/member/settings');
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        if (!cancelled) {
+          setSettings(d);
+          setLoadError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : 'Failed to load settings');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   function update(key: keyof MemberSettingsData, value: string | boolean) {
@@ -63,22 +79,37 @@ export default function MemberSettingsPage() {
     setSaving(true);
     setMsg('');
 
-    const res = await fetch('/api/member/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
-    });
+    try {
+      const res = await fetch('/api/member/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
 
-    if (res.ok) {
-      setMsg('Settings saved!');
-    } else {
-      setMsg('Failed to save.');
+      if (res.ok) {
+        setMsg('Settings saved!');
+      } else {
+        setMsg('Failed to save.');
+      }
+    } catch {
+      setMsg('Network error. Check your connection and try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   if (loading) return <p style={{ color: 'var(--color-text-secondary)', padding: 20 }}>Loading...</p>;
-  if (!settings) return <p style={{ color: 'var(--color-red)', padding: 20 }}>Failed to load settings.</p>;
+  if (!settings) return (
+    <div style={{ padding: 20 }}>
+      <p style={{ color: 'var(--color-red)', marginBottom: 12 }}>Failed to load settings{loadError ? `: ${loadError}` : '.'}</p>
+      <button
+        onClick={() => { setLoading(true); setLoadError(null); window.location.reload(); }}
+        style={{ padding: '8px 16px', backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div style={{ padding: '20px 16px' }}>

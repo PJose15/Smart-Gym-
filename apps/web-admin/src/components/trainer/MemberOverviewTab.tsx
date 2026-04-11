@@ -40,16 +40,41 @@ const statCard: CSSProperties = {
 export function MemberOverviewTab({ memberId }: { memberId: string }) {
   const [data, setData] = useState<MemberDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/trainer/members/${memberId}`)
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const r = await fetch(`/api/trainer/members/${memberId}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        if (!cancelled) setData(d);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load member details');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [memberId]);
 
   if (loading) return <p style={{ color: 'var(--color-text-secondary)' }}>Loading...</p>;
-  if (!data) return <p style={{ color: 'var(--color-red)' }}>Failed to load member details.</p>;
+  if (error || !data) return (
+    <div>
+      <p style={{ color: 'var(--color-red)', marginBottom: 12 }}>
+        {error ? `Failed to load member details: ${error}` : 'Failed to load member details.'}
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{ padding: '8px 16px', backgroundColor: 'var(--color-bg-elevated)', color: 'var(--color-text-primary)', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div>

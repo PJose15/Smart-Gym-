@@ -59,6 +59,8 @@ const btnStyle: CSSProperties = {
 export function MemberNotesTab({ memberId }: { memberId: string }) {
   const [notes, setNotes] = useState<TrainerNote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const [noteType, setNoteType] = useState<TrainerNoteType>('general');
   const [visibleToMember, setVisibleToMember] = useState(false);
@@ -71,64 +73,104 @@ export function MemberNotesTab({ memberId }: { memberId: string }) {
   // eslint-disable-next-line
   }, [memberId]);
 
-  function loadNotes() {
+  async function loadNotes() {
     setLoading(true);
-    fetch(`/api/trainer/members/${memberId}/notes`)
-      .then((r) => r.json())
-      .then((d) => { setNotes(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    setLoadError(null);
+    try {
+      const r = await fetch(`/api/trainer/members/${memberId}/notes`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      setNotes(Array.isArray(d) ? d : []);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load notes');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     if (!noteText.trim()) return;
     setSaving(true);
+    setActionError(null);
 
-    const res = await fetch(`/api/trainer/members/${memberId}/notes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        member_id: memberId,
-        note_type: noteType,
-        note_text: noteText.trim(),
-        is_visible_to_member: visibleToMember,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/trainer/members/${memberId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          member_id: memberId,
+          note_type: noteType,
+          note_text: noteText.trim(),
+          is_visible_to_member: visibleToMember,
+        }),
+      });
 
-    if (res.ok) {
-      setNoteText('');
-      setNoteType('general');
-      setVisibleToMember(false);
-      loadNotes();
+      if (res.ok) {
+        setNoteText('');
+        setNoteType('general');
+        setVisibleToMember(false);
+        loadNotes();
+      } else {
+        setActionError(`Failed to create note (HTTP ${res.status})`);
+      }
+    } catch {
+      setActionError('Network error creating note');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function handleUpdate(noteId: string) {
     if (!editText.trim()) return;
-    const res = await fetch(`/api/trainer/members/${memberId}/notes/${noteId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note_text: editText.trim() }),
-    });
-    if (res.ok) {
-      setEditingId(null);
-      loadNotes();
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/trainer/members/${memberId}/notes/${noteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note_text: editText.trim() }),
+      });
+      if (res.ok) {
+        setEditingId(null);
+        loadNotes();
+      } else {
+        setActionError(`Failed to update note (HTTP ${res.status})`);
+      }
+    } catch {
+      setActionError('Network error updating note');
     }
   }
 
   async function handleDelete(noteId: string) {
     if (!confirm('Delete this note?')) return;
-    const res = await fetch(`/api/trainer/members/${memberId}/notes/${noteId}`, {
-      method: 'DELETE',
-    });
-    if (res.ok) {
-      loadNotes();
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/trainer/members/${memberId}/notes/${noteId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        loadNotes();
+      } else {
+        setActionError(`Failed to delete note (HTTP ${res.status})`);
+      }
+    } catch {
+      setActionError('Network error deleting note');
     }
   }
 
+  const errorBannerStyle: CSSProperties = {
+    backgroundColor: 'var(--color-red-light)',
+    color: 'var(--color-red)',
+    padding: '10px 14px',
+    borderRadius: 8,
+    fontSize: 13,
+    marginBottom: 12,
+  };
+
   return (
     <div>
+      {actionError && <div style={errorBannerStyle}>{actionError}</div>}
+
       {/* Create Note Form */}
       <form onSubmit={handleCreate} style={{ ...cardStyle, marginBottom: 20 }}>
         <div style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'center' }}>
@@ -162,6 +204,16 @@ export function MemberNotesTab({ memberId }: { memberId: string }) {
       {/* Notes List */}
       {loading ? (
         <p style={{ color: 'var(--color-text-secondary)' }}>Loading notes...</p>
+      ) : loadError ? (
+        <div style={errorBannerStyle}>
+          Failed to load notes: {loadError}
+          <button
+            onClick={() => loadNotes()}
+            style={{ marginLeft: 12, background: 'none', border: 'none', color: 'var(--color-red)', textDecoration: 'underline', cursor: 'pointer', fontSize: 13 }}
+          >
+            Retry
+          </button>
+        </div>
       ) : notes.length === 0 ? (
         <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>No notes yet.</p>
       ) : (

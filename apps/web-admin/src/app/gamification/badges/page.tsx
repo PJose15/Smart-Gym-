@@ -102,6 +102,7 @@ export default function BadgesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [members, setMembers] = useState<MemberUnlock[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBadges();
@@ -147,11 +148,13 @@ export default function BadgesPage() {
     if (expandedId === badgeId) {
       setExpandedId(null);
       setMembers([]);
+      setMembersError(null);
       return;
     }
 
     setExpandedId(badgeId);
     setMembersLoading(true);
+    setMembersError(null);
 
     try {
       const { data, error: err } = await supabase
@@ -169,8 +172,9 @@ export default function BadgesPage() {
           unlocked_at: mb.unlocked_at,
         })),
       );
-    } catch {
+    } catch (err) {
       setMembers([]);
+      setMembersError(err instanceof Error ? err.message : 'Failed to load members');
     } finally {
       setMembersLoading(false);
     }
@@ -269,6 +273,10 @@ export default function BadgesPage() {
                           {membersLoading ? (
                             <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-muted)' }}>
                               Loading...
+                            </div>
+                          ) : membersError ? (
+                            <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-red)' }}>
+                              {membersError}
                             </div>
                           ) : members.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-muted)' }}>

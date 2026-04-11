@@ -24,6 +24,7 @@ interface DashboardData {
 export default function OwnerDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   // Initial load + poll every 30 s for metrics
@@ -34,17 +35,23 @@ export default function OwnerDashboardPage() {
     async function fetchDashboard() {
       try {
         const res = await fetch('/api/owner/dashboard', { signal: controller.signal });
-        if (!res.ok || !mountedRef.current) {
-          if (mountedRef.current) setLoading(false);
+        if (!mountedRef.current) return;
+        if (!res.ok) {
+          setRefreshError(`Failed to refresh (HTTP ${res.status})`);
+          setLoading(false);
           return;
         }
         const dashboard = await res.json();
         if (mountedRef.current) {
           setData((prev) => ({ ...dashboard, activity: prev?.activity ?? [] }));
+          setRefreshError(null);
           setLoading(false);
         }
-      } catch {
-        if (mountedRef.current) setLoading(false);
+      } catch (err) {
+        if (mountedRef.current && (err as { name?: string }).name !== 'AbortError') {
+          setRefreshError('Failed to refresh (network error)');
+          setLoading(false);
+        }
       }
     }
 
@@ -59,13 +66,37 @@ export default function OwnerDashboardPage() {
   }, []);
 
   if (loading) return <p style={{ color: 'var(--color-text-secondary)' }}>Loading dashboard...</p>;
-  if (!data) return <p style={{ color: 'var(--color-red)' }}>Failed to load dashboard.</p>;
+  if (!data) return (
+    <div>
+      <p style={{ color: 'var(--color-red)', marginBottom: 12 }}>Failed to load dashboard{refreshError ? `: ${refreshError}` : '.'}</p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{ padding: '8px 16px', backgroundColor: 'var(--color-blue)', color: 'var(--color-text-primary)', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   const { metrics, machine_performance, peak_hours, activity } = data;
 
   return (
     <div style={{ maxWidth: 1100, color: 'var(--color-text-primary)' }}>
       <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Owner Dashboard</h1>
+
+      {refreshError && (
+        <div style={{
+          backgroundColor: 'var(--color-gold)22',
+          color: 'var(--color-gold)',
+          padding: '10px 14px',
+          borderRadius: 8,
+          fontSize: 13,
+          marginBottom: 16,
+          border: '1px solid var(--color-gold)44',
+        }}>
+          {refreshError} — showing last loaded data.
+        </div>
+      )}
 
       {/* Live Activity Ticker */}
       <div style={{ marginBottom: 20 }}>
