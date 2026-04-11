@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { CheckInRecord } from '@nexera/types';
+import { useMember } from '@/lib/contexts/MemberContext';
+import { formatVolume } from '@/lib/weight';
 import { NexeraCoachAvatar } from './NexeraCoachAvatar';
 import { StatPill } from './StatPill';
 
@@ -27,6 +29,7 @@ export function CheckInMessage({
   isUnread,
   onMarkRead,
 }: CheckInMessageProps) {
+  const { weightUnit } = useMember();
   const sentDate = checkIn.sent_at ? formatRelativeTime(checkIn.sent_at) : '';
 
   // ── Unread ritual state ──────────────────────────
@@ -130,7 +133,7 @@ export function CheckInMessage({
             label="sessions"
           />
           <StatPill
-            value={`${checkIn.total_volume_lbs.toLocaleString()} lbs`}
+            value={formatVolume(checkIn.total_volume_lbs, weightUnit)}
             label="volume"
           />
           <StatPill
