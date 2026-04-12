@@ -57,6 +57,7 @@ jest.mock('../components/DayCard', () => ({
 
 // ── Helpers ────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockUseMember = require('@/lib/contexts/MemberContext').useMember;
 
 const mockMember = {

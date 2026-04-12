@@ -41,7 +41,6 @@ export function useStaffAuth(allowedRoles?: StaffRole[]): { authed: boolean; che
       }
     })();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { authed, checking };

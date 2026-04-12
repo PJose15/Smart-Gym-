@@ -103,7 +103,6 @@ export function StaffProvider({ children, allowedRoles, fallback }: StaffProvide
       }
     })();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!authed) {

@@ -13,6 +13,7 @@ jest.mock('@/lib/contexts/MemberContext', () => ({
 
 // ── Helpers ────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockUseMember = require('@/lib/contexts/MemberContext').useMember;
 
 const mockMember = {
