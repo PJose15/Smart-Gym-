@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
+import { useStaffWeightUnit } from '@/lib/contexts/StaffContext';
+import { formatVolume, formatWeight } from '@/lib/weight';
 
 interface MemberDetail {
   member_name: string;
@@ -38,6 +40,7 @@ const statCard: CSSProperties = {
 };
 
 export function MemberOverviewTab({ memberId }: { memberId: string }) {
+  const weightUnit = useStaffWeightUnit();
   const [data, setData] = useState<MemberDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,12 +121,12 @@ export function MemberOverviewTab({ memberId }: { memberId: string }) {
         </div>
         <div style={statCard}>
           <div style={{ color: 'var(--color-text-muted)', fontSize: 11, marginBottom: 4 }}>Total Volume</div>
-          <div style={{ fontSize: 20, fontWeight: 700 }}>{data.total_volume_lbs.toLocaleString()} lbs</div>
+          <div style={{ fontSize: 20, fontWeight: 700 }}>{formatVolume(data.total_volume_lbs, weightUnit)}</div>
         </div>
         {data.body_metrics?.weight_lbs && (
           <div style={statCard}>
             <div style={{ color: 'var(--color-text-muted)', fontSize: 11, marginBottom: 4 }}>Body Weight</div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{data.body_metrics.weight_lbs} lbs</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{formatWeight(data.body_metrics.weight_lbs, weightUnit)}</div>
           </div>
         )}
         <div style={statCard}>

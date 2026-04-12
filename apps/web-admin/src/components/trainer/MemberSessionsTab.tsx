@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
+import { useStaffWeightUnit } from '@/lib/contexts/StaffContext';
+import { formatVolume } from '@/lib/weight';
 
 interface SessionRow {
   id: string;
@@ -17,6 +19,7 @@ const thStyle: CSSProperties = { textAlign: 'left', padding: '8px 12px', borderB
 const tdStyle: CSSProperties = { padding: '8px 12px', borderBottom: '1px solid var(--color-border-subtle)' };
 
 export function MemberSessionsTab({ memberId }: { memberId: string }) {
+  const weightUnit = useStaffWeightUnit();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +100,7 @@ export function MemberSessionsTab({ memberId }: { memberId: string }) {
                     <td style={tdStyle}>{s.duration_minutes > 0 ? `${s.duration_minutes}m` : '—'}</td>
                     <td style={tdStyle}>{s.exercises_count}</td>
                     <td style={tdStyle}>{s.total_sets}</td>
-                    <td style={tdStyle}>{s.total_volume_lbs.toLocaleString()} lbs</td>
+                    <td style={tdStyle}>{formatVolume(s.total_volume_lbs, weightUnit)}</td>
                     <td style={tdStyle}>
                       <span style={{ color: s.finished_at ? 'var(--color-green)' : 'var(--color-gold)', fontSize: 12 }}>
                         {s.finished_at ? 'Completed' : 'In Progress'}

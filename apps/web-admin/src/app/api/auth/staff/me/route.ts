@@ -8,19 +8,30 @@ export async function GET() {
 
     const { admin, user_id, gym_id, role } = result;
 
-    // Fetch profile info
-    const { data: profile } = await admin
-      .from('users')
-      .select('email, full_name, avatar_url')
-      .eq('id', user_id)
-      .single();
+    // Fetch profile, gym, and gym settings in parallel.
+    const [profileRes, gymRes, settingsRes] = await Promise.all([
+      admin
+        .from('users')
+        .select('email, full_name, avatar_url')
+        .eq('id', user_id)
+        .single(),
+      admin
+        .from('gyms')
+        .select('id, name, slug, logo_url')
+        .eq('id', gym_id)
+        .single(),
+      admin
+        .from('gym_settings')
+        .select('weight_unit')
+        .eq('gym_id', gym_id)
+        .maybeSingle(),
+    ]);
 
-    // Fetch gym info
-    const { data: gym } = await admin
-      .from('gyms')
-      .select('id, name, slug, logo_url')
-      .eq('id', gym_id)
-      .single();
+    const profile = profileRes.data;
+    const gym = gymRes.data;
+    const rawUnit = settingsRes.data?.weight_unit;
+    const weight_unit: 'lbs' | 'kg' =
+      rawUnit === 'kg' || rawUnit === 'lbs' ? rawUnit : 'lbs';
 
     return NextResponse.json({
       user_id,
@@ -30,6 +41,7 @@ export async function GET() {
       email: profile?.email ?? '',
       avatar_url: profile?.avatar_url ?? null,
       gym: gym ?? null,
+      weight_unit,
     });
   } catch (err) {
     console.error('[staff/me] Error:', err);
