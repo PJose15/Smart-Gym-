@@ -6,7 +6,7 @@ import { validateUUIDs } from '@/lib/validation/uuid';
 
 const TIER_LIMITS: Record<string, number> = { starter: 5, growth: 25, pro: Infinity };
 
-export const machineSchema = z.object({
+const machineSchema = z.object({
   name: z.string().trim().min(1).max(100),
   category: z.string().trim().min(1).max(50),
   muscle_groups: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
