@@ -59,7 +59,7 @@ export async function checkGoalAchievement(
   // Get active goals for this machine (scoped to gym)
   const { data: goals } = await admin
     .from('member_goals')
-    .select('*')
+    .select('id, member_id, gym_id, goal_type, machine_id, machine_name, target_weight_lbs, target_reps, target_sessions, custom_description, inspired_by_member_id, inspired_by_event_id, is_achieved, achieved_at, created_at')
     .eq('member_id', memberId)
     .eq('gym_id', gymId)
     .eq('machine_id', machineId)
@@ -134,7 +134,7 @@ export async function getActiveGoals(
 ): Promise<MemberGoal[]> {
   let query = admin
     .from('member_goals')
-    .select('*')
+    .select('id, member_id, gym_id, goal_type, machine_id, machine_name, target_weight_lbs, target_reps, target_sessions, custom_description, inspired_by_member_id, inspired_by_event_id, is_achieved, achieved_at, created_at')
     .eq('member_id', memberId)
     .eq('is_achieved', false)
     .order('created_at', { ascending: false });

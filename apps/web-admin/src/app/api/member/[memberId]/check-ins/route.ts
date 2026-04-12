@@ -34,7 +34,9 @@ export async function GET(
     // Latest check-in (sent only)
     const { data: latest } = await admin
       .from('weekly_checkins')
-      .select('*')
+      .select(
+        'id, member_id, gym_id, trainer_id, week_start, week_end, ai_draft, final_message, sent_by, trainer_approved, trainer_approved_at, sent_at, member_replied, reply_text, replied_at, sessions_this_week, sessions_last_week, total_volume_lbs, prs_this_week, current_streak, read_at, created_at, updated_at'
+      )
       .eq('member_id', memberId)
       .not('sent_at', 'is', null)
       .order('week_start', { ascending: false })

@@ -26,7 +26,7 @@ export async function GET(
 
     const { data: notes } = await admin
       .from('trainer_member_notes')
-      .select('*')
+      .select('id, trainer_id, member_id, gym_id, note_type, note_text, session_id, is_visible_to_member, created_at')
       .eq('trainer_id', user_id)
       .eq('member_id', memberId)
       .eq('gym_id', gym_id)
@@ -74,7 +74,7 @@ export async function POST(
         session_id: session_id ?? null,
         is_visible_to_member: is_visible_to_member ?? false,
       })
-      .select()
+      .select('id, trainer_id, member_id, gym_id, note_type, note_text, session_id, is_visible_to_member, created_at')
       .single();
 
     if (error) {

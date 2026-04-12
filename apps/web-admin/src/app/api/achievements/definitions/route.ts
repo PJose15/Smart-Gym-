@@ -9,7 +9,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('achievement_definitions')
-      .select('*')
+      .select('id, code, title, description, category, points, required_value, required_unit, icon_name, sort_order, is_active, created_at')
       .order('category', { ascending: true })
       .limit(500);
 

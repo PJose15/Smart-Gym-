@@ -22,7 +22,9 @@ export async function GET(
 
     let query = admin
       .from('workout_sessions')
-      .select('*')
+      .select(
+        'id, gym_id, machine_id, member_id, session_date, workout_mode, sets, sets_count, total_volume_lbs, best_weight_lbs, best_reps, is_personal_best, personal_best_type, pr_improvement_lbs, pr_improvement_pct, previous_best_lbs, ai_tip_shown, ai_tip_source, completed_at, created_at, updated_at'
+      )
       .eq('member_id', params.memberId)
       .order('session_date', { ascending: false })
       .range(offset, offset + limit - 1);

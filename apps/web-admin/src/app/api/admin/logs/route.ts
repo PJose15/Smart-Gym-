@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
 
     let query = admin
       .from('smartgym_agent_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .select('id, gym_id, member_id, agent_name, trigger_event, action_taken, channel, status, error_message, payload, executed_at')
+      .order('executed_at', { ascending: false })
       .range(offset, offset + limit - 1);
     if (agent_name) query = query.eq('agent_name', agent_name);
     if (gym_id) query = query.eq('gym_id', gym_id);

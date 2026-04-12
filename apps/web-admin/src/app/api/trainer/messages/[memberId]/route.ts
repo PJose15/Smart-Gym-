@@ -18,7 +18,7 @@ export async function GET(
     // Fetch full thread
     const { data: messages } = await admin
       .from('trainer_member_messages')
-      .select('*')
+      .select('id, trainer_id, member_id, gym_id, sender_type, message_text, sent_at, read_at, is_deleted_by_trainer, is_deleted_by_member')
       .eq('trainer_id', user_id)
       .eq('member_id', memberId)
       .eq('gym_id', gym_id)

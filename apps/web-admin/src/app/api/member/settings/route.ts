@@ -40,10 +40,12 @@ export async function GET() {
 
     const { admin, member_id } = result;
 
+    const settingsCols = 'id, member_id, weight_unit, date_format, profile_visible, show_on_leaderboard, share_achievements, share_prs_to_feed, show_streak_publicly, share_weight_with_trainer, share_workout_with_trainer, show_body_weight, updated_at';
+
     // Get or create settings
     let { data: settings } = await admin
       .from('member_settings')
-      .select('*')
+      .select(settingsCols)
       .eq('member_id', member_id)
       .maybeSingle();
 
@@ -52,7 +54,7 @@ export async function GET() {
       const { data: created } = await admin
         .from('member_settings')
         .insert({ member_id })
-        .select()
+        .select(settingsCols)
         .single();
       settings = created;
     }
@@ -84,7 +86,7 @@ export async function PUT(req: NextRequest) {
     const { data: settings, error } = await admin
       .from('member_settings')
       .upsert({ member_id, ...parsed.data }, { onConflict: 'member_id' })
-      .select()
+      .select('id, member_id, weight_unit, date_format, profile_visible, show_on_leaderboard, share_achievements, share_prs_to_feed, show_streak_publicly, share_weight_with_trainer, share_workout_with_trainer, show_body_weight, updated_at')
       .single();
 
     if (error) {
