@@ -11,10 +11,10 @@ import { MUSCLE_GROUP_MAP } from './muscleGroups';
 // ============================================================================
 
 const STATE_COLORS: Record<MuscleRecoveryStateLabel, string> = {
-  fresh:      '#639922', // green — ready to go
-  primed:     '#3B8BD4', // blue — optimal window
-  recovering: '#D85A30', // orange — still recovering
-  fatigued:   '#C43030', // red — needs rest
+  fresh:      '#00C896', // green — ready to go (DOC_03 --muscle-fresh)
+  primed:     '#7C5CFF', // purple — optimal window (DOC_03 --muscle-primed)
+  recovering: '#FF4D6A', // red — still recovering (DOC_03 --muscle-recovering)
+  fatigued:   '#FFB020', // amber — needs rest (DOC_03 --muscle-fatigued)
 };
 
 // ============================================================================

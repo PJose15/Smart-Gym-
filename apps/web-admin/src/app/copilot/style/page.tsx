@@ -251,7 +251,7 @@ export default function StyleSettingsPage() {
           <span style={{ ...statsChipStyle, backgroundColor: tone === 'supportive' ? 'var(--color-green-light)' : tone === 'strict' ? 'var(--color-red-light)' : 'var(--color-bg-highest)', color: tone === 'supportive' ? 'var(--color-green)' : tone === 'strict' ? 'var(--color-red)' : 'var(--color-text-muted)' }}>
             Tone: {tone}
           </span>
-          <span style={{ ...statsChipStyle, backgroundColor: verbosity === 'detailed' ? 'var(--color-blue-subtle)' : verbosity === 'short' ? 'rgba(239,159,39,0.15)' : 'var(--color-bg-highest)', color: verbosity === 'detailed' ? 'var(--color-blue)' : verbosity === 'short' ? 'var(--color-gold)' : 'var(--color-text-muted)' }}>
+          <span style={{ ...statsChipStyle, backgroundColor: verbosity === 'detailed' ? 'var(--color-blue-subtle)' : verbosity === 'short' ? 'rgba(255, 215, 0,0.15)' : 'var(--color-bg-highest)', color: verbosity === 'detailed' ? 'var(--color-blue)' : verbosity === 'short' ? 'var(--color-gold)' : 'var(--color-text-muted)' }}>
             Verbosity: {verbosity}
           </span>
           <span style={statsChipStyle}>

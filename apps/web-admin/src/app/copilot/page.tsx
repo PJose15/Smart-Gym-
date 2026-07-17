@@ -193,7 +193,7 @@ const signalsPanelStyle: CSSProperties = {
 
 const confidenceBadgeStyle = (confidence: number): CSSProperties => ({
   ...chipStyle,
-  backgroundColor: confidence >= 0.7 ? 'var(--color-green-light)' : confidence >= 0.5 ? 'rgba(239,159,39,0.15)' : 'var(--color-red-light)',
+  backgroundColor: confidence >= 0.7 ? 'var(--color-green-light)' : confidence >= 0.5 ? 'rgba(255, 215, 0,0.15)' : 'var(--color-red-light)',
   color: confidence >= 0.7 ? 'var(--color-green)' : confidence >= 0.5 ? 'var(--color-gold)' : 'var(--color-red)',
 });
 
@@ -459,7 +459,7 @@ export default function CopilotInboxPage() {
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</span>
-              {pendingCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(239,159,39,0.15)', color: 'var(--color-gold)' }}>{pendingCount} pending</span>}
+              {pendingCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(255, 215, 0,0.15)', color: 'var(--color-gold)' }}>{pendingCount} pending</span>}
               {sentCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{sentCount} sent</span>}
               {discardedCount > 0 && <span style={statsChipStyle}>{discardedCount} discarded</span>}
               <span style={statsChipStyle}>{avgConfidence}% avg confidence</span>

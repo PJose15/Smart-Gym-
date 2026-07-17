@@ -12,9 +12,9 @@ const TIER_LABELS: Record<SubscriptionTier, string> = {
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   active: { color: 'var(--color-green)', bg: 'var(--color-green-light)' },
   trialing: { color: 'var(--color-blue)', bg: 'var(--color-blue-subtle)' },
-  past_due: { color: 'var(--color-gold)', bg: 'rgba(239,159,39,0.15)' },
+  past_due: { color: 'var(--color-gold)', bg: 'rgba(255, 215, 0,0.15)' },
   cancelled: { color: 'var(--color-red)', bg: 'var(--color-red-light)' },
-  incomplete: { color: 'var(--color-gold)', bg: 'rgba(239,159,39,0.15)' },
+  incomplete: { color: 'var(--color-gold)', bg: 'rgba(255, 215, 0,0.15)' },
   unpaid: { color: 'var(--color-red)', bg: 'var(--color-red-light)' },
   paused: { color: 'var(--color-text-muted)', bg: 'var(--color-bg-elevated)' },
 };

@@ -80,11 +80,11 @@ export function DNAHistoryChart({ snapshots }: DNAHistoryChartProps) {
         })}
 
         {/* Line */}
-        <path d={linePath} fill="none" stroke="#EF9F27" strokeWidth={2} strokeLinejoin="round" />
+        <path d={linePath} fill="none" stroke="#FFD700" strokeWidth={2} strokeLinejoin="round" />
 
         {/* Dots */}
         {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={3} fill="#EF9F27" />
+          <circle key={i} cx={p.x} cy={p.y} r={3} fill="#FFD700" />
         ))}
 
         {/* X-axis week labels */}

@@ -400,7 +400,7 @@ export default function MemberAnalyticsPage() {
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 {exerciseProgressions.map((ep, i) => {
-                  const colors = ['#3B8BD4', '#639922', '#7F77DD', '#C0392B', '#EF9F27'];
+                  const colors = ['#7C5CFF', '#00C896', '#3B82F6', '#FF4D6A', '#FFD700'];
                   return (
                     <Line
                       key={ep.name}

@@ -135,7 +135,7 @@ export function PRBottomSheet({ prResult, machineName, onDismiss, weightUnit = '
             style={{
               fontSize: 40,
               lineHeight: 1,
-              filter: 'drop-shadow(0 0 12px rgba(239, 159, 39, 0.4))',
+              filter: 'drop-shadow(0 0 12px rgba(255, 215, 0, 0.4))',
               flexShrink: 0,
             }}
           >

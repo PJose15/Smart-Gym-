@@ -50,7 +50,7 @@ export function MetricCard({ title, value, subtitle, change, placeholder, flashO
     prevValueRef.current = value;
   }, [value, flashOnIncrease]);
 
-  const flashBorder = isFlashing ? '1px solid rgba(99,153,34,0.3)' : '1px solid transparent';
+  const flashBorder = isFlashing ? '1px solid rgba(0, 200, 150,0.3)' : '1px solid transparent';
 
   return (
     <div

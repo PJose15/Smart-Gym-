@@ -61,7 +61,7 @@ export function PRCelebration({ pr, machineName, onDismiss, weightUnit = 'lbs' }
         textAlign: 'center',
         cursor: 'pointer',
         background: `radial-gradient(ellipse at center,
-          rgba(239, 159, 39, 0.15) 0%,
+          rgba(255, 215, 0, 0.15) 0%,
           var(--color-bg-base) 70%)`,
         backdropFilter: 'blur(8px)',
         opacity: exiting ? 0 : visible ? 1 : 0,
@@ -76,7 +76,7 @@ export function PRCelebration({ pr, machineName, onDismiss, weightUnit = 'lbs' }
           transform: visible && !exiting ? 'scale(1)' : 'scale(0.3)',
           opacity: visible && !exiting ? 1 : 0,
           transition: `transform 0.6s var(--ease-celebration), opacity 0.3s var(--ease-out)`,
-          filter: 'drop-shadow(0 0 20px rgba(239, 159, 39, 0.5))',
+          filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.5))',
         }}
       >
         {pr.type === 'first_session' ? '🎉' : '🏆'}
@@ -90,7 +90,7 @@ export function PRCelebration({ pr, machineName, onDismiss, weightUnit = 'lbs' }
           fontWeight: 'var(--weight-bold)',
           color: 'var(--color-gold)',
           letterSpacing: 'var(--tracking-wide)',
-          textShadow: '0 0 30px rgba(239, 159, 39, 0.4)',
+          textShadow: '0 0 30px rgba(255, 215, 0, 0.4)',
           marginBottom: 'var(--space-2)',
           transform: visible && !exiting ? 'translateY(0)' : 'translateY(20px)',
           opacity: visible && !exiting ? 1 : 0,

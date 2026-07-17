@@ -31,7 +31,7 @@ describe('calculateReadinessScore', () => {
       });
       expect(result.score).toBe(100);
       expect(result.zone).toBe('peak');
-      expect(result.color).toBe('#639922');
+      expect(result.color).toBe('#00C896');
       expect(result.headline).toBe('Peak day — train hard');
     });
   });
@@ -461,7 +461,7 @@ describe('calculateReadinessScore', () => {
         sessionCountLast3Days: 0, daysSinceLastSession: 3,
         lastSessionRPEAverage: null, volumeTrend: 'insufficient',
       }));
-      expect(r.color).toBe('#639922');
+      expect(r.color).toBe('#00C896');
     });
 
     it('rest → gray', () => {
@@ -469,7 +469,7 @@ describe('calculateReadinessScore', () => {
         sessionCountLast3Days: 4, daysSinceLastSession: 0,
         lastSessionRPEAverage: 10, volumeTrend: 'increasing',
       }));
-      expect(r.color).toBe('#888780');
+      expect(r.color).toBe('#FF4D6A');
     });
   });
 });

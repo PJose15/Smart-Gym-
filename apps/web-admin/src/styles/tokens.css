@@ -1,92 +1,204 @@
 /* Nexera Design System — Design Tokens */
-/* Source of truth: DOC_18_UI_DESIGN_SYSTEM.md */
+/* Source of truth: DOC_03_Design_System.md (Sections 2, 3, 16) */
 
 :root {
   /* ── BACKGROUND SYSTEM ──────────────────────────────── */
-  --color-bg-base:      #0f0f14;
-  --color-bg-raised:    #1a1a24;
-  --color-bg-elevated:  #252530;
-  --color-bg-highest:   #2f2f3c;
-  --color-bg-overlay:   rgba(15, 15, 20, 0.85);
+  /* Legacy names repointed to DOC_03 values:
+     base=--bg-base, raised=--bg-elevated, elevated=--bg-card, highest=--bg-card-hover */
+  --color-bg-base:      #0D0D0F;
+  --color-bg-raised:    #141416;
+  --color-bg-elevated:  #1A1A1F;
+  --color-bg-highest:   #1F1F26;
+  --color-bg-overlay:   rgba(13, 13, 15, 0.8);
+
+  /* DOC_03 spec-named background tokens */
+  --bg-base:            #0D0D0F;
+  --bg-elevated:        #141416;
+  --bg-card:            #1A1A1F;
+  --bg-card-hover:      #1F1F26;
+  --bg-overlay:         rgba(13, 13, 15, 0.8);
+  --bg-input:           #1A1A1F;
+  --bg-input-focus:     #1F1F26;
+  --bg-success-subtle:  #0D2818;
+  --bg-warning-subtle:  #261D0A;
+  --bg-error-subtle:    #260D0D;
+  --bg-skeleton:        #1F1F26;
+  --bg-skeleton-shine:  #252530;
 
   /* ── BORDER SYSTEM ──────────────────────────────────── */
-  --color-border-subtle:  rgba(255, 255, 255, 0.06);
+  --color-border-subtle:  rgba(255, 255, 255, 0.05);
   --color-border-default: rgba(255, 255, 255, 0.10);
   --color-border-strong:  rgba(255, 255, 255, 0.20);
-  --color-border-focus:   #3B8BD4;
+  --color-border-focus:   #7C5CFF;
+
+  --border-subtle:        rgba(255, 255, 255, 0.05);
+  --border-default:       rgba(255, 255, 255, 0.10);
+  --border-strong:        rgba(255, 255, 255, 0.20);
+  --border-accent:        rgba(124, 92, 255, 0.25);
+  --border-success:       rgba(0, 200, 150, 0.25);
+  --border-error:         rgba(255, 77, 106, 0.25);
 
   /* ── TEXT SYSTEM ────────────────────────────────────── */
   --color-text-primary:   #FFFFFF;
-  --color-text-secondary: #B4B2A9;
-  --color-text-muted:     #888780;
-  --color-text-disabled:  #5F5E5A;
-  --color-text-inverse:   #0f0f14;
+  --color-text-secondary: #A0A0B0;
+  --color-text-muted:     #606070;
+  --color-text-disabled:  #3A3A45;
+  --color-text-inverse:   #0D0D0F;
 
-  /* ── ACCENT: BLUE ─────────────────────────────────── */
-  --color-blue:           #3B8BD4;
-  --color-blue-light:     #85B7EB;
-  --color-blue-dark:      #2A6BA8;
-  --color-blue-subtle:    rgba(59, 139, 212, 0.12);
+  --text-primary:         #FFFFFF;
+  --text-secondary:       #A0A0B0;
+  --text-tertiary:        #606070;
+  --text-disabled:        #3A3A45;
+  --text-inverse:         #0D0D0F;
+  --text-on-accent:       #FFFFFF;
+
+  /* ── BRAND / ACCENT: NEXERA PURPLE ──────────────────── */
+  --accent:               #7C5CFF;
+  --accent-hover:         #9070FF;
+  --accent-pressed:       #6040E0;
+  --accent-subtle:        rgba(124, 92, 255, 0.10);
+  --accent-glow:          rgba(124, 92, 255, 0.25);
+
+  /* Legacy "blue" accent — repointed to the Nexera Purple brand accent
+     (old blue was the primary accent; ~90 files reference these names) */
+  --color-blue:           #7C5CFF;
+  --color-blue-light:     #9070FF;
+  --color-blue-dark:      #6040E0;
+  --color-blue-subtle:    rgba(124, 92, 255, 0.10);
 
   /* ── ACCENT: GOLD ─────────────────────────────────── */
-  --color-gold:           #EF9F27;
-  --color-gold-light:     #F5C572;
-  --color-gold-dark:      #C07B15;
-  --color-gold-subtle:    rgba(239, 159, 39, 0.12);
+  --color-gold:           #FFD700;
+  --color-gold-light:     #FFE566;
+  --color-gold-dark:      #D4B300;
+  --color-gold-subtle:    rgba(255, 215, 0, 0.10);
 
-  /* ── ACCENT: AMBER/FIRE ───────────────────────────── */
-  --color-amber:          #D85A30;
-  --color-amber-light:    #E8876A;
-  --color-amber-dark:     #A83E1A;
-  --color-amber-subtle:   rgba(216, 90, 48, 0.12);
+  /* ── ACCENT: AMBER/FIRE (streak) ──────────────────── */
+  --color-amber:          #FF6B35;
+  --color-amber-light:    #FF8F66;
+  --color-amber-dark:     #E5501F;
+  --color-amber-subtle:   rgba(255, 107, 53, 0.10);
 
-  /* ── ACCENT: GREEN ────────────────────────────────── */
-  --color-green:          #639922;
-  --color-green-light:    #8BC34A;
-  --color-green-dark:     #4A7219;
-  --color-green-subtle:   rgba(99, 153, 34, 0.12);
+  /* ── ACCENT: GREEN (success) ──────────────────────── */
+  --color-green:          #00C896;
+  --color-green-light:    #00E0A8;
+  --color-green-dark:     #00A87E;
+  --color-green-subtle:   rgba(0, 200, 150, 0.10);
 
   /* ── ACCENT: PURPLE ───────────────────────────────── */
-  --color-purple:         #7F77DD;
-  --color-purple-light:   #A8A2E8;
-  --color-purple-dark:    #5A52B8;
-  --color-purple-subtle:  rgba(127, 119, 221, 0.12);
+  --color-purple:         #7C5CFF;
+  --color-purple-light:   #9070FF;
+  --color-purple-dark:    #6040E0;
+  --color-purple-subtle:  rgba(124, 92, 255, 0.10);
 
-  /* ── ACCENT: RED ──────────────────────────────────── */
-  --color-red:            #C0392B;
-  --color-red-light:      #E05A4A;
-  --color-red-subtle:     rgba(192, 57, 43, 0.12);
+  /* ── ACCENT: RED (error) ──────────────────────────── */
+  --color-red:            #FF4D6A;
+  --color-red-light:      #FF7A90;
+  --color-red-subtle:     rgba(255, 77, 106, 0.10);
 
-  /* ── SEMANTIC COLORS ────────────────────────────────── */
-  --color-success:        var(--color-green);
-  --color-warning:        var(--color-gold);
-  --color-error:          var(--color-red);
-  --color-info:           var(--color-blue);
+  /* ── SEMANTIC / INTENT COLORS ───────────────────────── */
+  --color-success:        #00C896;
+  --color-warning:        #FFB020;
+  --color-error:          #FF4D6A;
+  --color-info:           #3B82F6;
   --color-pr:             var(--color-gold);
   --color-streak:         var(--color-amber);
   --color-level:          var(--color-purple);
 
+  --success:              #00C896;
+  --success-hover:        #00E0A8;
+  --success-subtle:       rgba(0, 200, 150, 0.10);
+  --warning:              #FFB020;
+  --warning-subtle:       rgba(255, 176, 32, 0.10);
+  --error:                #FF4D6A;
+  --error-subtle:         rgba(255, 77, 106, 0.10);
+  --info:                 #3B82F6;
+  --info-subtle:          rgba(59, 130, 246, 0.10);
+
+  /* ── GAMIFICATION ───────────────────────────────────── */
+  --gold:                 #FFD700;
+  --gold-glow:            rgba(255, 215, 0, 0.25);
+  --silver:               #C0C0C0;
+  --bronze:               #CD7F32;
+  --xp-color:             #7C5CFF;
+  --streak-cold:          #606070;
+  --streak-warm:          #FFB020;
+  --streak-hot:           #FF6B35;
+  --streak-fire:          #FF3D00;
+  --streak-inferno:       #FF1744;
+  --streak-legend:        #D500F9;
+
+  /* ── READINESS ZONES ────────────────────────────────── */
+  --readiness-peak:       #00C896;
+  --readiness-ready:      #7C5CFF;
+  --readiness-moderate:   #FFB020;
+  --readiness-rest:       #FF4D6A;
+
+  /* ── DNA DIMENSIONS ─────────────────────────────────── */
+  --dna-power:            #FF4D6A;
+  --dna-consistency:      #00C896;
+  --dna-progression:      #7C5CFF;
+  --dna-balance:          #3B82F6;
+  --dna-mindset:          #FFB020;
+
+  /* ── MUSCLE RECOVERY ────────────────────────────────── */
+  --muscle-fresh:         #00C896;
+  --muscle-primed:        #7C5CFF;
+  --muscle-trained:       #3B82F6;
+  --muscle-fatigued:      #FFB020;
+  --muscle-recovering:    #FF4D6A;
+
   /* ── LEVEL COLORS ───────────────────────────────────── */
-  --level-color-1:        #B4B2A9;
-  --level-color-2:        #639922;
-  --level-color-3:        #639922;
-  --level-color-4:        #3B8BD4;
-  --level-color-5:        #3B8BD4;
-  --level-color-6:        #7F77DD;
-  --level-color-7:        #7F77DD;
-  --level-color-8:        #D85A30;
-  --level-color-9:        #D85A30;
-  --level-color-10:       #EF9F27;
+  --level-color-1:        #A0A0B0;
+  --level-color-2:        #00C896;
+  --level-color-3:        #00C896;
+  --level-color-4:        #3B82F6;
+  --level-color-5:        #3B82F6;
+  --level-color-6:        #7C5CFF;
+  --level-color-7:        #7C5CFF;
+  --level-color-8:        #FF6B35;
+  --level-color-9:        #FF6B35;
+  --level-color-10:       #FFD700;
 
   /* ── GYM THEME ──────────────────────────────────────── */
-  --gym-primary:          var(--color-blue);
-  --gym-primary-dark:     var(--color-blue-dark);
-  --gym-primary-light:    var(--color-blue-subtle);
+  --gym-primary:          var(--accent);
+  --gym-primary-dark:     var(--accent-pressed);
+  --gym-primary-light:    var(--accent-subtle);
   --gym-text-on-primary:  #FFFFFF;
 
   /* ── FONT FAMILY ────────────────────────────────────── */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  /* --font-inter / --font-mono are injected by next/font in app/layout.tsx.
+     --font-mono resolves directly to the next/font variable (with built-in fallbacks). */
+  --font-sans:    var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-display: var(--font-inter), system-ui, sans-serif;
+  --font-body:    var(--font-inter), system-ui, sans-serif;
+
+  /* ── SEMANTIC TYPE SCALE (DOC_03 §3) ────────────────── */
+  /* Usage: `font: var(--text-h1); letter-spacing: var(--text-h1-tracking);`
+     (font shorthand = weight size/line-height family) */
+  --text-display:          800 48px/1.1 var(--font-sans);
+  --text-display-tracking: -0.02em;
+  --text-h1:               700 32px/1.2 var(--font-sans);
+  --text-h1-tracking:      -0.01em;
+  --text-h2:               700 24px/1.3 var(--font-sans);
+  --text-h2-tracking:      -0.005em;
+  --text-h3:               600 20px/1.4 var(--font-sans);
+  --text-h3-tracking:      0em;
+  --text-h4:               600 17px/1.4 var(--font-sans);
+  --text-h4-tracking:      0em;
+  --text-body-lg:          400 16px/1.6 var(--font-sans);
+  --text-body:             400 15px/1.6 var(--font-sans);
+  --text-body-md:          500 15px/1.6 var(--font-sans);
+  --text-small:            400 13px/1.5 var(--font-sans);
+  --text-small-md:         500 13px/1.5 var(--font-sans);
+  --text-small-tracking:   0.01em;
+  --text-tiny:             500 11px/1.4 var(--font-sans);
+  --text-tiny-tracking:    0.02em;
+  --text-label:            600 12px/1.0 var(--font-sans);   /* uppercase; apply text-transform separately */
+  --text-label-tracking:   0.05em;
+  --text-stat:             700 24px/1.0 var(--font-mono);   /* size varies — override font-size after applying */
+  --text-stat-tracking:    -0.02em;
+  --text-stat-large:       800 40px/1.0 var(--font-mono);
+  --text-stat-large-tracking: -0.03em;
 
   /* ── FONT SIZES ─────────────────────────────────────── */
   --text-xs:   11px;
@@ -159,8 +271,8 @@
   --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-xl:   0 16px 48px rgba(0, 0, 0, 0.6);
-  --shadow-gold: 0 0 20px rgba(239, 159, 39, 0.3);
-  --shadow-blue: 0 0 20px rgba(59, 139, 212, 0.3);
+  --shadow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+  --shadow-blue: 0 0 20px rgba(124, 92, 255, 0.3);
 
   /* ── Z-INDEX SCALE ──────────────────────────────────── */
   --z-base:         0;

@@ -112,8 +112,8 @@ export function DNARadarChart({
           {/* Current scores polygon */}
           <polygon
             points={buildPolygonPoints(scores, maxRadius, cx, cy)}
-            fill="rgba(239,159,39,0.12)"
-            stroke="#EF9F27"
+            fill="rgba(255, 215, 0,0.12)"
+            stroke="#FFD700"
             strokeWidth={2}
           />
 
@@ -122,7 +122,7 @@ export function DNARadarChart({
             const value = Math.max(0, Math.min(100, scores[axis.key]));
             const r = (value / 100) * maxRadius;
             const { x, y } = polarToXY(axis.angle, r, cx, cy);
-            return <circle key={axis.key} cx={x} cy={y} r={4} fill="#EF9F27" />;
+            return <circle key={axis.key} cx={x} cy={y} r={4} fill="#FFD700" />;
           })}
 
           {/* Labels */}
@@ -156,7 +156,7 @@ export function DNARadarChart({
                     x={x}
                     y={y + (size === 'full' ? 19 : 12)}
                     textAnchor="middle"
-                    fill="#EF9F27"
+                    fill="#FFD700"
                     fontSize={fontSize}
                     fontWeight={700}
                   >

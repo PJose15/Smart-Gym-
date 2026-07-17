@@ -2,28 +2,29 @@ import type { ReadinessInputs, ReadinessResult, ReadinessZone } from '@nexera/ty
 
 // ─── Zone Configuration ────────────────────────────────────────
 
+// Readiness zone colors — DOC_03 §2 readiness zone tokens
 export const ZONE_COLORS: Record<ReadinessZone, string> = {
-  peak: '#639922',
-  ready: '#3B8BD4',
-  moderate: '#D85A30',
-  rest: '#888780',
+  peak: '#00C896',
+  ready: '#7C5CFF',
+  moderate: '#FFB020',
+  rest: '#FF4D6A',
 };
 
 const ZONE_CONFIG: Record<ReadinessZone, { color: string; headline: string }> = {
   peak: {
-    color: '#639922',
+    color: '#00C896',
     headline: 'Peak day — train hard',
   },
   ready: {
-    color: '#3B8BD4',
+    color: '#7C5CFF',
     headline: 'Ready to train',
   },
   moderate: {
-    color: '#D85A30',
+    color: '#FFB020',
     headline: 'Lighter session today',
   },
   rest: {
-    color: '#888780',
+    color: '#FF4D6A',
     headline: 'Rest day recommended',
   },
 };

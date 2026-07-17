@@ -123,7 +123,7 @@ export function BottomNav({ unreadCheckIn }: BottomNavProps) {
                     right: -2,
                     width: 8,
                     height: 8,
-                    background: '#EF9F27',
+                    background: '#FFD700',
                     borderRadius: '50%',
                     border: '1.5px solid var(--color-bg-base)',
                   }}

@@ -40,9 +40,9 @@ const toggleBtnStyle: CSSProperties = {
 
 const toggleActiveStyle: CSSProperties = {
   ...toggleBtnStyle,
-  background: 'rgba(239,159,39,0.15)',
-  borderColor: 'rgba(239,159,39,0.3)',
-  color: '#EF9F27',
+  background: 'rgba(255, 215, 0,0.15)',
+  borderColor: 'rgba(255, 215, 0,0.3)',
+  color: '#FFD700',
 };
 
 const coachingStyle: CSSProperties = {
@@ -62,7 +62,7 @@ export function DNAProfileScreen({ memberId }: DNAProfileScreenProps) {
   if (error) {
     return (
       <div style={{ padding: 20, textAlign: 'center' }}>
-        <p style={{ color: '#D85A30', fontSize: 13 }}>Failed to load Performance DNA.</p>
+        <p style={{ color: '#FF4D6A', fontSize: 13 }}>Failed to load Performance DNA.</p>
       </div>
     );
   }
@@ -129,7 +129,7 @@ export function DNAProfileScreen({ memberId }: DNAProfileScreenProps) {
         </p>
         <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '8px 0 0', fontStyle: 'italic' }}>
           Lowest dimension:{' '}
-          <span style={{ color: '#EF9F27', fontWeight: 600 }}>
+          <span style={{ color: '#FFD700', fontWeight: 600 }}>
             {DIMENSION_CONFIG[lowestDim as keyof typeof DIMENSION_CONFIG].label} ({Math.round(data.scores[lowestDim])})
           </span>
         </p>

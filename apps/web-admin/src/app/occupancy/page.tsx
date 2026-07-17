@@ -166,7 +166,7 @@ export default function OccupancyPage() {
                       key={h}
                       style={{
                         ...heatCellStyle,
-                        backgroundColor: `rgba(59, 139, 212, ${0.08 + intensity * 0.82})`,
+                        backgroundColor: `rgba(124, 92, 255, ${0.08 + intensity * 0.82})`,
                         color: intensity > 0.5 ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                       }}
                       title={`${DAY_LABELS[dow]} ${formatHour(h)}: ${count} sessions`}

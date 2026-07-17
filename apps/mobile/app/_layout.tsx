@@ -2,6 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Stack, Redirect, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+} from '@expo-google-fonts/inter';
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_700Bold,
+} from '@expo-google-fonts/jetbrains-mono';
 import * as Notifications from 'expo-notifications';
 import type { Session } from '@supabase/supabase-js';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
@@ -24,6 +36,17 @@ export default function RootLayout() {
   useOfflineSync();
   const lastResponseHandled = useRef(false);
   const segments = useSegments();
+
+  // Brand fonts (DOC_03 §3). Keys must match theme/typography.ts font names.
+  const [fontsLoaded, fontError] = useFonts({
+    'Inter-Regular': Inter_400Regular,
+    'Inter-Medium': Inter_500Medium,
+    'Inter-SemiBold': Inter_600SemiBold,
+    'Inter-Bold': Inter_700Bold,
+    'Inter-ExtraBold': Inter_800ExtraBold,
+    'Mono-Regular': JetBrainsMono_400Regular,
+    'Mono-Bold': JetBrainsMono_700Bold,
+  });
 
   // Auth state: undefined = loading, null = no session, Session = authenticated
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -69,8 +92,8 @@ export default function RootLayout() {
     return () => cleanup?.();
   }, [session]);
 
-  // Loading state
-  if (session === undefined) {
+  // Loading state — wait for auth AND fonts (proceed anyway if fonts error)
+  if (session === undefined || (!fontsLoaded && !fontError)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.dark }}>
         <ActivityIndicator size="large" color={colors.primary} />

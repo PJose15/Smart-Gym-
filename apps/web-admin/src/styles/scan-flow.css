@@ -21,10 +21,10 @@
 
 @keyframes prGlow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(239, 159, 39, 0.3);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(239, 159, 39, 0.6);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
   }
 }
 
@@ -49,9 +49,9 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(239, 159, 39, 0.08) 45%,
-    rgba(239, 159, 39, 0.15) 50%,
-    rgba(239, 159, 39, 0.08) 55%,
+    rgba(255, 215, 0, 0.08) 45%,
+    rgba(255, 215, 0, 0.15) 50%,
+    rgba(255, 215, 0, 0.08) 55%,
     transparent 100%
   );
   background-size: 200% 100%;
@@ -114,13 +114,13 @@
 
 @keyframes inputPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(59, 139, 212, 0.3);
+    box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.3);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(59, 139, 212, 0);
+    box-shadow: 0 0 0 6px rgba(124, 92, 255, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 139, 212, 0);
+    box-shadow: 0 0 0 0 rgba(124, 92, 255, 0);
   }
 }
 
@@ -305,7 +305,7 @@
 
 .number-display.is-suggested {
   border-color: var(--color-blue);
-  box-shadow: 0 0 8px rgba(59, 139, 212, 0.15);
+  box-shadow: 0 0 8px rgba(124, 92, 255, 0.15);
 }
 
 .number-display.is-target {
@@ -715,7 +715,7 @@
 
 .ritual-stat-pill.gold {
   border-color: var(--color-gold);
-  background: rgba(239, 159, 39, 0.1);
+  background: rgba(255, 215, 0, 0.1);
 }
 
 .pill-value {

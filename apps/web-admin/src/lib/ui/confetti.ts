@@ -1,9 +1,9 @@
 const COLORS = [
-  '#EF9F27', // gold
-  '#F5C563', // light gold
-  '#FFD700', // bright gold
+  '#FFD700', // gold
+  '#FFE566', // light gold
+  '#FFB020', // amber gold
   '#FFFFFF', // white
-  '#A0D2DB', // accent blue
+  '#9070FF', // accent purple
 ];
 
 const PIECE_COUNT = 25;

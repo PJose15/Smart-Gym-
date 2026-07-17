@@ -33,7 +33,7 @@ const quickActionBtnStyle: CSSProperties = {
   fontSize: 'var(--text-sm)',
   fontWeight: 500,
   textDecoration: 'none',
-  border: '1px solid rgba(59, 139, 212, 0.2)',
+  border: '1px solid rgba(124, 92, 255, 0.2)',
   cursor: 'pointer',
   transition: 'background-color var(--duration-fast), transform var(--duration-instant)',
   minHeight: 'var(--tap-target-min)',
@@ -59,7 +59,7 @@ const activeWorkoutsBannerStyle: CSSProperties = {
   fontSize: 'var(--text-sm)',
   fontWeight: 500,
   color: 'var(--color-blue-light)',
-  border: '1px solid rgba(59, 139, 212, 0.15)',
+  border: '1px solid rgba(124, 92, 255, 0.15)',
   fontFamily: 'var(--font-sans)',
 };
 
@@ -134,7 +134,7 @@ const errorBoxStyle: CSSProperties = {
   padding: 'var(--space-4) var(--space-5)',
   borderRadius: 'var(--radius-md)',
   fontSize: 'var(--text-sm)',
-  border: '1px solid rgba(192, 57, 43, 0.2)',
+  border: '1px solid rgba(255, 77, 106, 0.2)',
   fontFamily: 'var(--font-sans)',
 };
 

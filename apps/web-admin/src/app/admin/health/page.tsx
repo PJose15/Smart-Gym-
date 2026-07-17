@@ -18,9 +18,9 @@ const spinnerStyle: CSSProperties = {
 };
 
 const statusColors: Record<string, { color: string; bg: string; border: string }> = {
-  healthy: { color: 'var(--color-green)', bg: 'var(--color-green-light)', border: 'rgba(99,153,34,0.3)' },
-  degraded: { color: 'var(--color-gold)', bg: 'rgba(239,159,39,0.15)', border: 'rgba(239,159,39,0.3)' },
-  critical: { color: 'var(--color-red)', bg: 'var(--color-red-light)', border: 'rgba(192,57,43,0.3)' },
+  healthy: { color: 'var(--color-green)', bg: 'var(--color-green-light)', border: 'rgba(0, 200, 150,0.3)' },
+  degraded: { color: 'var(--color-gold)', bg: 'rgba(255, 215, 0,0.15)', border: 'rgba(255, 215, 0,0.3)' },
+  critical: { color: 'var(--color-red)', bg: 'var(--color-red-light)', border: 'rgba(255, 77, 106,0.3)' },
 };
 
 const tableStyle: CSSProperties = {

@@ -30,7 +30,7 @@ function makeAllFreshStates(): Record<MuscleGroupKey, MuscleRecoveryState> {
       hoursSinceTraining: null,
       recoveryPct: 100,
       lastTrainedAt: null,
-      color: '#639922',
+      color: '#00C896',
     };
   }
   return states;
@@ -171,7 +171,7 @@ describe('calculateMuscleState', () => {
     expect(result.state).toBe('fresh');
     expect(result.hoursSinceTraining).toBeNull();
     expect(result.recoveryPct).toBe(100);
-    expect(result.color).toBe('#639922');
+    expect(result.color).toBe('#00C896');
   });
 
   it('trained 2 hours ago → fatigued (< 8h boundary)', () => {
@@ -184,7 +184,7 @@ describe('calculateMuscleState', () => {
     );
     expect(result.state).toBe('fatigued');
     expect(result.hoursSinceTraining).toBe(2);
-    expect(result.color).toBe('#C43030');
+    expect(result.color).toBe('#FFB020');
   });
 
   it('trained 7 hours ago → fatigued (still < 8h)', () => {
@@ -220,7 +220,7 @@ describe('calculateMuscleState', () => {
     );
     // recoveryRequired = 48h, primed = 48h..72h (1.5x)
     expect(result.state).toBe('primed');
-    expect(result.color).toBe('#3B8BD4');
+    expect(result.color).toBe('#7C5CFF');
   });
 
   it('trained 80 hours ago, chest RPE 8 → fresh (> 72h = 1.5x48)', () => {

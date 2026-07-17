@@ -14,6 +14,8 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@nexera/ai-assist": "workspace:*",
     "@nexera/types": "workspace:*",
@@ -27,6 +29,7 @@
     "expo-camera": "~16.0.0",
     "expo-constants": "~17.0.0",
     "expo-device": "^55.0.9",
+    "expo-font": "~13.0.4",
     "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "^14.0.2",
     "expo-linking": "~7.0.0",

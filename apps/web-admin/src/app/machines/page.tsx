@@ -665,7 +665,7 @@ export default function MachinesPage() {
               <span style={machineStatsChipStyle}>{machines.length} machines</span>
               {topType && <span style={{ ...machineStatsChipStyle, backgroundColor: 'rgba(167,100,229,0.15)', color: '#a764e5' }}>{topType[1]} {topType[0]}</span>}
               {byDiff.get('beginner') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{byDiff.get('beginner')} beginner</span>}
-              {byDiff.get('intermediate') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'rgba(239,159,39,0.15)', color: 'var(--color-gold)' }}>{byDiff.get('intermediate')} intermediate</span>}
+              {byDiff.get('intermediate') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'rgba(255, 215, 0,0.15)', color: 'var(--color-gold)' }}>{byDiff.get('intermediate')} intermediate</span>}
               {byDiff.get('advanced') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{byDiff.get('advanced')} advanced</span>}
               <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue)' }}>{new Set(machines.map(m => m.gym_id)).size} gym{new Set(machines.map(m => m.gym_id)).size !== 1 ? 's' : ''}</span>
             </div>
@@ -888,7 +888,7 @@ export default function MachinesPage() {
                         <span style={{ ...metaTagStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{m.equipment_type}</span>
                       )}
                       {m.difficulty && m.difficulty !== 'beginner' && (
-                        <span style={{ ...metaTagStyle, backgroundColor: 'rgba(239,159,39,0.15)', color: 'var(--color-gold)' }}>{m.difficulty}</span>
+                        <span style={{ ...metaTagStyle, backgroundColor: 'rgba(255, 215, 0,0.15)', color: 'var(--color-gold)' }}>{m.difficulty}</span>
                       )}
                     </td>
                     <td style={tdStyle}>

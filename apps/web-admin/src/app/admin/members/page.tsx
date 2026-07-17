@@ -78,7 +78,7 @@ interface MemberEntry {
 
 const statusColors: Record<string, { color: string; bg: string }> = {
   active: { color: 'var(--color-green)', bg: 'var(--color-green-light)' },
-  suspended: { color: 'var(--color-gold)', bg: 'rgba(239,159,39,0.15)' },
+  suspended: { color: 'var(--color-gold)', bg: 'rgba(255, 215, 0,0.15)' },
   cancelled: { color: 'var(--color-red)', bg: 'var(--color-red-light)' },
 };
 

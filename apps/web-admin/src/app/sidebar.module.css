@@ -103,13 +103,13 @@
   transform: translateY(-50%) scaleY(1) !important;
   width: 3px;
   background: var(--color-blue) !important;
-  box-shadow: 0 0 10px rgba(59, 139, 212, 0.7),
-              0 0 20px rgba(59, 139, 212, 0.35);
+  box-shadow: 0 0 10px rgba(124, 92, 255, 0.7),
+              0 0 20px rgba(124, 92, 255, 0.35);
   animation: glowPulse 2.5s ease-in-out infinite;
 }
 
 .linkActive:hover {
-  background-color: rgba(59, 139, 212, 0.18);
+  background-color: rgba(124, 92, 255, 0.18);
   color: var(--color-blue-light);
   transform: translateX(3px);
 }
@@ -117,11 +117,11 @@
 /* Pulsing glow on active sidebar indicator */
 @keyframes glowPulse {
   0%, 100% {
-    box-shadow: 0 0 8px rgba(59, 139, 212, 0.5),
-                0 0 16px rgba(59, 139, 212, 0.25);
+    box-shadow: 0 0 8px rgba(124, 92, 255, 0.5),
+                0 0 16px rgba(124, 92, 255, 0.25);
   }
   50% {
-    box-shadow: 0 0 12px rgba(59, 139, 212, 0.8),
-                0 0 24px rgba(59, 139, 212, 0.4);
+    box-shadow: 0 0 12px rgba(124, 92, 255, 0.8),
+                0 0 24px rgba(124, 92, 255, 0.4);
   }
 }

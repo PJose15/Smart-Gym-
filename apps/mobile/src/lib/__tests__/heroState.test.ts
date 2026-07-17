@@ -232,15 +232,15 @@ describe('greeting by time of day', () => {
 
 describe('accent colors and gradients', () => {
   const EXPECTED_COLORS: Record<string, string> = {
-    'today-fresh': '#3B8BD4',
-    'today-trained': '#639922',
-    'pr-recent': '#EF9F27',
-    'streak-milestone': '#D85A30',
-    'comeback': '#888780',
-    'no-program': '#5F5E5A',
-    'level-up': '#7F77DD',
-    'program-complete': '#EF9F27',
-    'program-week': '#3B8BD4',
+    'today-fresh': '#7C5CFF',
+    'today-trained': '#00C896',
+    'pr-recent': '#FFD700',
+    'streak-milestone': '#FF6B35',
+    'comeback': '#606070',
+    'no-program': '#606070',
+    'level-up': '#7C5CFF',
+    'program-complete': '#FFD700',
+    'program-week': '#7C5CFF',
   };
 
   test('all variants return correct accentColor', () => {

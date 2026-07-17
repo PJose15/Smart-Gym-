@@ -30,7 +30,7 @@ export function MuscleMapScreen({ data }: MuscleMapScreenProps) {
               className="h-full rounded-full"
               style={{
                 width: `${data.balanceScore}%`,
-                backgroundColor: data.balanceScore >= 70 ? '#639922' : data.balanceScore >= 40 ? '#D85A30' : '#C43030',
+                backgroundColor: data.balanceScore >= 70 ? '#00C896' : data.balanceScore >= 40 ? '#FFB020' : '#FF4D6A',
               }}
             />
           </div>

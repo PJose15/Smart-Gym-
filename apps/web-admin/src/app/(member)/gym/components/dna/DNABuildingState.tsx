@@ -62,7 +62,7 @@ export function DNABuildingState({ sessionsLogged, distinctMachines }: DNABuildi
             height: '100%',
             width: `${progress}%`,
             borderRadius: 4,
-            background: 'linear-gradient(90deg, #EF9F27, #F59E0B)',
+            background: 'linear-gradient(90deg, #FFD700, #FFB020)',
             transition: 'width 0.4s ease-out',
           }}
         />
