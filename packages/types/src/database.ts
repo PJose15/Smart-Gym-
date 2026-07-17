@@ -685,6 +685,21 @@ export interface Database {
         };
         Update: Record<string, never>;
       };
+      social_connections: {
+        Row: {
+          id: string;
+          follower_id: string;
+          following_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          follower_id: string;
+          following_id: string;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+      };
     };
     Functions: {
       get_machine_by_slug: {
