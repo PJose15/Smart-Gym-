@@ -33,7 +33,9 @@ import {
 } from '../../../src/lib/featureFlags';
 import { awardPoints } from '../../../src/lib/pointsService';
 import { checkAndAwardStreakBonus } from '../../../src/lib/streakService';
-import { checkAndUnlockBadges } from '../../../src/lib/badgeService';
+import { checkAndUnlockBadges, getBadgesBySlugs } from '../../../src/lib/badgeService';
+import { AchievementUnlock } from '../../../src/components/celebrations/AchievementUnlock';
+import type { Badge } from '@nexera/types';
 import { sendLocalNotification } from '../../../src/lib/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
@@ -208,6 +210,7 @@ export default function WorkoutCompleteScreen() {
   const [guardrails, setGuardrails] = useState<GuardrailInsight[]>([]);
   const [coachingInsight, setCoachingInsight] = useState<CoachingInsight | null>(null);
   const [newlyUnlockedBadges, setNewlyUnlockedBadges] = useState<string[]>([]);
+  const [unlockQueue, setUnlockQueue] = useState<Badge[]>([]);
   const [workoutNumber, setWorkoutNumber] = useState<number | null>(null);
   const [workoutFinishedAt, setWorkoutFinishedAt] = useState<string | null>(null);
 
@@ -301,6 +304,13 @@ export default function WorkoutCompleteScreen() {
           const newSlugs = await checkAndUnlockBadges(workout.profile_id, workout.gym_id);
           if (newSlugs.length > 0) {
             setNewlyUnlockedBadges(newSlugs);
+            // Queue full-screen celebration takeovers (one per unlock)
+            try {
+              const badgeDefs = await getBadgesBySlugs(newSlugs);
+              setUnlockQueue(badgeDefs);
+            } catch {
+              // Non-fatal — inline "Badge Unlocked" section still shows
+            }
             sendLocalNotification({
               type: 'badge_unlocked',
               title: 'Badge Unlocked!',
@@ -906,6 +916,20 @@ export default function WorkoutCompleteScreen() {
         <Text style={styles.backToHomeText}>Back to Home</Text>
       </TouchableOpacity>
     </ScrollView>
+
+    {/* Achievement unlock takeover — one celebration per new badge */}
+    {unlockQueue.length > 0 && (
+      <AchievementUnlock
+        achievement={{
+          id: unlockQueue[0].id,
+          name: unlockQueue[0].name,
+          description: unlockQueue[0].description,
+          icon: unlockQueue[0].icon_emoji,
+          rarity: unlockQueue[0].rarity,
+        }}
+        onDismiss={() => setUnlockQueue((q) => q.slice(1))}
+      />
+    )}
     </AnimatedScreen>
   );
 }

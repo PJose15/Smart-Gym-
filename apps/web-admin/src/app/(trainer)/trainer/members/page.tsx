@@ -4,6 +4,7 @@ import { useEffect, useState, CSSProperties } from 'react';
 import Link from 'next/link';
 import type { TrainerMemberListItem } from '@nexera/types';
 import { MemberAvatar } from '@/components/ui/MemberAvatar';
+import { TrainerMemberSkeleton } from '@/components/skeletons';
 
 const searchStyle: CSSProperties = {
   width: '100%',
@@ -58,7 +59,7 @@ export default function TrainerMembersPage() {
     m.member_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <p style={{ color: 'var(--color-text-muted)' }}>Loading members...</p>;
+  if (loading) return <TrainerMemberSkeleton />;
   if (error) return <p style={{ color: 'var(--color-red-light)' }}>{error}</p>;
 
   return (

@@ -433,6 +433,8 @@ export default function ProfileScreen() {
             badges={badges}
             streak={streak}
             totalPoints={totalPoints}
+            completedWorkouts={lifetimeStats?.totalWorkouts}
+            totalVolumeKg={lifetimeStats?.totalVolumeKg}
           />
         )}
 

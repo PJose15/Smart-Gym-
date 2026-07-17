@@ -1,6 +1,7 @@
 'use client';
 
 import { useMember } from '@/lib/contexts/MemberContext';
+import { Skeleton, FeedSkeleton } from '@/components/skeletons';
 import { GymHeader } from './components/GymHeader';
 import { LeaderboardPreview } from './components/LeaderboardPreview';
 import { ChallengePreview } from './components/ChallengePreview';
@@ -13,17 +14,9 @@ export default function GymPage() {
     return (
       <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {[1, 2, 3].map(i => (
-            <div
-              key={i}
-              style={{
-                height: i === 1 ? 60 : 120,
-                backgroundColor: 'var(--color-bg-raised)',
-                borderRadius: 12,
-                animation: 'pulse 1.5s ease-in-out infinite',
-              }}
-            />
-          ))}
+          <Skeleton height={60} radius={12} />
+          <Skeleton height={120} radius={12} />
+          <FeedSkeleton cards={3} />
         </div>
       </div>
     );

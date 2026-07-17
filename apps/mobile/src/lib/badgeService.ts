@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { checkBadgeUnlocks, computeStreak } from '@nexera/ai-assist';
-import type { BadgeWithStatus } from '@nexera/types';
+import type { Badge, BadgeWithStatus } from '@nexera/types';
 
 // ─── Rarity Display Constants ───────────────────────────
 
@@ -166,6 +166,23 @@ export async function checkAndUnlockBadges(
   });
 
   return newSlugs;
+}
+
+/**
+ * Fetches full badge definitions for a set of slugs.
+ * Used to feed the AchievementUnlock celebration after new unlocks.
+ */
+export async function getBadgesBySlugs(slugs: string[]): Promise<Badge[]> {
+  if (slugs.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('badges')
+    .select('*')
+    .in('slug', slugs)
+    .order('sort_order');
+
+  if (error) throw error;
+  return (data ?? []) as Badge[];
 }
 
 /**

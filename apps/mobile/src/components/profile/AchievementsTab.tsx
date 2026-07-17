@@ -11,6 +11,12 @@ import { Card } from '../Card';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { RARITY_COLORS, RARITY_LABELS } from '../../lib/badgeService';
+import {
+  getBadgeProgress,
+  RARITY_DIFFICULTY,
+  RARITY_XP,
+} from '../../lib/achievementDisplay';
+import { StreakFlame } from '../gamification/StreakFlame';
 import type { BadgeWithStatus } from '@nexera/types';
 import type { StreakResult } from '../../lib/streakService';
 
@@ -28,9 +34,13 @@ interface AchievementsTabProps {
   badges: BadgeWithStatus[];
   streak: StreakResult | null;
   totalPoints: number;
+  /** Optional — enables progress bars on workout-count badges */
+  completedWorkouts?: number;
+  /** Optional — enables progress bars on volume badges */
+  totalVolumeKg?: number;
 }
 
-export function AchievementsTab({ badges, streak, totalPoints }: AchievementsTabProps) {
+export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts, totalVolumeKg }: AchievementsTabProps) {
   const [filter, setFilter] = useState<RarityFilter>('all');
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
 
@@ -40,13 +50,23 @@ export function AchievementsTab({ badges, streak, totalPoints }: AchievementsTab
 
   const unlockedCount = badges.filter((b) => b.unlocked).length;
 
+  // Progress toward the selected locked badge (null = not derivable → hidden)
+  const selectedProgress = selectedBadge && !selectedBadge.unlocked
+    ? getBadgeProgress(selectedBadge.criteria_type, selectedBadge.criteria_value, {
+        completedWorkouts,
+        longestStreak: streak?.longestStreak,
+        totalVolumeKg,
+        totalPoints,
+      })
+    : null;
+
   return (
     <View>
       {/* Streak */}
       {streak && streak.currentStreak > 0 && (
         <Card style={styles.streakCard}>
           <View style={styles.streakRow}>
-            <Text style={styles.streakFlame}>{'\uD83D\uDD25'}</Text>
+            <StreakFlame streakWeeks={streak.currentStreak} />
             <View style={{ flex: 1 }}>
               <Text variant="heading" style={styles.streakCount}>
                 {streak.currentStreak} week{streak.currentStreak !== 1 ? 's' : ''}
@@ -164,19 +184,54 @@ export function AchievementsTab({ badges, streak, totalPoints }: AchievementsTab
               </View>
             )}
             <Text style={styles.modalDesc}>{selectedBadge?.description}</Text>
-            {selectedBadge?.unlocked && selectedBadge.unlocked_at && (
-              <Text style={styles.modalDate}>
-                Unlocked {new Date(selectedBadge.unlocked_at).toLocaleDateString()}
-              </Text>
+
+            {/* Earned: date + XP awarded */}
+            {selectedBadge?.unlocked && (
+              <>
+                {selectedBadge.unlocked_at && (
+                  <Text style={styles.modalDate}>
+                    Unlocked {new Date(selectedBadge.unlocked_at).toLocaleDateString()}
+                  </Text>
+                )}
+                <View style={styles.xpRow}>
+                  <Text style={styles.xpValue}>+{RARITY_XP[selectedBadge.rarity] ?? 0} XP</Text>
+                </View>
+              </>
             )}
+
+            {/* Locked: progress (when derivable) + difficulty */}
             {selectedBadge && !selectedBadge.unlocked && (
-              <Text style={styles.modalLocked}>Keep going to unlock this badge!</Text>
+              <>
+                {selectedProgress && (
+                  <View style={styles.progressSection}>
+                    <View style={styles.progressTrack}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          { width: `${Math.round(selectedProgress.ratio * 100)}%` as `${number}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.progressLabel}>{selectedProgress.label}</Text>
+                  </View>
+                )}
+                <Text style={styles.modalLocked}>
+                  Difficulty: {RARITY_DIFFICULTY[selectedBadge.rarity] ?? 'Unknown'}
+                </Text>
+              </>
             )}
+
             <TouchableOpacity
               style={styles.modalClose}
               onPress={() => setSelectedBadge(null)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                selectedBadge && !selectedBadge.unlocked ? 'Keep training' : 'Close'
+              }
             >
-              <Text style={styles.modalCloseText}>Close</Text>
+              <Text style={styles.modalCloseText}>
+                {selectedBadge && !selectedBadge.unlocked ? 'Keep training' : 'Close'}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -197,7 +252,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  streakFlame: { fontSize: 32 },
   streakCount: {
     fontSize: 22,
     fontWeight: '700',
@@ -331,7 +385,42 @@ const styles = StyleSheet.create({
   modalDate: {
     fontSize: 13,
     color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  xpRow: {
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    backgroundColor: colors.primarySubtle,
+    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
     marginBottom: spacing.md,
+  },
+  xpValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.xp,
+  },
+  progressSection: {
+    width: '100%',
+    marginBottom: spacing.sm,
+  },
+  progressTrack: {
+    height: 6,
+    backgroundColor: colors.surfaceHighest,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 3,
+  },
+  progressLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 6,
   },
   modalLocked: {
     fontSize: 13,

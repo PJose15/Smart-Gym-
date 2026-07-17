@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
 import { useCelebrationStore } from '@/lib/stores/celebrationStore';
 import { DayCompleteRitual, type DayCompleteRitualProps } from '@/components/scan/DayCompleteRitual';
+import { StreakFlame } from '@/components/gamification/StreakFlame';
 import { formatWeight, unitLabel, convertFromLbs } from '@/lib/weight';
 
 interface SessionSummary {
@@ -247,11 +248,14 @@ export function SessionComplete() {
           }}
         >
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-bold)', color: 'var(--color-amber)' }}>
-              {summary.streak}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <StreakFlame streakDays={summary.streak} size={18} />
+              <span style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-bold)', color: 'var(--color-amber)' }}>
+                {summary.streak}
+              </span>
             </div>
             <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-              Day Streak 🔥
+              Day Streak
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>

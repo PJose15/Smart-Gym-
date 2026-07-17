@@ -5,6 +5,7 @@ import type { FeedEventFull, ReactionType } from '@nexera/types';
 import { useFeed } from '@/lib/hooks/useFeed';
 import { useRealtimeFeed } from '@/lib/hooks/useRealtimeFeed';
 import { FeedEventCard } from './FeedEventCard';
+import { FeedSkeleton } from '@/components/skeletons';
 
 interface FeedListProps {
   memberId: string;
@@ -114,6 +115,9 @@ export function FeedList({ memberId, gymId }: FeedListProps) {
         </div>
       )}
 
+      {/* Initial load — shimmer skeleton cards (DOC_03 §14) */}
+      {events.length === 0 && loading && <FeedSkeleton />}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {events.map((event: FeedEventFull) => (
           <FeedEventCard
@@ -128,9 +132,10 @@ export function FeedList({ memberId, gymId }: FeedListProps) {
       {/* Infinite scroll sentinel */}
       <div ref={sentinelRef} style={{ height: 1 }} />
 
-      {loading && (
-        <div style={{ textAlign: 'center', padding: 20, color: 'var(--color-text-muted)', fontSize: 13 }}>
-          Loading...
+      {/* Pagination load — compact skeleton rows below existing cards */}
+      {loading && events.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <FeedSkeleton cards={2} />
         </div>
       )}
     </div>

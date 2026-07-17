@@ -2,6 +2,7 @@
 
 import type { LevelInfoData, WeeklyStatsData } from '@nexera/types';
 import { CSSProperties } from 'react';
+import { StreakFlame } from '@/components/gamification/StreakFlame';
 
 interface MomentumZoneProps {
   streak: number;
@@ -31,16 +32,16 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
     }}>
       {/* Streak tile */}
       <div style={tileStyle}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: '#FBBF24' }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-streak, #FF6B35)' }}>
           {streak}
         </div>
         <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>
           Week Streak
         </div>
-        {/* Flame icon */}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" style={{ marginTop: 4, opacity: streak > 0 ? 1 : 0.3 }}>
-          <path d="M12 23c-4.97 0-9-3.58-9-8 0-5.5 9-13 9-13s9 7.5 9 13c0 4.42-4.03 8-9 8zm0-2c3.87 0 7-2.69 7-6 0-3.83-5.4-9.13-7-10.77C10.4 5.87 5 11.17 5 15c0 3.31 3.13 6 7 6z" />
-        </svg>
+        {/* Animated tier flame — streak is measured in weeks here */}
+        <div style={{ marginTop: 4, display: 'flex', justifyContent: 'center' }}>
+          <StreakFlame streakDays={streak * 7} size={16} />
+        </div>
       </div>
 
       {/* Week dots tile */}

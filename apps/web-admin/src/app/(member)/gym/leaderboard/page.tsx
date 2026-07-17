@@ -4,6 +4,7 @@ import { CSSProperties } from 'react';
 import { useMember } from '@/lib/contexts/MemberContext';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { AnimatedLeaderboard } from '@/components/leaderboard/AnimatedLeaderboard';
+import { LeaderboardSkeleton } from '@/components/skeletons';
 
 const RANK_MEDALS: Record<number, string> = {
   1: '\uD83E\uDD47',
@@ -69,7 +70,11 @@ export default function LeaderboardFullPage() {
   );
 
   if (!member || !gym) {
-    return <div style={{ padding: 16, color: 'var(--color-text-secondary)' }}>Loading...</div>;
+    return (
+      <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)' }}>
+        <LeaderboardSkeleton />
+      </div>
+    );
   }
 
   const entries = data?.entries || [];
@@ -92,7 +97,7 @@ export default function LeaderboardFullPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)' }}>Loading...</div>
+        <LeaderboardSkeleton />
       ) : entries.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)', fontSize: 14 }}>
           No activity for this period yet.

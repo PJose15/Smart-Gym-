@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { StreakFlame } from '../gamification/StreakFlame';
 import type { HeroState } from '../../lib/heroState';
 
 const ND = Platform.OS !== 'web';
@@ -24,7 +25,7 @@ function StreakBadge({ streak }: { streak: number }) {
   if (streak <= 0) return null;
   return (
     <View style={streakStyles.badge}>
-      <Text style={streakStyles.flame}>{'\uD83D\uDD25'}</Text>
+      <StreakFlame streakWeeks={streak} size={14} />
       <Text style={streakStyles.text}>{streak}</Text>
     </View>
   );
@@ -214,9 +215,6 @@ const streakStyles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     gap: 4,
-  },
-  flame: {
-    fontSize: 14,
   },
   text: {
     fontSize: 14,

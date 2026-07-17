@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 
-interface AchievementItem {
+export interface AchievementExtras {
+  description?: string;
+  /** emoji shown in the unlock badge (defaults to 🏆) */
+  icon?: string;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
+}
+
+interface AchievementItem extends AchievementExtras {
   type: 'achievement';
   code: string;
   title: string;
@@ -20,7 +27,7 @@ interface CelebrationState {
   queue: CelebrationItem[];
   current: CelebrationItem | null;
 
-  addAchievement: (code: string, title: string, points: number) => void;
+  addAchievement: (code: string, title: string, points: number, extras?: AchievementExtras) => void;
   addLevelUp: (level: number, name: string, color: string) => void;
   dismiss: () => void;
 }
@@ -29,8 +36,8 @@ export const useCelebrationStore = create<CelebrationState>((set, get) => ({
   queue: [],
   current: null,
 
-  addAchievement: (code, title, points) => {
-    const item: AchievementItem = { type: 'achievement', code, title, points };
+  addAchievement: (code, title, points, extras) => {
+    const item: AchievementItem = { type: 'achievement', code, title, points, ...extras };
     const state = get();
     if (!state.current) {
       set({ current: item });

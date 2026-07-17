@@ -5,6 +5,7 @@ import { useMember } from '@/lib/contexts/MemberContext';
 import { formatVolume } from '@/lib/weight';
 import { MemberAvatar } from '@/components/ui/MemberAvatar';
 import { SkeletonGate } from '@/components/skeleton';
+import { StreakFlame } from '@/components/gamification/StreakFlame';
 import type { DNAResult } from '@nexera/types';
 import type { LevelProgress } from '@nexera/ai-assist';
 
@@ -292,9 +293,12 @@ export default function ProfilePage() {
             <p style={sectionTitle}>Streak</p>
             <div style={{ display: 'flex', gap: 24 }}>
               <div>
-                <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--color-orange, #F97316)' }}>
-                  {profile.streak.current}d
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <StreakFlame streakDays={profile.streak.current} size={22} />
+                  <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--color-streak, #FF6B35)' }}>
+                    {profile.streak.current}d
+                  </p>
+                </div>
                 <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>Current</p>
               </div>
               <div>

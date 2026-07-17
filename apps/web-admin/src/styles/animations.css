@@ -26,8 +26,14 @@
     50% { opacity: 0.4; }
   }
 
+  /* Single shared shimmer — DOC_03 §14 (one animation for ALL skeletons) */
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
   .skeleton {
-    animation: skeleton-pulse 1.5s var(--ease-in-out) infinite;
+    animation: shimmer 1.5s linear infinite;
   }
 
   /* ── Scan Pulse — sonar rings on machine connect ──────── */
@@ -95,20 +101,6 @@
   @keyframes prTimerDrain {
     from { transform: scaleX(1); }
     to   { transform: scaleX(0); }
-  }
-
-  @keyframes confettiRise {
-    0% {
-      transform: translateY(0) translateX(0) rotate(0deg);
-      opacity: 1;
-    }
-    80% {
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-45vh) translateX(var(--confetti-drift, 0px)) rotate(var(--confetti-rotate, 360deg));
-      opacity: 0;
-    }
   }
 
   .pr-bottom-sheet {
@@ -223,12 +215,6 @@
     to   { opacity: 0; }
   }
 
-  @keyframes confettiDrop {
-    0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
-    80%  { opacity: 1; }
-    100% { transform: translateY(45vh) translateX(var(--confetti-drift,0px)) rotate(var(--confetti-rotate,360deg)); opacity: 0; }
-  }
-
   .lb-row-animated {
     animation: leaderboardRowEnter 250ms var(--ease-default) both;
     animation-delay: calc(var(--row-index, 0) * 30ms);
@@ -307,6 +293,119 @@
   .hour-bar.current {
     animation: barBreath 2s ease-in-out infinite;
   }
+
+  /* ── Streak Flame — DOC_03 §8 (6-tier animated SVG) ──── */
+  /* Sway (rotate) on the wrapper; flicker (scale) on the SVG so the
+     two transform animations never fight over the same element. */
+
+  @keyframes flame-sway {
+    from { transform: rotate(calc(-1 * var(--amplitude, 3deg))); }
+    to   { transform: rotate(var(--amplitude, 3deg)); }
+  }
+
+  @keyframes flame-flicker {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+  }
+
+  .streak-flame-root[data-tier="1"],
+  .streak-flame-root[data-tier="2"],
+  .streak-flame-root[data-tier="3"],
+  .streak-flame-root[data-tier="4"],
+  .streak-flame-root[data-tier="5"] {
+    animation: flame-sway var(--sway-speed, 2s) ease-in-out infinite alternate;
+  }
+
+  .streak-flame-root[data-tier="3"] .streak-flame,
+  .streak-flame-root[data-tier="4"] .streak-flame,
+  .streak-flame-root[data-tier="5"] .streak-flame {
+    animation: flame-flicker var(--flicker-speed, 500ms) ease-in-out infinite;
+  }
+
+  /* ── Confetti — DOC_03 §11 (single shared physics keyframe) ── */
+  /* Per-particle ballistic arc is pre-computed into custom props by
+     launchConfetti(); the mid keyframe preserves the parabola. */
+
+  @keyframes confettiBurst {
+    0% {
+      transform: translate(0, 0) rotate(0deg);
+      opacity: 1;
+    }
+    50% {
+      transform: translate(var(--cx-mid, 0px), var(--cy-mid, 0px)) rotate(var(--rot-mid, 180deg));
+      opacity: 1;
+    }
+    85% { opacity: 1; }
+    100% {
+      transform: translate(var(--cx-end, 0px), var(--cy-end, 0px)) rotate(var(--rot-end, 360deg));
+      opacity: 0;
+    }
+  }
+
+  /* ── Achievement Unlock — DOC_03 §9 (8-phase takeover) ── */
+
+  @keyframes auBadgePop {
+    0%    { transform: scale(0); }
+    71.4% { transform: scale(1.1); }   /* 200–700ms: spring up */
+    100%  { transform: scale(1); }     /* 600–900ms: settle */
+  }
+
+  @keyframes auXpPop {
+    0%   { transform: scale(0.4); opacity: 0; }
+    70%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes legendary-shimmer {
+    0%   { border-color: #FFD700; box-shadow: 0 0 48px rgba(255, 215, 0, 0.6); }
+    50%  { border-color: #FFF176; box-shadow: 0 0 64px rgba(255, 241, 118, 0.8); }
+    100% { border-color: #FFD700; box-shadow: 0 0 48px rgba(255, 215, 0, 0.6); }
+  }
+
+  .achievement-unlock { animation: fadeIn 300ms var(--ease-out) both; }                        /* Phase 1: 0–300ms */
+  .achievement-unlock .au-badge { animation: auBadgePop 700ms var(--ease-spring) 200ms both; } /* Phases 2+3 */
+  .achievement-unlock .au-name  { animation: slideUpFade 300ms var(--ease-out) 700ms both; }   /* Phase 4 */
+  .achievement-unlock .au-desc  { animation: fadeIn 300ms var(--ease-out) 900ms both; }        /* Phase 5 */
+  .achievement-unlock .au-xp    { animation: auXpPop 300ms var(--ease-spring) 1100ms both; }   /* Phase 6 */
+  .achievement-unlock .au-hint  { animation: fadeIn 300ms var(--ease-out) 1300ms both; }
+
+  .achievement-badge[data-rarity="legendary"] {
+    animation: auBadgePop 700ms var(--ease-spring) 200ms both,
+               legendary-shimmer 3s linear 900ms infinite;
+  }
+
+  /* ── Level-Up Overlay — DOC_03 §12 (7-phase sequence) ── */
+
+  @keyframes luBadgePop {
+    0%   { transform: scale(0); opacity: 0; }
+    70%  { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes luXpDrain {
+    from { transform: scaleX(var(--from-scale, 1)); }
+    to   { transform: scaleX(0); }
+  }
+
+  .level-up-overlay { animation: fadeIn 300ms var(--ease-out) both; }
+  .level-up-overlay .lu-sheet       { animation: slideFromBottom 400ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }  /* Phase 1 */
+  .level-up-overlay .lu-badge       { animation: luBadgePop 500ms var(--ease-spring) 200ms both; }                /* Phase 2 */
+  .level-up-overlay .lu-level-text  { animation: fadeIn 250ms var(--ease-out) 600ms both; }                       /* Phase 3 */
+  .level-up-overlay .lu-name        { animation: slideUpFade 300ms var(--ease-out) 700ms both; }                  /* Phase 4 */
+  .level-up-overlay .lu-xp-fill     { animation: luXpDrain 600ms var(--ease-in-out) 900ms both; }                 /* Phase 5 */
+  .level-up-overlay .lu-perk        { animation: slideUpFade 250ms var(--ease-out) calc(1100ms + var(--perk-index, 0) * 50ms) both; } /* Phase 6 */
+  .level-up-overlay .lu-hint        { animation: fadeIn 300ms var(--ease-out) 1500ms both; }
+
+  /* ── Machine Ambient Glow — DOC_03 §13 (breathe) ────── */
+
+  @keyframes ambient-breathe {
+    from { opacity: 0.6; transform: scale(0.95); }
+    to   { opacity: 1.0; transform: scale(1.05); }
+  }
+
+  .machine-ambient::before {
+    animation: ambient-breathe 4s ease-in-out infinite alternate;
+  }
 }
 
 /* ── Check-In Unread — always-visible styles — UI_009 ── */
@@ -349,8 +448,50 @@
   );
 }
 
+/* ── Streak Flame — always-visible styles (glow via filter) ── */
+
+.streak-flame {
+  display: inline-block;
+  filter: drop-shadow(0 0 var(--glow-size, 0px) var(--glow-color, transparent));
+}
+
+.streak-flame-root[data-tier="0"] .streak-flame {
+  filter: grayscale(1);
+}
+
+/* ── Machine Ambient Glow — always-visible styles — DOC_03 §13 ── */
+
+.machine-ambient {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.machine-ambient::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(
+    ellipse at 50% 70%,
+    var(--ambient-color, transparent) 0%,
+    transparent 70%
+  );
+}
+
 .skeleton {
-  background: var(--color-bg-elevated);
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton) 25%,
+    var(--bg-skeleton-shine) 50%,
+    var(--bg-skeleton) 75%
+  );
+  background-size: 200% 100%;
   border-radius: var(--radius-sm);
 }
 
@@ -396,5 +537,37 @@
 
   .number-value[class*="roll-exit"] {
     opacity: 0 !important;
+  }
+
+  /* Skeletons: static base color, no shimmer — DOC_03 §15 */
+  .skeleton {
+    background: var(--bg-skeleton);
+    animation: none !important;
+  }
+
+  /* Streak flame is static for reduced motion */
+  .streak-flame-root,
+  .streak-flame {
+    animation: none !important;
+  }
+
+  /* Ambient glow: static, no breathe */
+  .machine-ambient::before,
+  .hero-ambient-svg .dominant-region {
+    animation: none !important;
+  }
+
+  /* Celebrations skip animation — show final state immediately.
+     (Global 0.01ms rule leaves animation-delay intact, which would
+     stagger content in; kill the animations outright instead.) */
+  .achievement-unlock,
+  .achievement-unlock *,
+  .level-up-overlay,
+  .level-up-overlay *,
+  .pr-celebration,
+  .pr-celebration * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

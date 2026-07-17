@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useScanFlowStore } from '@/lib/stores/scanFlowStore';
 import { ScanPulse } from '@/components/scan/ScanPulse';
+import { AmbientGlow } from '@/components/machine/AmbientGlow';
+import { MachineSkeleton } from '@/components/skeletons';
 import { MusclePill } from './MusclePill';
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -18,20 +20,7 @@ export function MachineLanding() {
   const [showPulse, setShowPulse] = useState(true);
 
   if (!machine) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            border: '3px solid var(--color-border-default)',
-            borderTopColor: 'var(--color-blue)',
-            borderRadius: '50%',
-            animation: 'spin 0.7s linear infinite',
-          }}
-        />
-      </div>
-    );
+    return <MachineSkeleton />;
   }
 
   const handleStartTracking = () => {
@@ -97,8 +86,11 @@ export function MachineLanding() {
         </p>
       </div>
 
-      {/* Machine image with scan pulse */}
+      {/* Machine image with scan pulse + ambient muscle glow */}
       <div style={{ position: 'relative', marginBottom: 'var(--space-6)' }}>
+        {/* Recovery states require an authenticated member (not available
+            pre-auth on the landing step) — defaults to the 'fresh' glow. */}
+        <AmbientGlow primaryMuscles={machine.muscle_groups} />
         {showPulse && (
           <ScanPulse
             color="var(--gym-primary)"

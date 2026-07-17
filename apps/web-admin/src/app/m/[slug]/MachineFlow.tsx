@@ -11,6 +11,7 @@ import { OnboardExperience } from './components/OnboardExperience';
 import { WelcomeMoment } from './components/WelcomeMoment';
 import { SetLogger } from './components/SetLogger';
 import { SessionComplete } from './components/SessionComplete';
+import { CelebrationManager } from '@/components/celebrations';
 
 interface MachineFlowProps {
   machine: MachineData;
@@ -53,24 +54,36 @@ export function MachineFlow({ machine }: MachineFlowProps) {
     }
   }, [step, member, machine, setScanEventId, scanEventId]);
 
-  switch (step) {
-    case 'landing':
-      return <MachineLanding />;
-    case 'auth_phone':
-      return <AuthPhone />;
-    case 'auth_otp':
-      return <AuthOTP />;
-    case 'onboard_goal':
-      return <OnboardGoal />;
-    case 'onboard_experience':
-      return <OnboardExperience />;
-    case 'welcome':
-      return <WelcomeMoment />;
-    case 'logging':
-      return <SetLogger />;
-    case 'complete':
-      return <SessionComplete />;
-    default:
-      return <MachineLanding />;
-  }
+  const renderStep = () => {
+    switch (step) {
+      case 'landing':
+        return <MachineLanding />;
+      case 'auth_phone':
+        return <AuthPhone />;
+      case 'auth_otp':
+        return <AuthOTP />;
+      case 'onboard_goal':
+        return <OnboardGoal />;
+      case 'onboard_experience':
+        return <OnboardExperience />;
+      case 'welcome':
+        return <WelcomeMoment />;
+      case 'logging':
+        return <SetLogger />;
+      case 'complete':
+        return <SessionComplete />;
+      default:
+        return <MachineLanding />;
+    }
+  };
+
+  return (
+    <>
+      {renderStep()}
+      {/* Achievement / level-up takeovers fired from SessionComplete —
+          the scan flow lives outside the (member) layout, so the manager
+          must be mounted here too. */}
+      <CelebrationManager />
+    </>
+  );
 }

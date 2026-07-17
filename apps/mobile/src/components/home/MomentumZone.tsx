@@ -1,10 +1,12 @@
 /**
  * MomentumZone — Streak, weekly stats, level progress. Based on DOC_07 Part 2E.
  */
+import type { ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { StreakFlame } from '../gamification/StreakFlame';
 
 interface MomentumZoneProps {
   streak: number;
@@ -17,12 +19,14 @@ interface MomentumZoneProps {
 
 function MomentumTile({
   icon,
+  iconNode,
   value,
   label,
   sub,
   accentColor,
 }: {
-  icon: string;
+  icon?: string;
+  iconNode?: ReactNode;
   value: string;
   label: string;
   sub?: string;
@@ -30,7 +34,11 @@ function MomentumTile({
 }) {
   return (
     <View style={tileStyles.container}>
-      <Text style={tileStyles.icon}>{icon}</Text>
+      {iconNode ? (
+        <View style={tileStyles.iconNode}>{iconNode}</View>
+      ) : (
+        <Text style={tileStyles.icon}>{icon}</Text>
+      )}
       <Text style={[tileStyles.value, { color: accentColor }]}>{value}</Text>
       <Text style={tileStyles.label}>{label}</Text>
       {sub && <Text style={tileStyles.sub}>{sub}</Text>}
@@ -68,7 +76,7 @@ export function MomentumZone({
 
       <View style={styles.tilesRow}>
         <MomentumTile
-          icon={'\uD83D\uDD25'}
+          iconNode={<StreakFlame streakWeeks={streak} size={18} />}
           value={`${streak}`}
           label="day streak"
           sub={getStreakContext(streak) || undefined}
@@ -157,6 +165,12 @@ const tileStyles = StyleSheet.create({
   },
   icon: {
     fontSize: 20,
+    marginBottom: 4,
+  },
+  iconNode: {
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 4,
   },
   value: {
