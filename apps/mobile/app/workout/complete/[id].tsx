@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,14 @@ import type {
   ExperienceLevel,
 } from '@nexera/types';
 import { trackEvent } from '../../../src/lib/events';
+import { buildWorkoutShare, shareDateUtc } from '../../../src/lib/feedLogic';
+import {
+  fetchFeedContext,
+  hasSharedToday,
+  shareWorkoutToFeed,
+  type FeedContext,
+  type ShareWorkoutResult,
+} from '../../../src/lib/feedService';
 import {
   isFeatureEnabled,
   refreshFeatureFlags,
@@ -147,6 +155,149 @@ function ComparisonBadge({ label, changePercent }: ComparisonBadgeProps) {
   );
 }
 
+// ─── Workout Share Section (DOC_05 §8) ──────────────────
+
+type SharePhase =
+  | 'loading'          // resolving member/gym + today's share status
+  | 'hidden'           // no member context or user skipped
+  | 'ready'            // opt-in CTA visible
+  | 'sharing'          // insert in flight
+  | 'shared'           // success state
+  | 'already_shared'   // one share per day already used
+  | 'unavailable';     // RLS denied / network — friendly degradation
+
+interface WorkoutShareSectionProps {
+  workoutId: string;
+  volumeKg: number;
+  prsHit: number;
+  machinesUsed: string[];
+}
+
+function WorkoutShareSection({ workoutId, volumeKg, prsHit, machinesUsed }: WorkoutShareSectionProps) {
+  const [phase, setPhase] = useState<SharePhase>('loading');
+  const [ctx, setCtx] = useState<FeedContext | null>(null);
+
+  // Built once from session results — mirrors the web producer contract, so
+  // the preview shows exactly what the feed will render.
+  const share = useMemo(
+    () => buildWorkoutShare({ volumeKg, prsHit, machinesUsed }),
+    [volumeKg, prsHit, machinesUsed],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const feedCtx = await fetchFeedContext();
+        if (cancelled) return;
+        if (!feedCtx) {
+          setPhase('hidden');
+          return;
+        }
+        setCtx(feedCtx);
+        const already = await hasSharedToday(feedCtx.memberId, shareDateUtc());
+        if (!cancelled) setPhase(already ? 'already_shared' : 'ready');
+      } catch {
+        if (!cancelled) setPhase('hidden');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    if (!ctx) return;
+    setPhase('sharing');
+    try {
+      const result: ShareWorkoutResult = await shareWorkoutToFeed({
+        memberId: ctx.memberId,
+        gymId: ctx.gymId,
+        displayText: share.display_text,
+        contextData: share.context_data as unknown as Record<string, unknown>,
+        sharedAt: shareDateUtc(),
+      });
+      setPhase(result);
+      if (result === 'shared') {
+        trackEvent('workout_shared', { workout_id: workoutId });
+      }
+    } catch {
+      // RLS-denied resolves to 'unavailable' inside the service; anything
+      // else (network, etc.) lands here. Never crash the celebration screen.
+      setPhase('unavailable');
+    }
+  }, [ctx, share, workoutId]);
+
+  if (phase === 'loading' || phase === 'hidden') return null;
+
+  if (phase === 'shared') {
+    return (
+      <View style={[styles.shareStatusCard, styles.shareStatusSuccess]}>
+        <Text style={styles.shareStatusIcon}>{'✓'}</Text>
+        <Text style={styles.shareStatusTitle}>Shared to gym feed</Text>
+      </View>
+    );
+  }
+
+  if (phase === 'already_shared') {
+    return (
+      <View style={styles.shareStatusCard}>
+        <Text style={styles.shareStatusTitle}>Already shared today</Text>
+        <Text style={styles.shareStatusSub}>One share per day — see you tomorrow.</Text>
+      </View>
+    );
+  }
+
+  if (phase === 'unavailable') {
+    return (
+      <View style={styles.shareStatusCard}>
+        <Text style={styles.shareStatusTitle}>Sharing isn&apos;t available right now</Text>
+        <Text style={styles.shareStatusSub}>
+          Your workout is saved — try sharing from the feed later.
+        </Text>
+      </View>
+    );
+  }
+
+  // 'ready' | 'sharing' — opt-in CTA with a preview of the exact post
+  return (
+    <View style={styles.shareSection}>
+      <Text style={styles.shareTitle}>Share with your gym?</Text>
+
+      <View style={styles.sharePreviewBox}>
+        <Text style={styles.sharePreviewText}>You {share.display_text}</Text>
+        <Text style={styles.sharePreviewMeta}>
+          {ctx?.gymName ? `Posts to the ${ctx.gymName} feed` : 'Posts to your gym feed'}
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.shareButton, phase === 'sharing' && styles.shareButtonDisabled]}
+        onPress={handleShare}
+        disabled={phase === 'sharing'}
+        accessibilityRole="button"
+        accessibilityLabel="Share workout to gym feed"
+      >
+        {phase === 'sharing' ? (
+          <ActivityIndicator size="small" color={colors.white} />
+        ) : (
+          <Text style={styles.shareButtonText}>Share to Feed</Text>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.shareSkipButton}
+        onPress={() => setPhase('hidden')}
+        disabled={phase === 'sharing'}
+        accessibilityRole="button"
+        accessibilityLabel="Skip sharing"
+      >
+        <Text style={styles.shareSkipText}>Skip</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 // ─── PR Label Mapping ───────────────────────────────────
 
 function prTypeLabel(type: PRDetection['type']): string {
@@ -213,6 +364,7 @@ export default function WorkoutCompleteScreen() {
   const [unlockQueue, setUnlockQueue] = useState<Badge[]>([]);
   const [workoutNumber, setWorkoutNumber] = useState<number | null>(null);
   const [workoutFinishedAt, setWorkoutFinishedAt] = useState<string | null>(null);
+  const [machinesUsed, setMachinesUsed] = useState<string[]>([]);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -258,6 +410,7 @@ export default function WorkoutCompleteScreen() {
       const exercises = (exercisesData ?? []) as WorkoutExerciseWithSets[];
       setSummary(computeSummary(workout, exercises));
       setWorkoutFinishedAt(workout.finished_at ?? null);
+      setMachinesUsed([...new Set(exercises.map((e) => e.exercise_name))]);
 
       // Fetch total completed workout count for this user
       try {
@@ -899,6 +1052,14 @@ export default function WorkoutCompleteScreen() {
         </View>
       )}
 
+      {/* Share to gym feed (DOC_05 §8) */}
+      <WorkoutShareSection
+        workoutId={workoutId ?? ''}
+        volumeKg={summary.total_volume_kg}
+        prsHit={insight?.prs?.length ?? 0}
+        machinesUsed={machinesUsed}
+      />
+
       {/* Motivational Closer */}
       <View style={styles.motivationalContainer}>
         <Text style={styles.motivationalText}>
@@ -1478,6 +1639,98 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textSecondary,
     textTransform: 'uppercase',
+  },
+
+  // Workout Share Section (DOC_05 §8)
+  shareSection: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 20,
+  },
+  shareTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  sharePreviewBox: {
+    backgroundColor: colors.primarySubtle,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+  },
+  sharePreviewText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    lineHeight: 20,
+  },
+  sharePreviewMeta: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  shareButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 46,
+  },
+  shareButtonDisabled: {
+    opacity: 0.7,
+  },
+  shareButtonText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  shareSkipButton: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  shareSkipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  shareStatusCard: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 4,
+  },
+  shareStatusSuccess: {
+    backgroundColor: colors.successSubtle,
+    borderColor: colors.success,
+  },
+  shareStatusIcon: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.success,
+  },
+  shareStatusTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  shareStatusSub: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 
   // Motivational Closer

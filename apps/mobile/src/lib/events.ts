@@ -10,6 +10,7 @@ export type EventName =
   | 'workout_started'
   | 'set_logged'
   | 'workout_finished'
+  | 'workout_shared'
   | 'ai_next_set_shown'
   | 'ai_next_set_applied'
   | 'ai_summary_viewed'

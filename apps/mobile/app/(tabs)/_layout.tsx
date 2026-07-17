@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { colors } from '../../src/theme/colors';
+import { useUnreadFeedCount } from '../../src/hooks/useUnreadFeedCount';
 
 const USE_NATIVE = Platform.OS !== 'web';
 
@@ -99,6 +100,8 @@ const tabIconStyles = StyleSheet.create({
 });
 
 export default function TabLayout() {
+  const { count: unreadFeedCount } = useUnreadFeedCount();
+
   return (
     <Tabs
       screenOptions={{
@@ -142,6 +145,27 @@ export default function TabLayout() {
           tabBarAccessibilityLabel: 'Scan QR code tab',
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon name="qr-code-outline" activeName="qr-code" size={size} color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="feed"
+        options={{
+          title: 'Feed',
+          tabBarAccessibilityLabel: 'Gym feed tab',
+          tabBarBadge:
+            unreadFeedCount > 0
+              ? unreadFeedCount > 99
+                ? '99+'
+                : unreadFeedCount
+              : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.primary,
+            color: colors.white,
+            fontSize: 10,
+          },
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabIcon name="people-outline" activeName="people" size={size} color={color} focused={focused} />
           ),
         }}
       />
