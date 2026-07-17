@@ -34,3 +34,6 @@ Thumbs.db
 # EAS
 eas-credentials/
 list-tables.mjs
+
+# Claude Code local settings
+.claude/settings.local.json
