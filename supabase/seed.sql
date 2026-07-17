@@ -14,7 +14,10 @@ VALUES
   ('global_leaderboard',       false, 'Cross-gym leaderboard (Phase 5 — disabled)'),
   ('push_notifications_enabled', true, 'Platform-wide web push notification sending'),
   ('uptimizeai_agents_enabled', true,  'All UptimizeAI agent automation workflows'),
-  ('new_gym_registrations',    true,  'Allow new gyms to self-register');
+  ('new_gym_registrations',    true,  'Allow new gyms to self-register')
+ON CONFLICT (flag_key) DO NOTHING;
+-- ^ migration 013 already seeds these keys; without the conflict guard,
+--   `supabase db reset` fails when this seed file runs after migrations.
 
 -- ============================================================
 -- ACHIEVEMENT DEFINITIONS — complete achievement catalog
@@ -33,7 +36,8 @@ VALUES
   ('program-complete', 'Program Graduate',  'Completed your first AI training program',       'milestone', 300,  1,    'programs', 70),
   ('programs-3',       'Three and Done',    'Completed 3 full training programs',             'milestone', 600,  3,    'programs', 80),
   ('level-5',          'Dedicated',         'Reached Level 5 — Dedicated',                   'milestone', 200,  5,    'level',    90),
-  ('level-10',         'Legend',            'Reached Level 10 — the highest rank',            'milestone', 1000, 10,   'level',    100);
+  ('level-10',         'Legend',            'Reached Level 10 — the highest rank',            'milestone', 1000, 10,   'level',    100)
+ON CONFLICT (code) DO NOTHING;
 
 -- PERFORMANCE CATEGORY
 INSERT INTO achievement_definitions
@@ -46,7 +50,8 @@ VALUES
   ('prs-50',           'Unstoppable Force', '50 personal records. You keep getting stronger.','performance', 1000, 50,   'prs',  150),
   ('volume-10k',       'Ten Thousand',      'Lifted 10,000 lbs total volume',                 'performance', 150,  10000,'lbs',  160),
   ('volume-100k',      'Hundred Thousand',  '100,000 lbs total volume lifted',                'performance', 400,  100000,'lbs', 170),
-  ('volume-1m',        'One Million',       '1,000,000 lbs total. A million pound club.',     'performance', 1000, 1000000,'lbs',180);
+  ('volume-1m',        'One Million',       '1,000,000 lbs total. A million pound club.',     'performance', 1000, 1000000,'lbs',180)
+ON CONFLICT (code) DO NOTHING;
 
 -- CONSISTENCY CATEGORY
 INSERT INTO achievement_definitions
@@ -59,7 +64,8 @@ VALUES
   ('streak-60',        'Iron Habit',        '60 days straight. This is a lifestyle now.',     'consistency', 750,  60,  'days', 230),
   ('streak-90',        'Quarterly Iron',    '90-day streak. Three months of consistency.',    'consistency', 1000, 90,  'days', 240),
   ('streak-180',       'Half Year',         'Six months without missing a day.',              'consistency', 1500, 180, 'days', 250),
-  ('streak-365',       'Full Year',         '365-day streak. A full year of training.',       'consistency', 3000, 365, 'days', 260);
+  ('streak-365',       'Full Year',         '365-day streak. A full year of training.',       'consistency', 3000, 365, 'days', 260)
+ON CONFLICT (code) DO NOTHING;
 
 -- EXPLORER CATEGORY
 INSERT INTO achievement_definitions
@@ -69,7 +75,8 @@ VALUES
   ('machines-10',      'Gym Explorer',      'Used 10 different machines',                     'explorer', 200,  10, 'machines', 280),
   ('machines-all',     'Full Gym',          'Used every machine in your gym',                 'explorer', 500,  0,  'machines', 290),
   ('first-cardio',     'Cardio Curious',    'Logged your first cardio session',               'explorer', 50,   1,  'sessions', 300),
-  ('first-program',    'Program Starter',   'Started your first AI training program',         'explorer', 100,  1,  'programs', 310);
+  ('first-program',    'Program Starter',   'Started your first AI training program',         'explorer', 100,  1,  'programs', 310)
+ON CONFLICT (code) DO NOTHING;
 
 -- COMMUNITY CATEGORY
 INSERT INTO achievement_definitions
@@ -78,7 +85,8 @@ VALUES
   ('challenge-join',   'Challenge Accepted', 'Joined your first gym challenge',               'community', 75,   1, 'challenges', 320),
   ('challenge-win',    'Champion',           'Won a gym challenge',                           'community', 500,  1, 'wins',       330),
   ('challenge-podium', 'Top of the Gym',     'Finished in the top 3 of a gym challenge',      'community', 200,  1, 'podiums',    340),
-  ('spotlight',        'Spotlight Athlete',  'Featured as a gym member spotlight',            'community', 250,  1, 'spotlights', 350);
+  ('spotlight',        'Spotlight Athlete',  'Featured as a gym member spotlight',            'community', 250,  1, 'spotlights', 350)
+ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================
 -- TIP LIBRARY — seed coaching tips by category
