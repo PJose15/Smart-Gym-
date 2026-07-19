@@ -41,7 +41,7 @@ export interface FeedPage {
 
 // ─── Member identity lookup (name + avatar via compatibility views) ─────────
 
-async function resolveMemberInfo(
+export async function resolveMemberInfo(
   memberIds: string[],
 ): Promise<Map<string, { name: string; avatar_url: string | null }>> {
   const map = new Map<string, { name: string; avatar_url: string | null }>();
