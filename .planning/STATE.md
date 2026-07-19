@@ -9,12 +9,12 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 
 ## Current Position
 
-Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (not started)
-Plan: —
-Status: Roadmap created; Phase 2 (Mobile Social Feed) already delivered 2026-07-17
-Progress: [░█░░░░] 1/6 phases complete (Phase 2)
-Last activity: 2026-07-19 — REQUIREMENTS.md + ROADMAP.md created (30 requirements, 6 phases, 100% coverage); Phase 2 marked complete retroactively
-Next action: `/gsd:plan-phase 1` — plan Owner Onboarding in full executable detail (user priority)
+Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (in progress)
+Plan: 1 of 9 complete (01-01 done; checkpoint at Task 2 — awaiting DB push approval)
+Status: Plan 01-01 complete: migration 027 written + deps installed; DB push pending user approval
+Progress: [░█░░░░] 1/6 phases complete (Phase 2); Phase 1 in progress
+Last activity: 2026-07-19 — Executed plan 01-01: migration 027 + react-hook-form/csv-parse installed
+Next action: User approves migration 027 DB push → Claude runs `npx supabase db push --linked` → continue plan 01-02
 
 ## Accumulated Context
 
@@ -36,7 +36,15 @@ Next action: `/gsd:plan-phase 1` — plan Owner Onboarding in full executable de
 - **Phase 5 ↔ 6 ordering tension:** agents (Phase 5) output pushes delivered by the Phase 6 dispatcher. Resolve in Phase 5 planning: build minimal dispatcher (NOTIF-01 core) as Phase 5's first plan, OR scope Phase 5 outputs to owner email + logs until Phase 6. Loop-safety dedup (AGENT-02) must precede any agent wiring.
 - Key Phase 1 pitfalls (see research/PITFALLS.md): Stripe webhook idempotency (`stripe_events_processed` table first), atomic gym creation via RPC, RLS session refresh after signup, CSV BOM handling, validate-then-import.
 
+## Decisions
+
+- **01-01**: RPCs use SECURITY DEFINER + REVOKE FROM PUBLIC + GRANT TO service_role (service_role isolation pattern)
+- **01-01**: complete_gym_onboarding uses loop-with-exception-catch for slug uniqueness (up to 3 retries with `-XXXX` suffix)
+- **01-01**: bulk_import_members skips duplicates (not errors) — validate-then-import two-phase flow handles bad data before this runs
+- **01-01**: stripe_events_processed has no RLS policies (service_role bypasses RLS entirely)
+
 ## Session Continuity
 
-Last session: 2026-07-19 — created REQUIREMENTS.md (30 REQ-IDs, 6 categories) + ROADMAP.md (6 phases, Phase 2 complete), updated this file.
-Resume with: `/gsd:plan-phase 1`
+Last session: 2026-07-19 — executed plan 01-01 (migration 027 + deps), hit Task 2 checkpoint (DB push).
+Stopped at: Task 2 of plan 01-01 — awaiting user approval to run `npx supabase db push --linked`
+Resume with: User replies "approved" → Claude runs `npx supabase db push --linked` → verify objects → commit SUMMARY → plan 01-02

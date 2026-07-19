@@ -14,7 +14,7 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
 - [ ] **ONBD-01**: Owner can sign up via a 4-step wizard (account → gym info → plan selection → Stripe checkout) with no human intervention
   - Unauthenticated `(onboard)/` route group with signup, verify-email, subscribe, setup pages; progress indicator across steps
   - Plan tiers (Starter/Growth/Pro) shown in-app before checkout; wizard uses react-hook-form + Zod; brand design tokens (DOC_03)
-- [ ] **ONBD-02**: Gym creation is atomic and resumable — no orphaned auth users or half-created gyms
+- [x] **ONBD-02**: Gym creation is atomic and resumable — no orphaned auth users or half-created gyms
   - Single transaction (Postgres RPC) creates `gyms`, `gym_memberships` (role=owner), `gym_settings`, `gym_billing` (trialing)
   - `onboarding_status` tracks partial completion; session refreshed post-creation so RLS sees the new membership immediately
 - [ ] **ONBD-03**: Stripe checkout completes the trial subscription safely, including retry and abandonment paths
@@ -22,9 +22,9 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
   - `checkout.session.completed` and `checkout.session.expired` handled; abandoned checkout shows "complete your subscription" banner; `payment_method_collection` + `trial_settings.end_behavior` configured
 - [ ] **ONBD-04**: First-machine setup wizard gets a new gym from zero machines to a printable QR code
   - Guided 3-step wizard (name → muscle groups → QR PDF) using existing `POST /api/machines` + QR endpoints; shared `MachineForm` extracted so `/machines` CRUD page and wizard stay in sync
-- [ ] **ONBD-05**: Owner can bulk-import members from CSV with validate-then-import flow
+- [x] **ONBD-05**: Owner can bulk-import members from CSV with validate-then-import flow
   - Column mapping UI, preview, per-row error report ("47 imported, 3 failed — download error report"); BOM/encoding handling (Excel exports); all-or-nothing batch import capped at 500 rows/request; `csv-parse` server-side
-- [ ] **ONBD-06**: Imported members can claim their accounts on mobile
+- [x] **ONBD-06**: Imported members can claim their accounts on mobile
   - Import creates members with `invited` status + claim email; first mobile phone-OTP login links the invited record to the auth user
 - [ ] **ONBD-07**: Owner dashboard shows post-signup setup checklist and trial countdown
   - Checklist (add machine, import/invite members, share QR) with completion state; "X days left in trial → Upgrade" banner on dashboard
@@ -118,11 +118,11 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | ONBD-01 | Phase 1 | Pending |
-| ONBD-02 | Phase 1 | Pending |
+| ONBD-02 | Phase 1 | Complete |
 | ONBD-03 | Phase 1 | Pending |
 | ONBD-04 | Phase 1 | Pending |
-| ONBD-05 | Phase 1 | Pending |
-| ONBD-06 | Phase 1 | Pending |
+| ONBD-05 | Phase 1 | Complete |
+| ONBD-06 | Phase 1 | Complete |
 | ONBD-07 | Phase 1 | Pending |
 | FEED-01 | Phase 2 | ✅ Complete (2026-07-17) |
 | FEED-02 | Phase 2 | ✅ Complete (2026-07-17) |
