@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-mobile-challenges/03-01-PLAN.md (all 3 tasks including live DB push)
-last_updated: "2026-07-19T20:42:16.456Z"
+stopped_at: Completed 03-mobile-challenges/03-04-PLAN.md (ChallengeLeaderboard + detail screen + route registration)
+last_updated: "2026-07-19T20:52:21.349Z"
 last_activity: "2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
   percent: 78
 ---
 
@@ -86,9 +86,11 @@ Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-devic
 - [Phase 03-mobile-challenges]: fetchChallengeDetail returns null (not throw) for missing challenge — stale deep link graceful handling
 - [Phase 03-mobile-challenges]: resolveMemberInfo exported from feedService.ts — challengeService reuses it for leaderboard name resolution
 - [Phase 03-mobile-challenges]: Migration 028 applied to live DB — challenge_participants_member_gym_read policy confirmed; 115 rows visible for demo gym member
+- [Phase 03-mobile-challenges]: Dynamic cache key strings cast to CacheKey for clearCache/setCache calls; static imports only (no dynamic import() in mobile tsconfig)
+- [Phase 03-mobile-challenges]: useReducedMotion gates confetti; haptic fires unconditionally on join (haptics are non-visual per DOC_03)
 
 ## Session Continuity
 
-Last session: 2026-07-19T20:42:16.452Z
-Stopped at: Completed 03-mobile-challenges/03-01-PLAN.md (all 3 tasks including live DB push)
+Last session: 2026-07-19T20:52:21.332Z
+Stopped at: Completed 03-mobile-challenges/03-04-PLAN.md (ChallengeLeaderboard + detail screen + route registration)
 Resume with: Execute plan 01-09 — Stripe + OTP E2E onboarding checkpoint
