@@ -6,7 +6,10 @@ import { PeakHoursGrid } from '@/components/owner/PeakHoursGrid';
 import { LiveActivityStrip } from '@/components/owner/LiveActivityStrip';
 import { AtRiskList } from '@/components/owner/AtRiskList';
 import { SessionsHourlyChart } from '@/components/owner/SessionsHourlyChart';
+import { SetupChecklist } from '@/components/owner/SetupChecklist';
+import { TrialCountdownBanner } from '@/components/owner/TrialCountdownBanner';
 import type { OwnerDashboardMetrics, MachinePerformance, PeakHourCell, ActivityFeedItem } from '@nexera/types';
+import type { OnboardingStatusResponse } from '@/app/api/owner/onboarding-status/route';
 
 const sectionTitle: CSSProperties = { margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: 'var(--color-text-secondary)' };
 const cardStyle: CSSProperties = { backgroundColor: 'var(--color-bg-raised)', borderRadius: 10, padding: 20, marginBottom: 20 };
@@ -25,7 +28,27 @@ export default function OwnerDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatusResponse | null>(null);
   const mountedRef = useRef(true);
+
+  // One-shot fetch for onboarding status (checklist + trial)
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/owner/onboarding-status', { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<OnboardingStatusResponse>;
+      })
+      .then((status) => {
+        if (mountedRef.current) setOnboardingStatus(status);
+      })
+      .catch((err) => {
+        if ((err as { name?: string }).name !== 'AbortError') {
+          console.error('[OwnerDashboard] onboarding-status fetch failed:', err);
+        }
+      });
+    return () => controller.abort();
+  }, []);
 
   // Initial load + poll every 30 s for metrics
   useEffect(() => {
@@ -96,6 +119,16 @@ export default function OwnerDashboardPage() {
         }}>
           {refreshError} — showing last loaded data.
         </div>
+      )}
+
+      {/* Trial countdown banner — shown while trialing */}
+      {onboardingStatus?.trial.is_trialing && onboardingStatus.trial.days_remaining !== null && (
+        <TrialCountdownBanner daysRemaining={onboardingStatus.trial.days_remaining} />
+      )}
+
+      {/* Setup checklist — collapses when all 3 steps complete */}
+      {onboardingStatus && (
+        <SetupChecklist checklist={onboardingStatus.checklist} />
       )}
 
       {/* Live Activity Ticker */}
