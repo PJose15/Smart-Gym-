@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-mobile-challenges/03-02-PLAN.md
-last_updated: "2026-07-19T20:38:47.450Z"
+stopped_at: Completed 03-mobile-challenges/03-01-PLAN.md (all 3 tasks including live DB push)
+last_updated: "2026-07-19T20:42:16.456Z"
 last_activity: "2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix"
 progress:
   total_phases: 6
@@ -85,9 +85,10 @@ Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-devic
 - [Phase 03-mobile-challenges]: progressPct = my_score/top_score (no goal_value column in DB — research confirmed)
 - [Phase 03-mobile-challenges]: fetchChallengeDetail returns null (not throw) for missing challenge — stale deep link graceful handling
 - [Phase 03-mobile-challenges]: resolveMemberInfo exported from feedService.ts — challengeService reuses it for leaderboard name resolution
+- [Phase 03-mobile-challenges]: Migration 028 applied to live DB — challenge_participants_member_gym_read policy confirmed; 115 rows visible for demo gym member
 
 ## Session Continuity
 
-Last session: 2026-07-19T20:38:47.446Z
-Stopped at: Completed 03-mobile-challenges/03-02-PLAN.md
+Last session: 2026-07-19T20:42:16.452Z
+Stopped at: Completed 03-mobile-challenges/03-01-PLAN.md (all 3 tasks including live DB push)
 Resume with: Execute plan 01-09 — Stripe + OTP E2E onboarding checkpoint

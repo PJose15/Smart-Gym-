@@ -24,7 +24,7 @@ decisions:
 metrics:
   duration: "2 minutes"
   completed_date: "2026-07-19"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
   files_created: 2
   files_modified: 2
@@ -40,20 +40,17 @@ metrics:
 |------|------|--------|-------|
 | 1 | Create Migration 028 — member SELECT policy on challenge_participants | `4e73ecb` | supabase/migrations/028_challenge_member_read.sql |
 | 2 | Add Bearer JWT support to verifyMember + forward request from join route | `4182c1b` | verifyMember.ts, verifyMember.test.ts, join/route.ts |
-
-## Task 3 Status
-
-**Task 3 (checkpoint:human-action):** Awaiting user approval to run `npx supabase db push --linked` and apply migration 028 to the live database (project aztppxuapbgmadfigtys).
+| 3 | Apply Migration 028 to live DB (human-approved checkpoint) | n/a (db push) | Live DB: challenge_participants_member_gym_read policy active |
 
 ## What Was Built
 
-### Migration 028 (Task 1)
+### Migration 028 (Tasks 1 + 3)
 File: `supabase/migrations/028_challenge_member_read.sql`
 
 - Adds `challenge_participants_member_gym_read` SELECT-only policy using `is_gym_member(gym_id)`
 - Mirrors the existing `challenges_gym_members_read` policy on `gym_challenges` (migration 001)
 - No INSERT/UPDATE/DELETE policies added — writes stay behind the web-admin join route (service role)
-- **Not yet applied to live DB** — pending Task 3 human approval
+- **Applied to live DB** — `npx supabase db push --linked` executed after user approval; policy confirmed present; authenticated demo-gym member JWT can SELECT 115 challenge_participants rows for Iron Society gym via PostgREST (count=exact verified)
 
 ### verifyMember Bearer JWT (Task 2)
 File: `apps/web-admin/src/lib/auth/verifyMember.ts`
@@ -87,6 +84,7 @@ File: `apps/web-admin/src/lib/auth/__tests__/verifyMember.test.ts`
 - Join route: `request` forwarded — VERIFIED
 - Full web-admin suite: 347/347 tests pass (5 new) — VERIFIED
 - TypeScript: `tsc --noEmit` clean — VERIFIED
+- Migration 028 applied to live DB: `npx supabase db push --linked` succeeded; PostgREST count=exact returns 115 rows for authenticated demo member — VERIFIED
 
 ## Deviations from Plan
 
@@ -108,3 +106,4 @@ None — plan executed exactly as written.
 - .planning/phases/03-mobile-challenges/03-01-SUMMARY.md: FOUND
 - Commit 4e73ecb (Task 1): FOUND
 - Commit 4182c1b (Task 2): FOUND
+- Task 3 (live DB push): CONFIRMED — user approved, orchestrator ran db push, PostgREST SELECT verified 115 rows
