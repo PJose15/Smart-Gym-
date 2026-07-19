@@ -1,6 +1,8 @@
 /**
  * HeroZone — The personal greeting card at the top of the home screen.
  * Full-bleed, variant-driven, time-aware. Based on DOC_07 Part 2C.
+ * Restyled to the NEXTERA Red-Luxury system (design/stitch): 22px featured
+ * card, hairline border, serif brand headline, mono metric, crimson glow.
  */
 import { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Image, Platform } from 'react-native';
@@ -8,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import { StreakFlame } from '../gamification/StreakFlame';
 import type { HeroState } from '../../lib/heroState';
 
@@ -85,67 +88,73 @@ export function HeroZone({ hero, firstName, avatarUrl, level, streak }: HeroZone
   }, [hero.variant]);
 
   return (
-    <LinearGradient
-      colors={[hero.gradientColors[0], hero.gradientColors[1]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
-      {/* Accent glow */}
-      <View style={[styles.accentGlow, { backgroundColor: hero.accentColor }]} />
+    <View style={styles.wrapper}>
+      <LinearGradient
+        colors={[hero.gradientColors[0], hero.gradientColors[1]]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.card}
+      >
+        {/* Emissive corner glow (tonal depth, no drop shadow) */}
+        <View style={[styles.accentGlow, { backgroundColor: hero.accentColor }]} />
 
-      <Animated.View style={[styles.content, { opacity: fadeIn, transform: [{ translateY: slideUp }] }]}>
-        {/* Identity row: avatar, greeting+name, streak */}
-        <View style={styles.identityRow}>
-          <MemberAvatar avatarUrl={avatarUrl} name={firstName} level={level} />
-          <View style={styles.identityText}>
-            <Text style={[styles.greeting, { color: hero.accentColor }]}>
-              {hero.greeting}
-            </Text>
-            <Text style={styles.name}>{firstName}</Text>
+        <Animated.View style={[styles.content, { opacity: fadeIn, transform: [{ translateY: slideUp }] }]}>
+          {/* Identity row: avatar, greeting+name, streak */}
+          <View style={styles.identityRow}>
+            <MemberAvatar avatarUrl={avatarUrl} name={firstName} level={level} />
+            <View style={styles.identityText}>
+              <Text style={[styles.greeting, { color: hero.accentColor }]}>
+                {hero.greeting}
+              </Text>
+              <Text style={styles.name}>{firstName}</Text>
+            </View>
+            <StreakBadge streak={streak} />
           </View>
-          <StreakBadge streak={streak} />
-        </View>
 
-        {/* Dynamic message */}
-        <View style={styles.messageBlock}>
-          <Text style={styles.headline}>{hero.headline}</Text>
-          <Text style={styles.subline}>{hero.subline}</Text>
-        </View>
+          {/* Dynamic message */}
+          <View style={styles.messageBlock}>
+            <Text style={styles.headline}>{hero.headline}</Text>
+            <Text style={styles.subline}>{hero.subline}</Text>
+          </View>
 
-        {/* Hero metric */}
-        {hero.metric && (
-          <Animated.View style={[styles.metricContainer, { transform: [{ scale: metricScale }] }]}>
-            <Text style={[styles.metricValue, { color: hero.accentColor }]}>
-              {hero.metric.value}
-            </Text>
-            <Text style={styles.metricLabel}>{hero.metric.label}</Text>
-          </Animated.View>
-        )}
-      </Animated.View>
-    </LinearGradient>
+          {/* Hero metric */}
+          {hero.metric && (
+            <Animated.View style={[styles.metricContainer, { transform: [{ scale: metricScale }] }]}>
+              <Text style={[styles.metricValue, { color: hero.accentColor }]}>
+                {hero.metric.value}
+              </Text>
+              <Text style={styles.metricLabel}>{hero.metric.label}</Text>
+            </Animated.View>
+          )}
+        </Animated.View>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     paddingTop: 56,
-    paddingBottom: 28,
-    paddingHorizontal: spacing.lg,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
+    backgroundColor: colors.background,
+  },
+  card: {
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
     overflow: 'hidden',
     position: 'relative',
   },
   accentGlow: {
     position: 'absolute',
-    top: -60,
-    right: -40,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    opacity: 0.08,
+    top: -70,
+    right: -50,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    opacity: 0.14,
   },
   content: {
     gap: spacing.lg,
@@ -159,14 +168,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 13,
-    fontWeight: '500',
-    letterSpacing: 0.5,
+    fontSize: typography.labelSize,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
+  // Serif brand moment — the greeting headline (Playfair Display)
   name: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 30,
+    fontFamily: typography.fontSerifBold,
     color: colors.text,
     marginTop: 2,
   },
@@ -174,20 +184,22 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headline: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: typography.h3Size,
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
     lineHeight: 26,
   },
   subline: {
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     lineHeight: 20,
   },
   metricContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 12,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
@@ -195,14 +207,18 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: spacing.sm,
   },
+  // Numbers are heroes — mono, big
   metricValue: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.5,
   },
   metricLabel: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.textMuted,
+    fontSize: typography.tinySize,
+    fontFamily: typography.fontSemiBold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
 });
 
@@ -210,15 +226,17 @@ const streakStyles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.amberSubtle,
-    borderRadius: 20,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    gap: 5,
   },
   text: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
     color: colors.amber,
   },
 });
@@ -232,7 +250,7 @@ const avatarStyles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: colors.borderAccent,
   },
   fallback: {
     width: 52,
@@ -240,20 +258,20 @@ const avatarStyles = StyleSheet.create({
     borderRadius: 26,
     backgroundColor: colors.surfaceElevated,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: colors.borderAccent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: typography.fontBold,
     color: colors.textSecondary,
   },
   levelBadge: {
     position: 'absolute',
     bottom: -2,
     right: -2,
-    backgroundColor: colors.purple,
+    backgroundColor: colors.primary,
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -264,7 +282,7 @@ const avatarStyles = StyleSheet.create({
   },
   levelText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: typography.fontBold,
     color: colors.white,
   },
 });

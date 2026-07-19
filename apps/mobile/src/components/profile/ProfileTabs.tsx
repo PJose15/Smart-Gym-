@@ -9,6 +9,7 @@ import {
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 export type ProfileTabKey = 'overview' | 'achievements' | 'dna' | 'bodymap';
 
@@ -96,6 +97,7 @@ export function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: spacing.sm,
     marginBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -106,21 +108,27 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
   },
   tabText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
     color: colors.textSecondary,
   },
   tabTextActive: {
-    color: colors.primary,
+    color: colors.primaryLight,
   },
   indicator: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -1,
     height: 2,
     backgroundColor: colors.primary,
     borderRadius: 1,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
   },
 });

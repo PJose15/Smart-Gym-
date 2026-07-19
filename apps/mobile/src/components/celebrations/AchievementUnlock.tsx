@@ -29,6 +29,7 @@ import {
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import {
   RARITY_BORDER_COLORS,
   RARITY_GLOW_COLORS,
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   badge: {
     width: 120,
     height: 120,
-    borderRadius: 24,
+    borderRadius: 22,
     borderWidth: 3,
     backgroundColor: colors.surfaceElevated,
     alignItems: 'center',
@@ -254,28 +255,30 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   badgeLegendary: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceHighest,
   },
   badgeIcon: {
     fontSize: 56,
     lineHeight: 68,
   },
   unlockedLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.textSecondary,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 3,
+    color: colors.gold,
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
   name: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 30,
+    fontFamily: typography.fontSerifBold,
     color: colors.text,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   description: {
     fontSize: 15,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
@@ -283,14 +286,15 @@ const styles = StyleSheet.create({
   },
   xpBadge: {
     borderWidth: 1,
-    borderRadius: 20,
+    borderRadius: 999,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    backgroundColor: colors.primarySubtle,
+    backgroundColor: colors.goldSubtle,
   },
   xpText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.xp,
+    fontSize: 15,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
+    color: colors.gold,
   },
 });

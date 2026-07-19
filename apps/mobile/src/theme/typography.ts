@@ -33,4 +33,7 @@ export const typography = {
   fontExtraBold: 'Inter-ExtraBold',
   fontMono:      'Mono-Regular',
   fontMonoBold:  'Mono-Bold',
+  // Editorial serif (Playfair Display) — brand moments, hero headlines only
+  fontSerif:     'Serif-SemiBold',
+  fontSerifBold: 'Serif-Bold',
 } as const;

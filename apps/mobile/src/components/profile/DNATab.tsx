@@ -1,9 +1,18 @@
 import { View, StyleSheet } from 'react-native';
+import Svg, {
+  Polygon,
+  Line,
+  Circle,
+  Text as SvgText,
+  Defs,
+  RadialGradient,
+  Stop,
+} from 'react-native-svg';
 import { Text } from '../Text';
-import { Card } from '../Card';
 import { AnimatedCard } from '../AnimatedCard';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import { ARCHETYPES, DIMENSION_CONFIG, DNA_AXES } from '@nexera/ai-assist';
 import type { DNACacheResult } from '../../lib/memberData';
 
@@ -11,93 +20,155 @@ interface DNATabProps {
   dna: DNACacheResult | null;
 }
 
-const DIMENSION_COLORS: Record<string, string> = {
-  power: colors.error,
-  consistency: colors.primary,
-  progression: colors.success,
-  balance: colors.gold,
-  mindset: colors.purple,
-};
+// ─── Pentagon Radar (design.md §7.5 — crimson stroke + glow, grid rings, ghost) ───
+
+const SIZE = 280;
+const CENTER = SIZE / 2;
+const RADIUS = 95;
+const GRID_STROKE = 'rgba(255, 255, 255, 0.09)';
+
+function vertex(index: number, value: number) {
+  const angle = (Math.PI * 2 * index) / 5 - Math.PI / 2;
+  const r = (value / 100) * RADIUS;
+  return {
+    x: CENTER + r * Math.cos(angle),
+    y: CENTER + r * Math.sin(angle),
+  };
+}
+
+function ringPoints(value: number): string {
+  return DNA_AXES.map((_, i) => {
+    const p = vertex(i, value);
+    return `${p.x},${p.y}`;
+  }).join(' ');
+}
+
+// Label anchors per axis position (0 top, 1 right, 2 bottom-right, 3 bottom-left, 4 left)
+const LABEL_ANCHOR: Array<'middle' | 'start' | 'end'> = ['middle', 'start', 'middle', 'middle', 'end'];
+const LABEL_DY = [-8, 4, 14, 14, 4];
 
 function PentagonChart({ scores }: { scores: Record<string, number> }) {
-  const size = 200;
-  const center = size / 2;
-  const radius = 80;
-
-  // Calculate pentagon vertices (5 axes, starting from top)
-  const getPoint = (index: number, value: number) => {
-    const angle = (Math.PI * 2 * index) / 5 - Math.PI / 2;
-    const r = (value / 100) * radius;
-    return {
-      x: center + r * Math.cos(angle),
-      y: center + r * Math.sin(angle),
-    };
-  };
-
-  // Build ring paths for 25, 50, 75, 100
-  const rings = [25, 50, 75, 100];
+  const dataPoints = DNA_AXES.map((axis, i) => vertex(i, scores[axis.key] ?? 0));
+  const dataPointsStr = dataPoints.map((p) => `${p.x},${p.y}`).join(' ');
 
   return (
     <View style={pentStyles.container}>
-      {/* Using View-based approach since SVG may not be available */}
-      <View style={[pentStyles.chart, { width: size, height: size }]}>
-        {/* Center dot */}
-        <View style={[pentStyles.centerDot, { left: center - 2, top: center - 2 }]} />
+      <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+        <Defs>
+          <RadialGradient id="dnaCoreGlow" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor={colors.primary} stopOpacity={0.22} />
+            <Stop offset="70%" stopColor={colors.primary} stopOpacity={0.06} />
+            <Stop offset="100%" stopColor={colors.primary} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
 
-        {/* Axis labels */}
+        {/* Central crimson glow */}
+        <Circle cx={CENTER} cy={CENTER} r={RADIUS} fill="url(#dnaCoreGlow)" />
+
+        {/* Grid rings (25 / 50 / 75 / 100) */}
+        {[25, 50, 75, 100].map((ring) => (
+          <Polygon
+            key={ring}
+            points={ringPoints(ring)}
+            fill="none"
+            stroke={GRID_STROKE}
+            strokeWidth={1}
+          />
+        ))}
+
+        {/* Axes */}
         {DNA_AXES.map((axis, i) => {
-          const pt = getPoint(i, 115);
+          const p = vertex(i, 100);
           return (
-            <Text
+            <Line
               key={axis.key}
-              style={[
-                pentStyles.axisLabel,
-                {
-                  left: pt.x - 25,
-                  top: pt.y - 8,
-                  color: DIMENSION_COLORS[axis.key] ?? colors.textSecondary,
-                },
-              ]}
-            >
-              {axis.icon} {scores[axis.key] ?? 0}
-            </Text>
-          );
-        })}
-
-        {/* Score dots on axes */}
-        {DNA_AXES.map((axis, i) => {
-          const pt = getPoint(i, scores[axis.key] ?? 0);
-          return (
-            <View
-              key={`dot-${axis.key}`}
-              style={[
-                pentStyles.scoreDot,
-                {
-                  left: pt.x - 4,
-                  top: pt.y - 4,
-                  backgroundColor: DIMENSION_COLORS[axis.key] ?? colors.primary,
-                },
-              ]}
+              x1={CENTER}
+              y1={CENTER}
+              x2={p.x}
+              y2={p.y}
+              stroke={GRID_STROKE}
+              strokeWidth={1}
             />
           );
         })}
-      </View>
+
+        {/* Data polygon — halo pass (fake glow) + crisp pass */}
+        <Polygon
+          points={dataPointsStr}
+          fill="none"
+          stroke={colors.primary}
+          strokeWidth={7}
+          strokeOpacity={0.22}
+          strokeLinejoin="round"
+        />
+        <Polygon
+          points={dataPointsStr}
+          fill="rgba(224, 20, 47, 0.18)"
+          stroke={colors.primary}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+
+        {/* Data points */}
+        {dataPoints.map((p, i) => (
+          <Circle key={DNA_AXES[i].key} cx={p.x} cy={p.y} r={3} fill={colors.white} />
+        ))}
+
+        {/* Axis labels */}
+        {DNA_AXES.map((axis, i) => {
+          const p = vertex(i, 118);
+          return (
+            <SvgText
+              key={`label-${axis.key}`}
+              x={p.x}
+              y={p.y + LABEL_DY[i]}
+              fill={colors.textSecondary}
+              fontSize={10}
+              fontFamily={typography.fontSemiBold}
+              letterSpacing={1}
+              textAnchor={LABEL_ANCHOR[i]}
+            >
+              {axis.label.toUpperCase()}
+            </SvgText>
+          );
+        })}
+      </Svg>
     </View>
   );
 }
 
-function ScoreBar({ label, score, color, icon }: { label: string; score: number; color: string; icon: string }) {
+// ─── Dimension breakdown row (design: card row, mono score, thin bar) ───
+
+function ScoreRow({
+  label,
+  score,
+  icon,
+  isTop,
+}: {
+  label: string;
+  score: number;
+  icon: string;
+  isTop: boolean;
+}) {
   return (
     <View style={barStyles.row}>
-      <Text style={barStyles.icon}>{icon}</Text>
-      <View style={barStyles.info}>
-        <View style={barStyles.labelRow}>
-          <Text variant="body" style={barStyles.label}>{label}</Text>
-          <Text variant="caption" style={[barStyles.score, { color }]}>{score}</Text>
-        </View>
-        <View style={barStyles.barBg}>
-          <View style={[barStyles.barFill, { width: `${score}%`, backgroundColor: color }]} />
-        </View>
+      <View style={barStyles.labelRow}>
+        <Text style={barStyles.label}>
+          {icon}  {label}
+        </Text>
+        <Text style={[barStyles.score, isTop && barStyles.scoreTop]}>{score}</Text>
+      </View>
+      <View style={barStyles.barBg}>
+        <View
+          style={[
+            barStyles.barFill,
+            {
+              width: `${score}%`,
+              backgroundColor: isTop ? colors.primary : colors.textMuted,
+            },
+            isTop && barStyles.barFillGlow,
+          ]}
+        />
       </View>
     </View>
   );
@@ -108,7 +179,7 @@ export function DNATab({ dna }: DNATabProps) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>{'🧬'}</Text>
-        <Text variant="heading" style={styles.emptyTitle}>Performance DNA</Text>
+        <Text style={styles.emptyTitle}>Performance DNA</Text>
         <Text variant="body" color="textSecondary" style={styles.emptyText}>
           Complete at least 10 sessions to unlock your Performance DNA profile.
         </Text>
@@ -121,7 +192,7 @@ export function DNATab({ dna }: DNATabProps) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>{'🧬'}</Text>
-        <Text variant="heading" style={styles.emptyTitle}>Building Your DNA</Text>
+        <Text style={styles.emptyTitle}>Building Your DNA</Text>
         <Text variant="body" color="textSecondary" style={styles.emptyText}>
           {dna.session_count}/10 sessions completed. Keep training to unlock your full profile.
         </Text>
@@ -140,45 +211,40 @@ export function DNATab({ dna }: DNATabProps) {
     balance: dna.balance,
     mindset: dna.mindset,
   };
+  const topKey = DNA_AXES.reduce(
+    (best, axis) => ((scores[axis.key] ?? 0) > (scores[best] ?? 0) ? axis.key : best),
+    DNA_AXES[0].key as string,
+  );
 
   return (
     <View>
-      {/* Pentagon Radar */}
-      <AnimatedCard index={0} style={styles.card}>
+      {/* Radar hero card — archetype header + pentagon (design: performance-dna) */}
+      <AnimatedCard index={0} style={styles.heroCard}>
+        <View style={styles.heroGlow} pointerEvents="none" />
+        <Text style={styles.archetypeKicker}>ARCHETYPE</Text>
+        <Text style={styles.archetypeName}>
+          {dna.archetype_icon}  {dna.archetype_name}
+        </Text>
+        {archetype && (
+          <Text variant="caption" color="textSecondary" style={styles.archetypeBlurb}>
+            {archetype.description}
+          </Text>
+        )}
         <PentagonChart scores={scores} />
       </AnimatedCard>
 
-      {/* Archetype Badge */}
-      {archetype && (
-        <AnimatedCard index={1} style={styles.card}>
-          <View style={[styles.archetypeCard, { borderLeftColor: dna.archetype_color || colors.primary }]}>
-            <Text style={styles.archetypeIcon}>{dna.archetype_icon}</Text>
-            <View style={{ flex: 1 }}>
-              <Text variant="heading" style={styles.archetypeName}>
-                {dna.archetype_name}
-              </Text>
-              <Text variant="caption" color="textSecondary">
-                {archetype.description}
-              </Text>
-            </View>
-          </View>
-        </AnimatedCard>
-      )}
-
-      {/* Score Breakdown */}
-      <AnimatedCard index={2} style={styles.card}>
-        <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
-          Score Breakdown
-        </Text>
+      {/* Dimensional Breakdown */}
+      <AnimatedCard index={1} style={styles.card}>
+        <Text style={styles.sectionTitle}>DIMENSIONAL BREAKDOWN</Text>
         {DNA_AXES.map((axis) => {
           const config = DIMENSION_CONFIG[axis.key];
           return (
-            <ScoreBar
+            <ScoreRow
               key={axis.key}
               label={config?.label ?? axis.key}
               score={scores[axis.key] ?? 0}
-              color={DIMENSION_COLORS[axis.key] ?? colors.primary}
               icon={axis.icon}
+              isTop={axis.key === topKey}
             />
           );
         })}
@@ -190,100 +256,137 @@ export function DNATab({ dna }: DNATabProps) {
 const pentStyles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: spacing.md,
-  },
-  chart: {
-    position: 'relative',
-  },
-  centerDot: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.textSecondary,
-  },
-  axisLabel: {
-    position: 'absolute',
-    fontSize: 12,
-    fontWeight: '600',
-    width: 50,
-    textAlign: 'center',
-  },
-  scoreDot: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    paddingVertical: spacing.sm,
   },
 });
 
 const barStyles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSubtle,
   },
-  icon: { fontSize: 18, width: 24 },
-  info: { flex: 1 },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    alignItems: 'flex-end',
+    marginBottom: 6,
   },
-  label: { fontWeight: '500', fontSize: 14 },
-  score: { fontWeight: '700', fontSize: 14 },
+  label: {
+    fontSize: 14,
+    fontFamily: typography.fontSemiBold,
+    color: colors.text,
+  },
+  score: {
+    fontSize: 20,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.5,
+    color: colors.text,
+    lineHeight: 22,
+  },
+  scoreTop: {
+    color: colors.primaryLight,
+  },
   barBg: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.border,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceHighest,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 2,
+  },
+  barFillGlow: {
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
   },
 });
 
 const styles = StyleSheet.create({
+  heroCard: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderTopColor: colors.borderAccent,
+    shadowOpacity: 0,
+    elevation: 0,
+    alignItems: 'center',
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  heroGlow: {
+    position: 'absolute',
+    top: -60,
+    alignSelf: 'center',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: colors.primarySubtle,
+  },
   card: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
     fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  archetypeKicker: {
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 2.4,
+    color: colors.primaryLight,
+    marginBottom: spacing.xs,
+  },
+  archetypeName: {
+    fontFamily: typography.fontSerif,
+    fontSize: 30,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  archetypeBlurb: {
+    textAlign: 'center',
+    maxWidth: 280,
     marginBottom: spacing.sm,
   },
-  archetypeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderLeftWidth: 4,
-    paddingLeft: spacing.sm,
-  },
-  archetypeIcon: { fontSize: 36 },
-  archetypeName: { marginBottom: 4 },
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: spacing.xxl,
     paddingHorizontal: spacing.lg,
   },
   emptyIcon: { fontSize: 48, marginBottom: spacing.md },
-  emptyTitle: { marginBottom: spacing.sm },
+  emptyTitle: {
+    fontFamily: typography.fontSerif,
+    fontSize: 24,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
   emptyText: { textAlign: 'center', lineHeight: 22 },
   progressBarBg: {
     width: '80%',
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.surfaceHighest,
     overflow: 'hidden',
     marginTop: spacing.md,
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.purple,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
   },
 });

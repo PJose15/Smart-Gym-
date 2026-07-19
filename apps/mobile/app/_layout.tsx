@@ -14,6 +14,10 @@ import {
   JetBrainsMono_400Regular,
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
+import {
+  PlayfairDisplay_600SemiBold,
+  PlayfairDisplay_700Bold,
+} from '@expo-google-fonts/playfair-display';
 import * as Notifications from 'expo-notifications';
 import type { Session } from '@supabase/supabase-js';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
@@ -46,6 +50,8 @@ export default function RootLayout() {
     'Inter-ExtraBold': Inter_800ExtraBold,
     'Mono-Regular': JetBrainsMono_400Regular,
     'Mono-Bold': JetBrainsMono_700Bold,
+    'Serif-SemiBold': PlayfairDisplay_600SemiBold,
+    'Serif-Bold': PlayfairDisplay_700Bold,
   });
 
   // Auth state: undefined = loading, null = no session, Session = authenticated

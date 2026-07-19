@@ -28,6 +28,8 @@ import {
 import type { TrendDataPoint, SessionForTrend } from '@nexera/utils';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { colors } from '../../src/theme/colors';
+import { typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { SkeletonGate, ProgressScreenSkeleton } from '../../src/components/skeleton';
 import { MiniChart } from '../../src/components/MiniChart';
 import type { WorkoutSet } from '@nexera/types';
@@ -451,8 +453,18 @@ export default function ProgressScreen() {
           <View style={styles.trendCard}>
             <View style={styles.trendHeader}>
               <Text style={styles.trendLabel}>Weekly Volume</Text>
-              <View style={[styles.trendBadge, { backgroundColor: trendBadgeColor(volumeDirection) }]}>
-                <Text style={styles.trendBadgeText}>{trendArrow(volumeDirection)}</Text>
+              <View
+                style={[
+                  styles.trendBadge,
+                  {
+                    backgroundColor: trendBadgeColor(volumeDirection) + '1A',
+                    borderColor: trendBadgeColor(volumeDirection) + '55',
+                  },
+                ]}
+              >
+                <Text style={[styles.trendBadgeText, { color: trendBadgeColor(volumeDirection) }]}>
+                  {trendArrow(volumeDirection)}
+                </Text>
               </View>
             </View>
             <MiniChart data={weeklyVolumeTrend} label="Weekly Volume" unit="kg" color={colors.primary} />
@@ -460,8 +472,18 @@ export default function ProgressScreen() {
           <View style={styles.trendCard}>
             <View style={styles.trendHeader}>
               <Text style={styles.trendLabel}>Weekly Frequency</Text>
-              <View style={[styles.trendBadge, { backgroundColor: trendBadgeColor(freqDirection) }]}>
-                <Text style={styles.trendBadgeText}>{trendArrow(freqDirection)}</Text>
+              <View
+                style={[
+                  styles.trendBadge,
+                  {
+                    backgroundColor: trendBadgeColor(freqDirection) + '1A',
+                    borderColor: trendBadgeColor(freqDirection) + '55',
+                  },
+                ]}
+              >
+                <Text style={[styles.trendBadgeText, { color: trendBadgeColor(freqDirection) }]}>
+                  {trendArrow(freqDirection)}
+                </Text>
               </View>
             </View>
             <MiniChart data={weeklyFrequencyTrend} label="Weekly Frequency" unit="sessions" color={colors.success} />
@@ -518,10 +540,19 @@ export default function ProgressScreen() {
       {topPerformers.length > 0 && (
         <View style={styles.prShowcaseCard}>
           <Text style={styles.sectionTitle}>Top Performers</Text>
-          {topPerformers.map((ex, i) => (
+          {topPerformers.map((ex, i) => {
+            const medal = i === 0 ? colors.gold : i === 1 ? colors.silver : i === 2 ? colors.bronze : null;
+            return (
             <View key={ex.exerciseName} style={styles.prShowcaseRow}>
-              <View style={styles.prShowcaseRank}>
-                <Text style={styles.prShowcaseRankText}>{i + 1}</Text>
+              <View
+                style={[
+                  styles.prShowcaseRank,
+                  medal
+                    ? { backgroundColor: medal + '1A', borderColor: medal + '66' }
+                    : { backgroundColor: colors.surfaceHighest, borderColor: colors.border },
+                ]}
+              >
+                <Text style={[styles.prShowcaseRankText, medal != null && { color: medal }]}>{i + 1}</Text>
               </View>
               <View style={styles.prShowcaseInfo}>
                 <Text style={styles.prShowcaseName} numberOfLines={1}>{ex.exerciseName}</Text>
@@ -529,7 +560,8 @@ export default function ProgressScreen() {
               </View>
               <Text style={styles.prShowcaseValue}>{formatWeight(ex.estimated1RM)}</Text>
             </View>
-          ))}
+            );
+          })}
         </View>
       )}
 
@@ -744,9 +776,12 @@ export default function ProgressScreen() {
     <AnimatedScreen>
     <View style={styles.container}>
       <View style={styles.headingRow}>
-        <Text style={styles.heading}>Your Progress</Text>
+        <View>
+          <Text style={styles.headingKicker}>PERFORMANCE</Text>
+          <Text style={styles.heading}>Your Progress</Text>
+        </View>
         <TouchableOpacity onPress={() => router.push('/leaderboard')} style={styles.leaderboardLink}>
-          <Text style={styles.leaderboardLinkText}>Leaderboard</Text>
+          <Text style={styles.leaderboardLinkText}>LEADERBOARD →</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.periodRow}>
@@ -828,51 +863,63 @@ const styles = StyleSheet.create({
   headingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.md,
     paddingTop: 20,
     paddingBottom: 4,
   },
+  headingKicker: {
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 2.4,
+    color: colors.primaryLight,
+    marginBottom: 4,
+  },
   heading: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontFamily: typography.fontSerif,
+    fontSize: 28,
     color: colors.text,
+    letterSpacing: 0.5,
   },
   leaderboardLink: {
-    paddingVertical: 4,
+    paddingVertical: 6,
     paddingHorizontal: 10,
   },
   leaderboardLinkText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    color: colors.primaryLight,
   },
   periodRow: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: spacing.md,
+    paddingTop: 12,
     paddingBottom: 4,
     gap: 8,
   },
   periodBtn: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: colors.surfaceHighest,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
   },
   periodBtnActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+    borderColor: colors.borderAccent,
   },
   periodBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
   },
   periodBtnTextActive: {
-    color: colors.white,
+    color: colors.primaryLight,
   },
   listContent: {
-    padding: 20,
+    padding: spacing.md,
     paddingTop: 12,
     paddingBottom: 40,
   },
@@ -886,16 +933,18 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontFamily: typography.fontSerif,
+    fontSize: 24,
     color: colors.text,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
@@ -903,6 +952,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.error,
     fontSize: 16,
+    fontFamily: typography.fontRegular,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -910,24 +960,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   retryButtonText: {
-    color: colors.white,
+    color: colors.textOnAccent,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
   },
   // ─── Card ───────────────────────────────────────────────
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 18,
     marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -939,26 +988,29 @@ const styles = StyleSheet.create({
   },
   exerciseName: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   sessionCount: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginTop: 2,
   },
   prBadge: {
-    backgroundColor: colors.success,
+    backgroundColor: colors.goldSubtle,
+    borderWidth: 1,
+    borderColor: colors.gold,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: 9999,
     marginLeft: 12,
   },
   prBadgeText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    color: colors.gold,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
   },
   // ─── PR Row ─────────────────────────────────────────────
   prRow: {
@@ -967,23 +1019,24 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.borderSubtle,
   },
   prItem: {
     alignItems: 'center',
     flex: 1,
   },
   prLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontFamily: typography.fontSemiBold,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
     marginBottom: 4,
   },
   prValue: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.4,
     color: colors.text,
   },
   // ─── Drill-down ────────────────────────────────────────
@@ -993,22 +1046,22 @@ const styles = StyleSheet.create({
   },
   drillDownText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primaryLight,
   },
   // ─── Expand ─────────────────────────────────────────────
   expandIndicator: {
-    fontSize: 13,
-    color: colors.primary,
+    fontSize: 12,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: 12,
-    fontWeight: '500',
+    fontFamily: typography.fontMedium,
   },
   // ─── Session Details ────────────────────────────────────
   sessionList: {
     marginTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.borderSubtle,
     paddingTop: 10,
   },
   sessionEntry: {
@@ -1016,12 +1069,13 @@ const styles = StyleSheet.create({
   },
   sessionDate: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     marginBottom: 8,
   },
   noSetsText: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     paddingLeft: 8,
@@ -1029,12 +1083,12 @@ const styles = StyleSheet.create({
   setsTable: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   setsTableHeader: {
     flexDirection: 'row',
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
@@ -1042,55 +1096,59 @@ const styles = StyleSheet.create({
   },
   setsTableHeaderText: {
     flex: 1,
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.8,
   },
   setRow: {
     flexDirection: 'row',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSubtle,
   },
   setNumber: {
     flex: 1,
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '600',
+    fontSize: 13,
+    color: colors.primaryLight,
+    fontFamily: typography.fontMonoBold,
   },
   setDetail: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.text,
-    fontWeight: '500',
+    fontFamily: typography.fontMono,
   },
   // ─── Chart Toggle ─────────────────────────────────────────
   chartToggleRow: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 3,
     marginBottom: 8,
   },
   chartToggleBtn: {
     flex: 1,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 9999,
     alignItems: 'center',
   },
   chartToggleBtnActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
   },
   chartToggleText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.textMuted,
   },
   chartToggleTextActive: {
-    color: colors.white,
+    color: colors.primaryLight,
   },
   // ─── Stats Summary ────────────────────────────────────────
   statsRow: {
@@ -1100,28 +1158,28 @@ const styles = StyleSheet.create({
   },
   statPill: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: 12,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   statPillValue: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.5,
     color: colors.text,
   },
   statPillLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 9,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    marginTop: 2,
+    letterSpacing: 0.8,
+    marginTop: 3,
   },
   // ─── Trends ───────────────────────────────────────────────
   trendsSectionHeader: {
@@ -1131,28 +1189,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   trendsToggle: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: colors.textMuted,
   },
   trendsContent: {
     gap: 12,
     marginBottom: 16,
   },
   trendCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   trendHeader: {
     flexDirection: 'row',
@@ -1162,30 +1221,29 @@ const styles = StyleSheet.create({
   },
   trendLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   trendBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: 9999,
+    borderWidth: 1,
   },
   trendBadgeText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12,
+    fontFamily: typography.fontMonoBold,
   },
   // ─── Streak ───────────────────────────────────────────────
   streakCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   streakRow: {
     flexDirection: 'row',
@@ -1198,16 +1256,19 @@ const styles = StyleSheet.create({
   },
   streakValue: {
     fontSize: 28,
-    fontWeight: '800',
-    color: colors.primary,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.8,
+    color: colors.primaryLight,
   },
   streakLabel: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 4,
-    lineHeight: 15,
+    lineHeight: 14,
   },
   streakDivider: {
     width: 1,
@@ -1216,15 +1277,14 @@ const styles = StyleSheet.create({
   },
   // ─── Muscle Groups ────────────────────────────────────────
   muscleCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   muscleRow: {
     flexDirection: 'row',
@@ -1232,94 +1292,101 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   muscleName: {
-    width: 80,
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textMuted,
-    textTransform: 'capitalize',
+    width: 84,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.6,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
   },
   muscleBarBg: {
     flex: 1,
-    height: 8,
+    height: 6,
     backgroundColor: colors.surfaceHighest,
-    borderRadius: 4,
+    borderRadius: 3,
     marginHorizontal: 8,
     overflow: 'hidden',
   },
   muscleBarFill: {
     height: '100%',
     backgroundColor: colors.primary,
-    borderRadius: 4,
+    borderRadius: 3,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
   },
   muscleCount: {
     width: 28,
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
     color: colors.text,
     textAlign: 'right',
   },
   // ─── PR Showcase ──────────────────────────────────────────
   prShowcaseCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   prShowcaseRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSubtle,
   },
   prShowcaseRank: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: colors.primary,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   prShowcaseRankText: {
-    color: colors.white,
+    color: colors.textSecondary,
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
   },
   prShowcaseInfo: {
     flex: 1,
   },
   prShowcaseName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   prShowcaseDetail: {
-    fontSize: 11,
-    color: colors.textSecondary,
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
     marginTop: 1,
   },
   prShowcaseValue: {
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.success,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.4,
+    color: colors.text,
   },
   // ─── Consistency Calendar ─────────────────────────────────
   calendarCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   calendarDayLabels: {
     flexDirection: 'row',
@@ -1329,8 +1396,9 @@ const styles = StyleSheet.create({
   calendarDayLabel: {
     width: 28,
     textAlign: 'center',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.6,
     color: colors.textSecondary,
   },
   calendarWeekRow: {
@@ -1343,15 +1411,24 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: colors.surfaceHighest,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
   calendarDotActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primaryLight,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
   },
   // ─── Breakdown Label ──────────────────────────────────────
   breakdownLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
     marginTop: 4,
     marginBottom: 12,
   },

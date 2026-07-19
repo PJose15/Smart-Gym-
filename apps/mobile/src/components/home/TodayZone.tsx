@@ -1,5 +1,8 @@
 /**
  * TodayZone — What to do today. Mode-aware. Based on DOC_07 Part 2D.
+ * Restyled to the NEXTERA Red-Luxury system (design/stitch §7.2 "TODAY"
+ * card): L2 card, 22px radius, hairline border, crimson kicker, mono
+ * set/rep numbers, crimson CTA with glow.
  */
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -7,6 +10,7 @@ import { Text } from '../Text';
 import { AnimatedCard } from '../AnimatedCard';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 interface TodayExercise {
   id: string;
@@ -32,16 +36,16 @@ interface TodayZoneProps {
 
 function ExerciseRow({ exercise, position }: { exercise: TodayExercise; position: number }) {
   return (
-    <View style={rowStyles.container}>
+    <View style={[rowStyles.container, position > 1 && rowStyles.bordered]}>
       <View style={rowStyles.number}>
         <Text style={rowStyles.numberText}>{position}</Text>
       </View>
       <View style={rowStyles.info}>
         <Text style={rowStyles.name}>{exercise.exercise_name}</Text>
-        <Text style={rowStyles.meta}>
-          {exercise.default_sets} sets × {exercise.default_reps} reps
-        </Text>
       </View>
+      <Text style={rowStyles.meta}>
+        {exercise.default_sets}×{exercise.default_reps}
+      </Text>
     </View>
   );
 }
@@ -67,7 +71,7 @@ export function TodayZone({
           <Text style={sectionStyles.cardTitle}>Workout in Progress</Text>
         </View>
         <TouchableOpacity
-          style={[sectionStyles.cta, { backgroundColor: colors.success }]}
+          style={[sectionStyles.cta, sectionStyles.ctaSuccess]}
           onPress={() => router.push(`/workout/${activeWorkoutId}?intent=${sessionIntent}`)}
           activeOpacity={0.8}
         >
@@ -82,7 +86,7 @@ export function TodayZone({
     return (
       <AnimatedCard index={1} style={sectionStyles.card}>
         <View style={sectionStyles.doneHeader}>
-          <Text style={sectionStyles.doneEmoji}>{'\u2705'}</Text>
+          <Text style={sectionStyles.doneEmoji}>{'✅'}</Text>
           <View>
             <Text style={sectionStyles.doneTitle}>All done for today!</Text>
             <Text style={sectionStyles.doneSubtitle}>
@@ -103,7 +107,7 @@ export function TodayZone({
 
         {restDayTip && (
           <View style={sectionStyles.tipBox}>
-            <Text style={sectionStyles.tipIcon}>{'\uD83D\uDCA1'}</Text>
+            <Text style={sectionStyles.tipIcon}>{'💡'}</Text>
             <Text style={sectionStyles.tipText}>{restDayTip}</Text>
           </View>
         )}
@@ -132,13 +136,16 @@ export function TodayZone({
     return (
       <AnimatedCard index={1} style={sectionStyles.card}>
         <View style={sectionStyles.cardHeader}>
-          <Text style={sectionStyles.cardTitle}>Today's Workout</Text>
-          <Text style={sectionStyles.cardMeta}>
-            {todayWorkout.exercises.length} exercises · ~{duration}
-          </Text>
+          <View style={sectionStyles.headerText}>
+            <Text style={sectionStyles.kicker}>TODAY</Text>
+            <Text style={sectionStyles.dayName}>{todayWorkout.dayName}</Text>
+          </View>
+          <View style={sectionStyles.metaChip}>
+            <Text style={sectionStyles.metaChipText}>
+              {todayWorkout.exercises.length} EX · ~{duration.toUpperCase()}
+            </Text>
+          </View>
         </View>
-
-        <Text style={sectionStyles.dayName}>{todayWorkout.dayName}</Text>
 
         <View style={sectionStyles.exerciseList}>
           {todayWorkout.exercises.map((ex, i) => (
@@ -161,8 +168,10 @@ export function TodayZone({
   return (
     <AnimatedCard index={1} style={sectionStyles.card}>
       <View style={sectionStyles.cardHeader}>
-        <Text style={sectionStyles.cardTitle}>Today</Text>
-        <Text style={sectionStyles.cardMeta}>Freestyle session</Text>
+        <View style={sectionStyles.headerText}>
+          <Text style={sectionStyles.kicker}>TODAY</Text>
+          <Text style={sectionStyles.dayName}>Freestyle session</Text>
+        </View>
       </View>
       <Text style={sectionStyles.freeText}>
         Scan any machine to start logging. No plan needed.
@@ -182,12 +191,30 @@ const sectionStyles = StyleSheet.create({
   card: {
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  headerText: {
+    flex: 1,
+    gap: 4,
+  },
+  kicker: {
+    fontSize: typography.labelSize,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primary,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   statusDot: {
     width: 8,
@@ -197,36 +224,52 @@ const sectionStyles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
-  cardMeta: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
   dayName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.primary,
-    marginBottom: spacing.md,
+    fontSize: typography.h4Size + 1,
+    fontFamily: typography.fontSemiBold,
+    color: colors.text,
+  },
+  metaChip: {
+    backgroundColor: colors.surfaceHighest,
+    borderRadius: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  metaChipText: {
+    fontSize: typography.tinySize,
+    fontFamily: typography.fontMono,
+    color: colors.textSecondary,
+    letterSpacing: 0.4,
   },
   exerciseList: {
-    gap: spacing.sm,
     marginBottom: spacing.md,
   },
   cta: {
     backgroundColor: colors.primary,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+    // Sanctioned crimson glow behind the primary CTA (design.md §3.11)
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+  },
+  ctaSuccess: {
+    backgroundColor: colors.success,
+    shadowColor: colors.success,
   },
   ctaText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.white,
   },
   freeText: {
     fontSize: 14,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginBottom: spacing.md,
     lineHeight: 20,
@@ -242,41 +285,47 @@ const sectionStyles = StyleSheet.create({
   },
   doneTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   doneSubtitle: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginTop: 2,
   },
   nextPreview: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
   nextLabel: {
     fontSize: 10,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 1,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primary,
+    letterSpacing: 1.2,
     marginBottom: 4,
   },
   nextName: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   nextMeta: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginTop: 2,
   },
   tipBox: {
     flexDirection: 'row',
     backgroundColor: colors.primarySubtle,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     padding: spacing.md,
     gap: spacing.sm,
     marginBottom: spacing.sm,
@@ -286,6 +335,7 @@ const sectionStyles = StyleSheet.create({
   },
   tipText: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     flex: 1,
     lineHeight: 18,
@@ -297,14 +347,15 @@ const sectionStyles = StyleSheet.create({
   },
   coachingLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.primary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: 4,
   },
   coachingText: {
     fontSize: 14,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     lineHeight: 20,
   },
@@ -315,32 +366,38 @@ const rowStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: 6,
+    paddingVertical: 10,
+  },
+  bordered: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
   },
   number: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surfaceHighest,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   numberText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textMuted,
+    fontSize: 11,
+    fontFamily: typography.fontMono,
+    color: colors.textSecondary,
   },
   info: {
     flex: 1,
   },
   name: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: typography.fontMedium,
     color: colors.text,
   },
   meta: {
     fontSize: 12,
+    fontFamily: typography.fontMono,
     color: colors.textMuted,
-    marginTop: 1,
   },
 });

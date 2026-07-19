@@ -9,9 +9,11 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../src/lib/supabase';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 import { trackEvent } from '../../src/lib/events';
 
 interface CoachNoteDetail {
@@ -198,6 +200,12 @@ export default function CoachNoteDetailScreen() {
       <Text style={styles.title}>{note.title}</Text>
 
       <View style={styles.bodyContainer}>
+        <LinearGradient
+          colors={[colors.primaryLight, colors.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.energyRibbon}
+        />
         {note.body.split('\n\n').map((paragraph, i) => (
           <Text key={i} style={styles.bodyText}>{paragraph}</Text>
         ))}
@@ -279,36 +287,51 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sourceChip: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.primary,
-    backgroundColor: colors.primary + '15',
+    fontSize: 10,
+    fontFamily: typography.fontBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.primaryLight,
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 999,
     overflow: 'hidden',
   },
   dateText: {
-    fontSize: 13,
-    color: colors.textSecondary,
+    fontSize: 11,
+    fontFamily: typography.fontMono,
+    color: colors.textMuted,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontFamily: typography.fontSerif,
+    fontSize: 26,
     color: colors.text,
     marginBottom: spacing.md,
-    lineHeight: 28,
+    lineHeight: 34,
   },
   bodyContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: spacing.lg,
+    paddingTop: spacing.lg + 2,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.lg,
+    overflow: 'hidden',
+  },
+  energyRibbon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
   },
   bodyText: {
     fontSize: 15,
+    fontFamily: typography.fontRegular,
     lineHeight: 24,
     color: colors.text,
     marginBottom: spacing.sm,
@@ -319,26 +342,31 @@ const styles = StyleSheet.create({
   divider: {
     width: 40,
     height: 2,
-    backgroundColor: colors.border,
+    backgroundColor: colors.primary,
     marginBottom: spacing.md,
     borderRadius: 1,
   },
   trainerName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   trainerLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+    marginTop: 4,
   },
   emptyText: {
     fontSize: 15,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
   },
   errorText: {
     fontSize: 15,
+    fontFamily: typography.fontRegular,
     color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.md,
@@ -348,12 +376,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   retryButtonText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.textOnAccent,
+    fontSize: 13,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   ackContainer: {
     marginBottom: spacing.lg,
@@ -362,56 +392,71 @@ const styles = StyleSheet.create({
   ackButton: {
     backgroundColor: colors.primary,
     paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   ackButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.textOnAccent,
+    fontSize: 14,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   ackDone: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     paddingHorizontal: 24,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   ackDoneText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.primaryLight,
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
 
   // ─── Enrichment Styles ────────────────────────────────
   metaRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   metaChip: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 11,
+    fontFamily: typography.fontMono,
     color: colors.textSecondary,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 999,
     overflow: 'hidden',
   },
   actionItemsContainer: {
-    backgroundColor: colors.primary + '10',
-    borderRadius: 12,
+    backgroundColor: colors.primarySubtle,
+    borderRadius: 16,
     padding: spacing.md,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     borderLeftWidth: 3,
     borderLeftColor: colors.primary,
   },
   actionItemsTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
+    fontSize: 11,
+    fontFamily: typography.fontBold,
+    color: colors.primaryLight,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 1.5,
     marginBottom: 8,
   },
   actionItemRow: {
@@ -424,33 +469,37 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     marginTop: 6,
   },
   actionItemText: {
     flex: 1,
     fontSize: 14,
+    fontFamily: typography.fontRegular,
     color: colors.text,
     lineHeight: 20,
   },
   tipsContainer: {
-    backgroundColor: colors.success + '10',
-    borderRadius: 12,
+    backgroundColor: colors.successSubtle,
+    borderRadius: 16,
     padding: spacing.md,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.success + '40',
     borderLeftWidth: 3,
     borderLeftColor: colors.success,
   },
   tipsTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 11,
+    fontFamily: typography.fontBold,
     color: colors.success,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 1.5,
     marginBottom: 8,
   },
   tipText: {
     fontSize: 14,
+    fontFamily: typography.fontRegular,
     color: colors.text,
     lineHeight: 20,
     marginBottom: 4,

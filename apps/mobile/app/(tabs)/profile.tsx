@@ -33,6 +33,7 @@ import { DNATab } from '../../src/components/profile/DNATab';
 import { BodyMapTab } from '../../src/components/profile/BodyMapTab';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 import type { UserGoal, WeightUnit, BadgeWithStatus } from '@nexera/types';
 
 // ─── Types ──────────────────────────────────────────────
@@ -375,7 +376,7 @@ export default function ProfileScreen() {
       <View style={styles.centered}>
         <BreathingCard>
           <Card style={styles.signInCard}>
-            <Text variant="heading" style={styles.signInTitle}>Sign In to Nexera</Text>
+            <Text style={styles.signInTitle}>Sign In to Nexera</Text>
             <Text variant="body" color="textSecondary" style={styles.signInSubtitle}>
               Sign in to track your workouts, view your progress, and manage your profile.
             </Text>
@@ -470,9 +471,20 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     width: '100%',
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   signInTitle: {
-    marginBottom: spacing.xs,
+    fontFamily: typography.fontSerif,
+    fontSize: 26,
+    color: colors.text,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
   },
   signInSubtitle: {
     textAlign: 'center',
@@ -484,6 +496,8 @@ const styles = StyleSheet.create({
   errorBanner: {
     backgroundColor: colors.errorSubtle,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.error + '55',
     padding: spacing.md,
     marginBottom: spacing.md,
   },

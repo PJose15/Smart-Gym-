@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import Svg, { Circle } from 'react-native-svg';
 import { supabase } from '../../src/lib/supabase';
 import type {
   Workout,
@@ -34,6 +35,7 @@ import { getWeightUnit } from '../../src/lib/weightUnit';
 import { retryWithBackoff } from '../../src/lib/retry';
 import { enqueueEvent } from '../../src/lib/offlineQueue';
 import { colors } from '../../src/theme/colors';
+import { typography } from '../../src/theme/typography';
 
 // ─── Helpers ────────────────────────────────────────────
 
@@ -202,41 +204,53 @@ function AddSetForm({
   };
 
   return (
-    <View style={styles.addSetRow}>
-      <TextInput
-        style={styles.addSetInput}
-        placeholder="kg"
-        placeholderTextColor={colors.textDisabled}
-        keyboardType="numeric"
-        value={weight}
-        onChangeText={setWeight}
-      />
-      <TextInput
-        style={styles.addSetInput}
-        placeholder="reps"
-        placeholderTextColor={colors.textDisabled}
-        keyboardType="numeric"
-        value={reps}
-        onChangeText={setReps}
-      />
-      <TextInput
-        style={[styles.addSetInput, styles.addSetInputSmall]}
-        placeholder="RPE"
-        placeholderTextColor={colors.textDisabled}
-        keyboardType="numeric"
-        value={rpe}
-        onChangeText={setRpe}
-        maxLength={2}
-      />
+    <View style={styles.addSetContainer}>
+      <View style={styles.addSetRow}>
+        <View style={styles.addSetField}>
+          <Text style={styles.addSetFieldLabel}>Weight (kg)</Text>
+          <TextInput
+            style={styles.addSetInput}
+            placeholder="0"
+            placeholderTextColor={colors.textDisabled}
+            keyboardType="numeric"
+            value={weight}
+            onChangeText={setWeight}
+          />
+        </View>
+        <View style={styles.addSetField}>
+          <Text style={styles.addSetFieldLabel}>Reps</Text>
+          <TextInput
+            style={styles.addSetInput}
+            placeholder="0"
+            placeholderTextColor={colors.textDisabled}
+            keyboardType="numeric"
+            value={reps}
+            onChangeText={setReps}
+          />
+        </View>
+        <View style={[styles.addSetField, styles.addSetFieldSmall]}>
+          <Text style={styles.addSetFieldLabel}>RPE</Text>
+          <TextInput
+            style={styles.addSetInput}
+            placeholder="–"
+            placeholderTextColor={colors.textDisabled}
+            keyboardType="numeric"
+            value={rpe}
+            onChangeText={setRpe}
+            maxLength={2}
+          />
+        </View>
+      </View>
       <TouchableOpacity
         style={[styles.logSetButton, isLogging && styles.logSetButtonDisabled]}
         onPress={handleLog}
         disabled={isLogging}
+        activeOpacity={0.85}
       >
         {isLogging ? (
           <ActivityIndicator size="small" color={colors.white} />
         ) : (
-          <Text style={styles.logSetButtonText}>Log</Text>
+          <Text style={styles.logSetButtonText}>LOG SET {'✓'}</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -675,30 +689,79 @@ function AddExerciseModal({
 
 const REST_DURATIONS = [60, 90, 120, 180]; // seconds
 
+const REST_RING_SIZE = 148;
+const REST_RING_STROKE = 6;
+const REST_RING_RADIUS = (REST_RING_SIZE - REST_RING_STROKE) / 2;
+const REST_RING_CIRCUMFERENCE = 2 * Math.PI * REST_RING_RADIUS;
+
 interface RestTimerProps {
   secondsLeft: number;
+  totalSeconds: number;
   isRunning: boolean;
   onDismiss: () => void;
   onSetDuration: (seconds: number) => void;
+  onAdjust: (deltaSeconds: number) => void;
 }
 
-function RestTimer({ secondsLeft, isRunning, onDismiss, onSetDuration }: RestTimerProps) {
+function RestTimer({
+  secondsLeft,
+  totalSeconds,
+  isRunning,
+  onDismiss,
+  onSetDuration,
+  onAdjust,
+}: RestTimerProps) {
   if (!isRunning) return null;
 
   const minutes = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
   const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
   const isFinished = secondsLeft <= 0;
+  const progress = totalSeconds > 0 ? Math.max(0, Math.min(1, secondsLeft / totalSeconds)) : 0;
 
   return (
     <View style={styles.restTimerOverlay}>
-      <View style={[styles.restTimerCard, isFinished && styles.restTimerCardDone]}>
-        <Text style={styles.restTimerLabel}>
-          {isFinished ? 'Rest Complete!' : 'Rest Timer'}
-        </Text>
-        <Text style={[styles.restTimerDisplay, isFinished && styles.restTimerDisplayDone]}>
-          {isFinished ? '0:00' : display}
-        </Text>
+      <View style={styles.restTimerCard}>
+        <View style={styles.restRingWrap}>
+          <Svg
+            width={REST_RING_SIZE}
+            height={REST_RING_SIZE}
+            viewBox={`0 0 ${REST_RING_SIZE} ${REST_RING_SIZE}`}
+          >
+            {/* Track */}
+            <Circle
+              cx={REST_RING_SIZE / 2}
+              cy={REST_RING_SIZE / 2}
+              r={REST_RING_RADIUS}
+              stroke={colors.bgSkeleton}
+              strokeWidth={REST_RING_STROKE}
+              fill="none"
+            />
+            {/* Emissive crimson progress arc */}
+            <Circle
+              cx={REST_RING_SIZE / 2}
+              cy={REST_RING_SIZE / 2}
+              r={REST_RING_RADIUS}
+              stroke={isFinished ? colors.primaryLight : colors.primary}
+              strokeWidth={REST_RING_STROKE}
+              strokeLinecap="round"
+              fill="none"
+              strokeDasharray={`${REST_RING_CIRCUMFERENCE}`}
+              strokeDashoffset={REST_RING_CIRCUMFERENCE * (1 - progress)}
+              rotation={-90}
+              origin={`${REST_RING_SIZE / 2}, ${REST_RING_SIZE / 2}`}
+            />
+          </Svg>
+          <View style={styles.restRingCenter}>
+            <Text style={styles.restTimerLabel}>
+              {isFinished ? 'REST COMPLETE' : 'REST'}
+            </Text>
+            <Text style={[styles.restTimerDisplay, isFinished && styles.restTimerDisplayDone]}>
+              {isFinished ? '0:00' : display}
+            </Text>
+          </View>
+        </View>
+
         <View style={styles.restTimerDurations}>
           {REST_DURATIONS.map((d) => (
             <TouchableOpacity
@@ -712,8 +775,28 @@ function RestTimer({ secondsLeft, isRunning, onDismiss, onSetDuration }: RestTim
             </TouchableOpacity>
           ))}
         </View>
+
+        <View style={styles.restAdjustRow}>
+          <TouchableOpacity
+            style={styles.restAdjustButton}
+            onPress={() => onAdjust(-15)}
+            disabled={isFinished}
+          >
+            <Text style={styles.restAdjustText}>{'−'}15s</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.restAdjustButton}
+            onPress={() => onAdjust(15)}
+            disabled={isFinished}
+          >
+            <Text style={styles.restAdjustText}>+15s</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity style={styles.restTimerDismiss} onPress={onDismiss}>
-          <Text style={styles.restTimerDismissText}>Dismiss</Text>
+          <Text style={styles.restTimerDismissText}>
+            {isFinished ? 'DONE' : 'SKIP REST →'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -854,6 +937,14 @@ export default function ActiveWorkoutScreen() {
     setRestDuration(seconds);
     setRestSecondsLeft(seconds);
     setRestTimerRunning(true);
+  }, []);
+
+  const adjustRestTimer = useCallback((deltaSeconds: number) => {
+    setRestSecondsLeft((prev) => Math.max(0, prev + deltaSeconds));
+    if (deltaSeconds > 0) {
+      // Keep the progress ring denominator in sync when extending rest
+      setRestDuration((prev) => prev + deltaSeconds);
+    }
   }, []);
 
   // ─── Compute AI suggestion ────────────────────────────
@@ -1488,9 +1579,11 @@ export default function ActiveWorkoutScreen() {
       {/* Rest Timer */}
       <RestTimer
         secondsLeft={restSecondsLeft}
+        totalSeconds={restDuration}
         isRunning={restTimerRunning}
         onDismiss={dismissRestTimer}
         onSetDuration={changeRestDuration}
+        onAdjust={adjustRestTimer}
       />
 
       {/* Floating Add Exercise Button */}
@@ -1538,39 +1631,47 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: typography.fontBold,
     color: colors.text,
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginBottom: 0,
   },
   elapsedContainer: {
     alignItems: 'center',
     backgroundColor: colors.primarySubtle,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   elapsedTime: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.primary,
+    fontFamily: typography.fontMonoBold,
+    color: colors.primaryLight,
+    fontVariant: ['tabular-nums'],
   },
   elapsedLabel: {
     fontSize: 10,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 1,
   },
   // Session intent badge
   intentBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    borderRadius: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: 12,
     paddingVertical: 5,
     gap: 4,
@@ -1581,23 +1682,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   intentLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   // Live stats strip
   liveStatsStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    paddingVertical: 10,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 12,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
   },
   liveStatPill: {
     alignItems: 'center',
@@ -1605,12 +1705,17 @@ const styles = StyleSheet.create({
   },
   liveStatValue: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
     color: colors.text,
+    fontVariant: ['tabular-nums'],
   },
   liveStatLabel: {
-    fontSize: 11,
+    fontSize: 10,
+    fontFamily: typography.fontMedium,
     color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 2,
   },
   liveStatDivider: {
     width: 1,
@@ -1628,13 +1733,13 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
+    fontFamily: typography.fontMedium,
     color: colors.textSecondary,
-    fontWeight: '500',
   },
   progressBarBg: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.surfaceHighest,
+    backgroundColor: colors.bgSkeleton,
     overflow: 'hidden',
   },
   progressBarFill: {
@@ -1698,8 +1803,8 @@ const styles = StyleSheet.create({
 
   // Empty state
   emptyState: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     marginBottom: 16,
@@ -1714,8 +1819,8 @@ const styles = StyleSheet.create({
 
   // Exercise Card
   exerciseCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
@@ -1725,12 +1830,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   exerciseName: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: typography.fontBold,
     color: colors.text,
+    letterSpacing: -0.2,
   },
   machineName: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -1748,35 +1855,42 @@ const styles = StyleSheet.create({
   },
   setHeaderText: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   setRow: {
     flexDirection: 'row',
     paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSubtle,
   },
   setNumber: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: typography.fontMonoBold,
     color: colors.primary,
+    fontVariant: ['tabular-nums'],
   },
   setValue: {
     flex: 1,
     fontSize: 14,
+    fontFamily: typography.fontMono,
     color: colors.text,
+    fontVariant: ['tabular-nums'],
   },
   setRpe: {
     flex: 1,
     fontSize: 14,
+    fontFamily: typography.fontMono,
     color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
   },
   noSetsText: {
     fontSize: 14,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     marginBottom: 12,
@@ -1785,9 +1899,9 @@ const styles = StyleSheet.create({
   // Suggestion Card
   suggestionCard: {
     backgroundColor: colors.primarySubtle,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderAccent,
     padding: 14,
     marginBottom: 12,
   },
@@ -1798,117 +1912,156 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   suggestionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   confidenceBadge: {
     paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: 999,
   },
   confidenceBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.white,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    color: colors.textInverse,
   },
   suggestionValues: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: typography.fontMonoBold,
     color: colors.text,
+    fontVariant: ['tabular-nums'],
     marginBottom: 6,
   },
   suggestionReason: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginBottom: 4,
   },
   suggestionSafetyNote: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.error,
     fontStyle: 'italic',
     marginBottom: 8,
   },
   suggestionApplyButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 6,
   },
   suggestionApplyButtonText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '600',
+    color: colors.primaryLight,
+    fontSize: 14,
+    fontFamily: typography.fontSemiBold,
   },
 
-  // Add Set
+  // Add Set (set logger — Stitch set-logger layout)
   addSetSection: {
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingTop: 12,
   },
   addSetLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     marginBottom: 8,
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  addSetContainer: {
+    gap: 12,
   },
   addSetRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: 8,
   },
-  addSetInput: {
+  addSetField: {
     flex: 1,
-    height: 44,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    color: colors.text,
-    backgroundColor: colors.surfaceElevated,
+    paddingTop: 10,
+    paddingBottom: 4,
+    paddingHorizontal: 8,
+    alignItems: 'center',
   },
-  addSetInputSmall: {
-    flex: 0.7,
+  addSetFieldSmall: {
+    flex: 0.6,
+  },
+  addSetFieldLabel: {
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  addSetInput: {
+    alignSelf: 'stretch',
+    height: 44,
+    fontSize: 24,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
+    color: colors.text,
+    textAlign: 'center',
+    padding: 0,
   },
   logSetButton: {
     backgroundColor: colors.primary,
-    height: 44,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    height: 52,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 6,
   },
   logSetButtonDisabled: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primaryDark,
   },
   logSetButtonText: {
-    color: colors.white,
+    color: colors.textOnAccent,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontBold,
+    letterSpacing: 1.5,
   },
 
-  // Finish Button
+  // Finish Button — primary CTA, solid crimson
   finishButton: {
-    backgroundColor: colors.success,
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 6,
   },
   finishButtonDisabled: {
-    backgroundColor: colors.successLight,
+    backgroundColor: colors.primaryDark,
   },
   finishButtonText: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: '700',
+    color: colors.textOnAccent,
+    fontSize: 16,
+    fontFamily: typography.fontBold,
+    letterSpacing: 1,
   },
 
-  // Rest Timer
+  // Rest Timer — emissive crimson countdown (Stitch rest-timer)
   restTimerOverlay: {
     position: 'absolute',
     bottom: 96,
@@ -1916,64 +2069,104 @@ const styles = StyleSheet.create({
     right: 16,
   },
   restTimerCard: {
-    backgroundColor: colors.surfaceHighest,
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    elevation: 10,
   },
-  restTimerCardDone: {
-    backgroundColor: colors.success,
+  restRingWrap: {
+    width: REST_RING_SIZE,
+    height: REST_RING_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  restRingCenter: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   restTimerLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primaryLight,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    letterSpacing: 2,
+    marginBottom: 2,
   },
   restTimerDisplay: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.white,
+    fontSize: 40,
+    fontFamily: typography.fontMonoBold,
+    color: colors.text,
     fontVariant: ['tabular-nums'],
-    marginBottom: 8,
+    letterSpacing: -1,
   },
   restTimerDisplayDone: {
-    color: colors.white,
+    color: colors.primaryLight,
   },
   restTimerDurations: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   restDurationChip: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 999,
   },
   restDurationChipText: {
-    color: colors.white,
+    color: colors.textSecondary,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: typography.fontMono,
+    fontVariant: ['tabular-nums'],
+  },
+  restAdjustRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 10,
+  },
+  restAdjustButton: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  restAdjustText: {
+    color: colors.text,
+    fontSize: 14,
+    fontFamily: typography.fontMono,
+    fontVariant: ['tabular-nums'],
   },
   restTimerDismiss: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    backgroundColor: colors.primarySubtle,
   },
   restTimerDismissText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    fontWeight: '500',
+    color: colors.primaryLight,
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
 
-  // FAB
+  // FAB — crimson gateway with glow
   fab: {
     position: 'absolute',
     right: 20,
@@ -1981,18 +2174,18 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    elevation: 8,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
   },
   fabText: {
     fontSize: 28,
-    color: colors.white,
+    color: colors.textOnAccent,
     fontWeight: '600',
     lineHeight: 30,
   },
@@ -2007,34 +2200,40 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: colors.surfaceElevated,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: colors.border,
     padding: 24,
     maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: typography.fontBold,
     color: colors.text,
     marginBottom: 20,
+    letterSpacing: -0.2,
   },
   modalLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     marginBottom: 8,
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   modalInput: {
     height: 48,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: typography.fontRegular,
     color: colors.text,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.bgInput,
     marginBottom: 16,
   },
   machineList: {
@@ -2044,22 +2243,23 @@ const styles = StyleSheet.create({
   machineItem: {
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 8,
   },
   machineItemSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+    borderColor: colors.borderAccent,
   },
   machineItemText: {
     fontSize: 15,
+    fontFamily: typography.fontRegular,
     color: colors.text,
   },
   machineItemTextSelected: {
-    color: colors.white,
-    fontWeight: '600',
+    color: colors.primaryLight,
+    fontFamily: typography.fontSemiBold,
   },
   emptyMachineText: {
     fontSize: 14,
@@ -2075,30 +2275,30 @@ const styles = StyleSheet.create({
   modalCancelButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
   },
   modalCancelText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
   },
   modalAddButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     backgroundColor: colors.primary,
   },
   modalAddButtonDisabled: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primaryDark,
   },
   modalAddText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.white,
+    fontFamily: typography.fontSemiBold,
+    color: colors.textOnAccent,
   },
 
   // ─── Form Checklist Styles ─────────────────────────

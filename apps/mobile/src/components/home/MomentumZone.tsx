@@ -1,11 +1,14 @@
 /**
  * MomentumZone — Streak, weekly stats, level progress. Based on DOC_07 Part 2E.
+ * Restyled to the NEXTERA Red-Luxury system (design/stitch stat grid):
+ * L2 tiles, 22px radius, hairline borders, mono stat numbers.
  */
 import type { ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import { StreakFlame } from '../gamification/StreakFlame';
 
 interface MomentumZoneProps {
@@ -83,18 +86,18 @@ export function MomentumZone({
           accentColor={colors.amber}
         />
         <MomentumTile
-          icon={'\uD83C\uDFCB\uFE0F'}
+          icon={'🏋️'}
           value={`${weeklyWorkouts}/${weeklyGoal}`}
           label="this week"
           sub={volumeStr}
-          accentColor={colors.primary}
+          accentColor={colors.text}
         />
         <MomentumTile
-          icon={'\u2B50'}
+          icon={'⭐'}
           value={`${level}`}
           label="level"
           sub={`${score.toLocaleString()} pts`}
-          accentColor={colors.purple}
+          accentColor={colors.gold}
         />
       </View>
 
@@ -121,11 +124,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: typography.labelSize,
+    fontFamily: typography.fontSemiBold,
     color: colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     marginBottom: spacing.md,
   },
   tilesRow: {
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 4,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surfaceHighest,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -148,6 +151,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
+    fontFamily: typography.fontRegular,
     color: colors.textMuted,
     marginTop: 6,
     textAlign: 'center',
@@ -157,8 +161,10 @@ const styles = StyleSheet.create({
 const tileStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.md,
     alignItems: 'center',
     gap: 4,
@@ -175,15 +181,19 @@ const tileStyles = StyleSheet.create({
   },
   value: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.5,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
     color: colors.textMuted,
-    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   sub: {
     fontSize: 11,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginTop: 2,
   },

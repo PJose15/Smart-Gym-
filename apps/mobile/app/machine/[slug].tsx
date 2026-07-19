@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../src/lib/supabase';
 import type { Machine, WorkoutStatus, AlternativeResult } from '@nexera/types';
 import { getMachineAlternatives } from '@nexera/ai-assist';
@@ -22,6 +23,7 @@ import { SkeletonGate, MachineDetailSkeleton } from '../../src/components/skelet
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 import { trackEvent } from '../../src/lib/events';
 import { isFeatureEnabled, refreshFeatureFlags, needsRefresh } from '../../src/lib/featureFlags';
 import { generateMachineMistakes, localCache } from '@nexera/ai-assist';
@@ -392,6 +394,13 @@ export default function MachineDetailScreen() {
   return (
     <AnimatedScreen>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Ambient crimson hero glow (energy ribbon, per Stitch machine screen) */}
+      <LinearGradient
+        colors={['rgba(224, 20, 47, 0.14)', 'rgba(224, 20, 47, 0)']}
+        style={styles.heroGlow}
+        pointerEvents="none"
+      />
+
       {machine.image_url && !imageError && (
         <Image
           source={{ uri: machine.image_url }}
@@ -401,7 +410,12 @@ export default function MachineDetailScreen() {
         />
       )}
 
-      <Text variant="heading">{machine.name}</Text>
+      <Text variant="heading" style={styles.heroTitle}>{machine.name}</Text>
+      {machine.muscle_groups.length > 0 && (
+        <Text variant="body" color="textSecondary" style={styles.muscleLine}>
+          {machine.muscle_groups.join(' · ')}
+        </Text>
+      )}
       {machine.gym_name && (
         <Text variant="caption" style={styles.gymName}>
           {machine.gym_name}
@@ -436,6 +450,13 @@ export default function MachineDetailScreen() {
             if (isInPlan && planExercise) {
               return (
                 <Card style={styles.modeCard}>
+                  <LinearGradient
+                    colors={[colors.primaryLight, colors.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.cardRibbon}
+                    pointerEvents="none"
+                  />
                   <Text variant="caption" style={styles.modeCardLabel}>
                     {'✓ Today\'s target'}
                   </Text>
@@ -477,21 +498,9 @@ export default function MachineDetailScreen() {
 
       {modeContext && modeContext.mode === 'freestyle' && (
         <View style={styles.modeSection}>
-          <View style={[styles.modePill, { backgroundColor: colors.surfaceElevated }]}>
+          <View style={[styles.modePill, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
             <Text style={[styles.modePillText, { color: colors.textSecondary }]}>Freestyle</Text>
           </View>
-        </View>
-      )}
-
-      {machine.muscle_groups.length > 0 && (
-        <View style={styles.chipsContainer}>
-          {machine.muscle_groups.map((muscle, i: number) => (
-            <View key={i} style={styles.chip}>
-              <Text variant="caption" color="white">
-                {muscle}
-              </Text>
-            </View>
-          ))}
         </View>
       )}
 
@@ -499,7 +508,7 @@ export default function MachineDetailScreen() {
       {(machine.difficulty || machine.equipment_type || machine.movement_pattern) && (
         <View style={styles.metadataRow}>
           {machine.difficulty && DIFFICULTY_CONFIG[machine.difficulty] && (
-            <View style={[styles.metaBadge, { backgroundColor: DIFFICULTY_CONFIG[machine.difficulty].color + '18' }]}>
+            <View style={[styles.metaBadge, { backgroundColor: DIFFICULTY_CONFIG[machine.difficulty].color + '18', borderColor: DIFFICULTY_CONFIG[machine.difficulty].color + '40' }]}>
               <Text style={[styles.metaBadgeText, { color: DIFFICULTY_CONFIG[machine.difficulty].color }]}>
                 {DIFFICULTY_CONFIG[machine.difficulty].label}
               </Text>
@@ -520,7 +529,7 @@ export default function MachineDetailScreen() {
             </View>
           )}
           {machine.maintenance_status === 'in_maintenance' && (
-            <View style={[styles.metaBadge, { backgroundColor: colors.error + '18' }]}>
+            <View style={[styles.metaBadge, { backgroundColor: colors.error + '18', borderColor: colors.error + '40' }]}>
               <Text style={[styles.metaBadgeText, { color: colors.error }]}>
                 In Maintenance
               </Text>
@@ -530,14 +539,14 @@ export default function MachineDetailScreen() {
       )}
 
       {machine.setup_steps.length > 0 && (
-        <Card style={styles.section}>
+        <Card style={styles.sectionCard}>
           <Text variant="subheading" style={styles.sectionTitle}>
             Setup Instructions
           </Text>
           {machine.setup_steps.map((step, i: number) => (
             <View key={i} style={styles.bulletRow}>
               <View style={styles.bulletNumber}>
-                <Text variant="caption" color="white">
+                <Text variant="caption" color="primary" style={styles.bulletNumberText}>
                   {i + 1}
                 </Text>
               </View>
@@ -550,14 +559,14 @@ export default function MachineDetailScreen() {
       )}
 
       {machine.safety_cues.length > 0 && (
-        <Card style={styles.section}>
+        <Card style={styles.sectionCard}>
           <Text variant="subheading" style={styles.sectionTitle}>
             Safety Cues
           </Text>
           {machine.safety_cues.map((cue, i: number) => (
             <View key={i} style={styles.bulletRow}>
               <View style={styles.warningIcon}>
-                <Text variant="caption" color="white">
+                <Text variant="caption" style={styles.warningGlyph}>
                   !
                 </Text>
               </View>
@@ -570,11 +579,13 @@ export default function MachineDetailScreen() {
       )}
 
       {commonMistakes.length > 0 && (
-        <View style={styles.section}>
+        <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Common Mistakes</Text>
           {commonMistakes.map((mistake, i) => (
             <View key={i} style={styles.bulletRow}>
-              <Text style={styles.mistakeIcon}>!</Text>
+              <View style={styles.warningIcon}>
+                <Text variant="caption" style={styles.warningGlyph}>!</Text>
+              </View>
               <Text style={styles.bulletText}>{mistake}</Text>
             </View>
           ))}
@@ -644,6 +655,14 @@ export default function MachineDetailScreen() {
         </TouchableOpacity>
       )}
 
+    </ScrollView>
+
+    {/* Sticky primary CTA over a background fade (Stitch machine screen footer) */}
+    <LinearGradient
+      colors={['rgba(10, 10, 12, 0)', 'rgba(10, 10, 12, 0.92)', colors.background]}
+      style={styles.footer}
+      pointerEvents="box-none"
+    >
       <TouchableOpacity
         style={[styles.startWorkoutButton, startingWorkout && { opacity: 0.6 }]}
         onPress={handleStartWorkout}
@@ -653,7 +672,7 @@ export default function MachineDetailScreen() {
           {startingWorkout ? 'Starting...' : 'Start Workout with This Machine'}
         </Text>
       </TouchableOpacity>
-    </ScrollView>
+    </LinearGradient>
 
     {/* ─── Alternatives Modal ─────────────────────────── */}
     <Modal
@@ -665,6 +684,7 @@ export default function MachineDetailScreen() {
       {Platform.OS === 'ios' ? (
         <BlurView tint="dark" intensity={40} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Alternative Machines</Text>
               <TouchableOpacity onPress={() => setShowAlternatives(false)}>
@@ -717,6 +737,7 @@ export default function MachineDetailScreen() {
       ) : (
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Alternative Machines</Text>
             <TouchableOpacity onPress={() => setShowAlternatives(false)}>
@@ -779,7 +800,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-    paddingBottom: spacing.xxl,
+    paddingBottom: 120,
   },
   centered: {
     flex: 1,
@@ -788,31 +809,50 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     backgroundColor: colors.background,
   },
+  heroGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 260,
+  },
   image: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: spacing.md,
+  },
+  heroTitle: {
+    fontFamily: typography.fontSerif,
+    fontSize: 34,
+    lineHeight: 42,
+    letterSpacing: 0.3,
+    color: colors.text,
+  },
+  muscleLine: {
+    marginTop: 2,
+    marginBottom: spacing.xs,
   },
   gymName: {
+    color: colors.textMuted,
     marginBottom: spacing.md,
   },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+  sectionCard: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
     marginBottom: spacing.lg,
-  },
-  chip: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: 16,
-  },
-  section: {
-    marginBottom: spacing.lg,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   sectionTitle: {
+    fontSize: 18,
+    fontFamily: typography.fontSemiBold,
+    color: colors.text,
     marginBottom: spacing.md,
   },
   bulletRow: {
@@ -824,10 +864,16 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
+  },
+  bulletNumberText: {
+    fontFamily: typography.fontMonoBold,
+    fontSize: 12,
   },
   bulletText: {
     flex: 1,
@@ -836,21 +882,19 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: colors.error,
+    backgroundColor: colors.warningSubtle,
+    borderWidth: 1,
+    borderColor: colors.warning,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
     marginTop: 2,
   },
-  mistakeIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.warning,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.sm,
-    marginTop: 2,
+  warningGlyph: {
+    color: colors.warning,
+    fontFamily: typography.fontBold,
+    fontSize: 12,
+    lineHeight: 14,
   },
   loadingText: {
     marginTop: spacing.md,
@@ -865,17 +909,32 @@ const styles = StyleSheet.create({
   button: {
     marginBottom: spacing.md,
   },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
   startWorkoutButton: {
-    backgroundColor: colors.success,
+    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: spacing.sm,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 8,
   },
   startWorkoutText: {
-    color: colors.white,
-    fontSize: 17,
-    fontWeight: '700',
+    color: colors.textOnAccent,
+    fontSize: 15,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
 
   // Metadata badges
@@ -886,19 +945,28 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   metaBadge: {
-    backgroundColor: colors.primary + '12',
-    paddingHorizontal: 10,
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 999,
   },
   metaBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.5,
     color: colors.primary,
   },
 
   // Personal history card
   historyCard: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
     marginBottom: spacing.lg,
   },
   historySectionTitle: {
@@ -914,8 +982,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   historyValue: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.5,
     color: colors.text,
   },
   historyLastUsed: {
@@ -928,10 +997,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   recentSetsLabel: {
-    fontWeight: '600',
-    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
+    color: colors.textMuted,
     marginBottom: spacing.xs,
   },
   recentSetsRow: {
@@ -942,44 +1012,66 @@ const styles = StyleSheet.create({
   recentSetChip: {
     backgroundColor: colors.background,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   recentSetText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: typography.fontMono,
     color: colors.text,
   },
 
-  // Alternatives button
   // Workout mode context styles
   modeSection: {
     marginBottom: spacing.md,
   },
   modePill: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: spacing.xs,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    marginBottom: spacing.sm,
   },
   modePillText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   modeCard: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.success,
+    shadowOpacity: 0,
+    elevation: 0,
+    overflow: 'hidden',
+  },
+  cardRibbon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    opacity: 0.6,
   },
   modeCardLabel: {
     color: colors.success,
-    fontWeight: '700',
-    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     marginBottom: 4,
   },
   modeCardText: {
-    fontWeight: '600',
+    fontFamily: typography.fontMonoBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
     marginBottom: 4,
   },
   modeNote: {
@@ -991,18 +1083,21 @@ const styles = StyleSheet.create({
   },
   modeSuggestionChip: {
     backgroundColor: colors.surfaceElevated,
-    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 999,
     marginRight: spacing.xs,
   },
   modeSuggestionText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: typography.fontMedium,
     color: colors.text,
     maxWidth: 120,
   },
 
+  // Alternatives button (secondary CTA: crimson hairline + 10% fill)
   alternativesButton: {
     backgroundColor: colors.primarySubtle,
     paddingVertical: 12,
@@ -1011,12 +1106,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.borderAccent,
   },
   alternativesButtonText: {
     color: colors.primary,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
   },
 
   // Modal
@@ -1027,10 +1122,21 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
     padding: spacing.lg,
+    paddingTop: spacing.sm,
     maxHeight: '70%',
+  },
+  modalHandle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: colors.borderStrong,
+    marginBottom: spacing.md,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1040,12 +1146,12 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: typography.fontBold,
     color: colors.text,
   },
   modalClose: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: typography.fontSemiBold,
     color: colors.primary,
   },
   emptyAlternatives: {
@@ -1061,14 +1167,16 @@ const styles = StyleSheet.create({
 
   // Alternative card
   alternativeCard: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
   alternativeName: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -1079,14 +1187,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   reasonChip: {
-    backgroundColor: colors.primary + '20',
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 999,
   },
   reasonText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.primary,
   },
   alternativeMuscles: {
@@ -1100,7 +1210,7 @@ const styles = StyleSheet.create({
   },
   alternativeAction: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.primary,
     marginTop: 4,
   },

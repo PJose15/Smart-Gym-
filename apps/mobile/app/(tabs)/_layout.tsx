@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { colors } from '../../src/theme/colors';
+import { typography } from '../../src/theme/typography';
 import { useUnreadFeedCount } from '../../src/hooks/useUnreadFeedCount';
 
 const USE_NATIVE = Platform.OS !== 'web';
@@ -106,24 +107,37 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        headerStyle: { backgroundColor: colors.dark },
+        tabBarInactiveTintColor: colors.textMuted,
+        headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.white,
+        headerShadowVisible: false,
+        headerTitleStyle: {
+          fontFamily: typography.fontSerif,
+          fontSize: 17,
+          letterSpacing: 2,
+          color: colors.text,
+        },
         tabBarBackground: () =>
           Platform.OS === 'ios' ? (
             <BlurView tint="dark" intensity={80} style={StyleSheet.absoluteFill} />
           ) : null,
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontFamily: typography.fontSemiBold,
+          letterSpacing: 0.6,
+          textTransform: 'uppercase',
+        },
         tabBarStyle: {
-          backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.background,
+          // L1 elevated surface with a hairline top border — depth via tonal
+          // layers, no drop shadows (design.md §3.11).
+          backgroundColor: Platform.OS === 'ios' ? 'rgba(18, 18, 20, 0.85)' : colors.surface,
           height: 65,
           paddingBottom: 8,
           paddingTop: 4,
-          borderTopWidth: 0,
-          elevation: 12,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          elevation: 0,
+          shadowOpacity: 0,
           ...(Platform.OS === 'ios' ? { position: 'absolute' as const } : {}),
         },
       }}

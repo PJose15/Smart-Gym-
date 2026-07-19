@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import type { LevelProgress } from '@nexera/ai-assist';
 
 interface ProfileHeaderProps {
@@ -37,8 +38,9 @@ export function ProfileHeader({
 
   return (
     <View style={styles.container}>
+      {/* Top bar: serif wordmark (brand moment) + settings */}
       <View style={styles.topRow}>
-        <View style={{ flex: 1 }} />
+        <Text style={styles.wordmark}>NEXTERA</Text>
         <TouchableOpacity
           style={styles.gearButton}
           onPress={() => router.push('/settings' as any)}
@@ -48,74 +50,82 @@ export function ProfileHeader({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.avatarCircle}>
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-        ) : (
-          <Text style={styles.avatarText}>{getInitials(fullName)}</Text>
-        )}
-      </View>
+      {/* Identity card — L2 surface, hairline border, corner crimson glow */}
+      <View style={styles.card}>
+        <View style={styles.cornerGlow} pointerEvents="none" />
 
-      <Text variant="heading" style={styles.name}>
-        {fullName || 'No Name Set'}
-      </Text>
-      <Text variant="body" color="textSecondary">{email}</Text>
-
-      {memberSince && (
-        <Text variant="caption" color="textSecondary" style={styles.memberSince}>
-          Member since {new Date(memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-        </Text>
-      )}
-
-      {levelProgress && (
-        <View style={styles.levelRow}>
-          <View style={[styles.levelBadge, { backgroundColor: levelProgress.current.color + '20' }]}>
-            <Text style={[styles.levelBadgeText, { color: levelProgress.current.color }]}>
-              Lv. {levelProgress.current.level}
-            </Text>
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatarCircle}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>{getInitials(fullName)}</Text>
+            )}
           </View>
+        </View>
+
+        <Text style={styles.name}>{fullName || 'No Name Set'}</Text>
+        <Text variant="caption" color="textSecondary" style={styles.email}>{email}</Text>
+
+        {levelProgress && (
+          <View style={styles.levelRow}>
+            <Text style={styles.levelLabel}>
+              LEVEL <Text style={styles.levelNumber}>{levelProgress.current.level}</Text>
+            </Text>
+            <Text style={styles.dotSeparator}>·</Text>
+            <Text style={styles.xpValue}>{levelProgress.score.toLocaleString()} XP</Text>
+          </View>
+        )}
+
+        {levelProgress && (
           <Text variant="caption" color="textSecondary" style={styles.levelName}>
             {levelProgress.current.name}
           </Text>
-        </View>
-      )}
+        )}
 
-      {levelProgress && levelProgress.next && (
-        <View style={styles.xpBarContainer}>
-          <View style={styles.xpBarBg}>
-            <View
-              style={[
-                styles.xpBarFill,
-                {
-                  width: `${levelProgress.progressPct}%`,
-                  backgroundColor: levelProgress.current.color,
-                },
-              ]}
-            />
-          </View>
-          <Text variant="caption" color="textSecondary" style={styles.xpLabel}>
-            {levelProgress.pointsToNext} pts to Level {levelProgress.next.level}
+        {memberSince && (
+          <Text style={styles.memberSince}>
+            Member since {new Date(memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
           </Text>
-        </View>
-      )}
+        )}
 
-      <View style={styles.quickStatsRow}>
-        {streak > 0 && (
-          <View style={styles.quickStat}>
-            <Text style={styles.quickStatValue}>{streak}</Text>
-            <Text variant="caption" color="textSecondary">streak</Text>
+        {levelProgress && levelProgress.next && (
+          <View style={styles.xpBarContainer}>
+            <View style={styles.xpBarLabels}>
+              <Text style={styles.xpToNext}>
+                {levelProgress.pointsToNext.toLocaleString()} XP TO LEVEL {levelProgress.next.level}
+              </Text>
+              <Text style={styles.xpNextLevel}>LEVEL {levelProgress.next.level}</Text>
+            </View>
+            <View style={styles.xpBarBg}>
+              <View
+                style={[
+                  styles.xpBarFill,
+                  { width: `${levelProgress.progressPct}%` },
+                ]}
+              />
+            </View>
           </View>
         )}
-        <View style={styles.quickStat}>
-          <Text style={styles.quickStatValue}>{totalSessions}</Text>
-          <Text variant="caption" color="textSecondary">sessions</Text>
+
+        <View style={styles.quickStatsRow}>
+          {streak > 0 && (
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatValue}>{streak}</Text>
+              <Text style={styles.quickStatLabel}>🔥 STREAK</Text>
+            </View>
+          )}
+          <View style={styles.quickStat}>
+            <Text style={styles.quickStatValue}>{totalSessions}</Text>
+            <Text style={styles.quickStatLabel}>SESSIONS</Text>
+          </View>
+          {levelProgress && (
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatValue}>{levelProgress.score.toLocaleString()}</Text>
+              <Text style={styles.quickStatLabel}>XP</Text>
+            </View>
+          )}
         </View>
-        {levelProgress && (
-          <View style={styles.quickStat}>
-            <Text style={styles.quickStatValue}>{levelProgress.score.toLocaleString()}</Text>
-            <Text variant="caption" color="textSecondary">XP</Text>
-          </View>
-        )}
       </View>
     </View>
   );
@@ -123,14 +133,21 @@ export function ProfileHeader({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
     paddingBottom: spacing.md,
   },
   topRow: {
     flexDirection: 'row',
     width: '100%',
-    justifyContent: 'flex-end',
-    marginBottom: spacing.xs,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  wordmark: {
+    fontFamily: typography.fontSerif,
+    fontSize: 20,
+    letterSpacing: 4,
+    color: colors.text,
+    textTransform: 'uppercase',
   },
   gearButton: {
     padding: spacing.xs,
@@ -139,81 +156,157 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: colors.textSecondary,
   },
-  avatarCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
+  card: {
     alignItems: 'center',
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    overflow: 'hidden',
+  },
+  cornerGlow: {
+    position: 'absolute',
+    top: -70,
+    right: -70,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: colors.primarySubtle,
+  },
+  avatarWrap: {
+    // Crimson halo behind the avatar (glow, not drop shadow)
+    borderRadius: 46,
+    padding: 4,
+    backgroundColor: colors.primarySubtle,
     marginBottom: spacing.md,
   },
+  avatarCircle: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: colors.surfaceHighest,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
   avatarText: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: typography.fontSerifBold,
   },
   avatarImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
   },
   name: {
-    marginBottom: spacing.xs,
+    fontFamily: typography.fontSerif,
+    fontSize: 28,
+    color: colors.text,
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
-  memberSince: {
-    marginTop: spacing.xs,
-    fontStyle: 'italic',
+  email: {
+    marginBottom: spacing.sm,
   },
   levelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginTop: spacing.sm,
   },
-  levelBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 10,
+  levelLabel: {
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    color: colors.primaryLight,
   },
-  levelBadgeText: {
+  levelNumber: {
+    fontFamily: typography.fontMonoBold,
     fontSize: 13,
-    fontWeight: '700',
+    color: colors.primaryLight,
+  },
+  dotSeparator: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  xpValue: {
+    fontFamily: typography.fontMonoBold,
+    fontSize: 14,
+    color: colors.text,
+    letterSpacing: -0.3,
   },
   levelName: {
-    fontWeight: '500',
+    marginTop: 2,
+  },
+  memberSince: {
+    marginTop: spacing.xs,
+    fontSize: 12,
+    fontFamily: typography.fontRegular,
+    color: colors.textMuted,
   },
   xpBarContainer: {
-    width: '80%',
-    marginTop: spacing.sm,
-    alignItems: 'center',
+    width: '100%',
+    marginTop: spacing.md,
+  },
+  xpBarLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  xpToNext: {
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.8,
+    color: colors.primaryLight,
+  },
+  xpNextLevel: {
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.8,
+    color: colors.textSecondary,
   },
   xpBarBg: {
     width: '100%',
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceHighest,
     overflow: 'hidden',
   },
   xpBarFill: {
     height: '100%',
     borderRadius: 3,
-  },
-  xpLabel: {
-    marginTop: 4,
-    fontSize: 11,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
   },
   quickStatsRow: {
     flexDirection: 'row',
-    gap: spacing.xl,
-    marginTop: spacing.md,
+    width: '100%',
+    justifyContent: 'space-evenly',
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
   },
   quickStat: {
     alignItems: 'center',
   },
   quickStatValue: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.5,
     color: colors.text,
+  },
+  quickStatLabel: {
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 0.8,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
 });

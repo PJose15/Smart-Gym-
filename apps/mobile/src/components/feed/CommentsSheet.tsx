@@ -284,8 +284,12 @@ const styles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     maxHeight: '100%',
@@ -325,7 +329,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xs + 2,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   retryText: {
     fontSize: typography.smallSize,
@@ -367,7 +371,9 @@ const styles = StyleSheet.create({
   commentBubble: {
     flex: 1,
     backgroundColor: colors.surfaceElevated,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     padding: spacing.sm + 2,
   },
   commentHeader: {
@@ -408,9 +414,9 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     backgroundColor: colors.bgInput,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
     color: colors.text,
     fontSize: typography.bodySize - 1,
     fontFamily: typography.fontRegular,
@@ -420,7 +426,7 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     backgroundColor: colors.primary,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
     minWidth: 60,

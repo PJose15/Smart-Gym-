@@ -108,10 +108,10 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceElevated,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceHighest,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
   },
   buttonActive: {
     backgroundColor: colors.primarySubtle,
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   },
   count: {
     fontSize: typography.labelSize,
-    fontFamily: typography.fontSemiBold,
+    fontFamily: typography.fontMonoBold,
     color: colors.textSecondary,
   },
   countActive: {

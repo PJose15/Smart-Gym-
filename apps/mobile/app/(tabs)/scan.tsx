@@ -12,6 +12,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { parseQrCode } from '@nexera/utils';
 import { Button, Text } from '../../src/components';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
@@ -21,6 +22,12 @@ import { trackEvent } from '../../src/lib/events';
 import { deduper } from '../../src/lib/requestDeduper';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
+
+// Viewfinder geometry (Stitch scan-machine reticle)
+const RETICLE_SIZE = 250;
+const RETICLE_INSET = 20;
+const LASER_TRAVEL = RETICLE_SIZE - RETICLE_INSET * 2 - 2;
 
 // ─── Types ─────────────────────────────────────────────
 interface RecentMachine {
@@ -66,6 +73,8 @@ export default function ScanScreen() {
 
   // Animated scan frame pulse
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Animated crimson laser line sweeping the viewfinder
+  const laserAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -83,8 +92,30 @@ export default function ScanScreen() {
       ]),
     );
     loop.start();
-    return () => loop.stop();
-  }, [pulseAnim]);
+
+    const laserLoop = Animated.loop(
+      Animated.timing(laserAnim, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      }),
+    );
+    laserLoop.start();
+
+    return () => {
+      loop.stop();
+      laserLoop.stop();
+    };
+  }, [pulseAnim, laserAnim]);
+
+  const laserTranslate = laserAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, LASER_TRAVEL],
+  });
+  const laserOpacity = laserAnim.interpolate({
+    inputRange: [0, 0.1, 0.9, 1],
+    outputRange: [0, 1, 1, 0],
+  });
 
   useEffect(() => {
     mountedRef.current = true;
@@ -356,9 +387,32 @@ export default function ScanScreen() {
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         >
           <View style={styles.overlay}>
-            <Animated.View
-              style={[styles.scanArea, { transform: [{ scale: pulseAnim }] }]}
+            <LinearGradient
+              colors={['rgba(0,0,0,0.75)', 'rgba(0,0,0,0)']}
+              style={styles.topGradient}
+              pointerEvents="none"
             />
+            <Text style={styles.scanHeaderLabel}>SCAN MACHINE</Text>
+
+            {/* Viewfinder: crimson corner brackets + hairline frame + laser sweep */}
+            <Animated.View
+              style={[styles.reticle, { transform: [{ scale: pulseAnim }] }]}
+            >
+              <View style={[styles.corner, styles.cornerTL]} />
+              <View style={[styles.corner, styles.cornerTR]} />
+              <View style={[styles.corner, styles.cornerBL]} />
+              <View style={[styles.corner, styles.cornerBR]} />
+              <View style={styles.innerFrame}>
+                <Animated.View
+                  style={[
+                    styles.laser,
+                    { opacity: laserOpacity, transform: [{ translateY: laserTranslate }] },
+                  ]}
+                />
+              </View>
+            </Animated.View>
+
+            <Text style={styles.scanningLabel}>SCANNING…</Text>
             <Text variant="body" color="white" style={styles.hint}>
               Point at a machine QR code
             </Text>
@@ -369,6 +423,13 @@ export default function ScanScreen() {
       {/* Bottom context panel */}
       {Platform.OS === 'ios' ? (
         <BlurView tint="dark" intensity={60} style={styles.bottomPanel}>
+          <LinearGradient
+            colors={[colors.primaryLight, colors.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.panelRibbon}
+            pointerEvents="none"
+          />
           <ScrollView
             horizontal={false}
             showsVerticalScrollIndicator={false}
@@ -378,12 +439,12 @@ export default function ScanScreen() {
           <View style={styles.statsStrip}>
             <View style={styles.statPill}>
               <Text variant="label" style={styles.statValue}>{scanCountToday}</Text>
-              <Text variant="caption" color="textSecondary">scans today</Text>
+              <Text variant="caption" color="textSecondary" style={styles.statLabel}>scans today</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statPill}>
               <Text variant="label" style={styles.statValue}>{totalUniqueMachines}</Text>
-              <Text variant="caption" color="textSecondary">machines used</Text>
+              <Text variant="caption" color="textSecondary" style={styles.statLabel}>machines used</Text>
             </View>
             {loadingContext && (
               <>
@@ -457,6 +518,13 @@ export default function ScanScreen() {
         </BlurView>
       ) : (
         <View style={[styles.bottomPanel, styles.bottomPanelAndroid]}>
+          <LinearGradient
+            colors={[colors.primaryLight, colors.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.panelRibbon}
+            pointerEvents="none"
+          />
           <ScrollView
             horizontal={false}
             showsVerticalScrollIndicator={false}
@@ -466,12 +534,12 @@ export default function ScanScreen() {
             <View style={styles.statsStrip}>
               <View style={styles.statPill}>
                 <Text variant="label" style={styles.statValue}>{scanCountToday}</Text>
-                <Text variant="caption" color="textSecondary">scans today</Text>
+                <Text variant="caption" color="textSecondary" style={styles.statLabel}>scans today</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statPill}>
                 <Text variant="label" style={styles.statValue}>{totalUniqueMachines}</Text>
-                <Text variant="caption" color="textSecondary">machines used</Text>
+                <Text variant="caption" color="textSecondary" style={styles.statLabel}>machines used</Text>
               </View>
               {loadingContext && (
                 <>
@@ -602,7 +670,7 @@ const styles = StyleSheet.create({
   // ─── Camera layout ─────────────────────────────────
   cameraContainer: {
     flex: 1,
-    backgroundColor: colors.black,
+    backgroundColor: colors.background,
   },
   cameraSection: {
     flex: 1,
@@ -616,29 +684,98 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  scanArea: {
-    width: 220,
-    height: 220,
-    borderWidth: 2,
+  topGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 96,
+  },
+  scanHeaderLabel: {
+    position: 'absolute',
+    top: spacing.md,
+    alignSelf: 'center',
+    fontSize: typography.labelSize,
+    fontFamily: typography.fontSemiBold,
+    color: colors.textSecondary,
+    letterSpacing: 3,
+  },
+  // ─── Viewfinder (Stitch reticle: corner brackets + laser) ───
+  reticle: {
+    width: RETICLE_SIZE,
+    height: RETICLE_SIZE,
+  },
+  corner: {
+    position: 'absolute',
+    width: 32,
+    height: 32,
     borderColor: colors.primary,
-    borderRadius: 16,
-    backgroundColor: 'transparent',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+  },
+  cornerTL: { top: 0, left: 0, borderTopWidth: 2, borderLeftWidth: 2 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: 2, borderRightWidth: 2 },
+  cornerBL: { bottom: 0, left: 0, borderBottomWidth: 2, borderLeftWidth: 2 },
+  cornerBR: { bottom: 0, right: 0, borderBottomWidth: 2, borderRightWidth: 2 },
+  innerFrame: {
+    position: 'absolute',
+    top: RETICLE_INSET,
+    left: RETICLE_INSET,
+    right: RETICLE_INSET,
+    bottom: RETICLE_INSET,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.18)',
+    overflow: 'hidden',
+  },
+  laser: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: colors.primaryLight,
+    shadowColor: colors.primaryLight,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 12,
+  },
+  scanningLabel: {
+    marginTop: spacing.lg,
+    fontSize: typography.tinySize,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primaryLight,
+    letterSpacing: 2.5,
   },
   hint: {
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
     textAlign: 'center',
+    fontSize: typography.smallSize,
+    color: colors.textSecondary,
   },
   // ─── Bottom context panel ──────────────────────────
   bottomPanel: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
     maxHeight: 260,
     paddingTop: spacing.md,
     overflow: 'hidden',
   },
   bottomPanelAndroid: {
-    backgroundColor: colors.background,
-    opacity: 0.95,
+    backgroundColor: colors.surface,
+  },
+  panelRibbon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    opacity: 0.8,
   },
   bottomPanelContent: {
     paddingHorizontal: spacing.md,
@@ -657,9 +794,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   statValue: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.5,
     color: colors.text,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontFamily: typography.fontMedium,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   statDivider: {
     width: 1,
@@ -668,22 +814,22 @@ const styles = StyleSheet.create({
   },
   // ─── Program card ──────────────────────────────────
   programCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    padding: spacing.sm,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
     marginBottom: spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
   },
   programLabel: {
-    fontWeight: '600',
-    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
     marginBottom: 2,
   },
   programName: {
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
   },
   // ─── Recent machines (horizontal) ──────────────────
   recentSection: {
@@ -691,33 +837,33 @@ const styles = StyleSheet.create({
   },
   recentLabel: {
     marginBottom: spacing.xs,
-    fontWeight: '600',
-    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
+    color: colors.textMuted,
   },
   recentScroll: {
     gap: spacing.sm,
   },
   recentChip: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    paddingVertical: spacing.xs,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm + 4,
     minWidth: 100,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
   },
   recentChipName: {
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     fontSize: 13,
     color: colors.text,
   },
   recentChipTime: {
     fontSize: 11,
+    fontFamily: typography.fontMono,
+    color: colors.textMuted,
     marginTop: 1,
   },
   // ─── Recent machines (permission denied list) ──────
@@ -753,10 +899,11 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   tipLabel: {
-    fontWeight: '600',
-    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
+    color: colors.textMuted,
     marginBottom: spacing.xs,
   },
   // ─── Error overlay ─────────────────────────────────
@@ -768,8 +915,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     padding: spacing.lg,
     alignItems: 'center',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   errorText: {
     marginBottom: spacing.md,

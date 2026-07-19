@@ -1,5 +1,5 @@
-/**
- * Push notification service — handles registration, permissions,
+﻿/**
+ * Push notification service â€” handles registration, permissions,
  * local notifications, and push token management.
  * Follows the fire-and-forget pattern for non-blocking operations.
  */
@@ -13,7 +13,7 @@ import { isFeatureEnabled } from './featureFlags';
 import { trackEvent } from './events';
 import type { NotificationType } from '@nexera/types';
 
-// ─── Configuration ───────────────────────────────────────
+// â”€â”€â”€ Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -24,11 +24,11 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// ─── Token Registration ──────────────────────────────────
+// â”€â”€â”€ Token Registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Requests permission and registers the Expo push token with Supabase.
- * Safe to call multiple times — upserts the token.
+ * Safe to call multiple times â€” upserts the token.
  * Returns the token string or null if registration failed.
  */
 export async function registerForPushNotifications(): Promise<string | null> {
@@ -55,7 +55,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
         name: 'Nexera',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#7C5CFF',
+        lightColor: '#E0142F',
       });
     }
 
@@ -65,7 +65,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     });
     const token = tokenData.data;
 
-    // Save token to Supabase (upsert — idempotent)
+    // Save token to Supabase (upsert â€” idempotent)
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -114,7 +114,7 @@ export async function unregisterPushToken(): Promise<void> {
   }
 }
 
-// ─── Deep Link Handler ───────────────────────────────────
+// â”€â”€â”€ Deep Link Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const NOTIFICATION_ROUTES: Record<
   NotificationType,
@@ -147,7 +147,7 @@ export function handleNotificationResponse(
   }
 }
 
-// ─── Local Notification Helpers ──────────────────────────
+// â”€â”€â”€ Local Notification Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Schedules a local notification immediately.
@@ -172,11 +172,11 @@ export async function sendLocalNotification(payload: {
       trigger: null,
     });
   } catch {
-    // Silent — local notifications are best-effort
+    // Silent â€” local notifications are best-effort
   }
 }
 
-// ─── Listener Setup ──────────────────────────────────────
+// â”€â”€â”€ Listener Setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Sets up notification listeners. Call once from root layout.

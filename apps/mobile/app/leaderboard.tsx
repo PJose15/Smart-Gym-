@@ -3,19 +3,27 @@ import {
   View,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../src/lib/supabase';
 import { getLeaderboard } from '../src/lib/leaderboardService';
-import { Text, Card } from '../src/components';
+import { Text } from '../src/components';
 import { AnimatedScreen } from '../src/components/AnimatedScreen';
 import { SkeletonGate, LeaderboardScreenSkeleton } from '../src/components/skeleton';
 import { colors } from '../src/theme/colors';
 import { spacing } from '../src/theme/spacing';
+import { typography } from '../src/theme/typography';
 import type { LeaderboardEntry, LeaderboardPeriod } from '@nexera/types';
+
+// Medal ring colors for the top-3 rank badges (design: gold w/ glow, silver, bronze)
+const MEDAL_COLORS: Record<number, string> = {
+  1: colors.gold,
+  2: colors.silver,
+  3: colors.bronze,
+};
 
 export default function LeaderboardScreen() {
   const router = useRouter();
@@ -71,37 +79,60 @@ export default function LeaderboardScreen() {
     return parts[0][0]?.toUpperCase() || '?';
   };
 
-  const renderItem = ({ item }: { item: LeaderboardEntry }) => (
-    <View style={[styles.row, item.is_current_user && styles.rowHighlight]}>
-      <Text style={[styles.rank, item.rank <= 3 && styles.rankTop]}>
-        {item.rank <= 3 ? ['', '\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][item.rank] : `#${item.rank}`}
-      </Text>
-      <View style={[styles.avatar, item.is_current_user && styles.avatarHighlight]}>
-        <Text style={styles.avatarText}>{getInitials(item.full_name)}</Text>
-      </View>
-      <View style={styles.nameContainer}>
-        <Text variant="body" style={[styles.name, item.is_current_user && styles.nameHighlight]}>
-          {item.is_current_user ? 'You' : item.full_name}
+  const renderItem = ({ item }: { item: LeaderboardEntry }) => {
+    const medal = MEDAL_COLORS[item.rank];
+    return (
+      <View style={[styles.row, item.is_current_user && styles.rowHighlight]}>
+        {medal ? (
+          <View
+            style={[
+              styles.rankBadge,
+              { borderColor: medal },
+              item.rank === 1 && styles.rankBadgeGold,
+            ]}
+          >
+            <Text style={[styles.rankBadgeText, { color: medal }]}>{item.rank}</Text>
+          </View>
+        ) : (
+          <Text style={[styles.rank, item.is_current_user && styles.rankHighlight]}>
+            {item.rank}
+          </Text>
+        )}
+        <View
+          style={[
+            styles.avatar,
+            medal ? { borderColor: medal } : null,
+            item.is_current_user && styles.avatarHighlight,
+          ]}
+        >
+          <Text style={styles.avatarText}>{getInitials(item.full_name)}</Text>
+        </View>
+        <View style={styles.nameContainer}>
+          <Text variant="body" style={[styles.name, item.is_current_user && styles.nameHighlight]}>
+            {item.is_current_user ? 'You' : item.full_name}
+          </Text>
+        </View>
+        <Text style={[styles.points, item.is_current_user && styles.pointsHighlight]}>
+          {item.total_points.toLocaleString()}
         </Text>
       </View>
-      <Text style={[styles.points, item.is_current_user && styles.pointsHighlight]}>
-        {item.total_points.toLocaleString()}
-      </Text>
-    </View>
-  );
+    );
+  };
 
   return (
     <SkeletonGate loading={loading} skeleton={<LeaderboardScreenSkeleton />}>
     <AnimatedScreen>
       <View style={styles.container}>
+        {/* Serif brand wordmark header (design: leaderboard.png) */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text variant="body" color="primary" style={{ fontWeight: '600' }}>Back</Text>
+            <Text variant="body" color="primary" style={styles.backText}>Back</Text>
           </TouchableOpacity>
-          <Text variant="heading" style={styles.title}>Leaderboard</Text>
+          <Text style={styles.wordmark}>NEXERA</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        {/* Period Toggle */}
+        {/* Period Toggle — pill chips per design system (4px/pill chips) */}
         <View style={styles.toggleContainer}>
           <TouchableOpacity
             style={[styles.toggleOption, period === 'weekly' && styles.toggleActive]}
@@ -137,25 +168,31 @@ export default function LeaderboardScreen() {
           return (
             <>
               <View style={styles.positionCard}>
+                <LinearGradient
+                  colors={[colors.primaryLight, colors.primaryDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.energyRibbon}
+                />
                 <View style={styles.positionRow}>
                   <View style={styles.positionStat}>
                     <Text variant="body" style={styles.positionRank}>
                       #{currentUser?.rank ?? '-'}
                     </Text>
-                    <Text variant="caption" color="textSecondary">Your Rank</Text>
+                    <Text variant="caption" color="textSecondary" style={styles.positionLabel}>Your Rank</Text>
                   </View>
                   <View style={styles.positionStat}>
                     <Text variant="body" style={styles.positionPoints}>
                       {currentUser?.total_points.toLocaleString() ?? '0'}
                     </Text>
-                    <Text variant="caption" color="textSecondary">Points</Text>
+                    <Text variant="caption" color="textSecondary" style={styles.positionLabel}>Points</Text>
                   </View>
                   {gapToNext !== null && gapToNext > 0 && (
                     <View style={styles.positionStat}>
                       <Text variant="body" style={styles.positionGap}>
                         {gapToNext.toLocaleString()}
                       </Text>
-                      <Text variant="caption" color="textSecondary">To Next</Text>
+                      <Text variant="caption" color="textSecondary" style={styles.positionLabel}>To Next</Text>
                     </View>
                   )}
                 </View>
@@ -171,6 +208,13 @@ export default function LeaderboardScreen() {
             </>
           );
         })()}
+
+        {/* Kicker label above the ranked list (design: "THIS WEEK ▾") */}
+        {entries.length > 0 && (
+          <Text style={styles.listKicker}>
+            {period === 'weekly' ? 'THIS WEEK' : 'ALL TIME'}
+          </Text>
+        )}
 
         {error && (
           <View style={styles.errorBanner}>
@@ -219,39 +263,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    gap: spacing.md,
+    paddingBottom: spacing.md,
   },
   backBtn: {
     paddingVertical: spacing.xs,
+    minWidth: 48,
   },
-  title: {
+  backText: {
+    fontFamily: typography.fontSemiBold,
+  },
+  headerSpacer: {
+    minWidth: 48,
+  },
+  wordmark: {
     flex: 1,
+    textAlign: 'center',
+    fontFamily: typography.fontSerifBold,
+    fontSize: 24,
+    letterSpacing: 6,
+    color: colors.text,
   },
   toggleContainer: {
     flexDirection: 'row',
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 3,
+    gap: spacing.sm,
   },
   toggleOption: {
     flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: 10,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: 999,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   toggleActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+    borderColor: colors.borderAccent,
   },
   toggleText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     color: colors.textSecondary,
   },
   toggleTextActive: {
-    color: colors.white,
+    color: colors.primaryLight,
+  },
+  listKicker: {
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.5,
+    color: colors.textMuted,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
   },
   listContent: {
     paddingHorizontal: spacing.md,
@@ -260,62 +327,88 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: spacing.md,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
   },
   rowHighlight: {
     backgroundColor: colors.primarySubtle,
-    borderColor: colors.primary,
-    borderWidth: 2,
+    borderColor: colors.borderAccent,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
   },
   rank: {
-    width: 36,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textSecondary,
+    width: 32,
+    fontSize: 15,
+    fontFamily: typography.fontMonoBold,
+    color: colors.textMuted,
     textAlign: 'center',
+    marginRight: spacing.sm,
   },
-  rankTop: {
-    fontSize: 22,
+  rankHighlight: {
+    color: colors.primaryLight,
+  },
+  rankBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+    backgroundColor: colors.surface,
+  },
+  rankBadgeGold: {
+    backgroundColor: colors.goldSubtle,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  rankBadgeText: {
+    fontSize: 14,
+    fontFamily: typography.fontMonoBold,
   },
   avatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceHighest,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
   },
   avatarHighlight: {
     backgroundColor: colors.primary,
+    borderColor: colors.primaryLight,
   },
   avatarText: {
     color: colors.white,
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: typography.fontBold,
   },
   nameContainer: {
     flex: 1,
   },
   name: {
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
   },
   nameHighlight: {
-    color: colors.primary,
-    fontWeight: '700',
+    color: colors.primaryLight,
+    fontFamily: typography.fontBold,
   },
   points: {
     fontSize: 16,
-    fontWeight: '700',
-    color: colors.primaryDark,
+    fontFamily: typography.fontMonoBold,
+    color: colors.text,
   },
   pointsHighlight: {
-    color: colors.primary,
+    color: colors.primaryLight,
   },
   errorBanner: {
     backgroundColor: colors.errorSubtle,
@@ -329,15 +422,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // ─── Your Position Card ─────────────────────────────────
+  // ─── Your Position Card (featured: Energy Ribbon top accent) ───
   positionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: spacing.md,
+    paddingTop: spacing.md + 4,
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.primary + '30',
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  energyRibbon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
   },
   positionRow: {
     flexDirection: 'row',
@@ -346,22 +448,29 @@ const styles = StyleSheet.create({
   positionStat: {
     alignItems: 'center',
   },
+  positionLabel: {
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+  },
   positionRank: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.primary,
+    fontSize: 24,
+    fontFamily: typography.fontMonoBold,
+    color: colors.primaryLight,
     marginBottom: 2,
   },
   positionPoints: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.primaryDark,
+    fontSize: 24,
+    fontFamily: typography.fontMonoBold,
+    color: colors.text,
     marginBottom: 2,
   },
   positionGap: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.warning,
+    fontSize: 24,
+    fontFamily: typography.fontMonoBold,
+    color: colors.gold,
     marginBottom: 2,
   },
   gapToLeaderText: {

@@ -22,12 +22,14 @@ import type { BadgeWithStatus } from '@nexera/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PRDetection } from '@nexera/types';
 import { deduper } from '../../src/lib/requestDeduper';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Button, Text } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { SkeletonGate, HomeScreenSkeleton } from '../../src/components/skeleton';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@nexera/types';
 import { computeHeroState } from '../../src/lib/heroState';
 import type { HeroInput } from '../../src/lib/heroState';
@@ -835,6 +837,13 @@ export default function HomeScreen() {
         {/* PR CELEBRATION — if unseen PRs */}
         {unseenPRs.length > 0 && (
           <AnimatedCard index={0} style={styles.prBanner}>
+            {/* Energy-ribbon top accent (gold → crimson) for the featured PR moment */}
+            <LinearGradient
+              colors={[colors.gold, colors.primaryLight, colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.prBannerRibbon}
+            />
             <View style={styles.prBannerHeader}>
               <Text style={styles.prBannerTrophy}>{'\uD83C\uDFC6'}</Text>
               <Text style={styles.prBannerTitle}>
@@ -956,6 +965,8 @@ const styles = StyleSheet.create({
   errorBanner: {
     backgroundColor: colors.errorSubtle,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 77, 106, 0.25)',
     padding: spacing.md,
     marginBottom: spacing.md,
     marginHorizontal: spacing.md,
@@ -964,14 +975,26 @@ const styles = StyleSheet.create({
     color: colors.error,
     textAlign: 'center',
   },
-  // PR Celebration Banner
+  // PR Celebration Banner — featured L2 card with a gold→crimson energy ribbon
   prBanner: {
     padding: spacing.md,
+    paddingTop: spacing.md + 2,
     marginBottom: spacing.md,
     marginHorizontal: spacing.md,
-    backgroundColor: colors.goldSubtle,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.gold,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
+    overflow: 'hidden' as const,
+  },
+  prBannerRibbon: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
   },
   prBannerHeader: {
     flexDirection: 'row' as const,
@@ -984,14 +1007,15 @@ const styles = StyleSheet.create({
   },
   prBannerTitle: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '700' as const,
-    color: colors.goldDark,
+    fontSize: typography.labelSize,
+    fontFamily: typography.fontSemiBold,
+    color: colors.gold,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1.2,
   },
   prBannerDismiss: {
     fontSize: 16,
-    color: colors.goldDark,
-    opacity: 0.6,
+    color: colors.textMuted,
     padding: 4,
   },
   prBannerRow: {
@@ -1002,39 +1026,48 @@ const styles = StyleSheet.create({
   },
   prBannerTypeBadge: {
     backgroundColor: colors.goldSubtle,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 179, 57, 0.35)',
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 999,
   },
   prBannerTypeText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: colors.goldDark,
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    color: colors.gold,
     textTransform: 'uppercase' as const,
+    letterSpacing: 0.6,
   },
   prBannerExercise: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   prBannerValue: {
     fontSize: 14,
-    fontWeight: '700' as const,
-    color: colors.goldDark,
+    fontFamily: typography.fontMonoBold,
+    color: colors.gold,
   },
-  // Guardrail styles
+  // Guardrail styles — L2 card, hairline border, amber status accents
   guardrailBanner: {
     padding: spacing.md,
     marginBottom: spacing.md,
     marginHorizontal: spacing.md,
-    backgroundColor: colors.amberSubtle,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.amber,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   guardrailTitle: {
-    fontWeight: '700',
+    fontFamily: typography.fontSemiBold,
     color: colors.amber,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    fontSize: typography.labelSize,
     marginBottom: spacing.sm,
   },
   guardrailItem: {
@@ -1073,18 +1106,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.xs,
   },
-  // Training tip
+  // Training tip — quiet L2 card with hairline border
   trainingTipCard: {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
-    backgroundColor: colors.goldSubtle,
-    borderRadius: 12,
-    padding: spacing.sm,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
+    padding: spacing.md,
     gap: spacing.sm,
     marginTop: spacing.sm,
     marginHorizontal: spacing.md,
     borderWidth: 1,
-    borderColor: colors.goldSubtle,
+    borderColor: colors.border,
   },
   trainingTipIcon: {
     fontSize: 16,
@@ -1093,7 +1126,7 @@ const styles = StyleSheet.create({
   trainingTipText: {
     flex: 1,
     fontSize: 13,
-    color: colors.goldDark,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
 });

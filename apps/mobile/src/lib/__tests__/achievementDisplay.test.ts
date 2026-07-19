@@ -6,9 +6,9 @@ import {
 import { colors } from '../../theme/colors';
 
 describe('RARITY_BORDER_COLORS', () => {
-  // DOC_03 Section 9: common #606070, rare #3B82F6, epic #7C5CFF, legendary #FFD700
+  // Stitch Red-Luxury: common textMuted, rare info blue, epic crimson, legendary gold
   it('matches spec colors via tokens', () => {
-    expect(RARITY_BORDER_COLORS.common).toBe('#606070');
+    expect(RARITY_BORDER_COLORS.common).toBe(colors.textMuted);
     expect(RARITY_BORDER_COLORS.rare).toBe(colors.info);
     expect(RARITY_BORDER_COLORS.epic).toBe(colors.primary);
     expect(RARITY_BORDER_COLORS.legendary).toBe(colors.gold);

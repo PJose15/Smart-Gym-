@@ -17,9 +17,11 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../src/lib/supabase';
 import { colors } from '../src/theme/colors';
 import { spacing } from '../src/theme/spacing';
+import { typography } from '../src/theme/typography';
 import { AnimatedScreen } from '../src/components/AnimatedScreen';
 
 // ─── Types ────────────────────────────────────────────
@@ -220,6 +222,18 @@ export default function AuthScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Brand block — serif NEXERA wordmark over near-black canvas */}
+          <View style={styles.brandBlock}>
+            <Text style={styles.wordmark}>NEXERA</Text>
+            <LinearGradient
+              colors={['transparent', colors.primary, 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.wordmarkRule}
+            />
+            <Text style={styles.brandTagline}>PERFORM · EVOLVE · ASCEND</Text>
+          </View>
+
           {/* Progress indicator */}
           <View style={styles.progressRow}>
             {steps.map((s, i) => (
@@ -458,6 +472,31 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
   },
+  // Brand block (serif wordmark + energy-ribbon rule + tagline)
+  brandBlock: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  wordmark: {
+    fontFamily: typography.fontSerifBold,
+    fontSize: 34,
+    letterSpacing: 8,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  wordmarkRule: {
+    height: 2,
+    width: 120,
+    marginTop: 12,
+    marginBottom: 10,
+    borderRadius: 1,
+  },
+  brandTagline: {
+    fontFamily: typography.fontSemiBold,
+    fontSize: 10,
+    letterSpacing: 3,
+    color: colors.textMuted,
+  },
   // Progress
   progressRow: {
     flexDirection: 'row',
@@ -480,12 +519,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stepHeading: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontFamily: typography.fontSerif,
+    fontSize: 30,
+    lineHeight: 38,
     color: colors.text,
     marginBottom: 8,
   },
   stepSubheading: {
+    fontFamily: typography.fontRegular,
     fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 22,
@@ -496,19 +537,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
+    fontFamily: typography.fontSemiBold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.bgInput,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
+    fontFamily: typography.fontRegular,
     color: colors.text,
   },
   // OTP
@@ -517,19 +561,23 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   otpInput: {
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderRadius: 16,
+    backgroundColor: colors.bgInput,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    borderRadius: 12,
     paddingHorizontal: 24,
     paddingVertical: 20,
     fontSize: 32,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
     color: colors.text,
     textAlign: 'center',
     letterSpacing: 12,
     width: '100%',
     maxWidth: 280,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
   },
   // Options (goal / experience)
   optionList: {
@@ -538,15 +586,15 @@ const styles = StyleSheet.create({
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 18,
     gap: 16,
   },
   optionCardSelected: {
-    borderColor: colors.primary,
+    borderColor: colors.borderAccent,
     backgroundColor: colors.primarySubtle,
   },
   optionIcon: {
@@ -557,11 +605,12 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   optionSub: {
     fontSize: 13,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -574,11 +623,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 56,
     marginTop: 8,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   primaryBtnText: {
-    color: colors.white,
-    fontSize: 17,
-    fontWeight: '600',
+    color: colors.textOnAccent,
+    fontSize: 14,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   disabledBtn: {
     opacity: 0.6,
@@ -589,13 +645,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   secondaryBtnText: {
-    color: colors.primary,
-    fontSize: 15,
-    fontWeight: '500',
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   errorText: {
     color: colors.error,
     fontSize: 14,
+    fontFamily: typography.fontRegular,
     textAlign: 'center',
     marginBottom: 16,
   },

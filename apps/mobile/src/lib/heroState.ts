@@ -61,15 +61,15 @@ const STREAK_MILESTONES = [7, 14, 30, 60, 90, 120, 180, 365];
 
 const HERO_COLORS: Record<HeroVariant, { accent: string; gradient: [string, string] }> = {
   'today-fresh': {
-    accent: '#7C5CFF',
-    gradient: ['#0D0D0F', '#141416'],
+    accent: '#E0142F',
+    gradient: ['#0A0A0C', '#16161A'],
   },
   'today-trained': {
     accent: '#00C896',
     gradient: ['#0a1a0a', '#142014'],
   },
   'pr-recent': {
-    accent: '#FFD700',
+    accent: '#E8B339',
     gradient: ['#1a1200', '#2a1e00'],
   },
   'streak-milestone': {
@@ -77,23 +77,23 @@ const HERO_COLORS: Record<HeroVariant, { accent: string; gradient: [string, stri
     gradient: ['#1a0800', '#2a1000'],
   },
   'program-week': {
-    accent: '#7C5CFF',
-    gradient: ['#020c1a', '#041828'],
+    accent: '#E0142F',
+    gradient: ['#120204', '#28060c'],
   },
   'comeback': {
-    accent: '#606070',
+    accent: '#6B6870',
     gradient: ['#12100e', '#1e1c18'],
   },
   'no-program': {
-    accent: '#606070',
+    accent: '#6B6870',
     gradient: ['#0f0f0f', '#1a1a1a'],
   },
   'level-up': {
-    accent: '#7C5CFF',
-    gradient: ['#0e0014', '#1a0028'],
+    accent: '#E0142F',
+    gradient: ['#140004', '#28000a'],
   },
   'program-complete': {
-    accent: '#FFD700',
+    accent: '#E8B339',
     gradient: ['#1a1200', '#2e2000'],
   },
 };

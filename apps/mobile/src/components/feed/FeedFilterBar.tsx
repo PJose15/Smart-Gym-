@@ -46,21 +46,20 @@ export function FeedFilterBar({ activeFilter, onFilterChange }: FeedFilterBarPro
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
   },
   content: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     gap: spacing.sm,
   },
+  // Pill chips — dark surface + hairline; active = crimson-subtle fill
   chip: {
-    paddingHorizontal: spacing.sm + 4,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 999,
     backgroundColor: colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
   },
   chipActive: {
     backgroundColor: colors.primarySubtle,
@@ -73,5 +72,6 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: colors.primary,
+    fontFamily: typography.fontSemiBold,
   },
 });

@@ -284,7 +284,7 @@ export default function FeedScreen() {
     return (
       <View style={styles.screen}>
         <View style={styles.header}>
-          <Text variant="subheading">{gymTitle}</Text>
+          <Text style={styles.headerTitle}>{gymTitle}</Text>
         </View>
         <View style={styles.skeletonWrap}>
           <FeedSkeleton />
@@ -317,7 +317,7 @@ export default function FeedScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Text variant="subheading" numberOfLines={1}>
+        <Text style={styles.headerTitle} numberOfLines={1}>
           {gymTitle}
         </Text>
       </View>
@@ -388,7 +388,15 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.sm + 4,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerTitle: {
+    fontSize: typography.h2Size,
+    fontFamily: typography.fontBold,
+    color: colors.text,
+    letterSpacing: -0.3,
   },
   skeletonWrap: {
     paddingHorizontal: spacing.md,
@@ -417,7 +425,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm + 2,
-    borderRadius: 10,
+    borderRadius: 12,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
   },
   retryText: {
     fontSize: typography.bodySize,

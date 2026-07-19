@@ -9,10 +9,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../src/lib/supabase';
 import { isFeatureEnabled, refreshFeatureFlags, needsRefresh } from '../../src/lib/featureFlags';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 
 interface CoachNoteRow {
   id: string;
@@ -83,6 +85,12 @@ export default function CoachNotesScreen() {
     return 'Note';
   }
 
+  function getInitials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return parts[0][0]?.toUpperCase() || '?';
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -129,7 +137,7 @@ export default function CoachNotesScreen() {
               </View>
             )}
             {weeklyCount > 0 && (
-              <View style={[styles.statsChip, { backgroundColor: colors.success + '15' }]}>
+              <View style={[styles.statsChip, { backgroundColor: colors.successSubtle, borderColor: colors.success + '40' }]}>
                 <Text style={[styles.statsChipText, { color: colors.success }]}>{weeklyCount} Weekly</Text>
               </View>
             )}
@@ -162,18 +170,33 @@ export default function CoachNotesScreen() {
             activeOpacity={0.7}
             onPress={() => router.push(`/coach-notes/${item.id}`)}
           >
+            {index === 0 && (
+              <LinearGradient
+                colors={[colors.primaryLight, colors.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.energyRibbon}
+              />
+            )}
             <View style={styles.cardHeader}>
-              <View style={styles.cardHeaderLeft}>
-                <Text style={styles.sourceChip}>{sourceLabel(item.source)}</Text>
-                {index === 0 && <Text style={styles.latestBadge}>Latest</Text>}
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {getInitials(item.trainer_profile?.full_name ?? 'Your Coach')}
+                </Text>
               </View>
-              <Text style={styles.dateText}>{formatDate(item.sent_at ?? item.created_at)}</Text>
+              <View style={styles.cardHeaderLeft}>
+                <Text style={styles.trainerName} numberOfLines={1}>
+                  {item.trainer_profile?.full_name ?? 'Your Coach'}
+                </Text>
+                <Text style={styles.sourceChip}>{sourceLabel(item.source)}</Text>
+              </View>
+              <View style={styles.cardHeaderRight}>
+                {index === 0 && <Text style={styles.latestBadge}>Latest</Text>}
+                <Text style={styles.dateText}>{formatDate(item.sent_at ?? item.created_at)}</Text>
+              </View>
             </View>
             <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
             <Text style={styles.cardBody} numberOfLines={2}>{item.body}</Text>
-            <Text style={styles.trainerName}>
-              — {item.trainer_profile?.full_name ?? 'Your Coach'}
-            </Text>
           </TouchableOpacity>
         )}
       />
@@ -195,58 +218,61 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   sectionLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
     marginBottom: spacing.sm,
-    fontWeight: '600',
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    gap: spacing.sm + 2,
+    marginBottom: spacing.sm + 2,
   },
   sourceChip: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primary,
-    backgroundColor: colors.primary + '15',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    overflow: 'hidden',
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.primaryLight,
+    marginTop: 2,
   },
   dateText: {
-    fontSize: 12,
-    color: colors.textSecondary,
+    fontSize: 11,
+    fontFamily: typography.fontMono,
+    color: colors.textMuted,
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
     marginBottom: 4,
   },
   cardBody: {
     fontSize: 14,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     lineHeight: 20,
-    marginBottom: 8,
   },
   trainerName: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
+    fontSize: 14,
+    fontFamily: typography.fontSemiBold,
+    color: colors.text,
   },
   emptyText: {
     fontSize: 15,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 32,
@@ -254,7 +280,7 @@ const styles = StyleSheet.create({
 
   // ─── Stats Header ─────────────────────────────────────
   statsHeader: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   statsChipsRow: {
     flexDirection: 'row',
@@ -263,40 +289,71 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statsChip: {
-    backgroundColor: colors.primary + '15',
-    borderRadius: 12,
+    backgroundColor: colors.primarySubtle,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
   statsChipText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: colors.primary,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primaryLight,
   },
   lastNoteText: {
-    fontSize: 12,
-    color: colors.textSecondary,
+    fontSize: 11,
+    fontFamily: typography.fontMono,
+    color: colors.textMuted,
     marginTop: 4,
   },
 
-  // ─── Latest Card Highlight ─────────────────────────────
+  // ─── Latest Card (featured: Energy Ribbon top accent) ──
   cardLatest: {
-    borderColor: colors.primary,
-    borderWidth: 1.5,
+    borderColor: colors.borderAccent,
+  },
+  energyRibbon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
   },
   cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    flex: 1,
+    minWidth: 0,
+  },
+  cardHeaderRight: {
+    alignItems: 'flex-end',
+    gap: 4,
   },
   latestBadge: {
     fontSize: 10,
-    fontWeight: '700',
-    color: colors.primary,
-    backgroundColor: colors.primary + '20',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 6,
+    fontFamily: typography.fontBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.primaryLight,
+    backgroundColor: colors.primarySubtle,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
     overflow: 'hidden',
+  },
+
+  // ─── Trainer avatar ────────────────────────────────────
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceHighest,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: colors.white,
+    fontSize: 13,
+    fontFamily: typography.fontBold,
   },
 });

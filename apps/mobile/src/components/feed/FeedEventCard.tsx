@@ -8,6 +8,7 @@
  */
 import { memo, useMemo } from 'react';
 import { Image, StyleSheet, TouchableOpacity, View, Text as RNText } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { FeedEventFull, ReactionType, WeightUnit } from '@nexera/types';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
@@ -41,9 +42,20 @@ function FeedEventCardInner({
     () => formatFeedEventText(event, weightUnit),
     [event, weightUnit],
   );
+  // Featured moments (pinned + PRs) get the energy-ribbon top accent
+  const showRibbon =
+    event.is_pinned || event.event_type === 'pr_weight' || event.event_type === 'pr_volume';
 
   return (
     <View style={[styles.card, event.is_pinned && styles.cardPinned]}>
+      {showRibbon && (
+        <LinearGradient
+          colors={[colors.primaryLight, colors.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.ribbon}
+        />
+      )}
       <View style={styles.row}>
         {/* Avatar or event icon */}
         {event.avatar_url ? (
@@ -121,16 +133,25 @@ export const FeedEventCard = memo(
 );
 
 const styles = StyleSheet.create({
+  // L2 card, 22px radius, hairline border — depth via tonal layers, no shadow
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    padding: spacing.md - 2,
+    borderColor: colors.border,
+    padding: spacing.md,
     marginBottom: spacing.sm + 4,
+    overflow: 'hidden',
   },
   cardPinned: {
     borderColor: colors.borderAccent,
+  },
+  ribbon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
   },
   row: {
     flexDirection: 'row',
@@ -141,12 +162,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   iconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surfaceHighest,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -160,8 +185,8 @@ const styles = StyleSheet.create({
   pinnedLabel: {
     fontSize: 10,
     fontFamily: typography.fontSemiBold,
-    color: colors.info,
-    letterSpacing: 0.5,
+    color: colors.primary,
+    letterSpacing: 1,
     marginBottom: 2,
   },
   description: {
@@ -181,7 +206,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   metaText: {
-    fontSize: typography.labelSize,
+    fontSize: typography.tinySize,
+    fontFamily: typography.fontMono,
     color: colors.textMuted,
   },
   metaAction: {

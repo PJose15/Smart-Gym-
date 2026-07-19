@@ -1,13 +1,13 @@
-import { supabase } from './supabase';
+﻿import { supabase } from './supabase';
 import { checkBadgeUnlocks, computeStreak } from '@nexera/ai-assist';
 import type { Badge, BadgeWithStatus } from '@nexera/types';
 
-// ─── Rarity Display Constants ───────────────────────────
+// â”€â”€â”€ Rarity Display Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const RARITY_COLORS: Record<string, string> = {
   common: '#A0A0B0',
   rare: '#3B82F6',
-  epic: '#7C5CFF',
+  epic: '#E0142F',
   legendary: '#FFD700',
 };
 
@@ -18,7 +18,7 @@ export const RARITY_LABELS: Record<string, string> = {
   legendary: 'Legendary',
 };
 
-// ─── Service Functions ──────────────────────────────────
+// â”€â”€â”€ Service Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Fetches all badge definitions and merges with user's unlock status.

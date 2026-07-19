@@ -5,6 +5,7 @@ import { AnimatedCard } from '../AnimatedCard';
 import { Card } from '../Card';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import { formatWeight } from '@nexera/utils';
 import type { WeightUnit, UserGoal } from '@nexera/types';
 
@@ -31,16 +32,16 @@ interface OverviewTabProps {
 }
 
 const GOAL_EMOJI: Record<string, string> = {
-  strength: '\uD83C\uDFCB\uFE0F',
-  hypertrophy: '\uD83D\uDCAA',
-  endurance: '\uD83C\uDFC3',
-  general: '\uD83E\uDD38',
+  strength: '🏋️',
+  hypertrophy: '💪',
+  endurance: '🏃',
+  general: '🤸',
 };
 
 const GOAL_TEXT: Record<string, string> = {
-  strength: 'Training for strength \u2014 heavy loads, lower reps.',
-  hypertrophy: 'Training for muscle growth \u2014 moderate loads, volume-focused.',
-  endurance: 'Training for endurance \u2014 lighter loads, higher reps.',
+  strength: 'Training for strength — heavy loads, lower reps.',
+  hypertrophy: 'Training for muscle growth — moderate loads, volume-focused.',
+  endurance: 'Training for endurance — lighter loads, higher reps.',
 };
 
 export function OverviewTab({
@@ -55,36 +56,33 @@ export function OverviewTab({
 
   return (
     <View>
-      {/* Lifetime Stats */}
+      {/* Lifetime Stats — 2x2 stat tile grid (design: 4-stat row, mono numbers) */}
       {lifetimeStats && lifetimeStats.totalWorkouts > 0 && (
-        <AnimatedCard index={0} style={styles.card}>
-          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
-            Lifetime Stats
-          </Text>
+        <AnimatedCard index={0} style={styles.gridWrap}>
           <View style={styles.grid}>
-            <View style={styles.pill}>
-              <Text style={styles.pillValue}>{lifetimeStats.totalWorkouts}</Text>
-              <Text variant="caption" color="textSecondary">workouts</Text>
+            <View style={styles.statTile}>
+              <Text style={styles.statLabel}>SESSIONS</Text>
+              <Text style={styles.statValue}>{lifetimeStats.totalWorkouts}</Text>
             </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillValue}>
+            <View style={styles.statTile}>
+              <Text style={styles.statLabel}>VOLUME</Text>
+              <Text style={styles.statValue}>
                 {lifetimeStats.totalVolumeKg >= 1000
                   ? `${(lifetimeStats.totalVolumeKg / 1000).toFixed(1)}t`
                   : formatWeight(lifetimeStats.totalVolumeKg, weightUnit)}
               </Text>
-              <Text variant="caption" color="textSecondary">volume</Text>
             </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillValue}>{lifetimeStats.totalSets}</Text>
-              <Text variant="caption" color="textSecondary">sets</Text>
+            <View style={styles.statTile}>
+              <Text style={styles.statLabel}>SETS</Text>
+              <Text style={styles.statValue}>{lifetimeStats.totalSets}</Text>
             </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillValue}>
+            <View style={styles.statTile}>
+              <Text style={styles.statLabel}>TIME IN GYM</Text>
+              <Text style={styles.statValue}>
                 {lifetimeStats.totalTimeMinutes >= 60
                   ? `${Math.floor(lifetimeStats.totalTimeMinutes / 60)}h`
                   : `${lifetimeStats.totalTimeMinutes}m`}
               </Text>
-              <Text variant="caption" color="textSecondary">time in gym</Text>
             </View>
           </View>
         </AnimatedCard>
@@ -95,11 +93,10 @@ export function OverviewTab({
         <AnimatedCard index={1} style={styles.card}>
           <View style={styles.consistencyRow}>
             <View style={{ flex: 1 }}>
-              <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
-                Training Consistency
-              </Text>
+              <Text style={styles.sectionTitle}>TRAINING CONSISTENCY</Text>
               <Text style={styles.consistencyValue}>
-                {avgWorkoutsPerWeek} workouts / week
+                <Text style={styles.consistencyNumber}>{avgWorkoutsPerWeek}</Text>
+                {'  workouts / week'}
               </Text>
             </View>
             <View style={styles.barBg}>
@@ -113,12 +110,12 @@ export function OverviewTab({
           </View>
           <Text variant="caption" color="textSecondary">
             {avgWorkoutsPerWeek >= 4
-              ? 'Elite consistency \u2014 you rarely miss a week.'
+              ? 'Elite consistency — you rarely miss a week.'
               : avgWorkoutsPerWeek >= 3
-                ? 'Strong habit \u2014 keep this rhythm going.'
+                ? 'Strong habit — keep this rhythm going.'
                 : avgWorkoutsPerWeek >= 2
-                  ? 'Solid foundation \u2014 an extra day would accelerate gains.'
-                  : 'Building momentum \u2014 consistency is the #1 factor for results.'}
+                  ? 'Solid foundation — an extra day would accelerate gains.'
+                  : 'Building momentum — consistency is the #1 factor for results.'}
           </Text>
         </AnimatedCard>
       )}
@@ -126,18 +123,16 @@ export function OverviewTab({
       {/* Favorite Machines */}
       {favoriteMachines.length > 0 && (
         <AnimatedCard index={2} style={styles.card}>
-          <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
-            Most Used Machines
-          </Text>
+          <Text style={styles.sectionTitle}>MOST USED MACHINES</Text>
           {favoriteMachines.map((m, i) => (
             <TouchableOpacity
               key={m.slug}
-              style={styles.favoriteRow}
+              style={[styles.favoriteRow, i === favoriteMachines.length - 1 && styles.favoriteRowLast]}
               onPress={() => router.push(`/machine/${m.slug}` as any)}
             >
-              <Text style={styles.favoriteRank}>#{i + 1}</Text>
+              <Text style={styles.favoriteRank}>{i + 1}</Text>
               <Text variant="body" style={styles.favoriteName}>{m.name}</Text>
-              <Text variant="caption" color="textSecondary">{m.count}x</Text>
+              <Text style={styles.favoriteCount}>{m.count}x</Text>
             </TouchableOpacity>
           ))}
         </AnimatedCard>
@@ -147,11 +142,9 @@ export function OverviewTab({
       {trainingGoal && trainingGoal !== 'general' && (
         <AnimatedCard index={3} style={styles.card}>
           <View style={styles.goalRow}>
-            <Text style={styles.goalEmoji}>{GOAL_EMOJI[trainingGoal] ?? '\uD83C\uDFAF'}</Text>
+            <Text style={styles.goalEmoji}>{GOAL_EMOJI[trainingGoal] ?? '🎯'}</Text>
             <View style={{ flex: 1 }}>
-              <Text variant="caption" color="textSecondary" style={styles.sectionTitle}>
-                Your Focus
-              </Text>
+              <Text style={[styles.sectionTitle, styles.goalTitle]}>CURRENT FOCUS</Text>
               <Text variant="body" style={styles.goalText}>
                 {GOAL_TEXT[trainingGoal] ?? ''}
               </Text>
@@ -165,7 +158,7 @@ export function OverviewTab({
         <AnimatedCard index={4} style={styles.card}>
           <View style={styles.pointsRow}>
             <Text style={styles.pointsValue}>{totalPoints.toLocaleString()}</Text>
-            <Text variant="caption" color="textSecondary"> total points</Text>
+            <Text style={styles.pointsLabel}>TOTAL POINTS</Text>
           </View>
         </AnimatedCard>
       )}
@@ -173,29 +166,59 @@ export function OverviewTab({
   );
 }
 
+const cardBase = {
+  backgroundColor: colors.surfaceElevated,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: colors.border,
+  shadowOpacity: 0,
+  elevation: 0,
+} as const;
+
 const styles = StyleSheet.create({
   card: {
+    ...cardBase,
     marginBottom: spacing.md,
   },
-  sectionTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-    fontSize: 11,
-    marginBottom: spacing.xs,
+  gridWrap: {
+    backgroundColor: colors.transparent,
+    borderRadius: 0,
+    padding: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+    marginBottom: spacing.md,
   },
   grid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: spacing.sm + 4,
   },
-  pill: {
-    alignItems: 'center',
-    flex: 1,
+  statTile: {
+    ...cardBase,
+    flexBasis: '47%',
+    flexGrow: 1,
+    padding: spacing.md,
   },
-  pillValue: {
-    fontSize: 20,
-    fontWeight: '700',
+  statLabel: {
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  statValue: {
+    fontSize: 28,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -0.8,
     color: colors.text,
+    lineHeight: 30,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
   },
   consistencyRow: {
     flexDirection: 'row',
@@ -204,38 +227,51 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   consistencyValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary,
+    fontSize: 14,
+    fontFamily: typography.fontMedium,
+    color: colors.textSecondary,
+  },
+  consistencyNumber: {
+    fontSize: 18,
+    fontFamily: typography.fontMonoBold,
+    color: colors.primaryLight,
   },
   barBg: {
     width: 60,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.surfaceHighest,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
     backgroundColor: colors.primary,
   },
   favoriteRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  favoriteRowLast: {
+    borderBottomWidth: 0,
+  },
   favoriteRank: {
     fontSize: 14,
-    fontWeight: '700',
-    color: colors.primary,
+    fontFamily: typography.fontMonoBold,
+    color: colors.primaryLight,
     width: 30,
   },
   favoriteName: {
     flex: 1,
-    fontWeight: '500',
+    fontFamily: typography.fontMedium,
+  },
+  favoriteCount: {
+    fontSize: 13,
+    fontFamily: typography.fontMono,
+    color: colors.textSecondary,
   },
   goalRow: {
     flexDirection: 'row',
@@ -245,17 +281,28 @@ const styles = StyleSheet.create({
   goalEmoji: {
     fontSize: 32,
   },
+  goalTitle: {
+    color: colors.primaryLight,
+  },
   goalText: {
-    fontWeight: '500',
+    fontFamily: typography.fontMedium,
     lineHeight: 20,
   },
   pointsRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    gap: spacing.sm,
   },
   pointsValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.primary,
+    fontSize: 32,
+    fontFamily: typography.fontMonoBold,
+    letterSpacing: -1,
+    color: colors.primaryLight,
+  },
+  pointsLabel: {
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
+    letterSpacing: 1,
+    color: colors.textSecondary,
   },
 });

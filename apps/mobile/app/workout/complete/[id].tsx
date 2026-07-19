@@ -49,6 +49,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AnimatedScreen } from '../../../src/components/AnimatedScreen';
 import { AnimatedNumber } from '../../../src/components/AnimatedNumber';
 import { colors } from '../../../src/theme/colors';
+import { typography } from '../../../src/theme/typography';
 
 function computeSummary(
   workout: Workout,
@@ -279,7 +280,7 @@ function WorkoutShareSection({ workoutId, volumeKg, prsHit, machinesUsed }: Work
         accessibilityLabel="Share workout to gym feed"
       >
         {phase === 'sharing' ? (
-          <ActivityIndicator size="small" color={colors.white} />
+          <ActivityIndicator size="small" color={colors.primaryLight} />
         ) : (
           <Text style={styles.shareButtonText}>Share to Feed</Text>
         )}
@@ -802,7 +803,7 @@ export default function WorkoutCompleteScreen() {
         <Text style={styles.checkText}>{'\u2713'}</Text>
       </View>
 
-      <Text style={styles.heading}>Workout Complete!</Text>
+      <Text style={styles.heading}>Session Complete {'\ud83c\udf89'}</Text>
 
       {/* Time of Day Badge */}
       <View style={styles.timeOfDayBadge}>
@@ -1170,29 +1171,38 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Checkmark
+  // Checkmark — crimson ring, tonal (no green block)
   checkCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.success,
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
+    elevation: 8,
   },
   checkText: {
     fontSize: 40,
-    color: colors.white,
+    color: colors.primaryLight,
     fontWeight: '700',
     lineHeight: 44,
   },
 
-  // Heading
+  // Heading — serif editorial (Stitch session-summary)
   heading: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 32,
+    fontFamily: typography.fontSerifBold,
     color: colors.text,
     marginBottom: 28,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
 
   // Stats Grid
@@ -1206,8 +1216,8 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '46%',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
@@ -1215,21 +1225,23 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 28,
-    fontWeight: '700',
-    color: colors.primaryDark,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
+    color: colors.gold,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 
   // Duration
   durationContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 32,
     alignItems: 'center',
@@ -1239,15 +1251,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   durationLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 4,
   },
   durationValue: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
     color: colors.text,
   },
 
@@ -1259,13 +1273,18 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  // PR Callout
+  // PR Callout — gold metallic treatment (Stitch session-summary)
   prContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: 16,
-    borderWidth: 2,
-    borderColor: colors.gold,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 179, 57, 0.35)',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 6,
   },
   prHeader: {
     flexDirection: 'row',
@@ -1273,43 +1292,50 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   prTrophy: {
-    fontSize: 24,
+    fontSize: 20,
     marginRight: 8,
   },
   prTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.goldDark,
+    fontSize: 14,
+    fontFamily: typography.fontSemiBold,
+    color: colors.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   prRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: colors.goldSubtle,
   },
   prTypeBadge: {
-    backgroundColor: colors.gold,
-    borderRadius: 6,
+    backgroundColor: colors.goldSubtle,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 179, 57, 0.35)',
+    borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
     marginRight: 10,
   },
   prTypeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textInverse,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    color: colors.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   prExercise: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   prValue: {
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.goldDark,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
+    color: colors.gold,
   },
 
   // Comparison Badges
@@ -1319,7 +1345,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   comparisonBadge: {
-    borderRadius: 20,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
@@ -1330,36 +1358,41 @@ const styles = StyleSheet.create({
     backgroundColor: colors.errorSubtle,
   },
   badgeNeutral: {
-    backgroundColor: colors.surfaceHighest,
+    backgroundColor: colors.surfaceElevated,
   },
   badgeTextUp: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
     color: colors.success,
   },
   badgeTextDown: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
     color: colors.error,
   },
   badgeTextNeutral: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
     color: colors.textSecondary,
   },
 
   // Top Exercises
   topExercisesContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
   },
   topExercisesTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 12,
   },
   topExerciseRow: {
@@ -1371,53 +1404,58 @@ const styles = StyleSheet.create({
   },
   topExerciseRank: {
     width: 24,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primaryDark,
+    fontSize: 15,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
+    color: colors.primaryLight,
   },
   topExerciseName: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
   },
   topExerciseVolume: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: typography.fontMono,
+    fontVariant: ['tabular-nums'],
     color: colors.textSecondary,
   },
 
   // Insight Card
   insightCard: {
     backgroundColor: colors.primarySubtle,
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     padding: 16,
   },
   insightCardText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: typography.fontMedium,
     color: colors.text,
     lineHeight: 22,
   },
 
   // Next Time Suggestion
   nextTimeSuggestion: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
   },
   nextTimeLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 6,
   },
   nextTimeText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: typography.fontMedium,
     color: colors.text,
     lineHeight: 22,
   },
@@ -1429,15 +1467,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   guardrailTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
     color: colors.amber,
     textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 4,
   },
   guardrailCard: {
     flexDirection: 'row',
-    backgroundColor: colors.goldSubtle,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -1454,7 +1495,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Back to Home
+  // Back to Home — primary CTA, solid crimson + glow
   backToHomeButton: {
     backgroundColor: colors.primary,
     paddingVertical: 16,
@@ -1462,28 +1503,35 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: '100%',
     alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 6,
   },
   backToHomeText: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: '700',
+    color: colors.textOnAccent,
+    fontSize: 15,
+    fontFamily: typography.fontBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   // Phase 3: Coaching
   coachingSection: {
     width: '100%',
     backgroundColor: colors.primarySubtle,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 18,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderAccent,
   },
   coachingSectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primaryLight,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: 8,
   },
   coachingSectionMessage: {
@@ -1520,24 +1568,30 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   badgeUnlockTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.goldDark,
+    fontSize: 13,
+    fontFamily: typography.fontSemiBold,
+    color: colors.gold,
     textTransform: 'uppercase',
+    letterSpacing: 1.5,
     textAlign: 'center',
     marginBottom: 8,
   },
   badgeUnlockCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 2,
-    borderColor: colors.gold,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 179, 57, 0.35)',
     alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 4,
   },
   badgeUnlockName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: typography.fontSerif,
     color: colors.text,
     textTransform: 'capitalize',
   },
@@ -1547,7 +1601,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.primarySubtle,
-    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginBottom: 8,
@@ -1557,9 +1613,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   timeOfDayText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
+    fontSize: 13,
+    fontFamily: typography.fontSemiBold,
+    color: colors.primaryLight,
   },
 
   // Workout Number
@@ -1567,18 +1623,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   workoutNumberText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
 
   // Intensity Meter
   intensityContainer: {
     width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1591,18 +1647,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   intensityLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   intensityLevel: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontFamily: typography.fontBold,
   },
   intensityBarBg: {
     height: 8,
-    backgroundColor: colors.surfaceHighest,
+    backgroundColor: colors.bgSkeleton,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -1621,8 +1678,8 @@ const styles = StyleSheet.create({
   },
   averageChip: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 10,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 12,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
@@ -1630,22 +1687,24 @@ const styles = StyleSheet.create({
   },
   averageValue: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.primaryDark,
+    fontFamily: typography.fontMonoBold,
+    fontVariant: ['tabular-nums'],
+    color: colors.text,
     marginBottom: 2,
   },
   averageLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
-  // Workout Share Section (DOC_05 §8)
+  // Workout Share Section (DOC_05 §8) — secondary ghost-crimson CTA
   shareSection: {
     width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: 14,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 22,
     padding: 18,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1653,30 +1712,35 @@ const styles = StyleSheet.create({
   },
   shareTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: typography.fontBold,
     color: colors.text,
     marginBottom: 12,
   },
   sharePreviewBox: {
     backgroundColor: colors.primarySubtle,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
     padding: 12,
     marginBottom: 14,
   },
   sharePreviewText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.text,
     lineHeight: 20,
   },
   sharePreviewMeta: {
     fontSize: 12,
+    fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     marginTop: 4,
   },
   shareButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 10,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+    borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1686,9 +1750,11 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   shareButtonText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '700',
+    color: colors.primaryLight,
+    fontSize: 13,
+    fontFamily: typography.fontBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   shareSkipButton: {
     alignItems: 'center',
@@ -1697,13 +1763,13 @@ const styles = StyleSheet.create({
   },
   shareSkipText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
   },
   shareStatusCard: {
     width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: 14,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
