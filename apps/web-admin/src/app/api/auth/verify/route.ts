@@ -189,7 +189,7 @@ async function findOrCreateMember(
         .update({
           user_id: userId,
           onboarding_status:
-            existing.onboarding_status === 'pending'
+            (existing.onboarding_status === 'pending' || existing.onboarding_status === 'invited')
               ? 'in_progress'
               : existing.onboarding_status,
         })

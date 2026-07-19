@@ -12,9 +12,9 @@
 
 import { NextRequest } from 'next/server';
 
-// Enable dev OTP bypass so the route doesn't call real Supabase Auth
+// Enable dev OTP bypass so the route doesn't call real Supabase Auth.
+// NODE_ENV is 'test' in Jest by default. We only set the OTP flag + DB creds.
 beforeAll(() => {
-  process.env.NODE_ENV = 'test'; // not 'production'
   process.env.NEXT_PUBLIC_DEV_OTP = 'true';
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://fake.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'fake-service-role-key';
