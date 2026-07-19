@@ -7,6 +7,7 @@ const CSRF_EXEMPT = [
   '/api/agents/',
   '/api/health',
   '/api/dev/',
+  '/api/onboard/',
 ]
 
 function isCsrfExempt(pathname: string): boolean {
