@@ -72,14 +72,14 @@ Plans:
   4. Member finds their own rank on the leaderboard even when outside the top ranks (pinned "YOU" row)
   5. Opening a deleted or ended challenge (e.g., from a stale deep link) shows a graceful "no longer available" state, never a crash
 **Dependency notes**: Consumption-only — challenge creation stays in web admin. Use aggregated screen endpoints (avoid the 20-query home-screen anti-pattern), leaderboard caching, and DOC_03 tokens/celebration components. Rank-change push trigger lands in Phase 6, not here.
-**Plans:** 3/5 plans executed
+**Plans:** 5/5 plans executed (awaiting human device sign-off to mark Complete)
 
 Plans:
-- [ ] 03-01-PLAN.md — Migration 028 (challenge_participants member SELECT) + verifyMember Bearer JWT support [wave 1, checkpoint: db push]
-- [ ] 03-02-PLAN.md — Mobile data layer: challengeLogic + challengeService (TDD) + expo-haptics + EXPO_PUBLIC_API_URL + cache keys [wave 1]
-- [ ] 03-03-PLAN.md — Challenges tab: list screen with active/completed toggle, ChallengeCard, skeleton [wave 2]
-- [ ] 03-04-PLAN.md — Challenge detail: join flow (haptic + confetti), progress bar, leaderboard with pinned YOU row, graceful deleted/ended states [wave 2]
-- [ ] 03-05-PLAN.md — Full automated gate + on-device Iron Society walkthrough checkpoint [wave 3]
+- [x] 03-01-PLAN.md — Migration 028 (challenge_participants member SELECT) + verifyMember Bearer JWT support [wave 1, checkpoint: db push] ✅ COMPLETE
+- [x] 03-02-PLAN.md — Mobile data layer: challengeLogic + challengeService (TDD) + expo-haptics + EXPO_PUBLIC_API_URL + cache keys [wave 1] ✅ COMPLETE
+- [x] 03-03-PLAN.md — Challenges tab: list screen with active/completed toggle, ChallengeCard, skeleton [wave 2] ✅ COMPLETE
+- [x] 03-04-PLAN.md — Challenge detail: join flow (haptic + confetti), progress bar, leaderboard with pinned YOU row, graceful deleted/ended states [wave 2] ✅ COMPLETE
+- [x] 03-05-PLAN.md — Full automated gate + on-device Iron Society walkthrough checkpoint [wave 3] — automated gate GREEN, device walkthrough PENDING HUMAN SIGN-OFF
 
 ### Phase 4: Mobile Program View
 **Goal**: Members see their full training program — where they are, what's next, and what each day holds — not just today's slice
@@ -125,7 +125,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Gym Owner Self-Serve Onboarding | 9/9 | Complete   | 2026-07-19 |
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
-| 3. Mobile Challenges | 3/5 | In Progress|  |
+| 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
 | 4. Mobile Program View | 0/? | Not started | - |
 | 5. UptimizeAI Agent Connection | 0/? | Not started | - |
 | 6. Notification Orchestration Wiring | 0/? | Not started | - |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-mobile-challenges/03-03-PLAN.md (ChallengeCard + ChallengesScreenSkeleton + challenges list screen + tab registration)
-last_updated: "2026-07-19T20:54:02.553Z"
-last_activity: "2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix"
+stopped_at: "Completed 03-mobile-challenges/03-05-PLAN.md — automated gate green (935 tests, both tsc clean); Task 2 on-device walkthrough awaiting human sign-off"
+last_updated: "2026-07-19T20:57:21Z"
+last_activity: "2026-07-19 — Executed plan 03-05: final phase gate (mobile 189/189 + web-admin 347/347, tsc clean both apps)"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 14
-  completed_plans: 13
-  percent: 78
+  completed_plans: 14
+  percent: 85
 ---
 
 # State
@@ -25,12 +25,12 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 
 ## Current Position
 
-Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (in progress)
-Plan: 8 of 9 complete (01-01 through 01-08 all done)
-Status: Plans 01-01 through 01-08 complete; CSV import wizard + claim-path fix shipped; next: 01-09 (Stripe + OTP E2E checkpoint)
-Progress: [████████░░] 78%
-Last activity: 2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix
-Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-device OTP + real CSV import)
+Phase: 3 of 6 — Mobile Challenges (gate awaiting human device walkthrough)
+Plan: 5 of 5 complete (03-01 through 03-05 all executed)
+Status: Automated gate green. Phase 3 Task 2 (on-device walkthrough) awaiting human "approved" signal. After that, Phase 3 is complete.
+Progress: [█████████░] 85%
+Last activity: 2026-07-19 — Executed plan 03-05: final phase gate (mobile 189/189 + web-admin 347/347, tsc clean both apps)
+Next action: Human approves 03-05 Task 2 device walkthrough, then Phase 3 is COMPLETE — next: Phase 4 Mobile Program View
 
 ## Accumulated Context
 
@@ -90,9 +90,10 @@ Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-devic
 - [Phase 03-mobile-challenges]: useReducedMotion gates confetti; haptic fires unconditionally on join (haptics are non-visual per DOC_03)
 - [Phase 03-mobile-challenges]: ChallengeCard uses Pressable not AnimatedCard — AnimatedCard triggers entrance animations on every list render; Pressable with opacity feedback is more appropriate for list items
 - [Phase 03-mobile-challenges]: CHALLENGES_CACHE_KEY return cast as any — CacheKey type string & Record<string,never> trick does not widen to template literal strings in TypeScript 5.x
+- [Phase 03-mobile-challenges — Gate 03-05]: Automated gate passed: mobile 189/189, web-admin 347/347, both tsc clean, zero hardcoded hex in challenge files; total test count 935
 
 ## Session Continuity
 
-Last session: 2026-07-19T20:54:02.548Z
-Stopped at: Completed 03-mobile-challenges/03-03-PLAN.md (ChallengeCard + ChallengesScreenSkeleton + challenges list screen + tab registration)
-Resume with: Execute plan 01-09 — Stripe + OTP E2E onboarding checkpoint
+Last session: 2026-07-19T20:57:21Z
+Stopped at: "Completed 03-mobile-challenges/03-05-PLAN.md — automated gate green; Task 2 on-device walkthrough awaiting human sign-off"
+Resume with: Human approves 03-05 Task 2 walkthrough (reply "approved"), then Phase 3 is complete — next: plan Phase 4 Mobile Program View
