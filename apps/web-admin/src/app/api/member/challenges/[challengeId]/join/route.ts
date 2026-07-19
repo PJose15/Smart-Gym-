@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { member_id, gym_id } = parsed.data;
 
-    const auth = await verifyMember(member_id);
+    const auth = await verifyMember(member_id, request);
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;

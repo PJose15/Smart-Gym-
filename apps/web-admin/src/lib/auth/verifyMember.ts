@@ -12,35 +12,62 @@ interface VerifyResult {
 
 /**
  * Verifies that the current session user owns the given member_id.
+ * Accepts either a cookie-based session (web) or a Bearer JWT (mobile).
  * Returns the admin client for further operations, or a 401/403 NextResponse.
+ *
+ * @param requestedMemberId - The member ID to verify ownership of
+ * @param request - Optional Request object; when present, Bearer JWT in
+ *   Authorization header is tried before the cookie session fallback.
+ *   All existing call sites omit this param and keep cookie-only behavior.
  */
 export async function verifyMember(
-  requestedMemberId: string
+  requestedMemberId: string,
+  request?: Request
 ): Promise<VerifyResult | NextResponse> {
-  const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  // Admin (service-role) client used for both auth lookup and member ownership check
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
-  if (!session?.user) {
+  let userId: string | null = null;
+
+  // ── Bearer path (mobile clients) ──────────────────────────────────────────
+  const authHeader = request?.headers.get('authorization');
+  if (authHeader?.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7); // strip "Bearer " prefix
+    const { data: { user }, error } = await admin.auth.getUser(token);
+    if (!error && user) {
+      userId = user.id;
+    }
+    // On error/null: fall through to cookie path (browser may send Bearer too)
+  }
+
+  // ── Cookie path (web / fallback) ──────────────────────────────────────────
+  if (!userId) {
+    const supabase = await createServerSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      userId = session.user.id;
+    }
+  }
+
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Look up which member belongs to this user
-  const { data: member } = await supabase
+  // ── Member ownership check (admin client in both paths) ──────────────────
+  const { data: member } = await admin
     .from('members')
     .select('id')
-    .eq('user_id', session.user.id)
+    .eq('user_id', userId)
     .eq('id', requestedMemberId)
     .maybeSingle();
 
   if (!member) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
-
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
 
   return { member_id: member.id, admin };
 }
