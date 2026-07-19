@@ -36,7 +36,7 @@
   4. The owner imports a real Excel-exported member CSV, sees a per-row success/failure report, and imported members can claim accounts via phone OTP on mobile
   5. The dashboard shows a setup checklist and trial countdown that reflect actual completion state
 **Dependency notes**: Existing billing code at `apps/web-admin/src/app/api/billing/*` + `lib/billing/stripeHelpers.ts` handles checkout/portal/webhooks — this phase adds the pre-checkout gym-creation path, `stripe_events_processed` idempotency, `checkout.session.completed/expired` handlers, and the `(onboard)/` unauthenticated route group. Key pitfalls: webhook idempotency (P1), atomic gym creation (P2), RLS/session refresh (P3), CSV BOM + partial import (P4/P5), ghost checkout state (P6). New deps: `react-hook-form`, `@hookform/resolvers`, `csv-parse`.
-**Plans:** 4/9 plans executed
+**Plans:** 5/9 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Migration 027 (idempotency table, 'invited' status, atomic-gym + bulk-import RPCs) + deps install [wave 1, checkpoint: db push] ✅ COMPLETE 2026-07-19
@@ -116,7 +116,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Gym Owner Self-Serve Onboarding | 4/9 | In Progress|  |
+| 1. Gym Owner Self-Serve Onboarding | 5/9 | In Progress|  |
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
 | 3. Mobile Challenges | 0/? | Not started | - |
 | 4. Mobile Program View | 0/? | Not started | - |

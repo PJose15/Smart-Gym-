@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 01-gym-owner-self-serve-onboarding/01-03-PLAN.md
-last_updated: "2026-07-19T16:49:02.029Z"
-last_activity: "2026-07-19 — Executed plan 01-01: migration 027 + react-hook-form/csv-parse installed"
+stopped_at: Completed 01-gym-owner-self-serve-onboarding/01-05-PLAN.md
+last_updated: "2026-07-19T17:28:15.863Z"
+last_activity: "2026-07-19 — Executed plan 01-05: (onboard)/ route group, register API + rollback, signup + verify-email pages"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 9
-  completed_plans: 4
-  percent: 22
+  completed_plans: 5
+  percent: 56
 ---
 
 # State
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (in progress)
-Plan: 4 of 9 complete (01-01 through 01-04 done; 01-01 Task 2 checkpoint resolved — migration 027 live)
-Status: Plans 01-01 through 01-04 complete; migration 027 applied to live DB; next: 01-05 (onboard route group)
-Progress: [██░░░░░░░░] 22%
-Last activity: 2026-07-19 — Executed plan 01-01: migration 027 + react-hook-form/csv-parse installed
-Next action: Continue plan 01-05 — (onboard)/ route group, register API with rollback, signup + verify-email pages
+Plan: 5 of 9 complete (01-01 through 01-05 done)
+Status: Plans 01-01 through 01-05 complete; (onboard)/ route group + register API + wizard steps 1-2 shipped; next: 01-06 (subscribe/checkout flow)
+Progress: [██████░░░░] 56%
+Last activity: 2026-07-19 — Executed plan 01-05: (onboard)/ route group, register API + rollback, signup + verify-email pages
+Next action: Execute plan 01-06 — Stripe Checkout integration (subscribe step)
 
 ## Accumulated Context
 
@@ -64,9 +64,12 @@ Next action: Continue plan 01-05 — (onboard)/ route group, register API with r
 - [Phase 01-gym-owner-self-serve-onboarding]: computeDaysRemaining exported as pure helper with injectable now param for deterministic tests
 - [Phase 01-gym-owner-self-serve-onboarding]: SetupChecklist returns null when all 3 items complete; has_shared_qr derived from machine_scan_events count
 - [Phase 01-gym-owner-self-serve-onboarding]: POST /api/machines uses pure generateMachineMistakes from @nexera/ai-assist (not edge-function client); machines/page.tsx submission path kept as-is; MachineForm minimal mode for wizard embed
+- [Phase 01-gym-owner-self-serve-onboarding]: anon server client for signUp (fires email), admin client for all post-signUp DB ops — separates email delivery from privileged writes
+- [Phase 01-gym-owner-self-serve-onboarding]: identities.length === 0 is the Supabase duplicate email signal — return 409 before any DB insertion, no orphaned users
+- [Phase 01-gym-owner-self-serve-onboarding]: deleteUser rollback is best-effort (try/catch) — failed cleanup must not mask the original registration error
 
 ## Session Continuity
 
-Last session: 2026-07-19T16:49:02.025Z
-Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-03-PLAN.md
-Resume with: Execute plan 01-05 — (onboard)/ route group, register API, signup + verify-email pages
+Last session: 2026-07-19T17:28:15.859Z
+Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-05-PLAN.md
+Resume with: Execute plan 01-06 — Stripe Checkout integration (subscribe step)

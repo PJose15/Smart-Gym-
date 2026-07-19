@@ -11,7 +11,7 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
 
 ### ONBD — Gym Owner Self-Serve Onboarding
 
-- [ ] **ONBD-01**: Owner can sign up via a 4-step wizard (account → gym info → plan selection → Stripe checkout) with no human intervention
+- [x] **ONBD-01**: Owner can sign up via a 4-step wizard (account → gym info → plan selection → Stripe checkout) with no human intervention
   - Unauthenticated `(onboard)/` route group with signup, verify-email, subscribe, setup pages; progress indicator across steps
   - Plan tiers (Starter/Growth/Pro) shown in-app before checkout; wizard uses react-hook-form + Zod; brand design tokens (DOC_03)
 - [x] **ONBD-02**: Gym creation is atomic and resumable — no orphaned auth users or half-created gyms
@@ -117,7 +117,7 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ONBD-01 | Phase 1 | Pending |
+| ONBD-01 | Phase 1 | Complete |
 | ONBD-02 | Phase 1 | Complete |
 | ONBD-03 | Phase 1 | Complete |
 | ONBD-04 | Phase 1 | Complete |
