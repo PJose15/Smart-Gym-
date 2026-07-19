@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 01-gym-owner-self-serve-onboarding/01-06-PLAN.md
-last_updated: "2026-07-19T17:51:56.039Z"
-last_activity: "2026-07-19 — Executed plan 01-07: /setup first-machine wizard page + 4 behavior tests"
+stopped_at: Completed 01-gym-owner-self-serve-onboarding/01-08-PLAN.md
+last_updated: "2026-07-19T18:00:00.000Z"
+last_activity: "2026-07-19 — Executed plan 01-08: CSV member import, parseMembersCsv, validate-then-import route, /setup/import page, claim-path fix"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 9
-  completed_plans: 7
-  percent: 67
+  completed_plans: 8
+  percent: 78
 ---
 
 # State
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (in progress)
-Plan: 7 of 9 complete (01-01 through 01-08 excluding 01-06 order; 01-06 now done)
-Status: Plans 01-01 through 01-08 complete; subscribe Step 3 + live prices + context-aware checkout shipped; next: 01-09 (Stripe E2E onboarding checkpoint)
+Plan: 8 of 9 complete (01-01 through 01-08 all done)
+Status: Plans 01-01 through 01-08 complete; CSV import wizard + claim-path fix shipped; next: 01-09 (Stripe + OTP E2E checkpoint)
 Progress: [████████░░] 78%
-Last activity: 2026-07-19 — Executed plan 01-06: subscribe page, TierCard, prices route, context-aware checkout
-Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint
+Last activity: 2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix
+Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-device OTP + real CSV import)
 
 ## Accumulated Context
 
@@ -74,9 +74,13 @@ Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint
 - [Phase 01-gym-owner-self-serve-onboarding]: prices route uses getSession light check (not verifyStaff) + module-level 1hr TTL cache; _resetPricesCache exported for test isolation
 - [Phase 01-gym-owner-self-serve-onboarding]: PKCE code exchange: strip code param after exchange; always refreshSession before fetching protected data (Pitfall 3)
 - [Phase 01-gym-owner-self-serve-onboarding]: Resume banner: has_customer && !has_subscription signals abandoned checkout; auto-redirect to /setup when has_subscription=true
+- **01-08**: Switch jest.config.js from babel-jest to ts-jest — Babel 7.29.0 cannot parse TypeScript in jest.mock() factory bodies (all 59 suites were failing pre-fix)
+- **01-08**: Claim email deferred — claim works via phone OTP; rows without phone get warning; no email provider in scope
+- **01-08**: Import valid-only rows — owner sees per-row validation report and confirms; invalid rows skipped, invalid_count in response
+- **01-08**: 'invited' treated same as 'pending' in findOrCreateMember status transition
 
 ## Session Continuity
 
-Last session: 2026-07-19T17:51:56.034Z
-Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-06-PLAN.md
-Resume with: Execute plan 01-08 — CSV member import wizard step
+Last session: 2026-07-19T18:00:00.000Z
+Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-08-PLAN.md
+Resume with: Execute plan 01-09 — Stripe + OTP E2E onboarding checkpoint
