@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - Muscle Recovery Map</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#e5e1e4",
+                    "on-tertiary-fixed-variant": "#8e1120",
+                    "surface-container-highest": "#353437",
+                    "surface": "#131315",
+                    "on-primary-fixed-variant": "#930018",
+                    "on-tertiary-fixed": "#410007",
+                    "background": "#131315",
+                    "primary": "#ffb3af",
+                    "tertiary-fixed": "#ffdad8",
+                    "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                    "secondary": "#ffb3b0",
+                    "surface-dim": "#131315",
+                    "inverse-primary": "#bf0023",
+                    "on-tertiary-container": "#fff6f5",
+                    "on-surface": "#e5e1e4",
+                    "tertiary-container": "#ca4046",
+                    "primary-fixed-dim": "#ffb3af",
+                    "tertiary-fixed-dim": "#ffb3b1",
+                    "error": "#ffb4ab",
+                    "surface-container": "#201f21",
+                    "secondary-fixed-dim": "#ffb3b0",
+                    "on-primary": "#68000e",
+                    "on-primary-fixed": "#410006",
+                    "on-secondary": "#680010",
+                    "outline-variant": "#5d3f3e",
+                    "bg-elevated": "#121214",
+                    "on-secondary-container": "#fff6f5",
+                    "surface-variant": "#353437",
+                    "secondary-fixed": "#ffdad8",
+                    "on-secondary-fixed-variant": "#93001b",
+                    "on-tertiary": "#680011",
+                    "bg-card": "#16161A",
+                    "surface-bright": "#39393b",
+                    "on-secondary-fixed": "#410006",
+                    "outline": "#ad8885",
+                    "inverse-on-surface": "#313032",
+                    "surface-tint": "#ffb3af",
+                    "inverse-surface": "#e5e1e4",
+                    "on-surface-variant": "#e7bdba",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-low": "#1c1b1d",
+                    "surface-container-lowest": "#0e0e10",
+                    "primary-fixed": "#ffdad7",
+                    "primary-container": "#e0142f",
+                    "error-container": "#93000a",
+                    "on-primary-container": "#fff5f4",
+                    "tertiary": "#ffb3b1",
+                    "text-secondary": "#B5B2B8",
+                    "on-error": "#690005",
+                    "gold": "#E8B339",
+                    "surface-container-high": "#2a2a2c",
+                    "secondary-container": "#e40430"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter-desktop": "24px",
+                    "sub": "4px",
+                    "base": "8px",
+                    "hero-margin": "64px",
+                    "section-gap": "32px",
+                    "gutter-mobile": "16px"
+            },
+            "fontFamily": {
+                    "stat-display": [
+                            "JetBrains Mono"
+                    ],
+                    "wordmark": [
+                            "Playfair Display"
+                    ],
+                    "hero-lg": [
+                            "Playfair Display"
+                    ],
+                    "headline-h1": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "stat-display": [
+                            "40px",
+                            {
+                                    "lineHeight": "1",
+                                    "letterSpacing": "-0.03em",
+                                    "fontWeight": "800"
+                            }
+                    ],
+                    "wordmark": [
+                            "48px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "0.12em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "hero-lg": [
+                            "40px",
+                            {
+                                    "lineHeight": "1.1",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-h1": [
+                            "32px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "15px",
+                            {
+                                    "lineHeight": "1.6",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "1",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        /* Base Styles */
+        body {
+            background-color: #0A0A0C;
+            color: #e5e1e4;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Utility Classes for Glows and Effects */
+        .nextera-glow {
+            box-shadow: 0 0 24px rgba(224, 20, 47, 0.28);
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 12px rgba(224, 20, 47, 0.5);
+        }
+
+        .hairline-border {
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        
+        .energy-border-top {
+            border-top: 2px solid;
+            border-image: linear-gradient(135deg, #FF2740, #8A0D1E) 1;
+        }
+
+        /* Custom Scrollbar for hidden sheet */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0A0A0C; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #353437; 
+            border-radius: 4px;
+        }
+
+        /* Animations */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(224, 20, 47, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(224, 20, 47, 0.5); }
+            100% { box-shadow: 0 0 15px rgba(224, 20, 47, 0.2); }
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 3s infinite;
+        }
+
+        /* Heatmap Legend Gradients */
+        .heat-0-24 { background: linear-gradient(to right, #1a1a24, #2a2a3c); } /* Depleted - Platinum/Grey */
+        .heat-25-49 { background: linear-gradient(to right, #6b2110, #b43d1a); } /* Recovering - Amber/Rust */
+        .heat-50-74 { background: linear-gradient(to right, #930018, #ca4046); } /* Ready - Crimson */
+        .heat-75-100 { background: linear-gradient(to right, #e0142f, #ffb3af); } /* Peak - Hot Crimson/White */
+
+        /* Anatomy Interaction Areas (Simplified representation for HTML/CSS) */
+        .muscle-group {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .muscle-group:hover {
+            filter: drop-shadow(0 0 8px rgba(255,179,175,0.6));
+        }
+
+        /* Bottom Sheet Transition */
+        #muscle-sheet {
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #muscle-sheet.active {
+            transform: translateY(0);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col relative pb-24 md:pb-0">
+<!-- Ambient Background Effects -->
+<div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+<div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary-container rounded-full opacity-5 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary-container rounded-full opacity-10 blur-[100px]"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row relative">
+<!-- Sidebar / Navigation Drawer (Desktop Only) -->
+<aside class="hidden lg:flex flex-col h-screen py-hero-margin bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant/10 flat no shadows docked left-0 w-64 fixed z-40">
+<div class="px-gutter-desktop mb-section-gap flex items-center justify-start">
+<!-- Header: Profile Layout -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden hairline-border bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-xl">person</span>
+</div>
+<div>
+<h2 class="font-headline-h1 text-[16px] leading-tight font-bold text-on-surface">NEXTERA ELITE</h2>
+<p class="font-label-caps text-[10px] text-text-secondary">Lead Performance Coach</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1 mt-8">
+<!-- Inactive -->
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings_accessibility</span>
+<span>Trainer Hub</span>
+</a>
+<!-- Active Intent Match: Client Roster -> Similar to Training/Performance -->
+<!-- Assuming this page is a diagnostic tool within a broader suite, Dashboard or Performance Data makes sense. Let's map to Performance Data as Active -->
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">group</span>
+<span>Client Roster</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-3 bg-tertiary-container/20 text-primary border-r-4 border-primary px-gutter-desktop py-base transition-all duration-300 ease-in-out font-body-md text-body-md font-bold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitoring</span>
+<span>Performance Data</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">precision_manufacturing</span>
+<span>Inventory</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md mt-auto mb-8" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Workspace Area -->
+<div class="flex-1 w-full lg:ml-64 flex flex-col min-h-screen">
+<!-- Top App Bar (Mobile & Desktop) -->
+<header class="bg-background/80 backdrop-blur-md flex justify-between items-center w-full px-gutter-mobile py-sub docked full-width top-0 sticky z-30 flat no shadows lg:px-gutter-desktop lg:py-4">
+<div class="flex items-center gap-3">
+<!-- Avatar Leading (Mobile priority, hidden on desktop if sidebar handles profile, but keeping as requested) -->
+<div class="w-8 h-8 rounded-full overflow-hidden hairline-border bg-surface-variant flex items-center justify-center lg:hidden">
+<span class="material-symbols-outlined text-on-surface text-sm">person</span>
+</div>
+<h1 class="font-wordmark text-wordmark text-on-surface tracking-widest text-2xl lg:text-3xl m-0 leading-none">NEXTERA</h1>
+</div>
+<!-- Trailing Icon -->
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors Active: scale-95 transition-transform duration-150 rounded-full">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+</button>
+</header>
+<!-- Dashboard Content -->
+<div class="flex-1 px-gutter-mobile lg:px-gutter-desktop py-6 flex flex-col relative z-10">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-8">
+<div>
+<h2 class="font-headline-h1 text-headline-h1 text-on-surface mb-2">Recovery Telemetry</h2>
+<p class="font-body-md text-body-md text-text-secondary max-w-lg">Real-time muscular fatigue and readiness analysis. Select a group for diagnostic detail.</p>
+</div>
+<!-- View Toggle -->
+<div class="inline-flex bg-bg-elevated p-1 rounded-lg hairline-border self-start">
+<button class="px-6 py-2 rounded-md bg-surface-container text-on-surface font-label-caps text-label-caps nextera-glow transition-all duration-200">FRONT</button>
+<button class="px-6 py-2 rounded-md text-text-secondary hover:text-on-surface font-label-caps text-label-caps transition-all duration-200">BACK</button>
+</div>
+</div>
+<!-- Central Diagnostic Area -->
+<div class="flex-1 flex flex-col lg:flex-row gap-6">
+<!-- Anatomy Viewer (Left/Center) -->
+<div class="flex-1 bg-bg-card rounded-xl hairline-border relative overflow-hidden flex flex-col min-h-[500px] lg:min-h-[700px]">
+<!-- Top Bar in Viewer -->
+<div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-10 pointer-events-none">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-stat-display text-[12px] text-primary-container tracking-wider">LIVE SCAN</span>
+</div>
+<div class="font-stat-display text-[14px] text-on-surface/50">SYSTEM: NOMINAL</div>
+</div>
+<!-- 3D/Anatomy Placeholder Context -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-auto mt-8">
+<!-- 
+                                Representing the complex anatomical image described. 
+                                In a real implementation, this would be an SVG map or WebGL context.
+                                For HTML/CSS fidelity to the prompt, we use an image placeholder with detailed alt.
+                            -->
+<div class="relative w-full max-w-[400px] aspect-[1/2] mx-auto">
+<img class="w-full h-full object-contain opacity-90 drop-shadow-[0_0_15px_rgba(224,20,47,0.1)]" data-alt="A highly detailed, cinematic 3D rendering of a human anatomical muscular system standing facing forward. The background is a stark, absolute black. The musculature is rendered in a translucent, glass-like dark grey material. Specific muscle groups are illuminated from within by intense, glowing emissive light denoting 'heat' or recovery status: the quadriceps burn with a hot crimson red glow, the chest glows softly with an amber light, and the core is a cool platinum white. Thin, laser-like red light streaks curve elegantly around the figure in the dark space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq-3jB6-AMqnS01qNrfZV-CkeXkKs4MnoUGrDoxtPmX5HbFbIx9coD5zYkCBLQX9uAyX774eCZcvcu2YWVcerCf9Py7QqdIQ11vJsMBFOANGlWF3Sg3bmnLxoDofboVKUB7jW-mnm49yz2-7yIJfdwr2hTcOc7BZEfvanFGujl726qgtvgvrenvs1i_kvUBG-kDoa1Oa1caa6dAz9GSb5FPZ4KUqACcrJi6yM9voJYdsAM7FDoV7Asvu4lAXhlOV1ibwVc_UwwbYw"/>
+<!-- Interactive Hotspots (Simulated overlay on top of image) -->
+<!-- Quadriceps Hotspot (Crimson - High Heat) -->
+<button aria-label="Inspect Quadriceps" class="absolute top-[50%] left-[30%] w-[40%] h-[15%] rounded-full bg-transparent border border-transparent hover:border-primary-container/50 hover:bg-primary-container/10 transition-colors z-20 cursor-crosshair muscle-group" onclick="openMuscleSheet('Quadriceps', '82', '24', '14', 'Leg Press')"></button>
+<!-- Chest Hotspot (Amber - Medium Heat) -->
+<button aria-label="Inspect Pectorals" class="absolute top-[22%] left-[30%] w-[40%] h-[10%] rounded-full bg-transparent border border-transparent hover:border-gold/50 hover:bg-gold/10 transition-colors z-20 cursor-crosshair muscle-group" onclick="openMuscleSheet('Pectoralis Major', '45', '48', '32', 'Bench Press')"></button>
+<!-- Core Hotspot (Platinum - Low Heat/Ready) -->
+<button aria-label="Inspect Abdominals" class="absolute top-[35%] left-[38%] w-[24%] h-[12%] rounded-full bg-transparent border border-transparent hover:border-white/50 hover:bg-white/10 transition-colors z-20 cursor-crosshair muscle-group" onclick="openMuscleSheet('Abdominals', '95', '0', '0', 'Cable Crunch')"></button>
+</div>
+</div>
+<!-- Legend (Bottom overlay) -->
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-surface-container-highest/80 backdrop-blur-md p-3 rounded-lg hairline-border z-10">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-caps text-[10px] text-text-secondary">RECOVERY METRICS</span>
+</div>
+<div class="flex h-2 rounded-full overflow-hidden w-full gap-0.5">
+<div class="flex-1 heat-0-24"></div>
+<div class="flex-1 heat-25-49"></div>
+<div class="flex-1 heat-50-74"></div>
+<div class="flex-1 heat-75-100"></div>
+</div>
+<div class="flex justify-between items-center mt-2 font-stat-display text-[10px] text-on-surface-variant">
+<span>DEPLETED</span>
+<span>PEAK</span>
+</div>
+</div>
+</div>
+<!-- Side Panel / Details (Desktop) -> Moves to Bottom Sheet on Mobile -->
+<!-- We implement this as a persistent side panel on lg, and a sliding sheet on mobile -->
+<div class="fixed inset-x-0 bottom-0 z-50 bg-bg-card border-t border-outline-variant/20 rounded-t-2xl p-6 lg:static lg:w-80 lg:border-t-0 lg:border-l lg:rounded-none lg:rounded-xl lg:border-outline-variant/10 hairline-border flex flex-col gap-6 lg:transform-none shadow-[0_-10px_40px_rgba(0,0,0,0.5)] lg:shadow-none" id="muscle-sheet">
+<!-- Mobile drag handle -->
+<div class="w-12 h-1 bg-surface-variant rounded-full mx-auto mb-2 lg:hidden"></div>
+<button class="absolute top-4 right-4 lg:hidden text-text-secondary" onclick="closeMuscleSheet()">
+<span class="material-symbols-outlined">close</span>
+</button>
+<!-- Content Area (Dynamically populated by JS conceptually, hardcoded for HTML output) -->
+<div id="sheet-content">
+<!-- Header -->
+<div class="mb-6 energy-border-top pt-4">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary-container text-sm">target</span>
+<span class="font-label-caps text-primary-container text-[10px] tracking-widest">SELECTED GROUP</span>
+</div>
+<h3 class="font-headline-h1 text-[28px] font-bold text-on-surface uppercase tracking-tight" id="detail-name">Quadriceps</h3>
+<p class="font-body-md text-sm text-text-secondary mt-1">Vastus Lateralis &amp; Medialis</p>
+</div>
+<!-- Primary Stat Grid -->
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low p-4 rounded-lg hairline-border">
+<span class="font-label-caps text-[10px] text-text-secondary block mb-1">RECOVERY</span>
+<div class="flex items-baseline gap-1">
+<span class="font-stat-display text-3xl text-primary-container glow-text" id="detail-recovery">82</span>
+<span class="font-stat-display text-sm text-primary-container">%</span>
+</div>
+<div class="w-full bg-surface-variant h-1 mt-2 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[82%] shadow-[0_0_8px_#e0142f]"></div>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg hairline-border">
+<span class="font-label-caps text-[10px] text-text-secondary block mb-1">TIME TO READY</span>
+<div class="flex items-baseline gap-1">
+<span class="font-stat-display text-3xl text-on-surface" id="detail-hours">14</span>
+<span class="font-stat-display text-sm text-on-surface-variant">H</span>
+</div>
+<div class="w-full bg-surface-variant h-1 mt-2 rounded-full overflow-hidden">
+<div class="bg-on-surface h-full w-[45%]"></div>
+</div>
+</div>
+</div>
+<!-- Sparkline / History (CSS Representation) -->
+<div class="mb-6">
+<span class="font-label-caps text-[10px] text-text-secondary block mb-3">FATIGUE DECAY (48H)</span>
+<div class="h-16 w-full relative flex items-end justify-between px-1 gap-1">
+<!-- Simulated bar chart -->
+<div class="w-full bg-primary-container/20 h-[90%] rounded-t-sm relative"><div class="absolute bottom-0 w-full bg-primary-container h-[20%] rounded-t-sm"></div></div>
+<div class="w-full bg-primary-container/20 h-[80%] rounded-t-sm relative"><div class="absolute bottom-0 w-full bg-primary-container h-[30%] rounded-t-sm"></div></div>
+<div class="w-full bg-primary-container/20 h-[65%] rounded-t-sm relative"><div class="absolute bottom-0 w-full bg-primary-container h-[45%] rounded-t-sm"></div></div>
+<div class="w-full bg-primary-container/20 h-[50%] rounded-t-sm relative"><div class="absolute bottom-0 w-full bg-primary-container h-[60%] rounded-t-sm"></div></div>
+<div class="w-full bg-primary-container/20 h-[35%] rounded-t-sm relative"><div class="absolute bottom-0 w-full bg-primary-container h-[75%] rounded-t-sm"></div></div>
+<div class="w-full bg-primary-container/20 h-[20%] rounded-t-sm relative"><div class="absolute bottom-0 w-full bg-primary-container h-[90%] rounded-t-sm shadow-[0_0_5px_#e0142f]"></div></div>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full bg-primary-container text-white py-4 rounded-lg font-label-caps text-sm tracking-wider hover:bg-secondary-container transition-all active:scale-[0.98] flex justify-center items-center gap-2 group nextera-glow mt-auto">
+<span>TRAIN THIS</span>
+<span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+<!-- Initial Empty State (Hidden via JS normally, visible here for structure) -->
+<div class="hidden flex-col items-center justify-center h-full opacity-50 py-12" id="sheet-empty">
+<span class="material-symbols-outlined text-4xl mb-4">touch_app</span>
+<p class="font-body-md text-center text-sm">Select a muscle group on the map<br/>to view diagnostics.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile Only) -->
+<nav class="md:hidden bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant/20 shadow-lg docked full-width bottom-0 rounded-t-xl fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-6 pt-base">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity flex-1 py-2" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">home</span>
+<span class="font-label-caps text-[10px]">HOME</span>
+</a>
+<!-- Active Context Intent: Performance/Scanning -> SCAN is closest -->
+<a class="flex flex-col items-center justify-center text-primary filter drop-shadow-[0_0_8px_rgba(255,179,175,0.4)] Active: scale-90 transition-all duration-200 flex-1 py-2 relative" href="#">
+<span class="absolute top-0 right-1/4 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+<span class="material-symbols-outlined text-[24px] mb-1" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+<span class="font-label-caps text-[10px] font-bold">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity flex-1 py-2" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">fitness_center</span>
+<span class="font-label-caps text-[10px]">TRAIN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity flex-1 py-2" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">groups</span>
+<span class="font-label-caps text-[10px]">FEED</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity flex-1 py-2" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">person</span>
+<span class="font-label-caps text-[10px]">PROFILE</span>
+</a>
+</nav>
+<!-- Simple JS for interactions -->
+<script>
+        function openMuscleSheet(name, rec, hrs, stress, exercise) {
+            const sheet = document.getElementById('muscle-sheet');
+            
+            // Update content
+            document.getElementById('detail-name').innerText = name;
+            document.getElementById('detail-recovery').innerText = rec;
+            document.getElementById('detail-hours').innerText = hrs;
+            
+            // Color logic based on recovery %
+            const recVal = parseInt(rec);
+            const recEl = document.getElementById('detail-recovery');
+            const barEl = recEl.parentElement.nextElementSibling.firstElementChild;
+            
+            if(recVal > 75) {
+                recEl.className = "font-stat-display text-3xl text-primary-container glow-text";
+                barEl.className = "bg-primary-container h-full w-["+rec+"%] shadow-[0_0_8px_#e0142f]";
+            } else if (recVal > 40) {
+                recEl.className = "font-stat-display text-3xl text-gold glow-text";
+                barEl.className = "bg-gold h-full w-["+rec+"%] shadow-[0_0_8px_#E8B339]";
+            } else {
+                recEl.className = "font-stat-display text-3xl text-on-surface glow-text";
+                barEl.className = "bg-on-surface h-full w-["+rec+"%] shadow-[0_0_8px_#ffffff]";
+            }
+            barEl.style.width = rec + "%";
+
+            // Show sheet on mobile
+            if(window.innerWidth < 1024) {
+                sheet.classList.add('active');
+                // Prevent body scroll
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeMuscleSheet() {
+            const sheet = document.getElementById('muscle-sheet');
+            sheet.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Initialize state (desktop visible, mobile hidden via CSS transform)
+        // Simulate click on load for visual state
+        setTimeout(() => {
+            if(window.innerWidth >= 1024) {
+                openMuscleSheet('Quadriceps', '82', '14', '0', 'Leg Press');
+            }
+        }, 500);
+    </script>
+</body></html>

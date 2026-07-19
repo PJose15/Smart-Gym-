@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - Accept Program</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:wght@600&amp;family=JetBrains+Mono:wght@800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary": "#ffb3b0",
+                        "secondary-fixed": "#ffdad8",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "bg-elevated": "#121214",
+                        "on-surface-variant": "#e7bdba",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#ffb3af",
+                        "surface": "#131315",
+                        "surface-bright": "#39393b",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-container": "#e0142f",
+                        "on-primary-container": "#fff5f4",
+                        "primary-fixed-dim": "#ffb3af",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#353437",
+                        "tertiary-fixed": "#ffdad8",
+                        "on-secondary-fixed": "#410006",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "text-secondary": "#B5B2B8",
+                        "on-tertiary": "#680011",
+                        "secondary-container": "#e40430",
+                        "on-tertiary-fixed": "#410007",
+                        "on-primary-fixed": "#410006",
+                        "primary": "#ffb3af",
+                        "on-secondary-container": "#fff6f5",
+                        "primary-fixed": "#ffdad7",
+                        "on-primary": "#68000e",
+                        "inverse-surface": "#e5e1e4",
+                        "surface-variant": "#353437",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "bg-card": "#16161A",
+                        "inverse-on-surface": "#313032",
+                        "on-surface": "#e5e1e4",
+                        "on-tertiary-container": "#fff6f5",
+                        "background": "#131315",
+                        "outline-variant": "#5d3f3e",
+                        "on-error-container": "#ffdad6",
+                        "gold": "#E8B339",
+                        "on-secondary": "#680010",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-background": "#e5e1e4",
+                        "outline": "#ad8885",
+                        "error-container": "#93000a",
+                        "surface-container": "#201f21",
+                        "tertiary": "#ffb3b1",
+                        "on-primary-fixed-variant": "#930018",
+                        "tertiary-container": "#ca4046",
+                        "surface-container-low": "#1c1b1d"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "sub": "4px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px",
+                        "hero-margin": "64px",
+                        "gutter-desktop": "24px",
+                        "base": "8px"
+                    },
+                    fontFamily: {
+                        "headline-h1": ["Inter"],
+                        "hero-lg": ["Playfair Display"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "wordmark": ["Playfair Display"],
+                        "stat-display": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-h1": ["32px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "hero-lg": ["40px", { lineHeight: "1.1", letterSpacing: "0.02em", fontWeight: "600" }],
+                        "label-caps": ["12px", { lineHeight: "1", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "body-md": ["15px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "wordmark": ["48px", { lineHeight: "1.2", letterSpacing: "0.12em", fontWeight: "600" }],
+                        "stat-display": ["40px", { lineHeight: "1", letterSpacing: "-0.03em", fontWeight: "800" }]
+                    },
+                    boxShadow: {
+                        'glow-primary': '0 0 20px rgba(224, 20, 47, 0.28)',
+                        'glow-primary-hover': '0 0 30px rgba(224, 20, 47, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Motion Classes */
+        .animate-scale-in {
+            animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .animate-stagger-in {
+            animation: staggerIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .animate-breathe {
+            animation: breathe 3s ease-in-out infinite;
+        }
+        .animate-wipe {
+            position: relative;
+            overflow: hidden;
+        }
+        .animate-wipe::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: wipe 1.5s ease-out infinite;
+        }
+
+        @keyframes scaleIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes slideUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes staggerIn {
+            0% { transform: translateY(10px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(224, 20, 47, 0.28); }
+            50% { transform: scale(1.02); box-shadow: 0 0 30px rgba(224, 20, 47, 0.4); }
+        }
+        @keyframes wipe {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Energy Ribbon */
+        .border-energy-top {
+            position: relative;
+        }
+        .border-energy-top::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #FF2740, #8A0D1E);
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen font-body-md antialiased flex flex-col items-center">
+<!-- Top App Bar (Suppressed Navbar, but keeping Header Anchor) -->
+<header class="w-full max-w-[1440px] px-gutter-mobile md:px-gutter-desktop py-sub flex justify-center items-center bg-background/80 backdrop-blur-md sticky top-0 z-40 border-b border-outline-variant/10">
+<h1 class="font-wordmark text-wordmark text-on-surface tracking-widest">NEXTERA</h1>
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[600px] px-gutter-mobile py-section-gap flex-grow flex flex-col gap-section-gap pb-[180px]">
+<!-- Header Intent -->
+<section class="text-center">
+<h2 class="font-headline-h1 text-headline-h1 text-on-surface mb-base animate-slide-up" style="animation-delay: 50ms;">Your Trainer Sent a Program</h2>
+<div class="flex flex-col items-center gap-base mt-section-gap animate-scale-in" style="animation-delay: 100ms;">
+<div class="w-[56px] h-[56px] rounded-full overflow-hidden border border-outline-variant/30 shadow-glow-primary">
+<img alt="Trainer Avatar" class="w-full h-full object-cover" data-alt="A cinematic, high-contrast headshot of an elite fitness trainer in a darkened gym environment. The lighting is dramatic, emphasizing their focused expression with a subtle red emissive glow reflecting off their skin, fitting a dark luxury aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgifEC_QtLwbAHWwhzbkx_x6LkLHp-a7FsC8cr3heqvOy7lHbbuZWjvX9Sk5I0mCCW-FST9nshzSGe4F1erVwWGFxOPPM-YvIHk8SfG0w3MMlNNPzna9qKmFGkkXdiuZShsDrUfrOQLKK6QzjMbjXBUo9PVvDyqjNT3U4c0mhptnB9urB7JclRZNvYRjnkRPiiGU3MLCAT4Z16iKjqlzaGD0Z8VT5i9uAQjoFBwnTtu8pdK-psfI6puVJ69RSiSSWttD7IB_y1iFw"/>
+</div>
+<p class="font-body-md text-on-surface-variant"><span class="text-on-surface font-semibold">Marcus</span> assigned you a new program</p>
+</div>
+</section>
+<!-- Program Card -->
+<section class="bg-bg-card rounded-xl border border-white/5 border-energy-top p-gutter-mobile animate-slide-up" style="animation-delay: 200ms;">
+<div class="flex items-center gap-sub mb-base">
+<span class="bg-surface-container-highest px-2 py-1 rounded-full font-label-caps text-label-caps text-primary tracking-widest">TRAIN</span>
+<span class="font-label-caps text-label-caps text-text-secondary tracking-widest">TRAINER PROGRAM</span>
+</div>
+<h3 class="font-headline-h1 text-headline-h1 text-on-surface mb-sub">Power Builder — PPL</h3>
+<div class="flex items-center gap-base text-text-secondary font-body-md mb-gutter-mobile">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">calendar_month</span> 6 weeks</span>
+<span>·</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">fitness_center</span> 4 days/week</span>
+</div>
+<p class="font-body-md text-on-surface-variant mb-section-gap leading-relaxed border-b border-outline-variant/10 pb-gutter-mobile">
+                A hybrid approach blending raw strength mechanics with hypertrophy volume. Designed to push your CNS to the limit while ensuring adequate recovery through strict Push/Pull/Legs splits.
+            </p>
+<!-- Day List -->
+<div>
+<h4 class="font-label-caps text-label-caps text-text-secondary tracking-widest mb-base">WHAT YOU'LL DO (WEEK 1)</h4>
+<div class="flex flex-col gap-sub" id="day-list">
+<!-- Rows populated via JS for staggering -->
+</div>
+</div>
+</section>
+</main>
+<!-- Fixed Bottom Actions -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant/20 p-gutter-mobile z-50 flex justify-center">
+<div class="w-full max-w-[600px] flex flex-col gap-base">
+<button class="w-full bg-primary-container text-on-primary-container font-label-caps text-label-caps py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-secondary-container transition-all animate-breathe active:scale-[0.98]" id="accept-btn">
+<span>ACCEPT PROGRAM</span>
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<button class="w-full bg-transparent border border-primary-container/30 text-primary-container font-label-caps text-label-caps py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-container/10 transition-colors active:scale-[0.98]" id="decline-btn">
+<span>NOT RIGHT NOW</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Decline Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center px-gutter-mobile hidden bg-background/90 backdrop-blur-sm opacity-0 transition-opacity duration-300" id="decline-modal">
+<div class="bg-bg-card border border-white/10 rounded-xl p-gutter-desktop w-full max-w-[400px] shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
+<h3 class="font-headline-h1 text-[24px] text-on-surface mb-sub">Decline this program?</h3>
+<p class="font-body-md text-on-surface-variant mb-gutter-desktop">Let Marcus know why you're passing on this right now.</p>
+<textarea class="w-full bg-surface border border-outline-variant/30 rounded-lg p-base text-on-surface font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors mb-gutter-desktop h-24 resize-none" placeholder="Add a note... (Optional)"></textarea>
+<div class="flex gap-base">
+<button class="flex-1 py-3 rounded-lg border border-outline-variant/30 text-on-surface font-label-caps text-label-caps hover:bg-surface-variant/30 transition-colors" id="cancel-modal-btn">CANCEL</button>
+<button class="flex-1 py-3 rounded-lg bg-error-container text-on-error-container font-label-caps text-label-caps hover:bg-error transition-colors">DECLINE</button>
+</div>
+</div>
+</div>
+<!-- Confetti Canvas -->
+<canvas class="fixed inset-0 pointer-events-none z-[100]" id="confetti-canvas"></canvas>
+<script>
+        // Data for stagger list
+        const days = [
+            { day: 'Day 1', focus: 'Heavy Push', icon: 'fitness_center' },
+            { day: 'Day 2', focus: 'Volume Pull', icon: 'laps' },
+            { day: 'Day 3', focus: 'Legs / Core', icon: 'directions_run' },
+            { day: 'Day 4', focus: 'Active Recovery', icon: 'pool' }
+        ];
+
+        const dayList = document.getElementById('day-list');
+        days.forEach((d, index) => {
+            const delay = 300 + (index * 50); // Start after card slide up
+            const html = `
+                <div class="flex items-center justify-between bg-surface p-base rounded-lg border border-white/5 animate-stagger-in" style="animation-delay: ${delay}ms;">
+                    <div class="flex items-center gap-base">
+                        <span class="material-symbols-outlined text-on-surface-variant">${d.icon}</span>
+                        <div>
+                            <span class="block font-label-caps text-label-caps text-on-surface">${d.day}</span>
+                            <span class="block font-body-md text-text-secondary text-sm">${d.focus}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            dayList.insertAdjacentHTML('beforeend', html);
+        });
+
+        // Modal Logic
+        const declineBtn = document.getElementById('decline-btn');
+        const modal = document.getElementById('decline-modal');
+        const modalContent = document.getElementById('modal-content');
+        const cancelModalBtn = document.getElementById('cancel-modal-btn');
+
+        const openModal = () => {
+            modal.classList.remove('hidden');
+            // trigger reflow
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        };
+
+        const closeModal = () => {
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        };
+
+        declineBtn.addEventListener('click', openModal);
+        cancelModalBtn.addEventListener('click', closeModal);
+
+        // Accept Logic
+        const acceptBtn = document.getElementById('accept-btn');
+        acceptBtn.addEventListener('click', function() {
+            this.classList.remove('animate-breathe');
+            this.classList.add('animate-wipe');
+            this.innerHTML = `<span>ACCEPTED</span><span class="material-symbols-outlined text-[18px]">done_all</span>`;
+            
+            // Simple Confetti
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            for(let i=0; i<50; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 1) * 20 - 10,
+                    size: Math.random() * 5 + 2,
+                    color: ['#E0142F', '#ffb3b0', '#ffffff'][Math.floor(Math.random() * 3)]
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.5; // gravity
+                    if(p.y < canvas.height) active = true;
+                    
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                if(active) requestAnimationFrame(animate);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+            
+            setTimeout(() => {
+                // Simulate navigation or success state
+                this.classList.remove('animate-wipe');
+            }, 1500);
+        });
+
+    </script>
+</body></html>

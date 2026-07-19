@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXTERA - Session Complete</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:wght@600&amp;family=JetBrains+Mono:wght@800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#ffb3b0",
+                        "secondary-fixed": "#ffdad8",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "bg-elevated": "#121214",
+                        "on-surface-variant": "#e7bdba",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#ffb3af",
+                        "surface": "#131315",
+                        "surface-bright": "#39393b",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-container": "#e0142f",
+                        "on-primary-container": "#fff5f4",
+                        "primary-fixed-dim": "#ffb3af",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#353437",
+                        "tertiary-fixed": "#ffdad8",
+                        "on-secondary-fixed": "#410006",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "text-secondary": "#B5B2B8",
+                        "on-tertiary": "#680011",
+                        "secondary-container": "#e40430",
+                        "on-tertiary-fixed": "#410007",
+                        "on-primary-fixed": "#410006",
+                        "primary": "#ffb3af",
+                        "on-secondary-container": "#fff6f5",
+                        "primary-fixed": "#ffdad7",
+                        "on-primary": "#68000e",
+                        "inverse-surface": "#e5e1e4",
+                        "surface-variant": "#353437",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "bg-card": "#16161A",
+                        "inverse-on-surface": "#313032",
+                        "on-surface": "#e5e1e4",
+                        "on-tertiary-container": "#fff6f5",
+                        "background": "#131315",
+                        "outline-variant": "#5d3f3e",
+                        "on-error-container": "#ffdad6",
+                        "gold": "#E8B339",
+                        "on-secondary": "#680010",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-background": "#e5e1e4",
+                        "outline": "#ad8885",
+                        "error-container": "#93000a",
+                        "surface-container": "#201f21",
+                        "tertiary": "#ffb3b1",
+                        "on-primary-fixed-variant": "#930018",
+                        "tertiary-container": "#ca4046",
+                        "surface-container-low": "#1c1b1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sub": "4px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px",
+                        "hero-margin": "64px",
+                        "gutter-desktop": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-h1": ["Inter"],
+                        "hero-lg": ["Playfair Display"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "wordmark": ["Playfair Display"],
+                        "stat-display": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "hero-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "wordmark": ["48px", { "lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600" }],
+                        "stat-display": ["40px", { "lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Base Animations */
+        @keyframes cascadeUp {
+            from { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        
+        @keyframes rollUp {
+            from { opacity: 0; transform: translateY(80%) scaleY(0.8); }
+            to { opacity: 1; transform: translateY(0) scaleY(1); }
+        }
+        
+        @keyframes springIn {
+            0% { opacity: 0; transform: scale(0.9) translateY(15px); }
+            50% { opacity: 1; transform: scale(1.02) translateY(-2px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* Utility Classes */
+        .cascade-item {
+            opacity: 0;
+            animation: cascadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .delay-1 { animation-delay: 60ms; }
+        .delay-2 { animation-delay: 120ms; }
+        .delay-3 { animation-delay: 180ms; }
+        .delay-4 { animation-delay: 240ms; }
+        .delay-5 { animation-delay: 300ms; }
+        
+        .stat-roll {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .stat-roll > .stat-value {
+            opacity: 0;
+            transform-origin: bottom;
+            animation: rollUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .spring-card {
+            opacity: 0;
+            animation: springIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        .sparkline-path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawLine 0.6s ease-out 600ms forwards;
+        }
+
+        /* Glass/Glow utilities */
+        .hairline-border {
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        
+        .btn-press:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col items-center justify-center p-gutter-mobile overflow-x-hidden selection:bg-primary-container/30">
+<!-- Ambient background glow -->
+<div class="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary-container/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+<main class="w-full max-w-md flex flex-col gap-6 relative z-10 py-hero-margin">
+<!-- Header -->
+<header class="text-center cascade-item delay-1 mb-2">
+<h1 class="font-hero-lg text-hero-lg text-on-surface uppercase tracking-[0.1em]">SESSION COMPLETE 🎉</h1>
+</header>
+<!-- Hero Stats Row -->
+<section class="flex justify-between items-center w-full px-6 py-8 bg-surface-container-low rounded-2xl hairline-border cascade-item delay-2 relative overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+<!-- Subtle gradient overlay -->
+<div class="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none"></div>
+<div class="stat-roll">
+<span class="font-stat-display text-primary-fixed stat-value" style="font-size: 28px; animation-delay: 200ms;">42</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-2 opacity-80">MIN</span>
+</div>
+<div class="h-10 w-px bg-white/10"></div>
+<div class="stat-roll">
+<span class="font-stat-display text-primary-fixed stat-value" style="font-size: 28px; animation-delay: 280ms;">18</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-2 opacity-80">SETS</span>
+</div>
+<div class="h-10 w-px bg-white/10"></div>
+<div class="stat-roll">
+<span class="font-stat-display text-primary-fixed stat-value" style="font-size: 28px; animation-delay: 360ms;">12.4k</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-2 opacity-80">LB VOL</span>
+</div>
+</section>
+<!-- PR Block -->
+<section class="relative w-full cascade-item delay-3 mt-2">
+<!-- Confetti Container -->
+<div class="absolute -inset-12 pointer-events-none z-0" id="confetti-canvas"></div>
+<div class="relative z-10">
+<h2 class="font-body-md text-body-md text-gold font-bold mb-4 flex items-center gap-2 drop-shadow-[0_0_8px_rgba(232,179,57,0.3)]">
+<span class="material-symbols-outlined text-gold" style="font-variation-settings: 'FILL' 1, 'wght' 400;">emoji_events</span>
+<span class="font-stat-display">2</span> Personal Records
+                </h2>
+<div class="flex flex-col gap-3">
+<!-- PR Card 1 -->
+<div class="spring-card bg-bg-card hairline-border rounded-xl p-5 flex justify-between items-center shadow-[0_0_20px_rgba(224,20,47,0.05)] relative overflow-hidden" style="animation-delay: 300ms;">
+<div class="absolute top-0 left-0 w-full h-[2px]" style="background: var(--energy-ribbon);"></div>
+<div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary-container/5 to-transparent pointer-events-none"></div>
+<div>
+<div class="font-body-md text-body-md text-on-surface font-semibold tracking-wide">Chest Press</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1.5 opacity-80">
+<span class="font-stat-display font-normal text-sm">135</span> lb × <span class="font-stat-display font-normal text-sm">10</span> <span class="text-secondary ml-1 font-bold font-body-md">(new top)</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-[#1A2E20] flex items-center justify-center border border-[#2d5236]">
+<span class="material-symbols-outlined text-[#4ADE80] text-xl">trending_up</span>
+</div>
+</div>
+<!-- PR Card 2 -->
+<div class="spring-card bg-bg-card hairline-border rounded-xl p-5 flex justify-between items-center shadow-[0_0_20px_rgba(224,20,47,0.05)] relative overflow-hidden" style="animation-delay: 400ms;">
+<div class="absolute top-0 left-0 w-full h-[2px]" style="background: var(--energy-ribbon);"></div>
+<div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary-container/5 to-transparent pointer-events-none"></div>
+<div>
+<div class="font-body-md text-body-md text-on-surface font-semibold tracking-wide">Lat Pulldown</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1.5 opacity-80">
+                                e<span class="font-stat-display font-normal text-sm">1</span>RM <span class="font-stat-display font-normal text-sm">188</span> lb <span class="text-secondary ml-1 font-bold font-body-md">(new best)</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-[#1A2E20] flex items-center justify-center border border-[#2d5236]">
+<span class="material-symbols-outlined text-[#4ADE80] text-xl">trending_up</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Readiness -->
+<section class="w-full bg-bg-card hairline-border rounded-xl p-5 flex justify-between items-center cascade-item delay-4">
+<div>
+<div class="font-body-md text-body-md text-on-surface font-semibold">Readiness</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1.5 opacity-80">
+<span class="font-stat-display font-normal text-sm">72 → 64</span> <span class="text-primary-fixed-dim ml-1 font-body-md">(recovering)</span>
+</div>
+</div>
+<div class="w-20 h-10 relative">
+<svg class="w-full h-full overflow-visible absolute inset-0 z-10" viewbox="0 0 64 32">
+<!-- Glow -->
+<path class="sparkline-path blur-md" d="M0,8 L16,14 L32,6 L48,26 L64,18" fill="none" stroke="rgba(224,20,47,0.4)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<!-- Core line -->
+<path class="text-primary sparkline-path" d="M0,8 L16,14 L32,6 L48,26 L64,18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</div>
+</section>
+<!-- Metadata Chips -->
+<section class="flex flex-wrap gap-3 w-full cascade-item delay-5">
+<div class="px-4 py-2 rounded-full hairline-border bg-surface-container-low font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+                Worked: Chest · Triceps · Front Delts
+            </div>
+<div class="px-4 py-2 rounded-full border border-primary/20 bg-primary/10 font-label-caps text-label-caps text-primary flex items-center gap-1.5 drop-shadow-[0_0_8px_rgba(224,20,47,0.2)]">
+<span class="text-sm">🔥</span> <span class="font-stat-display font-normal text-sm">7</span>-day streak
+            </div>
+</section>
+<!-- Actions -->
+<footer class="flex gap-4 w-full mt-6 cascade-item delay-5">
+<button class="flex-1 py-4 rounded-xl border border-primary-container text-primary-container bg-primary-container/5 font-body-md text-body-md font-bold uppercase tracking-widest hover:bg-primary-container/10 transition-colors btn-press">
+                Share to feed
+            </button>
+<button class="flex-1 py-4 rounded-xl bg-primary-container text-on-primary-container font-body-md text-body-md font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(224,20,47,0.4)] hover:shadow-[0_0_30px_rgba(224,20,47,0.6)] transition-all btn-press relative overflow-hidden">
+<div class="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity"></div>
+                Done
+            </button>
+</footer>
+</main>
+<script>
+        // Confetti puff effect
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('confetti-canvas');
+            if (!container) return;
+            
+            const colors = ['#E0142F', '#E8B339', '#ffdad7', '#bf0023']; // Crimson, Gold, Light Red, Dark Red
+            const particleCount = 45;
+            
+            // Wait slightly for the PR block reveal
+            setTimeout(() => {
+                for(let i=0; i<particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    
+                    // Randomize shape (circle or small rectangle)
+                    const isCircle = Math.random() > 0.4;
+                    const size = Math.random() * 6 + 3;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = isCircle ? `${size}px` : `${size * 2}px`;
+                    particle.style.borderRadius = isCircle ? '50%' : '1px';
+                    
+                    particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.left = '50%';
+                    particle.style.top = '20px'; // Origin near the title
+                    particle.style.opacity = '0';
+                    particle.style.transform = 'translate(-50%, -50%)';
+                    particle.style.boxShadow = `0 0 ${Math.random() * 8 + 2}px ${particle.style.backgroundColor}`;
+
+                    // Math for trajectory
+                    const angle = (Math.random() * Math.PI) - (Math.PI / 2); // Upward arc
+                    const velocity = Math.random() * 120 + 40;
+                    const tx = Math.sin(angle) * velocity;
+                    const ty = -Math.cos(angle) * velocity - (Math.random() * 50); // Push upwards
+                    const rot = Math.random() * 360;
+
+                    container.appendChild(particle);
+
+                    particle.animate([
+                        { transform: 'translate(-50%, -50%) scale(0) rotate(0deg)', opacity: 1 },
+                        { transform: `translate(calc(-50% + ${tx * 0.8}px), calc(-50% + ${ty * 0.8}px)) scale(${Math.random() + 0.8}) rotate(${rot/2}deg)`, opacity: 1, offset: 0.6 },
+                        { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty + 40}px)) scale(0) rotate(${rot}deg)`, opacity: 0 }
+                    ], {
+                        duration: 800 + Math.random() * 600,
+                        easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+                        fill: 'forwards'
+                    });
+                    
+                    // Cleanup
+                    setTimeout(() => particle.remove(), 2000);
+                }
+            }, 300); // 300ms matches the PR block delay roughly
+        });
+    </script>
+</body></html>

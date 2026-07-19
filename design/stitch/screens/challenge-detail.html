@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - Challenge Detail</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#e5e1e4",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "surface-container-highest": "#353437",
+                        "surface": "#131315",
+                        "on-primary-fixed-variant": "#930018",
+                        "on-tertiary-fixed": "#410007",
+                        "background": "#131315",
+                        "primary": "#ffb3af",
+                        "tertiary-fixed": "#ffdad8",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "secondary": "#ffb3b0",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-tertiary-container": "#fff6f5",
+                        "on-surface": "#e5e1e4",
+                        "tertiary-container": "#ca4046",
+                        "primary-fixed-dim": "#ffb3af",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "error": "#ffb4ab",
+                        "surface-container": "#201f21",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "on-primary": "#68000e",
+                        "on-primary-fixed": "#410006",
+                        "on-secondary": "#680010",
+                        "outline-variant": "#5d3f3e",
+                        "bg-elevated": "#121214",
+                        "on-secondary-container": "#fff6f5",
+                        "surface-variant": "#353437",
+                        "secondary-fixed": "#ffdad8",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "on-tertiary": "#680011",
+                        "bg-card": "#16161A",
+                        "surface-bright": "#39393b",
+                        "on-secondary-fixed": "#410006",
+                        "outline": "#ad8885",
+                        "inverse-on-surface": "#313032",
+                        "surface-tint": "#ffb3af",
+                        "inverse-surface": "#e5e1e4",
+                        "on-surface-variant": "#e7bdba",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1c1b1d",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-fixed": "#ffdad7",
+                        "primary-container": "#e0142f",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#fff5f4",
+                        "tertiary": "#ffb3b1",
+                        "text-secondary": "#B5B2B8",
+                        "on-error": "#690005",
+                        "gold": "#E8B339",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-container": "#e40430"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter-desktop": "24px",
+                        "sub": "4px",
+                        "base": "8px",
+                        "hero-margin": "64px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "stat-display": ["JetBrains Mono"],
+                        "wordmark": ["Playfair Display"],
+                        "hero-lg": ["Playfair Display"],
+                        "headline-h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "stat-display": ["40px", { "lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "stat-display-sm": ["24px", { "lineHeight": "1", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "wordmark": ["48px", { "lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600" }],
+                        "hero-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-h2": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom utilities for the specific design system needs not perfectly mapped by standard tailwind */
+        .glow-primary {
+            box-shadow: 0 0 24px rgba(224, 20, 47, 0.28);
+        }
+        .glow-primary-text {
+            text-shadow: 0 0 12px rgba(224, 20, 47, 0.5);
+        }
+        .hairline-border {
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .bg-energy-grad {
+            background: linear-gradient(135deg, #FF2740, #8A0D1E);
+        }
+        
+        /* SVG Circle Animation Prep */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.8s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen selection:bg-primary-container selection:text-white pb-[120px]">
+<!-- Top Navigation (Task-focused variant, no bottom nav) -->
+<nav class="sticky top-0 z-40 bg-background/80 backdrop-blur-md flex justify-between items-center w-full px-gutter-mobile py-4 border-b border-white/5">
+<button class="text-on-surface hover:text-primary transition-colors flex items-center justify-center p-2 -ml-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back_ios_new</span>
+</button>
+<div class="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">
+            Challenge Details
+        </div>
+<button class="text-on-surface hover:text-primary transition-colors flex items-center justify-center p-2 -mr-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">ios_share</span>
+</button>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex flex-col gap-section-gap px-gutter-mobile pt-6">
+<!-- Hero Section -->
+<section class="relative bg-bg-card hairline-border rounded-xl p-6 overflow-hidden">
+<!-- Left Crimson Border Accent -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-energy-grad shadow-[4px_0_12px_rgba(224,20,47,0.4)]"></div>
+<div class="flex flex-col gap-2 relative z-10 pl-2">
+<span class="font-label-caps text-label-caps text-primary tracking-widest uppercase glow-primary-text">Volume Challenge</span>
+<h1 class="font-hero-lg text-hero-lg text-on-surface mt-1">November Volume War</h1>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-on-surface-variant font-body-md text-body-md">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span>248 participants</span>
+</div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="text-on-surface">3 days left</span>
+</div>
+</div>
+<!-- Rank Badge -->
+<div class="mt-4 inline-flex items-center gap-2 bg-surface-container-highest px-4 py-2 rounded-lg border border-white/10 w-fit">
+<span class="material-symbols-outlined text-gold" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="font-label-caps text-label-caps text-on-surface">Current Rank: <span class="text-white font-bold">#3</span></span>
+</div>
+</div>
+</section>
+<!-- Progress Section -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Circular Gauge Card -->
+<div class="bg-bg-card hairline-border rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+<!-- Subtle background glow -->
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(224,20,47,0.1)_0%,transparent_70%)]"></div>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant w-full text-left mb-6 uppercase">Your Contribution</h2>
+<div class="relative w-48 h-48 flex items-center justify-center">
+<!-- SVG Progress Ring -->
+<svg class="absolute inset-0 w-full h-full" viewbox="0 0 100 100">
+<!-- Definitions for gradients -->
+<defs>
+<lineargradient id="redGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#FF2740"></stop>
+<stop offset="100%" stop-color="#8A0D1E"></stop>
+</lineargradient>
+<filter height="140%" id="glow" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+</defs>
+<!-- Background track -->
+<circle class="text-surface-container-highest stroke-current" cx="50" cy="50" fill="transparent" r="44" stroke-width="6"></circle>
+<!-- Progress indicator (approx 62% for 47k/75k) -->
+<circle class="progress-ring__circle" cx="50" cy="50" fill="transparent" filter="url(#glow)" r="44" stroke="url(#redGradient)" stroke-dasharray="276.46" stroke-dashoffset="105" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<!-- Center Values -->
+<div class="flex flex-col items-center justify-center text-center z-10">
+<span class="font-stat-display text-stat-display-sm text-on-surface">47K</span>
+<div class="w-8 h-[1px] bg-white/20 my-1"></div>
+<span class="font-stat-display text-stat-display-sm text-on-surface-variant opacity-60">75K</span>
+<span class="font-label-caps text-[10px] text-text-secondary mt-2">LBS LIFTED</span>
+</div>
+</div>
+<!-- Status Pill -->
+<div class="mt-6 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full">
+<span class="material-symbols-outlined text-emerald-400 text-[16px]">trending_up</span>
+<span class="font-label-caps text-[11px] text-emerald-400 font-bold uppercase">On Pace</span>
+</div>
+</div>
+<!-- About & Prize Card -->
+<div class="flex flex-col gap-4">
+<div class="bg-bg-card hairline-border rounded-xl p-6 flex-1">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase">Mission Brief</h2>
+<p class="font-body-md text-body-md text-on-surface opacity-80 leading-relaxed">
+                        Accumulate the highest total tonnage moved across all compound lifts before the month ends. Only verifiable logs count towards the final ranking.
+                    </p>
+</div>
+<div class="bg-bg-card hairline-border rounded-xl p-5 flex items-center justify-between border-l-2 border-l-gold shadow-[inset_0_0_20px_rgba(232,179,57,0.05)]">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center border border-gold/20">
+<span class="material-symbols-outlined text-gold" style="font-variation-settings: 'FILL' 1;">trophy</span>
+</div>
+<div>
+<span class="block font-label-caps text-[10px] text-on-surface-variant uppercase mb-1">Grand Prize</span>
+<span class="block font-headline-h1 text-[18px] text-on-surface">1 Month Elite Tier</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Leaderboard Section -->
+<section class="flex flex-col gap-4">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-headline-h1 text-headline-h2 text-on-surface">Top Competitors</h2>
+<button class="font-label-caps text-label-caps text-primary hover:text-white transition-colors uppercase">View All</button>
+</div>
+<div class="bg-bg-card hairline-border rounded-xl overflow-hidden flex flex-col">
+<!-- Rank 1 -->
+<div class="flex items-center gap-4 p-4 border-b border-white/5 bg-gradient-to-r from-gold/5 to-transparent relative">
+<div class="w-6 text-center font-stat-display text-[16px] text-gold font-bold">1</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-gold/30">
+<img class="w-full h-full object-cover" data-alt="A cinematic, low-key lighting portrait of an athletic user avatar. Profile view against a dark, moody background with subtle red rim lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF6Fbn3eMCzct5mmf-hBZzG5rTgEoNtmTRG45oRQYvD82_gUJVaTAGnbd3hp8w1OSY4nJak3W2uhE4aN4L9POOC5QPK4VaPL95Ku8WNtafbCyerrwbpFiueLxjqcNL5LoqLnmyhv4oX5TKj3PLQkBCYzEUSfEFr1X0154n0beEMJ6qWv29tPXdyWCH4EMr5RQs265zn4nF24mOSZ8bwcZnUoVxuX9SyTElEwttdwwmW22v6zGzhJwrsR983sQwYjkhDX4tYOc66Dg"/>
+</div>
+<div class="flex-1">
+<span class="block font-body-md text-on-surface font-semibold">David K.</span>
+<span class="block font-label-caps text-[10px] text-on-surface-variant mt-0.5">ELITE TIER</span>
+</div>
+<div class="text-right">
+<span class="font-stat-display text-[18px] text-on-surface">112K</span>
+<span class="block font-label-caps text-[10px] text-text-secondary">LBS</span>
+</div>
+</div>
+<!-- Rank 2 -->
+<div class="flex items-center gap-4 p-4 border-b border-white/5">
+<div class="w-6 text-center font-stat-display text-[16px] text-on-surface-variant font-bold">2</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-white/10">
+<img class="w-full h-full object-cover" data-alt="A minimalist profile picture of a fitness enthusiast. High contrast black and white styling with sharp, focused lighting conveying intensity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5kFDtc3EwiLP7-jCChAyEg6844Foyq86pDqd0PQaChE7Cm6lU6UrwhGh6hk--M2L4qdyjvtNKii4dNAPL3wQ1VzKH2x9oXjIaBmH8npsviLHM2EVLQRX5B4gXktPg8zr01OP6gFDYVRhTCS2X7oqLBJt2bCFFSMuBraMsfsZWy8oWWMaenCfaA5Uk2H3ChNfSZsSyRt48OOkEcV1OVpuzDIRd9cg-owWk68hteNlMhpAjis11gH_-hBF33PvQIkHtSVn7xwCVxkY"/>
+</div>
+<div class="flex-1">
+<span class="block font-body-md text-on-surface font-semibold">Sarah M.</span>
+</div>
+<div class="text-right">
+<span class="font-stat-display text-[18px] text-on-surface">98.5K</span>
+<span class="block font-label-caps text-[10px] text-text-secondary">LBS</span>
+</div>
+</div>
+<!-- Active User Row (You) -->
+<div class="flex items-center gap-4 p-4 border-b border-primary/20 bg-primary-container/10 relative shadow-[inset_0_0_15px_rgba(224,20,47,0.1)]">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="w-6 text-center font-stat-display text-[16px] text-primary font-bold">3</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-primary/50 relative">
+<img class="w-full h-full object-cover" data-alt="A high-contrast, moody avatar of the current user. Silhouetted athletic figure with dynamic crimson backlighting against deep blacks." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0ZJhMymIkdeJ2k7g-MkoJl3ZKrEAXpNS0681GAgT0nu6Jl3bEIcaVuXDG-CqgFUB1YhMgvKJo6Qb8ttjp8C4s41G5Se3DteoNW7bCdo6viXECVpckYlMj3MQHyYRw2H_JDK94T_r_uqgl0sdVLUkLz7UPB9m2rySDvSwa-Ku_Tgk2SvIKiBcNCNEd9pfLXX9TmoB9_HuENiSfSkoAJg5tjf-7POh7k_vZqP5j8xmVsPKJgIPZImNbfRvIWc6k884O_5TtfapFE1w"/>
+</div>
+<div class="flex-1">
+<span class="block font-body-md text-white font-bold">You</span>
+</div>
+<div class="text-right">
+<span class="font-stat-display text-[18px] text-primary glow-primary-text">47K</span>
+<span class="block font-label-caps text-[10px] text-primary/70">LBS</span>
+</div>
+</div>
+<!-- Rank 4 -->
+<div class="flex items-center gap-4 p-4">
+<div class="w-6 text-center font-stat-display text-[16px] text-on-surface-variant font-bold">4</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-white/10 flex items-center justify-center">
+<span class="font-label-caps text-on-surface">JM</span>
+</div>
+<div class="flex-1">
+<span class="block font-body-md text-on-surface font-semibold">James M.</span>
+</div>
+<div class="text-right">
+<span class="font-stat-display text-[18px] text-on-surface">45.2K</span>
+<span class="block font-label-caps text-[10px] text-text-secondary">LBS</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Bottom Action -->
+<div class="fixed bottom-0 left-0 w-full z-50 p-gutter-mobile bg-gradient-to-t from-background via-background/90 to-transparent pb-8">
+<button class="w-full bg-primary-container text-white font-label-caps text-[14px] uppercase tracking-widest py-4 rounded-xl font-bold glow-primary hover:bg-inverse-primary transition-all active:scale-[0.98] border border-white/10 flex justify-center items-center gap-2">
+<span>Join Challenge</span>
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+</button>
+</div>
+</body></html>

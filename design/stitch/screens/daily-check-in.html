@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXTERA - Readiness Check-in</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "on-background": "#e5e1e4",
+                            "on-tertiary-fixed-variant": "#8e1120",
+                            "surface-container-highest": "#353437",
+                            "surface": "#131315",
+                            "on-primary-fixed-variant": "#930018",
+                            "on-tertiary-fixed": "#410007",
+                            "background": "#131315",
+                            "primary": "#ffb3af",
+                            "tertiary-fixed": "#ffdad8",
+                            "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                            "secondary": "#ffb3b0",
+                            "surface-dim": "#131315",
+                            "inverse-primary": "#bf0023",
+                            "on-tertiary-container": "#fff6f5",
+                            "on-surface": "#e5e1e4",
+                            "tertiary-container": "#ca4046",
+                            "primary-fixed-dim": "#ffb3af",
+                            "tertiary-fixed-dim": "#ffb3b1",
+                            "error": "#ffb4ab",
+                            "surface-container": "#201f21",
+                            "secondary-fixed-dim": "#ffb3b0",
+                            "on-primary": "#68000e",
+                            "on-primary-fixed": "#410006",
+                            "on-secondary": "#680010",
+                            "outline-variant": "#5d3f3e",
+                            "bg-elevated": "#121214",
+                            "on-secondary-container": "#fff6f5",
+                            "surface-variant": "#353437",
+                            "secondary-fixed": "#ffdad8",
+                            "on-secondary-fixed-variant": "#93001b",
+                            "on-tertiary": "#680011",
+                            "bg-card": "#16161A",
+                            "surface-bright": "#39393b",
+                            "on-secondary-fixed": "#410006",
+                            "outline": "#ad8885",
+                            "inverse-on-surface": "#313032",
+                            "surface-tint": "#ffb3af",
+                            "inverse-surface": "#e5e1e4",
+                            "on-surface-variant": "#e7bdba",
+                            "on-error-container": "#ffdad6",
+                            "surface-container-low": "#1c1b1d",
+                            "surface-container-lowest": "#0e0e10",
+                            "primary-fixed": "#ffdad7",
+                            "primary-container": "#e0142f",
+                            "error-container": "#93000a",
+                            "on-primary-container": "#fff5f4",
+                            "tertiary": "#ffb3b1",
+                            "text-secondary": "#B5B2B8",
+                            "on-error": "#690005",
+                            "gold": "#E8B339",
+                            "surface-container-high": "#2a2a2c",
+                            "secondary-container": "#e40430"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "gutter-desktop": "24px",
+                            "sub": "4px",
+                            "base": "8px",
+                            "hero-margin": "64px",
+                            "section-gap": "32px",
+                            "gutter-mobile": "16px"
+                    },
+                    "fontFamily": {
+                            "stat-display": [
+                                    "JetBrains Mono"
+                            ],
+                            "wordmark": [
+                                    "Playfair Display"
+                            ],
+                            "hero-lg": [
+                                    "Playfair Display"
+                            ],
+                            "headline-h1": [
+                                    "Inter"
+                            ],
+                            "body-md": [
+                                    "Inter"
+                            ],
+                            "label-caps": [
+                                    "Inter"
+                            ]
+                    },
+                    "fontSize": {
+                            "stat-display": [
+                                    "40px",
+                                    {
+                                            "lineHeight": "1",
+                                            "letterSpacing": "-0.03em",
+                                            "fontWeight": "800"
+                                    }
+                            ],
+                            "wordmark": [
+                                    "48px",
+                                    {
+                                            "lineHeight": "1.2",
+                                            "letterSpacing": "0.12em",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "hero-lg": [
+                                    "40px",
+                                    {
+                                            "lineHeight": "1.1",
+                                            "letterSpacing": "0.02em",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "headline-h1": [
+                                    "32px",
+                                    {
+                                            "lineHeight": "1.2",
+                                            "letterSpacing": "-0.01em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "body-md": [
+                                    "15px",
+                                    {
+                                            "lineHeight": "1.6",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "label-caps": [
+                                    "12px",
+                                    {
+                                            "lineHeight": "1",
+                                            "letterSpacing": "0.05em",
+                                            "fontWeight": "600"
+                                    }
+                            ]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .emissive-glow {
+            box-shadow: 0 0 16px rgba(224, 20, 47, 0.28);
+        }
+        .emissive-glow-strong {
+            box-shadow: 0 0 24px rgba(224, 20, 47, 0.4);
+        }
+        .hairline-border {
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex items-center justify-center p-gutter-mobile relative overflow-hidden">
+<!-- Atmospheric Background Glow -->
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(224,20,47,0.05)_0%,_transparent_60%)] pointer-events-none"></div>
+<!-- Check-in Modal Card -->
+<div class="w-full max-w-md bg-bg-card rounded-xl hairline-border p-section-gap relative z-10 flex flex-col gap-8 shadow-2xl backdrop-blur-sm">
+<!-- Header -->
+<div class="flex justify-between items-center">
+<h1 class="font-headline-h1 text-headline-h1 text-on-surface tracking-tight">Quick check-in</h1>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center p-1 rounded-full hover:bg-surface-variant/50">
+<span class="material-symbols-outlined text-[28px]">close</span>
+</button>
+</div>
+<!-- Questions Container -->
+<div class="flex flex-col gap-6">
+<!-- Question 1: Sleep -->
+<div class="flex flex-col gap-3">
+<label class="font-body-md text-on-surface-variant">How did you sleep?</label>
+<div class="flex justify-between items-center bg-bg-elevated rounded-full p-1 hairline-border">
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😴</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😐</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🙂</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl rounded-full ring-1 ring-primary-container bg-primary-container/10 emissive-glow opacity-100 scale-105 transition-all">😊</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🤩</button>
+</div>
+</div>
+<!-- Question 2: Soreness -->
+<div class="flex flex-col gap-3">
+<label class="font-body-md text-on-surface-variant">How sore are you today?</label>
+<div class="flex justify-between items-center bg-bg-elevated rounded-full p-1 hairline-border">
+<button class="w-12 h-12 flex items-center justify-center text-2xl rounded-full ring-1 ring-primary-container bg-primary-container/10 emissive-glow opacity-100 scale-105 transition-all">💪</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🙂</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😬</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😣</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🥵</button>
+</div>
+</div>
+<!-- Question 3: Energy -->
+<div class="flex flex-col gap-3">
+<label class="font-body-md text-on-surface-variant">How's your energy?</label>
+<div class="flex justify-between items-center bg-bg-elevated rounded-full p-1 hairline-border">
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🔋</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😐</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🙂</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl rounded-full ring-1 ring-primary-container bg-primary-container/10 emissive-glow opacity-100 scale-105 transition-all">⚡</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🚀</button>
+</div>
+</div>
+<!-- Question 4: Stress -->
+<div class="flex flex-col gap-3">
+<label class="font-body-md text-on-surface-variant">Stress level?</label>
+<div class="flex justify-between items-center bg-bg-elevated rounded-full p-1 hairline-border">
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😌</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl rounded-full ring-1 ring-primary-container bg-primary-container/10 emissive-glow opacity-100 scale-105 transition-all">🙂</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😐</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">😖</button>
+<button class="w-12 h-12 flex items-center justify-center text-2xl grayscale opacity-40 hover:opacity-80 transition-all rounded-full">🤯</button>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="mt-4">
+<button class="w-full bg-primary-container text-white py-4 rounded-lg font-label-caps text-label-caps uppercase tracking-widest hover:bg-secondary-container transition-colors duration-200 active:scale-[0.98] flex items-center justify-center gap-2 emissive-glow hover:emissive-glow-strong">
+                Update my readiness
+                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Script to handle tactile interaction visually -->
+<script>
+        document.querySelectorAll('button:not(.bg-primary-container)').forEach(btn => {
+            btn.addEventListener('mousedown', function() {
+                if(!this.classList.contains('ring-primary-container')) {
+                    this.style.transform = 'scale(0.95)';
+                }
+            });
+            btn.addEventListener('mouseup', function() {
+                if(!this.classList.contains('ring-primary-container')) {
+                    this.style.transform = 'scale(1)';
+                }
+            });
+            btn.addEventListener('mouseleave', function() {
+                if(!this.classList.contains('ring-primary-container')) {
+                    this.style.transform = 'scale(1)';
+                }
+            });
+        });
+    </script>
+</body></html>

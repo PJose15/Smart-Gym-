@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - My Program</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#e5e1e4",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "surface-container-highest": "#353437",
+                        "surface": "#131315",
+                        "on-primary-fixed-variant": "#930018",
+                        "on-tertiary-fixed": "#410007",
+                        "background": "#131315",
+                        "primary": "#ffb3af",
+                        "tertiary-fixed": "#ffdad8",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "secondary": "#ffb3b0",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-tertiary-container": "#fff6f5",
+                        "on-surface": "#e5e1e4",
+                        "tertiary-container": "#ca4046",
+                        "primary-fixed-dim": "#ffb3af",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "error": "#ffb4ab",
+                        "surface-container": "#201f21",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "on-primary": "#68000e",
+                        "on-primary-fixed": "#410006",
+                        "on-secondary": "#680010",
+                        "outline-variant": "#5d3f3e",
+                        "bg-elevated": "#121214",
+                        "on-secondary-container": "#fff6f5",
+                        "surface-variant": "#353437",
+                        "secondary-fixed": "#ffdad8",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "on-tertiary": "#680011",
+                        "bg-card": "#16161A",
+                        "surface-bright": "#39393b",
+                        "on-secondary-fixed": "#410006",
+                        "outline": "#ad8885",
+                        "inverse-on-surface": "#313032",
+                        "surface-tint": "#ffb3af",
+                        "inverse-surface": "#e5e1e4",
+                        "on-surface-variant": "#e7bdba",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1c1b1d",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-fixed": "#ffdad7",
+                        "primary-container": "#e0142f",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#fff5f4",
+                        "tertiary": "#ffb3b1",
+                        "text-secondary": "#B5B2B8",
+                        "on-error": "#690005",
+                        "gold": "#E8B339",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-container": "#e40430"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter-desktop": "24px",
+                        "sub": "4px",
+                        "base": "8px",
+                        "hero-margin": "64px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "stat-display": ["JetBrains Mono"],
+                        "wordmark": ["Playfair Display"],
+                        "hero-lg": ["Playfair Display"],
+                        "headline-h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "stat-display": ["40px", { "lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "wordmark": ["48px", { "lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600" }],
+                        "hero-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glow-effect {
+            box-shadow: 0 0 15px rgba(224, 20, 47, 0.28);
+        }
+        .text-glow {
+            text-shadow: 0 0 8px rgba(224, 20, 47, 0.4);
+        }
+        .hairline-border {
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .energy-ribbon-border {
+            position: relative;
+        }
+        .energy-ribbon-border::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #FF2740, #8A0D1E);
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col md:flex-row selection:bg-primary-container selection:text-white">
+<!-- Desktop Navigation Drawer -->
+<nav class="hidden lg:flex flex-col h-full py-hero-margin bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant/10 docked left-0 h-full w-64 transition-all duration-300 ease-in-out z-40 fixed">
+<div class="px-gutter-desktop mb-section-gap">
+<h1 class="font-wordmark text-headline-h1 text-on-surface mb-section-gap">NEXTERA</h1>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden hairline-border">
+<img class="w-full h-full object-cover" data-alt="A striking digital installation art piece featuring glowing, generative geometric shapes suspended in a vast, minimalist gallery space. The room is illuminated by high-key, soft white lighting that creates a bright, modern light-mode aesthetic. The artwork relies on a sophisticated palette of deep blacks and pristine whites, punctuated by intense accents of vibrant red. The mood is serene yet technologically advanced." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaTDesYQzumksmc8BzGm-GIkYvRS6lXTM-Xdjm-gsbW4CUdDVBx458LT7EztCGCVYkb0hTZS7vlb-xHdn7-hIML27GbFHB-I0QLTVJ0I17nALK28ah_hjsL2Ra8rJq5Ig2NIWhOiafa9hr5CIYMHnqhZO1LQH4Cw4O0VyohMDf9Ogky42kVcJP4dvg_oJ_2HBxZUgC5mNxnu1-7z8TjMRZLS4mKFek9CNbz6eegX4qiZR3Up3VzV871gddo1KFKoyiYhRDVZXra6I"/>
+</div>
+<div>
+<div class="font-headline-h1 text-body-md text-on-surface">NEXTERA ELITE</div>
+<div class="font-body-md text-label-caps text-on-surface-variant">Lead Performance Coach</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 bg-tertiary-container/20 text-primary border-r-4 border-primary px-gutter-desktop py-base" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="font-body-md text-body-md font-bold">My Program</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Client Roster</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-body-md text-body-md">Performance Data</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 w-full lg:ml-64 flex flex-col min-h-screen pb-24 md:pb-8">
+<!-- Mobile Top App Bar -->
+<header class="flex justify-between items-center w-full px-gutter-mobile py-sub bg-background/80 backdrop-blur-md sticky top-0 z-30 lg:hidden">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden hairline-border">
+<img class="w-full h-full object-cover" data-alt="A striking digital installation art piece featuring glowing, generative geometric shapes suspended in a vast, minimalist gallery space. The room is illuminated by high-key, soft white lighting that creates a bright, modern light-mode aesthetic. The artwork relies on a sophisticated palette of deep blacks and pristine whites, punctuated by intense accents of vibrant red. The mood is serene yet technologically advanced." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB26J-WtR-ugwFfR8h3cHT_wK1Qx1aoBS6M179UBZXX8pRpC4kN4k51CKpIg-pd7jfas9Q7L92zsZgMK3-YUn2hW7r1GEqBNAvNya9gHq-dgIseRZNLc4Rbt9fP--n4ITfocPxd-qQ41mARdZXwdU3yeOOu2qnCLJ6jUjUt9mF0t50fW_ZDk1qvvHYJBhNK7kVGOCM7PxZ8YqagNn7oc4quUNWm7l7xSy7HBH1MuFEpqbbc7h51KQ8kMadqCAWLdwcMB7nN9mz00lk"/>
+</div>
+</div>
+<h1 class="font-wordmark text-wordmark text-on-surface tracking-widest text-[24px]">NEXTERA</h1>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<div class="px-gutter-mobile md:px-gutter-desktop pt-6 lg:pt-12 max-w-5xl mx-auto w-full">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-hero-lg text-hero-lg text-on-surface mb-2">My Program</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Focus. Execute. Ascend.</p>
+</div>
+<button class="flex items-center gap-2 text-primary font-label-caps text-label-caps hover:opacity-80 transition-opacity">
+                    Switch <span class="material-symbols-outlined text-[16px]">swap_vert</span>
+</button>
+</div>
+<!-- Program Hero Card -->
+<div class="bg-bg-card rounded-xl p-6 hairline-border energy-ribbon-border mb-8 relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary-container/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-4">
+<div class="inline-flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-full hairline-border">
+<span class="text-[14px]">🤖</span>
+<span class="font-label-caps text-label-caps text-on-surface">AI PROGRAM</span>
+</div>
+</div>
+<h3 class="font-headline-h1 text-headline-h1 text-on-surface mb-2">AI Muscle Builder</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">8 weeks · 4 days/week</p>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-label-caps">
+<span class="text-on-surface">Week 3 of 8 · Day 2 of 4</span>
+<span class="text-primary text-glow">38% COMPLETE</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container glow-effect w-[38%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Week Grid -->
+<div class="mb-8">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-4">THIS WEEK</h4>
+<div class="grid grid-cols-4 md:grid-cols-7 gap-3">
+<!-- Day 1: Completed -->
+<div class="bg-surface-container-low rounded-lg p-3 flex flex-col items-center justify-center hairline-border opacity-70 relative overflow-hidden">
+<div class="absolute top-1 right-1">
+<span class="material-symbols-outlined text-[14px] text-green-500">check_circle</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">D1</span>
+<span class="font-stat-display text-[14px] text-on-surface">M</span>
+</div>
+<!-- Day 2: Today -->
+<div class="bg-bg-card rounded-lg p-3 flex flex-col items-center justify-center border border-primary-container glow-effect relative overflow-hidden col-span-2 md:col-span-1">
+<div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-primary mb-1">D2</span>
+<span class="font-stat-display text-[14px] text-on-surface">T</span>
+</div>
+<!-- Day 3: Rest -->
+<div class="bg-transparent border border-dashed border-outline-variant/30 rounded-lg p-3 flex flex-col items-center justify-center opacity-50">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">REST</span>
+<span class="font-stat-display text-[14px] text-on-surface-variant">W</span>
+</div>
+<!-- Day 4: Upcoming -->
+<div class="bg-surface-container-lowest rounded-lg p-3 flex flex-col items-center justify-center hairline-border">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">D3</span>
+<span class="font-stat-display text-[14px] text-on-surface">T</span>
+</div>
+<!-- Day 5: Upcoming -->
+<div class="bg-surface-container-lowest rounded-lg p-3 flex flex-col items-center justify-center hairline-border hidden md:flex">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">D4</span>
+<span class="font-stat-display text-[14px] text-on-surface">F</span>
+</div>
+</div>
+</div>
+<!-- Today's Session Expanded -->
+<div>
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-headline-h1 text-[20px] text-on-surface">Upper Body Power</h4>
+<span class="font-label-caps text-label-caps text-on-surface-variant">45 MIN EST.</span>
+</div>
+<div class="space-y-3 mb-8">
+<!-- Exercise 1 -->
+<div class="bg-bg-card rounded-lg p-4 hairline-border flex justify-between items-center group hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center">
+<img class="w-10 h-10 object-cover rounded opacity-80 mix-blend-luminosity group-hover:mix-blend-normal transition-all" data-alt="A striking digital installation art piece featuring glowing, generative geometric shapes suspended in a vast, minimalist gallery space. The room is illuminated by high-key, soft white lighting that creates a bright, modern light-mode aesthetic. The artwork relies on a sophisticated palette of deep blacks and pristine whites, punctuated by intense accents of vibrant red. The mood is serene yet technologically advanced." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNUQgv1DNr9ev86mflHEvWtNtIm3I0SjAw8OTlVINJIS5NvvDLfgLCXAyRfIIZ-HlpSJOSJPEmk0sWVuBwQTbIVxbuFzxbK-1RyTn0lvQDPcSzer_Ld--Lmonju6KsmJJOhXaZKgrDY1QyHjCAtscC0GwfdTB0Y_hHUJdQwUcWCswecBvZC1iaiIfFFsFSBrp4OdBciB7Tn1AqLwx1ZEx10e8leXQgJzbO2tRLTmOnxJypxaxUfD6Um3O766zsChiKsgJSbuyHFcI"/>
+</div>
+<div>
+<div class="font-body-md text-on-surface font-semibold mb-1">Barbell Bench Press</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant flex gap-2">
+<span>MACHINE / FREE</span>
+<span class="text-primary-fixed-dim">PREV: 225 LBS</span>
+</div>
+</div>
+</div>
+<div class="font-stat-display text-[16px] text-on-surface text-right">
+                            4<span class="text-on-surface-variant text-[12px] ml-1 mr-1">×</span>8-12
+                        </div>
+</div>
+<!-- Exercise 2 -->
+<div class="bg-bg-card rounded-lg p-4 hairline-border flex justify-between items-center group hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center">
+<img class="w-10 h-10 object-cover rounded opacity-80 mix-blend-luminosity group-hover:mix-blend-normal transition-all" data-alt="A striking digital installation art piece featuring glowing, generative geometric shapes suspended in a vast, minimalist gallery space. The room is illuminated by high-key, soft white lighting that creates a bright, modern light-mode aesthetic. The artwork relies on a sophisticated palette of deep blacks and pristine whites, punctuated by intense accents of vibrant red. The mood is serene yet technologically advanced." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALO539MLjN5IZ6764-JlscIk016JWkU4PA7ZAbnnnVjwajStX1A5zUyQBtMPzDShjLbt0fnysS7ZAqan6pYNpT1ZxKYRyEGkF5MYnbL1bCksU36Kiu3blKec7nsCxcyBPlcVRQ_FSLM-fYDK5T1t3TqzibOdORaoiqOWi0S8-KDCPDs0NjZasetoBUmyU4yfYr2-ikQKU4xh1X0-4rP2UbxVHS3hEVa4StQS9Na6xiFuYBfi9ZHQGu86k87eMPiMoGNR_DizaLvoQ"/>
+</div>
+<div>
+<div class="font-body-md text-on-surface font-semibold mb-1">Incline Dumbbell Press</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant flex gap-2">
+<span>FREE WEIGHT</span>
+<span class="text-primary-fixed-dim">PREV: 80 LBS</span>
+</div>
+</div>
+</div>
+<div class="font-stat-display text-[16px] text-on-surface text-right">
+                            3<span class="text-on-surface-variant text-[12px] ml-1 mr-1">×</span>10-12
+                        </div>
+</div>
+</div>
+<button class="w-full bg-primary-container text-white font-label-caps text-label-caps py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-inverse-primary transition-colors active:scale-[0.98] glow-effect">
+                    START TODAY'S SESSION <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-6 pt-base bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant/20 shadow-lg rounded-t-xl md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-[10px]">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary filter drop-shadow-[0_0_8px_rgba(255,179,175,0.4)] scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="font-label-caps text-[10px] font-bold">TRAIN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">qr_code_scanner</span>
+<span class="font-label-caps text-[10px]">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">groups</span>
+<span class="font-label-caps text-[10px]">FEED</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-caps text-[10px]">PROFILE</span>
+</a>
+</nav>
+</body></html>

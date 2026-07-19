@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexera - Gamification Celebrations</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#ffb3b0",
+                        "secondary-fixed": "#ffdad8",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "bg-elevated": "#121214",
+                        "on-surface-variant": "#e7bdba",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#ffb3af",
+                        "surface": "#131315",
+                        "surface-bright": "#39393b",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-container": "#e0142f",
+                        "on-primary-container": "#fff5f4",
+                        "primary-fixed-dim": "#ffb3af",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#353437",
+                        "tertiary-fixed": "#ffdad8",
+                        "on-secondary-fixed": "#410006",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "text-secondary": "#B5B2B8",
+                        "on-tertiary": "#680011",
+                        "secondary-container": "#e40430",
+                        "on-tertiary-fixed": "#410007",
+                        "on-primary-fixed": "#410006",
+                        "primary": "#ffb3af",
+                        "on-secondary-container": "#fff6f5",
+                        "primary-fixed": "#ffdad7",
+                        "on-primary": "#68000e",
+                        "inverse-surface": "#e5e1e4",
+                        "surface-variant": "#353437",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "bg-card": "#16161A",
+                        "inverse-on-surface": "#313032",
+                        "on-surface": "#e5e1e4",
+                        "on-tertiary-container": "#fff6f5",
+                        "background": "#131315",
+                        "outline-variant": "#5d3f3e",
+                        "on-error-container": "#ffdad6",
+                        "gold": "#E8B339",
+                        "on-secondary": "#680010",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-background": "#e5e1e4",
+                        "outline": "#ad8885",
+                        "error-container": "#93000a",
+                        "surface-container": "#201f21",
+                        "tertiary": "#ffb3b1",
+                        "on-primary-fixed-variant": "#930018",
+                        "tertiary-container": "#ca4046",
+                        "surface-container-low": "#1c1b1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sub": "4px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px",
+                        "hero-margin": "64px",
+                        "gutter-desktop": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-h1": ["Inter"],
+                        "hero-lg": ["Playfair Display"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "wordmark": ["Playfair Display"],
+                        "stat-display": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "hero-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "wordmark": ["48px", { "lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600" }],
+                        "stat-display": ["40px", { "lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Custom Animations */
+        @keyframes burst-ring {
+            0% { transform: scale(0.2); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(2.4); opacity: 0; }
+        }
+        .animate-burst-ring {
+            animation: burst-ring 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes level-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-level-pop {
+            animation: level-pop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes badge-rotate-pop {
+            0% { transform: rotate(-30deg) scale(0.5); opacity: 0; }
+            60% { transform: rotate(10deg) scale(1.1); opacity: 1; }
+            100% { transform: rotate(0deg) scale(1); opacity: 1; }
+        }
+        .animate-badge-pop {
+            animation: badge-rotate-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(200%) skewX(-15deg); }
+        }
+        .animate-shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes flame-flicker {
+            0% { transform: scale(1) translateY(0); filter: hue-rotate(0deg); }
+            50% { transform: scale(1.1) translateY(-5px); filter: hue-rotate(-10deg); }
+            100% { transform: scale(1) translateY(0); filter: hue-rotate(0deg); }
+        }
+        .animate-flame {
+            animation: flame-flicker 1.5s ease-in-out infinite;
+        }
+        
+        .nexera-glow {
+            filter: drop-shadow(0 0 20px rgba(224, 20, 47, 0.28));
+        }
+        
+        .glass-panel {
+            background: rgba(22, 22, 26, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen font-body-md relative overflow-hidden flex flex-col md:flex-row items-center justify-center gap-section-gap p-gutter-desktop">
+<!-- Ambient Background Glow -->
+<div class="absolute inset-0 z-0 pointer-events-none opacity-30">
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-container rounded-full mix-blend-screen filter blur-[100px]"></div>
+<div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-tertiary-container rounded-full mix-blend-screen filter blur-[100px]"></div>
+</div>
+<!-- Variant A: LEVEL-UP -->
+<div class="relative z-10 w-full max-w-sm h-[600px] glass-panel rounded-xl overflow-hidden flex flex-col items-center justify-center p-section-gap shadow-2xl group cursor-pointer" onclick="replayAnimation(this, '.level-anim')">
+<div class="absolute inset-0 bg-gradient-to-b from-primary-container/10 to-transparent pointer-events-none"></div>
+<!-- Burst Ring -->
+<div class="absolute w-64 h-64 border-4 border-primary-container rounded-full level-anim animate-burst-ring opacity-0" style="animation-delay: 0.1s;"></div>
+<div class="absolute w-48 h-48 border-2 border-primary rounded-full level-anim animate-burst-ring opacity-0" style="animation-delay: 0.2s;"></div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<span class="font-label-caps text-label-caps text-primary tracking-widest uppercase mb-base opacity-0 level-anim" style="animation: fade-in 0.5s ease forwards 0.3s;">Level Up</span>
+<div class="relative w-32 h-32 mb-section-gap flex items-center justify-center nexera-glow">
+<!-- Giant Mono Level Number -->
+<span class="font-stat-display text-stat-display text-[80px] text-white level-anim animate-level-pop opacity-0" style="text-shadow: 0 0 30px rgba(224,20,47,0.8);">7</span>
+<div class="absolute inset-0 bg-primary-container/20 rounded-full blur-xl -z-10"></div>
+</div>
+<h2 class="font-headline-h1 text-headline-h1 text-white mb-sub opacity-0 level-anim" style="animation: fade-in 0.5s ease forwards 0.6s;">Athlete</h2>
+<p class="text-on-surface-variant font-body-md text-body-md mb-section-gap opacity-0 level-anim" style="animation: fade-in 0.5s ease forwards 0.7s;">You've unlocked tier II telemetry.</p>
+<!-- XP Bar Animation -->
+<div class="w-full max-w-[200px] h-2 bg-surface-container-highest rounded-full overflow-hidden opacity-0 level-anim" style="animation: fade-in 0.5s ease forwards 0.8s;">
+<div class="h-full bg-energy-ribbon w-0 level-anim" style="animation: fill-bar 1s ease-out forwards 1s;"></div>
+</div>
+<button class="mt-section-gap bg-primary-container text-white px-8 py-3 rounded-md font-label-caps text-label-caps uppercase tracking-wider hover:bg-secondary-container transition-colors opacity-0 level-anim shadow-[0_0_15px_rgba(224,20,47,0.3)]" style="animation: fade-in 0.5s ease forwards 1.2s;">
+                Continue
+            </button>
+</div>
+<!-- Subtle Confetti (CSS simulated) -->
+<div class="absolute top-0 left-1/4 w-2 h-4 bg-primary rotate-45 opacity-0 level-anim" style="animation: fall-1 2s linear forwards 0.4s;"></div>
+<div class="absolute top-0 right-1/4 w-3 h-3 bg-gold rounded-full opacity-0 level-anim" style="animation: fall-2 2.5s linear forwards 0.5s;"></div>
+</div>
+<!-- Variant B: ACHIEVEMENT -->
+<div class="relative z-10 w-full max-w-sm h-[600px] glass-panel rounded-xl overflow-hidden flex flex-col items-center justify-center p-section-gap shadow-2xl group cursor-pointer" onclick="replayAnimation(this, '.badge-anim')">
+<div class="absolute inset-0 bg-gradient-to-t from-gold/5 to-transparent pointer-events-none"></div>
+<div class="relative z-10 flex flex-col items-center text-center w-full">
+<!-- Badge Icon -->
+<div class="relative w-40 h-40 mb-section-gap badge-anim animate-badge-pop opacity-0">
+<div class="absolute inset-0 bg-gold/20 rounded-full blur-2xl"></div>
+<!-- Hexagon Base (simulated with CSS) -->
+<div class="absolute inset-0 bg-surface-container-highest border border-gold/30 rounded-xl flex items-center justify-center overflow-hidden animate-shimmer" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);">
+<span class="material-symbols-outlined text-gold text-6xl" data-weight="fill" style="font-variation-settings: 'FILL' 1; filter: drop-shadow(0 0 10px rgba(232,179,57,0.5));">military_tech</span>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-gold tracking-widest uppercase mb-base opacity-0 badge-anim" style="animation: fade-up 0.5s ease forwards 0.4s;">Achievement Unlocked</span>
+<h2 class="font-headline-h1 text-headline-h1 text-white mb-sub opacity-0 badge-anim" style="animation: fade-up 0.5s ease forwards 0.5s;">Centurion</h2>
+<p class="text-on-surface-variant font-body-md text-body-md mb-section-gap opacity-0 badge-anim" style="animation: fade-up 0.5s ease forwards 0.6s;">Completed 100 high-intensity interval sessions.</p>
+<!-- XP Pop -->
+<div class="bg-surface-container border border-outline-variant/30 rounded-full px-6 py-2 flex items-center gap-2 opacity-0 badge-anim" style="animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.8s;">
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+<span class="font-stat-display text-lg text-primary font-bold">+400 XP</span>
+</div>
+</div>
+</div>
+<!-- Variant C: STREAK TIER -->
+<div class="relative z-10 w-full max-w-sm h-[600px] glass-panel rounded-xl overflow-hidden flex flex-col items-center justify-center p-section-gap shadow-2xl group cursor-pointer" onclick="replayAnimation(this, '.streak-anim')">
+<div class="absolute inset-0 bg-gradient-to-tr from-secondary-container/10 to-transparent pointer-events-none"></div>
+<div class="relative z-10 flex flex-col items-center text-center w-full">
+<!-- Animated Flame -->
+<div class="relative w-32 h-40 mb-section-gap streak-anim" style="animation: burst-up 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+<div class="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
+<span class="text-[100px] leading-none animate-flame inline-block" style="filter: drop-shadow(0 0 20px rgba(228,4,48,0.6));">🔥</span>
+</div>
+<div class="bg-surface border border-outline-variant/30 rounded-xl p-6 w-full opacity-0 streak-anim relative overflow-hidden" style="animation: fade-up 0.5s ease forwards 0.3s;">
+<div class="absolute top-0 left-0 w-full h-1 bg-energy-ribbon"></div>
+<h2 class="font-headline-h1 text-headline-h1 text-white mb-2">21-Day Streak!</h2>
+<p class="text-on-surface-variant font-body-md text-body-md">Consistency is elite. Keep the fire burning.</p>
+</div>
+<button class="mt-section-gap border border-primary text-primary px-8 py-3 rounded-md font-label-caps text-label-caps uppercase tracking-wider hover:bg-primary/10 transition-colors opacity-0 streak-anim" style="animation: fade-in 0.5s ease forwards 0.6s;">
+                View Log
+            </button>
+</div>
+<!-- Spring Crimson Burst -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none flex items-center justify-center opacity-0 streak-anim" style="animation: flash 0.8s ease-out forwards 0.1s;">
+<div class="w-full h-full bg-radial-gradient from-primary-container/30 to-transparent rounded-full scale-150"></div>
+</div>
+</div>
+<!-- Inline Animations definition for utility classes -->
+<style>
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pop-in {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fill-bar {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+        @keyframes burst-up {
+            0% { opacity: 0; transform: scale(0.5) translateY(50px); }
+            70% { opacity: 1; transform: scale(1.2) translateY(-10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes flash {
+            0% { opacity: 0; transform: scale(0.5); }
+            20% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+        @keyframes fall-1 {
+            0% { top: -10%; transform: translateY(0) rotate(45deg); opacity: 1; }
+            100% { top: 110%; transform: translateY(100px) rotate(360deg); opacity: 0; }
+        }
+        @keyframes fall-2 {
+            0% { top: -10%; transform: translateY(0); opacity: 1; }
+            100% { top: 110%; transform: translateY(150px); opacity: 0; }
+        }
+        
+        .bg-radial-gradient {
+            background-image: radial-gradient(var(--tw-gradient-stops));
+        }
+    </style>
+<script>
+        // Simple JS to allow clicking cards to replay their animations
+        function replayAnimation(container, animClass) {
+            const elements = container.querySelectorAll(animClass);
+            elements.forEach(el => {
+                // Remove animation inline style delays temporarily if needed, or just re-trigger
+                el.style.animation = 'none';
+                // Trigger reflow
+                void el.offsetWidth;
+                // Restore original animation state (handled by CSS classes usually, but we forced inline for delays)
+                el.style.animation = '';
+            });
+        }
+    </script>
+</body></html>

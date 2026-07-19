@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - Messages</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:wght@600&amp;family=JetBrains+Mono:wght@800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#ffb3b0",
+                        "secondary-fixed": "#ffdad8",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "bg-elevated": "#121214",
+                        "on-surface-variant": "#e7bdba",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#ffb3af",
+                        "surface": "#131315",
+                        "surface-bright": "#39393b",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-container": "#e0142f",
+                        "on-primary-container": "#fff5f4",
+                        "primary-fixed-dim": "#ffb3af",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#353437",
+                        "tertiary-fixed": "#ffdad8",
+                        "on-secondary-fixed": "#410006",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "text-secondary": "#B5B2B8",
+                        "on-tertiary": "#680011",
+                        "secondary-container": "#e40430",
+                        "on-tertiary-fixed": "#410007",
+                        "on-primary-fixed": "#410006",
+                        "primary": "#ffb3af",
+                        "on-secondary-container": "#fff6f5",
+                        "primary-fixed": "#ffdad7",
+                        "on-primary": "#68000e",
+                        "inverse-surface": "#e5e1e4",
+                        "surface-variant": "#353437",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "bg-card": "#16161A",
+                        "inverse-on-surface": "#313032",
+                        "on-surface": "#e5e1e4",
+                        "on-tertiary-container": "#fff6f5",
+                        "background": "#131315",
+                        "outline-variant": "#5d3f3e",
+                        "on-error-container": "#ffdad6",
+                        "gold": "#E8B339",
+                        "on-secondary": "#680010",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-background": "#e5e1e4",
+                        "outline": "#ad8885",
+                        "error-container": "#93000a",
+                        "surface-container": "#201f21",
+                        "tertiary": "#ffb3b1",
+                        "on-primary-fixed-variant": "#930018",
+                        "tertiary-container": "#ca4046",
+                        "surface-container-low": "#1c1b1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sub": "4px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px",
+                        "hero-margin": "64px",
+                        "gutter-desktop": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-h1": ["Inter"],
+                        "hero-lg": ["Playfair Display"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "wordmark": ["Playfair Display"],
+                        "stat-display": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "hero-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "wordmark": ["48px", { "lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600" }],
+                        "stat-display": ["40px", { "lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .glow-primary { box-shadow: 0 0 15px rgba(224, 20, 47, 0.28); }
+        .glow-subtle { box-shadow: 0 0 8px rgba(224, 20, 47, 0.15); }
+        .hairline-border { border: 1px solid rgba(255, 255, 255, 0.07); }
+        
+        /* Motion Classes */
+        .stagger-item { opacity: 0; transform: translateY(10px); animation: fadeInUp 0.4s ease-out forwards; }
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        
+        .bubble-in { opacity: 0; transform: scale(0.95) translateY(10px); animation: bubbleIn 0.2s ease-out forwards; }
+        
+        .pulse-badge { animation: pulseGlow 2s infinite; }
+        
+        .typing-dot { animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes bubbleIn { to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(224, 20, 47, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(224, 20, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(224, 20, 47, 0); } }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased font-body-md text-body-md min-h-screen flex flex-col md:flex-row">
+<!-- Navigation Drawer (Desktop) -->
+<nav class="hidden lg:flex flex-col h-full py-hero-margin bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant/10 docked left-0 h-full w-64 fixed z-40">
+<div class="px-gutter-desktop">
+<h1 class="font-wordmark text-headline-h1 text-on-surface mb-section-gap">NEXTERA</h1>
+<div class="flex items-center gap-3 mb-8">
+<img class="w-10 h-10 rounded-full object-cover hairline-border" data-alt="A cinematic, high-contrast headshot of a fit athletic trainer in a dimly lit, premium gym environment with red accent lighting. Dark mode, elite fitness vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuARVVS4KC3lx4tHMKNYdQtIAIDFVivTz385amdKHvyhXEVG8R4Sh5uhB1_Omzud4qAZkzLPrBAp2gcy86nSwkIqHU9rig65S6j-6XxFPfracT7LH0NrGB47Kb4QHoSIu1OGM9Zu64SI_WsRk47M8tefuUSV8ACSGGmD65VVJfg1byr6hwAMr6P_JrNJZtYaDi7VKSRsqr4g9s0NRc7Km3UopyFi5HFhjAkFX3y6YdVEsZqO1mu5A_17KKB7e877R8Sy5AUBb112WuQ"/>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface">NEXTERA ELITE</div>
+<div class="text-xs text-text-secondary">Lead Performance Coach</div>
+</div>
+</div>
+</div>
+<div class="flex-1 space-y-2 mt-4">
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings_accessibility</span>
+<span>Trainer Hub</span>
+</a>
+<a class="flex items-center gap-3 bg-tertiary-container/20 text-primary border-r-4 border-primary px-gutter-desktop py-base transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span>Messages</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">monitoring</span>
+<span>Performance Data</span>
+</a>
+</div>
+</nav>
+<!-- Top App Bar (Mobile) -->
+<header class="md:hidden flex justify-between items-center w-full px-gutter-mobile py-sub bg-background/80 backdrop-blur-md fixed top-0 z-40">
+<img class="w-8 h-8 rounded-full" data-alt="Silhouette icon of an athlete, minimalist, white on dark background, luxury tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuCTUpfEocjUyrAlzAErvvkpD_Bqt4-2bId9y2t15_kcmYNtft5yUlG9i2Xkdc_FnmG2lkkZYR5ZMMkqOjhBmDViVu3_KT2BSpbiabFAmTw1EzYS-7dJ4n7NJKpLTUkZ5fRR8gbnX9vJD3I7M54WV_2bZkufVY4Qix96FxfdXsFMl5o0y3UkqHk4VhK_zfQ_yJGfNE38hj9C1vO5mF5tENOWgXC5LUkA0GbplMEuMCBPKK4Bru7stZbahDh53624EK1ASQ-BEnoW4"/>
+<h1 class="font-wordmark text-wordmark text-on-surface tracking-widest text-2xl">NEXTERA</h1>
+<span class="material-symbols-outlined text-primary">notifications</span>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col md:ml-64 pt-[60px] md:pt-0 h-screen overflow-hidden">
+<!-- View A & B Container (Split view on large screens, stack on small) -->
+<div class="flex flex-1 overflow-hidden">
+<!-- View A: Messages List -->
+<div class="w-full lg:w-1/3 flex flex-col border-r border-outline-variant/10 bg-background h-full hidden md:flex lg:flex">
+<div class="p-gutter-desktop pb-4 border-b hairline-border bg-bg-elevated sticky top-0 z-10">
+<h2 class="font-headline-h1 text-headline-h1 text-on-surface">Messages</h2>
+<div class="mt-4 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">search</span>
+<input class="w-full bg-bg-card hairline-border rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary-container text-on-surface placeholder-text-secondary transition-all" placeholder="Search..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-gutter-desktop space-y-2">
+<!-- Trainer Card -->
+<div class="bg-bg-card hairline-border rounded-xl p-4 flex gap-4 items-center cursor-pointer hover:bg-surface-variant/20 transition-colors stagger-item stagger-1 bg-surface-variant/10">
+<div class="relative">
+<img class="w-12 h-12 rounded-full object-cover border border-outline-variant/30" data-alt="Intense close-up portrait of a male fitness trainer named Marcus, cinematic lighting, red ambient glow, dark background, premium fitness editorial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQTQxh-gGnlxX76LW1urXZ9RxGM-pit46vDXQAFEQjZVOYg76BLZcn1cDZEv0SiH_5LAzDftv2Tt0DTSuLPqFAUG3iAB6Xu0D-9JJFEWcE93Xpei-0WbABCP8bmH6FcA7I_IVIJXizYJArRHUSVVTZXcctRyUcNwEYtpFjulyTbq-7OZ4zQi7zza7QnOGh_nEyFGHtV7RLLX5AvFyCG1DoWBj_9Ju_KyMOnNSka7BwQ-LsYJtuYKltdks_0P0Kj0NhZ_l-SoFjDdc"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-primary-container rounded-full border-2 border-bg-card"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-bold text-on-surface truncate">Marcus</span>
+<span class="text-xs text-text-secondary">2m</span>
+</div>
+<div class="text-xs text-primary-container font-label-caps tracking-wider mb-1">YOUR TRAINER</div>
+<p class="text-sm text-on-surface-variant truncate">Push the tempo on those last two sets.</p>
+</div>
+<div class="w-2.5 h-2.5 bg-primary-container rounded-full pulse-badge"></div>
+</div>
+<!-- AI Coach -->
+<div class="mt-6 mb-2">
+<span class="font-label-caps text-label-caps text-text-secondary tracking-widest pl-2">AI COACH INSIGHTS</span>
+</div>
+<div class="bg-bg-card hairline-border rounded-xl p-4 cursor-pointer hover:bg-surface-variant/20 transition-colors stagger-item stagger-2 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-0.5 bg-energy-ribbon"></div>
+<div class="flex gap-4 items-center">
+<div class="w-10 h-10 rounded-full bg-surface-bright flex items-center justify-center glow-subtle">
+<span class="material-symbols-outlined text-primary-container text-lg">memory</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-bold text-on-surface truncate">Nextera AI</span>
+<span class="text-xs text-text-secondary">1h</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate">Recovery metrics indicate optimal readiness for heavy loads today.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- View B: Thread -->
+<div class="w-full lg:w-2/3 flex flex-col h-full bg-background relative">
+<!-- Thread Header -->
+<div class="h-[72px] flex items-center justify-between px-gutter-desktop border-b hairline-border bg-bg-elevated shrink-0 z-10">
+<div class="flex items-center gap-3">
+<button class="md:hidden text-on-surface-variant hover:text-on-surface mr-2">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Intense close-up portrait of a male fitness trainer named Marcus, cinematic lighting, red ambient glow, dark background, premium fitness editorial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE9IJYy4I6TqvP__XtcO5kj1Nx-75X-RyxC-TkkTK4hGZyOlDMFB6csKPyQQ-9hs9ccpt0i6Mpc9Z4ylXtOo0fIzwjo_zSCfzeFXC8-Mu-1Ouy_GVeIaeNDLOB3AjJZLAtNQCmGCYxJT3L9x36kZHaWPKmG38ngGQBd9gF9rogu08gUx18M2FX8qTROpVU5oAcoUdBuQDLTASsiuGT3OtQokL8rGs077tjBchQmQNS_5aOwe1YGjHoUpvwOHUGDISxG4Dgt_u-vlU"/>
+<div>
+<div class="font-bold text-on-surface leading-tight">Marcus</div>
+<div class="text-xs text-primary-container font-label-caps tracking-wider">YOUR TRAINER</div>
+</div>
+</div>
+<button class="text-text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">info</span>
+</button>
+</div>
+<!-- Messages Area -->
+<div class="flex-1 overflow-y-auto p-gutter-desktop space-y-6 flex flex-col">
+<div class="text-center text-xs text-text-secondary font-label-caps my-4">TODAY</div>
+<!-- Received Bubble -->
+<div class="flex gap-3 max-w-[85%] bubble-in">
+<img class="w-8 h-8 rounded-full object-cover mt-auto shrink-0" data-alt="Small avatar of trainer Marcus, dark mode, red glow." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbMTmf2N9JYCrsyFrsXjWSIJyajrbiexMsI37LbCKswvLU0scBzpLsygDWHQHSba2J_cQ4Weg4CkAICdkGK7fJFAWQPaFKFRkLHhHSn5oxwA9cmSGW2pkKshiHtmpPIIx0ahU7GwJ25Nz1RvlwRgfUPlzvkuPagHwQn_jniDxTYcU39RyCFQnml8ue3if194yFpP0Ig1zTC3Z5g0NYoyCRYpqjw365dYMqmegt8WGhnVZXkvGA6uq8EqS1yv9Y8EKoB091oopsdNY"/>
+<div class="bg-surface-bright text-on-surface rounded-2xl rounded-bl-sm p-4 text-sm hairline-border">
+                            Looking at yesterday's telemetry. Your power output dropped 15% on the last set. 
+                        </div>
+</div>
+<!-- Received Bubble -->
+<div class="flex gap-3 max-w-[85%] bubble-in" style="animation-delay: 0.1s;">
+<div class="w-8 shrink-0"></div> <!-- Spacer for alignment -->
+<div class="bg-surface-bright text-on-surface rounded-2xl p-4 text-sm hairline-border">
+                            Let's focus on explosive movement today. Hit the heavy bag for 5 rounds, strict 90-second rest.
+                        </div>
+</div>
+<!-- Sent Bubble -->
+<div class="flex flex-col items-end gap-1 bubble-in self-end max-w-[85%]" style="animation-delay: 0.2s;">
+<div class="bg-primary-container text-white rounded-2xl rounded-br-sm p-4 text-sm glow-primary">
+                            Understood. Should I maintain the same heart rate zones?
+                        </div>
+<div class="flex items-center gap-1 text-[10px] text-primary-container">
+<span>✓✓ Read</span>
+</div>
+</div>
+<!-- Typing Indicator -->
+<div class="flex gap-3 max-w-[85%] items-end mt-4 bubble-in" style="animation-delay: 0.3s;">
+<img class="w-6 h-6 rounded-full object-cover shrink-0 opacity-70" data-alt="Small avatar of trainer Marcus, dark mode, red glow." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnpYFUbE-QTAPpnlVCLYmjc8a39PdP9Ke72Hq5-vbx47yzjsF3wq-ckmYhF5NqU7Kn47IwWJ-MZnj9r-1PCzdkBhjrC6dgnxLXl2rOlaAMVPBmRR_vb2cNhjWsv2VVuMPYK4gd_0TbV-xp0-io18npfGCXhhIN8TBTUDAVZQL2KcNjrX4v9JUxckAKxdE2NY8iOSlTgQL6UsxfutRzXAZdh3nhjVKT4fq-tUg5XWCzh1U1fU9mf7tAT1pr8hBDtInXLtcahwM5h98"/>
+<div class="bg-surface-bright rounded-full py-2 px-4 flex gap-1 items-center hairline-border h-8">
+<div class="w-1.5 h-1.5 bg-text-secondary rounded-full typing-dot"></div>
+<div class="w-1.5 h-1.5 bg-text-secondary rounded-full typing-dot"></div>
+<div class="w-1.5 h-1.5 bg-text-secondary rounded-full typing-dot"></div>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-4 bg-bg-elevated border-t hairline-border shrink-0 z-10 pb-[90px] md:pb-4">
+<!-- Quick Replies -->
+<div class="flex gap-2 mb-3 overflow-x-auto hide-scroll pb-1 stagger-item">
+<button class="shrink-0 bg-transparent border border-primary-container/30 text-primary hover:bg-primary-container/10 px-3 py-1.5 rounded-full text-xs font-label-caps transition-colors">
+                            YES, ON IT
+                        </button>
+<button class="shrink-0 bg-transparent border border-primary-container/30 text-primary hover:bg-primary-container/10 px-3 py-1.5 rounded-full text-xs font-label-caps transition-colors">
+                            ADJUST MACROS
+                        </button>
+<button class="shrink-0 bg-transparent border border-primary-container/30 text-primary hover:bg-primary-container/10 px-3 py-1.5 rounded-full text-xs font-label-caps transition-colors">
+                            FEELING FATIGUED
+                        </button>
+</div>
+<div class="flex items-center gap-2 bg-surface rounded-full p-1 pl-4 hairline-border focus-within:border-primary-container/50 transition-colors">
+<input class="flex-1 bg-transparent border-none text-sm text-on-surface placeholder-text-secondary focus:ring-0 p-0 py-2" placeholder="Message your trainer..." type="text"/>
+<button class="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center shrink-0 hover:scale-95 transition-transform glow-subtle">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-6 pt-base bg-surface-container-lowest border-t border-outline-variant/20 shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-[10px]">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">fitness_center</span>
+<span class="font-label-caps text-[10px]">TRAIN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary filter drop-shadow-[0_0_8px_rgba(255,179,175,0.4)] scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="font-label-caps text-[10px]">MSG</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">qr_code_scanner</span>
+<span class="font-label-caps text-[10px]">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-caps text-[10px]">PROFILE</span>
+</a>
+</nav>
+</body></html>

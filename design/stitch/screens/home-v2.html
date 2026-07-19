@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXTERA Member Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#e5e1e4",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "surface-container-highest": "#353437",
+                        "surface": "#131315",
+                        "on-primary-fixed-variant": "#930018",
+                        "on-tertiary-fixed": "#410007",
+                        "background": "#131315",
+                        "primary": "#ffb3af",
+                        "tertiary-fixed": "#ffdad8",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "secondary": "#ffb3b0",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-tertiary-container": "#fff6f5",
+                        "on-surface": "#e5e1e4",
+                        "tertiary-container": "#ca4046",
+                        "primary-fixed-dim": "#ffb3af",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "error": "#ffb4ab",
+                        "surface-container": "#201f21",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "on-primary": "#68000e",
+                        "on-primary-fixed": "#410006",
+                        "on-secondary": "#680010",
+                        "outline-variant": "#5d3f3e",
+                        "bg-elevated": "#121214",
+                        "on-secondary-container": "#fff6f5",
+                        "surface-variant": "#353437",
+                        "secondary-fixed": "#ffdad8",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "on-tertiary": "#680011",
+                        "bg-card": "#16161A",
+                        "surface-bright": "#39393b",
+                        "on-secondary-fixed": "#410006",
+                        "outline": "#ad8885",
+                        "inverse-on-surface": "#313032",
+                        "surface-tint": "#ffb3af",
+                        "inverse-surface": "#e5e1e4",
+                        "on-surface-variant": "#e7bdba",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1c1b1d",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-fixed": "#ffdad7",
+                        "primary-container": "#e0142f",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#fff5f4",
+                        "tertiary": "#ffb3b1",
+                        "text-secondary": "#B5B2B8",
+                        "on-error": "#690005",
+                        "gold": "#E8B339",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-container": "#e40430"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter-desktop": "24px",
+                        "sub": "4px",
+                        "base": "8px",
+                        "hero-margin": "64px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "stat-display": ["JetBrains Mono"],
+                        "wordmark": ["Playfair Display"],
+                        "hero-lg": ["Playfair Display"],
+                        "headline-h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "stat-display": ["40px", {"lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                        "wordmark": ["48px", {"lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600"}],
+                        "hero-lg": ["40px", {"lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .nextera-glow {
+            box-shadow: 0 0 24px rgba(224,20,47,0.15);
+        }
+        .hairline-border {
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        .text-glow {
+            text-shadow: 0 0 8px rgba(255,179,175,0.4);
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-[100px] selection:bg-primary-container selection:text-on-primary-container antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 z-40 flex justify-between items-center w-full px-gutter-mobile py-sub bg-background/80 backdrop-blur-md">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center hairline-border">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Iron Fitness</span>
+<span class="font-wordmark text-[14px] text-on-surface tracking-widest leading-none mt-1 uppercase">NEXTERA</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary-container rounded-full shadow-[0_0_8px_rgba(224,20,47,0.6)]"></span>
+</button>
+<div class="relative p-[2px] rounded-full bg-gradient-to-tr from-primary-container to-surface-container">
+<img class="w-8 h-8 rounded-full object-cover border border-background" data-alt="A cinematic close-up portrait of an athlete in a dimly lit, moody gym environment. The lighting is dramatic, high-contrast, with deep shadows and subtle red rim light outlining their profile, matching the Nextera cinematic red-luxury aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxnN5yqvDLUdGgdmP0mc22cGyD09VBc5KK1rHccF_svEQAmbz14AtLNbNJ4fDtvzc0PxYvdsL6TGE87drLtVdlAleHPIek_9SmcvBke6-_d0gHEGFfEgkVDRF7jzAm-86g8eMUPJkz8reA1U4al42S_dlCgQ1gTIAwjoORMsKNxvvTq5WvX0a_-iwXPWgG3n_KntMkzMcRkg5x2mJmf5zeiOl9T4q6dGismv64s-DJb6IaAjkk0RjAhmY1kFB0_EsyZq-6d1ahSW8"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="pt-[72px] px-gutter-mobile md:px-gutter-desktop max-w-[1440px] mx-auto flex flex-col gap-base md:gap-gutter-desktop pb-section-gap">
+<!-- Hero Card -->
+<section class="relative bg-bg-card rounded-[22px] p-6 hairline-border overflow-hidden nextera-glow">
+<!-- Emissive corner glow -->
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary-container opacity-20 blur-3xl rounded-full"></div>
+<div class="relative z-10 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<h1 class="font-hero-lg text-hero-lg text-on-surface mb-1">Tuesday morning, Pedro.</h1>
+<p class="text-on-surface-variant text-sm">Week 3. Day 2 in progress.</p>
+</div>
+<div class="bg-surface-container-high px-3 py-1.5 rounded-full hairline-border flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container shadow-[0_0_6px_rgba(224,20,47,0.8)]"></span>
+<span class="font-label-caps text-label-caps text-on-surface">84 · Peak readiness</span>
+</div>
+</div>
+<div class="mt-4">
+<p class="text-on-surface mb-2">2 of 4 machines done today</p>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container shadow-[0_0_8px_rgba(224,20,47,0.5)] w-1/2"></div>
+</div>
+</div>
+<div class="flex items-center gap-4 mt-2 pt-4 border-t border-white/5">
+<div class="flex items-center gap-2">
+<span class="font-stat-display text-sm text-primary">12</span>
+<span class="text-on-surface-variant text-xs uppercase tracking-wider">Day Streak 🔥 Personal best</span>
+</div>
+<div class="h-4 w-px bg-white/10"></div>
+<div class="text-on-surface-variant text-xs font-stat-display">
+                        LAST PR — <span class="text-primary">185 LBS</span> — CHEST PRESS
+                    </div>
+</div>
+</div>
+</section>
+<!-- 2-Up Row (Readiness & Streak) -->
+<section class="grid grid-cols-2 gap-base">
+<div class="bg-bg-card rounded-xl p-4 hairline-border flex flex-col items-center justify-center gap-2">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-primary-container drop-shadow-[0_0_4px_rgba(224,20,47,0.5)]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="84, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<span class="font-stat-display text-2xl text-on-surface text-glow">84</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-2">Readiness</span>
+</div>
+<div class="bg-bg-card rounded-xl p-4 hairline-border flex flex-col items-center justify-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-3xl drop-shadow-[0_0_8px_rgba(224,20,47,0.4)]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="font-stat-display text-2xl text-on-surface">12</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-1">Day Streak</span>
+</div>
+</section>
+<!-- Today AI Program Card -->
+<section class="bg-bg-card rounded-xl hairline-border overflow-hidden">
+<div class="p-4 border-b border-white/5 flex justify-between items-center bg-surface-container/30">
+<div>
+<span class="font-label-caps text-label-caps text-primary mb-1 block">TODAY</span>
+<h3 class="font-headline-h1 text-lg text-on-surface">Week 3, Day 2 · Upper Body</h3>
+</div>
+<span class="text-xs text-on-surface-variant font-stat-display bg-surface-container px-2 py-1 rounded">2/4 DONE</span>
+</div>
+<div class="flex flex-col">
+<!-- Machine Item (Done) -->
+<div class="flex items-center justify-between p-4 border-b border-white/5 bg-surface/50">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container border border-primary-container/30">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="text-on-surface-variant line-through opacity-70">Chest Press</span>
+</div>
+<span class="text-xs text-on-surface-variant font-stat-display opacity-50">4x10</span>
+</div>
+<!-- Machine Item (Done) -->
+<div class="flex items-center justify-between p-4 border-b border-white/5 bg-surface/50">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container border border-primary-container/30">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="text-on-surface-variant line-through opacity-70">Lat Pulldown</span>
+</div>
+<span class="text-xs text-on-surface-variant font-stat-display opacity-50">4x12</span>
+</div>
+<!-- Machine Item (Up Next) -->
+<div class="flex items-center justify-between p-4 border-b border-white/5 bg-surface-container/20 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container shadow-[0_0_8px_rgba(224,20,47,0.6)]"></div>
+<div class="flex items-center gap-3 pl-2">
+<div class="w-6 h-6 rounded-full border border-primary-container flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold">Shoulder Press</span>
+<span class="text-[10px] text-primary uppercase tracking-wider mt-0.5">Up next</span>
+</div>
+</div>
+<button class="bg-primary-container text-white text-xs font-label-caps uppercase px-3 py-1.5 rounded-full hover:bg-inverse-primary transition-colors hover:shadow-[0_0_12px_rgba(224,20,47,0.4)]">Start</button>
+</div>
+<!-- Machine Item (Pending) -->
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center"></div>
+<span class="text-on-surface-variant">Cable Row</span>
+</div>
+<span class="text-xs text-on-surface-variant font-stat-display">3x12</span>
+</div>
+</div>
+</section>
+<!-- 2x2 Stat Grid -->
+<section class="grid grid-cols-2 gap-base">
+<div class="bg-bg-card rounded-xl p-4 hairline-border flex flex-col justify-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Sessions</span>
+<span class="font-stat-display text-2xl text-on-surface">18</span>
+</div>
+<div class="bg-bg-card rounded-xl p-4 hairline-border flex flex-col justify-center relative overflow-hidden">
+<div class="absolute -bottom-4 -right-4 w-16 h-16 bg-gold/10 blur-xl rounded-full"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">PRs</span>
+<span class="font-stat-display text-2xl text-gold text-glow">7</span>
+</div>
+<div class="bg-bg-card rounded-xl p-4 hairline-border flex flex-col justify-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Volume (Lbs)</span>
+<span class="font-stat-display text-xl text-on-surface">47.2k</span>
+</div>
+<div class="bg-bg-card rounded-xl p-4 hairline-border flex flex-col justify-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Best Streak</span>
+<span class="font-stat-display text-xl text-on-surface">12</span>
+</div>
+</section>
+<!-- Active Challenge Card -->
+<section class="bg-bg-card rounded-xl hairline-border relative overflow-hidden pt-1">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-gold via-primary-container to-bg-card"></div>
+<div class="p-5 flex justify-between items-center">
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-[10px] text-gold tracking-widest uppercase">Active Challenge</span>
+<h3 class="font-headline-h1 text-lg text-on-surface">November Volume War</h3>
+<p class="text-xs text-on-surface-variant mt-1">Top 10% earn Elite badge</p>
+</div>
+<div class="w-12 h-12 relative flex items-center justify-center">
+<span class="material-symbols-outlined text-gold text-3xl drop-shadow-[0_0_8px_rgba(232,179,57,0.3)]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-6 pt-base bg-surface-container-lowest border-t border-outline-variant/20 shadow-lg md:hidden">
+<button class="flex flex-col items-center justify-center text-primary filter drop-shadow-[0_0_8px_rgba(255,179,175,0.4)] scale-90 transition-all duration-200">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps text-[10px]">HOME</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined mb-1">fitness_center</span>
+<span class="font-label-caps text-label-caps text-[10px]">TRAIN</span>
+</button>
+<!-- Elevated Crimson Scan Button -->
+<button class="relative -top-6 flex flex-col items-center justify-center w-16 h-16 rounded-full bg-primary-container text-white shadow-[0_8px_24px_rgba(224,20,47,0.4)] border-2 border-surface-container-lowest hover:bg-inverse-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined mb-1">groups</span>
+<span class="font-label-caps text-label-caps text-[10px]">FEED</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-caps text-label-caps text-[10px]">PROFILE</span>
+</button>
+</nav>
+<!-- SideNav (Desktop) -->
+<nav class="hidden md:flex flex-col h-full py-hero-margin bg-surface-container-low border-r border-outline-variant/10 docked left-0 w-64 fixed z-30">
+<div class="px-gutter-desktop mb-section-gap flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center border border-primary-container/30">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<div class="font-wordmark text-headline-h1 text-on-surface tracking-wider uppercase">NEXTERA</div>
+</div>
+<div class="flex-1 flex flex-col gap-2">
+<button class="flex items-center gap-3 bg-tertiary-container/20 text-primary border-r-4 border-primary px-gutter-desktop py-base transition-all duration-300 ease-in-out w-full text-left relative overflow-hidden">
+<div class="absolute inset-0 bg-primary-container/5 w-full h-full"></div>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-body-md font-semibold">Home</span>
+</button>
+<button class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out w-full text-left">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-body-md">Train</span>
+</button>
+<button class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out w-full text-left">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+<span class="font-body-md">Scan Equipment</span>
+</button>
+<button class="flex items-center gap-3 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out w-full text-left">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-body-md">Community</span>
+</button>
+</div>
+</nav>
+</body></html>

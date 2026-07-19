@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - Readiness Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom glow animation for the ring */
+        @keyframes pulse-glow {
+            0% { filter: drop-shadow(0 0 8px rgba(224, 20, 47, 0.4)); }
+            50% { filter: drop-shadow(0 0 16px rgba(224, 20, 47, 0.7)); }
+            100% { filter: drop-shadow(0 0 8px rgba(224, 20, 47, 0.4)); }
+        }
+        .emissive-ring {
+            animation: pulse-glow 3s infinite alternate;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#e5e1e4",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "surface-container-highest": "#353437",
+                        "surface": "#131315",
+                        "on-primary-fixed-variant": "#930018",
+                        "on-tertiary-fixed": "#410007",
+                        "background": "#131315",
+                        "primary": "#ffb3af",
+                        "tertiary-fixed": "#ffdad8",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "secondary": "#ffb3b0",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-tertiary-container": "#fff6f5",
+                        "on-surface": "#e5e1e4",
+                        "tertiary-container": "#ca4046",
+                        "primary-fixed-dim": "#ffb3af",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "error": "#ffb4ab",
+                        "surface-container": "#201f21",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "on-primary": "#68000e",
+                        "on-primary-fixed": "#410006",
+                        "on-secondary": "#680010",
+                        "outline-variant": "#5d3f3e",
+                        "bg-elevated": "#121214",
+                        "on-secondary-container": "#fff6f5",
+                        "surface-variant": "#353437",
+                        "secondary-fixed": "#ffdad8",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "on-tertiary": "#680011",
+                        "bg-card": "#16161A",
+                        "surface-bright": "#39393b",
+                        "on-secondary-fixed": "#410006",
+                        "outline": "#ad8885",
+                        "inverse-on-surface": "#313032",
+                        "surface-tint": "#ffb3af",
+                        "inverse-surface": "#e5e1e4",
+                        "on-surface-variant": "#e7bdba",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1c1b1d",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-fixed": "#ffdad7",
+                        "primary-container": "#e0142f",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#fff5f4",
+                        "tertiary": "#ffb3b1",
+                        "text-secondary": "#B5B2B8",
+                        "on-error": "#690005",
+                        "gold": "#E8B339",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-container": "#e40430"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "gutter-desktop": "24px",
+                        "sub": "4px",
+                        "base": "8px",
+                        "hero-margin": "64px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px"
+                    },
+                    fontFamily: {
+                        "stat-display": ["JetBrains Mono"],
+                        "wordmark": ["Playfair Display"],
+                        "hero-lg": ["Playfair Display"],
+                        "headline-h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    fontSize: {
+                        "stat-display": ["40px", { lineHeight: "1", letterSpacing: "-0.03em", fontWeight: "800" }],
+                        "wordmark": ["24px", { lineHeight: "1.2", letterSpacing: "0.12em", fontWeight: "600" }], /* Scaled down for top bar */
+                        "hero-lg": ["40px", { lineHeight: "1.1", letterSpacing: "0.02em", fontWeight: "600" }],
+                        "headline-h1": ["24px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "700" }], /* Scaled down for mobile */
+                        "body-md": ["15px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "label-caps": ["11px", { lineHeight: "1", letterSpacing: "0.05em", fontWeight: "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-primary-container selection:text-white">
+<!-- Top Navigation (Detail Screen - No Bottom Nav) -->
+<header class="bg-background/80 backdrop-blur-md flex justify-between items-center w-full px-gutter-mobile py-4 sticky top-0 z-50">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<span class="font-wordmark text-wordmark text-on-surface tracking-widest uppercase">Nextera</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant tracking-[0.2em] mt-1 text-[8px]">Fitness</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined text-2xl">more_vert</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-[600px] mx-auto px-gutter-mobile pb-12 pt-4 flex flex-col gap-6">
+<!-- Header Section -->
+<div class="text-center">
+<h1 class="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">Readiness Detail</h1>
+</div>
+<!-- Central Readiness Ring -->
+<div class="relative flex flex-col items-center justify-center mt-4 mb-8">
+<!-- Background ambient glow -->
+<div class="absolute w-[280px] h-[280px] rounded-full bg-primary-container/10 blur-[60px] pointer-events-none"></div>
+<div class="relative w-[240px] h-[240px]">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<!-- SVG Filters for Emissive Effect -->
+<defs>
+<filter height="140%" id="crimson-glow" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+</defs>
+<!-- Track -->
+<circle cx="50" cy="50" fill="none" r="42" stroke="#2a2a2c" stroke-width="4"></circle>
+<!-- Progress Arc (Value: 84. Circumference = 2 * PI * 42 = 263.89) -->
+<!-- Dasharray: (84/100)*263.89 = 221.6 -->
+<circle class="emissive-ring" cx="50" cy="50" fill="none" filter="url(#crimson-glow)" r="42" stroke="#e0142f" stroke-dasharray="221.6 263.89" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<!-- Center Content -->
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="font-stat-display text-stat-display text-white text-[64px] tracking-tighter mb-1 filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">84</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mt-2">Out of 100</span>
+</div>
+</div>
+<!-- Status & AI Insight -->
+<div class="mt-6 flex flex-col items-center text-center px-4">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></div>
+<span class="font-body-md text-body-md text-white font-semibold uppercase tracking-wider">Peak — Push It</span>
+</div>
+<!-- AI Insight Card -->
+<div class="bg-card border border-white/5 rounded-xl p-4 flex gap-3 items-start max-w-[90%] relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary-container/50 to-transparent"></div>
+<span class="material-symbols-outlined text-primary-container text-xl mt-0.5">psychiatry</span>
+<p class="font-body-md text-[14px] text-on-surface-variant text-left leading-relaxed">
+                        Nervous system recovery is exceptional. Muscular readiness indicates you are primed for a high-intensity overload session today.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Metrics Breakdown Bars -->
+<div class="bg-card border border-white/[0.07] rounded-[16px] p-5 flex flex-col gap-5 relative overflow-hidden">
+<!-- Subtle card highlight -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/5 blur-[40px] rounded-full pointer-events-none"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest border-b border-white/5 pb-3">Systems Diagnostics</h3>
+<div class="flex flex-col gap-4 mt-1">
+<!-- Metric 1 -->
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-[10px] text-on-surface-variant w-24 text-right uppercase">Recovery</span>
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[90%] rounded-full shadow-[0_0_8px_rgba(224,20,47,0.6)]"></div>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-[10px] text-on-surface-variant w-24 text-right uppercase">Load Balance</span>
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[75%] rounded-full opacity-80"></div>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-[10px] text-on-surface-variant w-24 text-right uppercase">Sleep Score</span>
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[88%] rounded-full shadow-[0_0_8px_rgba(224,20,47,0.6)]"></div>
+</div>
+</div>
+<!-- Metric 4 -->
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-[10px] text-on-surface-variant w-24 text-right uppercase">Soreness</span>
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[60%] rounded-full opacity-60"></div>
+</div>
+</div>
+<!-- Metric 5 -->
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-[10px] text-on-surface-variant w-24 text-right uppercase">Consistency</span>
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[95%] rounded-full shadow-[0_0_8px_rgba(224,20,47,0.6)]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- 7-Day Sparkline Trend -->
+<div class="bg-card border border-white/[0.07] rounded-[16px] p-5 flex flex-col gap-4">
+<div class="flex justify-between items-end border-b border-white/5 pb-3">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">7-Day Trend</h3>
+<span class="font-stat-display text-[20px] text-white">84<span class="text-on-surface-variant text-[12px] ml-1 font-body-md font-normal">avg</span></span>
+</div>
+<div class="h-24 w-full relative mt-2">
+<!-- Simple SVG Line Chart representation -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 40">
+<defs>
+<lineargradient id="line-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#e0142f" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#e0142f" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Area fill -->
+<path d="M0,30 L15,25 L30,28 L45,15 L60,20 L75,10 L90,18 L100,5 L100,40 L0,40 Z" fill="url(#line-gradient)"></path>
+<!-- Line -->
+<path d="M0,30 L15,25 L30,28 L45,15 L60,20 L75,10 L90,18 L100,5" fill="none" filter="drop-shadow(0 2px 4px rgba(224,20,47,0.5))" stroke="#e0142f" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+<!-- Current Point Indicator -->
+<circle cx="100" cy="5" fill="#fff" filter="drop-shadow(0 0 4px #e0142f)" r="2"></circle>
+</svg>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXTERA - Rest Timer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:wght@600&amp;family=JetBrains+Mono:wght@800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#ffb3b0",
+                      "secondary-fixed": "#ffdad8",
+                      "tertiary-fixed-dim": "#ffb3b1",
+                      "surface-container-high": "#2a2a2c",
+                      "secondary-fixed-dim": "#ffb3b0",
+                      "bg-elevated": "#121214",
+                      "on-surface-variant": "#e7bdba",
+                      "on-secondary-fixed-variant": "#93001b",
+                      "error": "#ffb4ab",
+                      "surface-tint": "#ffb3af",
+                      "surface": "#131315",
+                      "surface-bright": "#39393b",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-container": "#e0142f",
+                      "on-primary-container": "#fff5f4",
+                      "primary-fixed-dim": "#ffb3af",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#353437",
+                      "tertiary-fixed": "#ffdad8",
+                      "on-secondary-fixed": "#410006",
+                      "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                      "text-secondary": "#B5B2B8",
+                      "on-tertiary": "#680011",
+                      "secondary-container": "#e40430",
+                      "on-tertiary-fixed": "#410007",
+                      "on-primary-fixed": "#410006",
+                      "primary": "#ffb3af",
+                      "on-secondary-container": "#fff6f5",
+                      "primary-fixed": "#ffdad7",
+                      "on-primary": "#68000e",
+                      "inverse-surface": "#e5e1e4",
+                      "surface-variant": "#353437",
+                      "on-tertiary-fixed-variant": "#8e1120",
+                      "bg-card": "#16161A",
+                      "inverse-on-surface": "#313032",
+                      "on-surface": "#e5e1e4",
+                      "on-tertiary-container": "#fff6f5",
+                      "background": "#131315",
+                      "outline-variant": "#5d3f3e",
+                      "on-error-container": "#ffdad6",
+                      "gold": "#E8B339",
+                      "on-secondary": "#680010",
+                      "surface-dim": "#131315",
+                      "inverse-primary": "#bf0023",
+                      "on-background": "#e5e1e4",
+                      "outline": "#ad8885",
+                      "error-container": "#93000a",
+                      "surface-container": "#201f21",
+                      "tertiary": "#ffb3b1",
+                      "on-primary-fixed-variant": "#930018",
+                      "tertiary-container": "#ca4046",
+                      "surface-container-low": "#1c1b1d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sub": "4px",
+                      "section-gap": "32px",
+                      "gutter-mobile": "16px",
+                      "hero-margin": "64px",
+                      "gutter-desktop": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-h1": ["Inter"],
+                      "hero-lg": ["Playfair Display"],
+                      "label-caps": ["Inter"],
+                      "body-md": ["Inter"],
+                      "wordmark": ["Playfair Display"],
+                      "stat-display": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "headline-h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "hero-lg": ["40px", {"lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-md": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "wordmark": ["48px", {"lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600"}],
+                      "stat-display": ["40px", {"lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 1;
+        }
+        
+        .timer-glow {
+            box-shadow: 0 0 80px rgba(224, 20, 47, 0.28);
+        }
+        
+        @keyframes pulseRing {
+            0% { stroke-opacity: 1; filter: drop-shadow(0 0 4px rgba(224, 20, 47, 0.5)); }
+            50% { stroke-opacity: 0.8; filter: drop-shadow(0 0 12px rgba(224, 20, 47, 0.8)); }
+            100% { stroke-opacity: 1; filter: drop-shadow(0 0 4px rgba(224, 20, 47, 0.5)); }
+        }
+
+        @keyframes intensePulse {
+            0% { transform: scale(1); box-shadow: 0 0 80px rgba(255, 39, 64, 0.4); text-shadow: 0 0 10px rgba(255, 39, 64, 0.5); }
+            50% { transform: scale(1.03); box-shadow: 0 0 120px rgba(255, 39, 64, 0.6); text-shadow: 0 0 20px rgba(255, 39, 64, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 80px rgba(255, 39, 64, 0.4); text-shadow: 0 0 10px rgba(255, 39, 64, 0.5); }
+        }
+        
+        @keyframes flashGo {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .pulse-active {
+            animation: pulseRing 1s ease-in-out infinite;
+        }
+
+        .pulse-intense {
+            animation: intensePulse 1s ease-in-out infinite;
+            color: #FF2740 !important;
+        }
+        
+        .go-flash {
+            animation: flashGo 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            color: #FF2740;
+            text-shadow: 0 0 30px rgba(255, 39, 64, 0.8);
+        }
+
+        svg circle.progress {
+            transition: stroke-dashoffset 1s linear;
+        }
+        
+        .hairline-border {
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation -->
+<header class="flex justify-between items-center w-full px-gutter-mobile py-base bg-background/80 backdrop-blur-md z-50 fixed top-0">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/30 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="close">close</span>
+</button>
+<span class="font-label-caps text-label-caps text-on-surface tracking-widest opacity-70">WORKOUT IN PROGRESS</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/30 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</button>
+</header>
+<main class="flex-1 flex flex-col items-center justify-center px-gutter-mobile pt-24 pb-32">
+<!-- Timer Centerpiece -->
+<div class="relative flex flex-col items-center justify-center w-full max-w-sm aspect-square mb-section-gap">
+<!-- Glow Background -->
+<div class="absolute inset-0 rounded-full timer-glow z-0"></div>
+<!-- SVG Ring -->
+<svg class="absolute inset-0 w-full h-full transform -rotate-90 z-10" viewbox="0 0 100 100">
+<!-- Track -->
+<circle cx="50" cy="50" fill="none" r="45" stroke="#1c1b1d" stroke-width="4"></circle>
+<!-- Progress Arc -->
+<circle class="progress pulse-active" cx="50" cy="50" fill="none" id="progress-ring" r="45" stroke="#e0142f" stroke-dasharray="283" stroke-dashoffset="70" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<!-- Center Content -->
+<div class="relative z-20 flex flex-col items-center justify-center w-full h-full transition-transform duration-300" id="timer-center">
+<span class="font-label-caps text-label-caps text-primary tracking-[0.2em] mb-2 opacity-80">REST</span>
+<div class="font-stat-display text-[72px] leading-none tracking-tighter text-on-surface" id="timer-display">0:45</div>
+</div>
+</div>
+<!-- Up Next Card -->
+<div class="w-full max-w-md bg-bg-card hairline-border rounded-xl p-4 mb-4 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded bg-surface-container-high flex items-center justify-center shrink-0">
+<img class="w-full h-full object-cover rounded opacity-80 mix-blend-luminosity" data-alt="A macro shot of a sleek, heavy black barbell loaded with matte black weight plates sitting on a dark gym floor. The cinematic lighting highlights the knurling on the bar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnIwoZHmlQngokYGJFe5Y7bhBh5z4kMM9DRua8rhoofyFfnzERfTV1GRowBRwotbvAQ7dtrDYa2mMpoCusace360AuwHo5n3_nzQcwAylYLFezznv9Lw4PYt7NC2NsUzMC6-M4Qu_42ihx1sFjzRhIqzImIQO69HzHsVNGRi9mNzfAl7R7wjHjGzHsqgI7xbP2KsmDXaQEhkFKQ5cdg12NyxexzfrwnRLYUE43ofd_GcGuILCLR6SwPG-X4xx5J8QuNV0EsBvpmgM"/>
+</div>
+<div class="flex flex-col flex-1">
+<span class="font-label-caps text-label-caps text-primary mb-1">UP NEXT — SET <span class="font-stat-display text-[14px]">3</span> OF <span class="font-stat-display text-[14px]">4</span></span>
+<span class="font-hero-lg text-2xl tracking-wide text-on-surface">Bench Press</span>
+<div class="flex items-center gap-1.5 text-text-secondary mt-1">
+<span class="font-stat-display text-base">135</span>
+<span class="font-body-md text-sm">lb</span>
+<span class="text-on-surface-variant/50 font-body-md mx-1">×</span>
+<span class="font-stat-display text-base">10</span>
+<span class="font-body-md text-sm">reps</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Trainer Cue Card -->
+<div class="w-full max-w-md bg-bg-card hairline-border rounded-xl p-4 mb-section-gap flex items-start gap-3 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[2px]" style="background: linear-gradient(135deg, #FF2740, #8A0D1E);"></div>
+<img class="w-10 h-10 rounded-full object-cover shrink-0 border border-outline-variant/30 grayscale contrast-125" data-alt="A close-up portrait of an intense performance coach set against a black background with a crimson rim light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuByahVmwGYf6e0Nve1nx10nBlM1ze2Rn1COQFW_JgL3YNhlFRRSjMjdHkAjudHS-LmiKlnJNYc84Nxy1u8XY39nrJGb2yrtaxvODJ6LDqsK8v86RETtHX-rnGR7HuEDTqBp0rvoEBM7IHsrkb_OSXUm3puJF9DZU3OawVp__nXJD4m_PknnIvCW-4AzoN1wC4GBqnVod5ulGZeoMKrTYs_diPQP83XdXjlonj2iql9ZMDU1VVp16-wXtDWlnHOb8VQ_9F2lQWCDzvY"/>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">COACH CUE</span>
+<p class="font-body-md text-on-surface italic text-sm text-text-secondary leading-snug">"Keep your shoulders pinned back this set. Drive through the heels."</p>
+</div>
+</div>
+<!-- Controls -->
+<div class="w-full max-w-md flex flex-col gap-4 mt-auto">
+<div class="flex justify-center gap-4">
+<button class="flex items-center justify-center gap-2 bg-bg-card hairline-border text-on-surface px-6 py-3 rounded-full hover:bg-surface-variant/30 active:scale-95 transition-all">
+<span class="font-stat-display text-sm">−15s</span>
+</button>
+<button class="flex items-center justify-center gap-2 bg-bg-card hairline-border text-on-surface px-6 py-3 rounded-full hover:bg-surface-variant/30 active:scale-95 transition-all">
+<span class="font-stat-display text-sm">+15s</span>
+</button>
+</div>
+<button class="w-full flex items-center justify-center gap-2 border border-primary/20 bg-primary/10 text-primary px-6 py-4 rounded-lg hover:bg-primary/20 active:scale-95 transition-all group" id="skip-btn">
+<span class="font-label-caps text-label-caps tracking-widest">SKIP REST</span>
+<span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</main>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const timerDisplay = document.getElementById('timer-display');
+            const progressRing = document.getElementById('progress-ring');
+            const timerCenter = document.getElementById('timer-center');
+            const skipBtn = document.getElementById('skip-btn');
+            
+            let timeLeft = 45;
+            const totalTime = 45;
+            const circumference = 2 * Math.PI * 45; // ~282.7
+            
+            function setProgress(percent) {
+                const offset = circumference - (percent / 100) * circumference;
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            function updateDisplay() {
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                timerDisplay.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                
+                const percent = (timeLeft / totalTime) * 100;
+                setProgress(percent);
+
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    timerCenter.classList.add('pulse-intense');
+                    progressRing.setAttribute('stroke', '#FF2740');
+                }
+            }
+
+            function finishTimer() {
+                clearInterval(timerInterval);
+                timerCenter.classList.remove('pulse-intense');
+                progressRing.style.strokeDashoffset = 0; // Snap full
+                progressRing.setAttribute('stroke', '#FF2740');
+                
+                timerCenter.innerHTML = `<div class="font-stat-display text-[96px] leading-none tracking-tighter go-flash">GO</div>`;
+            }
+
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    updateDisplay();
+                } else {
+                    finishTimer();
+                }
+            }, 1000);
+
+            skipBtn.addEventListener('click', () => {
+                timeLeft = 0;
+                finishTimer();
+            });
+
+            // Initial setup
+            updateDisplay();
+        });
+    </script>
+</body></html>

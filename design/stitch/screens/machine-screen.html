@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexera - Machine Logging</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=Playfair+Display:wght@600;700&amp;family=JetBrains+Mono:wght@800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#ffb3b0",
+                      "secondary-fixed": "#ffdad8",
+                      "tertiary-fixed-dim": "#ffb3b1",
+                      "surface-container-high": "#2a2a2c",
+                      "secondary-fixed-dim": "#ffb3b0",
+                      "bg-elevated": "#121214",
+                      "on-surface-variant": "#e7bdba",
+                      "on-secondary-fixed-variant": "#93001b",
+                      "error": "#ffb4ab",
+                      "surface-tint": "#ffb3af",
+                      "surface": "#131315",
+                      "surface-bright": "#39393b",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-container": "#e0142f",
+                      "on-primary-container": "#fff5f4",
+                      "primary-fixed-dim": "#ffb3af",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#353437",
+                      "tertiary-fixed": "#ffdad8",
+                      "on-secondary-fixed": "#410006",
+                      "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                      "text-secondary": "#B5B2B8",
+                      "on-tertiary": "#680011",
+                      "secondary-container": "#e40430",
+                      "on-tertiary-fixed": "#410007",
+                      "on-primary-fixed": "#410006",
+                      "primary": "#ffb3af",
+                      "on-secondary-container": "#fff6f5",
+                      "primary-fixed": "#ffdad7",
+                      "on-primary": "#68000e",
+                      "inverse-surface": "#e5e1e4",
+                      "surface-variant": "#353437",
+                      "on-tertiary-fixed-variant": "#8e1120",
+                      "bg-card": "#16161A",
+                      "inverse-on-surface": "#313032",
+                      "on-surface": "#e5e1e4",
+                      "on-tertiary-container": "#fff6f5",
+                      "background": "#131315",
+                      "outline-variant": "#5d3f3e",
+                      "on-error-container": "#ffdad6",
+                      "gold": "#E8B339",
+                      "on-secondary": "#680010",
+                      "surface-dim": "#131315",
+                      "inverse-primary": "#bf0023",
+                      "on-background": "#e5e1e4",
+                      "outline": "#ad8885",
+                      "error-container": "#93000a",
+                      "surface-container": "#201f21",
+                      "tertiary": "#ffb3b1",
+                      "on-primary-fixed-variant": "#930018",
+                      "tertiary-container": "#ca4046",
+                      "surface-container-low": "#1c1b1d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "2xl": "1.375rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sub": "4px",
+                      "section-gap": "32px",
+                      "gutter-mobile": "16px",
+                      "hero-margin": "64px",
+                      "gutter-desktop": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-h1": ["Inter"],
+                      "hero-lg": ["Playfair Display"],
+                      "label-caps": ["Inter"],
+                      "body-md": ["Inter"],
+                      "wordmark": ["Playfair Display"],
+                      "stat-display": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "headline-h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                      "hero-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                      "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                      "body-md": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                      "wordmark": ["48px", { "lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600" }],
+                      "stat-display": ["40px", { "lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        /* Custom Animations for UI Requirements */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes rim-sweep {
+            0% { transform: translateX(-100%); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        @keyframes fill-spring {
+            0% { transform: scaleX(0); }
+            100% { transform: scaleX(1); }
+        }
+
+        @keyframes breathe-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(224, 20, 47, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(224, 20, 47, 0.7); }
+        }
+
+        .animate-fade-in { animation: fade-in 150ms ease-out forwards; }
+        .animate-rim-sweep { animation: rim-sweep 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .animate-breathe { animation: breathe-glow 2.4s ease-in-out infinite; }
+        
+        .segment-fill {
+            transform-origin: left;
+            animation: fill-spring 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Setup material symbols defaults */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md antialiased overflow-x-hidden selection:bg-primary-container/30">
+<!-- Header & Hero Section -->
+<header class="relative pt-base pb-section-gap">
+<!-- Faint dark machine illustration & ambient glow -->
+<div class="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-screen pointer-events-none z-0" data-alt="A highly detailed, faint schematic illustration of a modern fitness chest press machine. Set against a pitch-black void, the machine is subtly illuminated by deep, cinematic crimson rim lighting that emphasizes its mechanical precision. The aesthetic is ultra-modern, elite, and moody, evoking a high-performance telemetry dashboard. Dark mode, minimal glassmorphism style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAxSSh2jrchz0ePMjybpVeWY3LZoQsiq75SLw7a6tYMPCE7eiFKc81J75C8AC6WHlQUE_HImEGWUSyXTtDBsk4pCAWVn1jQXyaib0cikwMRmXiE-dA69nMYHzsP8JlmDZituUitWzXAn-Dp2AqJex0c1C1OCQ9wXE1DNu8lqP05unZGtxvQ48vGjHo2fE85RQ8uH0Zz4aiarZOs_fhUEnt6KEhlNfXfGOVbls5cxTHz4Ner5Tc19k9xy1xs35js0MkTOSpB-MMiU24')"></div>
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(224,20,47,0.15),_transparent_70%)] pointer-events-none z-0"></div>
+<!-- Rim light sweep effect -->
+<div class="absolute top-0 left-0 w-full h-[2px] overflow-hidden pointer-events-none z-20">
+<div class="w-1/2 h-full bg-gradient-to-r from-transparent via-primary-container to-transparent animate-rim-sweep"></div>
+</div>
+<!-- Top App Bar equivalent (Suppressed global nav, contextual task nav) -->
+<div class="flex justify-between items-center px-gutter-mobile py-base relative z-10 animate-fade-in">
+<button aria-label="Go back" class="p-2 -ml-2 rounded-full hover:bg-surface-variant/30 transition-colors active:scale-95 group text-on-surface">
+<span class="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back_ios_new</span>
+</button>
+<div class="flex items-center gap-1 font-label-caps text-label-caps text-on-surface-variant bg-surface-container-low/50 px-3 py-1.5 rounded-full border border-outline-variant/10 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[14px] text-primary-fixed-dim">check</span>
+                All sets saved
+            </div>
+</div>
+<!-- Title Area -->
+<div class="px-gutter-mobile mt-section-gap relative z-10 animate-fade-in" style="animation-delay: 50ms;">
+<h1 class="font-hero-lg text-hero-lg text-on-surface tracking-tight mb-1 drop-shadow-md">Chest Press</h1>
+<p class="font-body-md text-body-md text-text-secondary">Chest · Triceps · Front Delts</p>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow px-gutter-mobile flex flex-col gap-6 relative z-10 pb-32 animate-fade-in" style="animation-delay: 100ms;">
+<!-- Mode Pill -->
+<div>
+<button class="inline-flex items-center gap-2 bg-primary-container/10 border border-primary-container/20 text-primary-fixed-dim font-label-caps text-label-caps px-4 py-2 rounded-full hover:bg-primary-container/20 active:scale-95 transition-all">
+                PROGRAM · Upper A
+                <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</button>
+</div>
+<!-- Prescription Card -->
+<div class="bg-bg-card border border-outline-variant/10 rounded-2xl p-5 flex flex-col gap-5 shadow-2xl relative overflow-hidden group">
+<!-- Subtle inner top highlight mimicking energy ribbon -->
+<div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary-container/30 to-transparent"></div>
+<div class="flex justify-between items-baseline">
+<h3 class="font-headline-h1 text-headline-h1 text-on-surface tracking-tighter">Set 2 <span class="text-on-surface-variant text-xl">of 4</span></h3>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-primary-fixed-dim mb-1">TARGET 8–12 REPS</p>
+<p class="font-body-md text-sm text-text-secondary">90s rest</p>
+</div>
+</div>
+<!-- Segmented Progress Bar -->
+<div class="flex gap-1.5 h-1.5 w-full mt-2">
+<!-- Segment 1 (Filled) -->
+<div class="flex-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-full h-full bg-primary-container segment-fill" style="animation-delay: 150ms;"></div>
+</div>
+<!-- Segment 2 (Filled) -->
+<div class="flex-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-full h-full bg-primary-container segment-fill" style="animation-delay: 300ms;"></div>
+</div>
+<!-- Segment 3 (Empty) -->
+<div class="flex-1 bg-surface-container-highest rounded-full"></div>
+<!-- Segment 4 (Empty) -->
+<div class="flex-1 bg-surface-container-highest rounded-full"></div>
+</div>
+</div>
+<!-- Recovery Alert -->
+<div class="bg-[#2A1E0E] border border-gold/20 rounded-xl p-3.5 flex gap-3 items-start animate-fade-in" style="animation-delay: 200ms;">
+<span class="material-symbols-outlined text-gold flex-shrink-0" style="font-variation-settings: 'FILL' 1;">warning</span>
+<p class="font-body-md text-sm text-on-surface/90 leading-snug">
+                Your chest is still recovering — consider lighter volume today.
+            </p>
+</div>
+<!-- Preview Chip -->
+<button class="mt-4 flex items-center justify-between w-full bg-surface-container-low/50 border border-outline-variant/10 rounded-xl p-4 cursor-pointer hover:bg-surface-variant/40 active:scale-[0.98] transition-all backdrop-blur-sm animate-fade-in" style="animation-delay: 250ms;">
+<div class="flex items-center gap-3">
+<div class="bg-surface-container-highest p-2 rounded-lg text-text-secondary">
+<span class="material-symbols-outlined text-[20px]">fitness_center</span>
+</div>
+<div class="text-left">
+<p class="font-label-caps text-[10px] text-text-secondary tracking-wider mb-0.5">UP NEXT</p>
+<p class="font-body-md text-on-surface font-medium">Lat Pulldown</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-text-secondary">arrow_forward</span>
+</button>
+</main>
+<!-- Sticky Footer Container -->
+<div class="fixed bottom-0 left-0 w-full px-gutter-mobile pb-8 pt-12 bg-gradient-to-t from-background via-background/95 to-transparent z-50 pointer-events-none">
+<button class="w-full bg-primary-container text-on-primary-container font-label-caps text-label-caps tracking-widest py-4 rounded-xl flex justify-center items-center gap-2 animate-breathe active:scale-[0.97] transition-transform duration-100 pointer-events-auto group relative overflow-hidden">
+<!-- Subtle button texture/gradient -->
+<div class="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-50"></div>
+<span class="relative z-10">LOG A SET</span>
+<span class="material-symbols-outlined relative z-10 text-[18px] group-hover:translate-x-1 transition-transform">check</span>
+</button>
+</div>
+</body></html>

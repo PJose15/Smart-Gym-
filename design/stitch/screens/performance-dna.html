@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXTERA - Performance DNA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#e5e1e4",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "surface-container-highest": "#353437",
+                        "surface": "#131315",
+                        "on-primary-fixed-variant": "#930018",
+                        "on-tertiary-fixed": "#410007",
+                        "background": "#131315",
+                        "primary": "#ffb3af",
+                        "tertiary-fixed": "#ffdad8",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "secondary": "#ffb3b0",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-tertiary-container": "#fff6f5",
+                        "on-surface": "#e5e1e4",
+                        "tertiary-container": "#ca4046",
+                        "primary-fixed-dim": "#ffb3af",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "error": "#ffb4ab",
+                        "surface-container": "#201f21",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "on-primary": "#68000e",
+                        "on-primary-fixed": "#410006",
+                        "on-secondary": "#680010",
+                        "outline-variant": "#5d3f3e",
+                        "bg-elevated": "#121214",
+                        "on-secondary-container": "#fff6f5",
+                        "surface-variant": "#353437",
+                        "secondary-fixed": "#ffdad8",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "on-tertiary": "#680011",
+                        "bg-card": "#16161A",
+                        "surface-bright": "#39393b",
+                        "on-secondary-fixed": "#410006",
+                        "outline": "#ad8885",
+                        "inverse-on-surface": "#313032",
+                        "surface-tint": "#ffb3af",
+                        "inverse-surface": "#e5e1e4",
+                        "on-surface-variant": "#e7bdba",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1c1b1d",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-fixed": "#ffdad7",
+                        "primary-container": "#e0142f",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#fff5f4",
+                        "tertiary": "#ffb3b1",
+                        "text-secondary": "#B5B2B8",
+                        "on-error": "#690005",
+                        "gold": "#E8B339",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-container": "#e40430"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "gutter-desktop": "24px",
+                        "sub": "4px",
+                        "base": "8px",
+                        "hero-margin": "64px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px"
+                    },
+                    fontFamily: {
+                        "stat-display": ["JetBrains Mono"],
+                        "wordmark": ["Playfair Display"],
+                        "hero-lg": ["Playfair Display"],
+                        "headline-h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    fontSize: {
+                        "stat-display": ["40px", { lineHeight: "1", letterSpacing: "-0.03em", fontWeight: "800" }],
+                        "wordmark": ["48px", { lineHeight: "1.2", letterSpacing: "0.12em", fontWeight: "600" }],
+                        "hero-lg": ["40px", { lineHeight: "1.1", letterSpacing: "0.02em", fontWeight: "600" }],
+                        "headline-h1": ["32px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "body-md": ["15px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "label-caps": ["12px", { lineHeight: "1", letterSpacing: "0.05em", fontWeight: "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0C;
+            color: #e5e1e4;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .glow-red {
+            filter: drop-shadow(0 0 12px rgba(224, 20, 47, 0.4));
+        }
+        
+        .card-border {
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        
+        .energy-border-top {
+            position: relative;
+        }
+        .energy-border-top::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #FF2740, #8A0D1E);
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+        }
+
+        .radar-line {
+            stroke: rgba(255, 255, 255, 0.07);
+            stroke-width: 1;
+        }
+
+        .radar-label {
+            fill: #B5B2B8;
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-anchor: middle;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-background/80 backdrop-blur-md flex justify-between items-center w-full px-gutter-mobile py-sub docked full-width top-0 sticky z-40">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden card-border flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">person</span>
+</div>
+</div>
+<div class="font-wordmark text-wordmark text-on-surface tracking-widest text-2xl flex-1 text-center">
+            NEXTERA
+        </div>
+<div class="flex items-center justify-center w-10 h-10 hover:text-primary transition-colors cursor-pointer text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 w-full max-w-[1440px] mx-auto px-gutter-mobile md:px-gutter-desktop py-section-gap pb-32">
+<!-- Hero Section -->
+<div class="mb-section-gap text-center md:text-left">
+<h1 class="font-headline-h1 text-headline-h1 text-on-surface mb-2">PERFORMANCE DNA</h1>
+<p class="font-body-md text-body-md text-text-secondary">Your athletic telemetry signature.</p>
+</div>
+<!-- Radar Chart Card -->
+<div class="bg-bg-card rounded-xl p-6 card-border relative mb-6 energy-border-top flex flex-col items-center overflow-hidden">
+<!-- Atmospheric Glow Background -->
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-container/10 via-background/0 to-background/0 pointer-events-none"></div>
+<div class="text-center mb-8 relative z-10">
+<h2 class="font-label-caps text-label-caps text-primary mb-1 tracking-[0.2em]">ARCHETYPE</h2>
+<div class="font-hero-lg text-hero-lg text-on-surface glow-red">The Powerhouse</div>
+<p class="font-body-md text-body-md text-text-secondary mt-2 max-w-sm mx-auto">
+                    You move serious weight. Strength is your signature.
+                </p>
+</div>
+<!-- SVG Radar Chart -->
+<div class="relative w-full max-w-[320px] aspect-square z-10 my-4">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 200 200">
+<defs>
+<filter height="140%" id="crimsonGlow" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="4"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+</defs>
+<!-- Background Grid -->
+<g class="radar-line">
+<!-- Pentagons (Grid Levels) -->
+<polygon fill="none" points="100,20 176,75 147,165 53,165 24,75"></polygon>
+<polygon fill="none" points="100,40 157,81 135,149 65,149 43,81"></polygon>
+<polygon fill="none" points="100,60 138,88 123,132 77,132 62,88"></polygon>
+<polygon fill="none" points="100,80 119,94 112,116 88,116 81,94"></polygon>
+<!-- Axes -->
+<line x1="100" x2="100" y1="100" y2="20"></line>
+<line x1="100" x2="176" y1="100" y2="75"></line>
+<line x1="100" x2="147" y1="100" y2="165"></line>
+<line x1="100" x2="53" y1="100" y2="165"></line>
+<line x1="100" x2="24" y1="100" y2="75"></line>
+</g>
+<!-- Ghost Polygon (Previous State/Growth) -->
+<polygon fill="rgba(255,255,255,0.03)" points="100,50 140,80 120,130 70,120 50,75" stroke="rgba(255,255,255,0.15)" stroke-dasharray="2,2" stroke-width="1"></polygon>
+<!-- Current Data Polygon -->
+<polygon fill="rgba(224, 20, 47, 0.18)" filter="url(#crimsonGlow)" points="100,25 160,85 130,150 80,140 35,65" stroke="#E0142F" stroke-width="2"></polygon>
+<!-- Data Points -->
+<circle cx="100" cy="25" fill="#FFF" r="3"></circle>
+<circle cx="160" cy="85" fill="#FFF" r="3"></circle>
+<circle cx="130" cy="150" fill="#FFF" r="3"></circle>
+<circle cx="80" cy="140" fill="#FFF" r="3"></circle>
+<circle cx="35" cy="65" fill="#FFF" r="3"></circle>
+<!-- Labels -->
+<text class="radar-label text-primary" x="100" y="10">STRENGTH</text>
+<text class="radar-label" x="185" y="75">ENDURANCE</text>
+<text class="radar-label" x="155" y="178">CONSISTENCY</text>
+<text class="radar-label" x="45" y="178">PROGRESSION</text>
+<text class="radar-label" x="15" y="75">BALANCE</text>
+</svg>
+</div>
+</div>
+<!-- Dimension Breakdown List -->
+<div class="flex flex-col gap-3">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2">DIMENSIONAL BREAKDOWN</h3>
+<!-- Row 1: Strength -->
+<div class="bg-bg-card card-border rounded-lg p-4 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="font-body-md text-body-md text-on-surface font-semibold">Strength</span>
+<span class="font-stat-display text-stat-display text-primary text-2xl">94</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container glow-red w-[94%]"></div>
+</div>
+<div class="flex justify-between mt-1">
+<span class="font-label-caps text-label-caps text-text-secondary text-[10px]">CONFIDENCE: HIGH</span>
+<span class="font-label-caps text-label-caps text-text-secondary text-[10px]">+2% THIS WEEK</span>
+</div>
+</div>
+<!-- Row 2: Endurance -->
+<div class="bg-bg-card card-border rounded-lg p-4 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="font-body-md text-body-md text-on-surface font-semibold">Endurance</span>
+<span class="font-stat-display text-stat-display text-on-surface text-2xl">72</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline w-[72%]"></div>
+</div>
+</div>
+<!-- Row 3: Consistency -->
+<div class="bg-bg-card card-border rounded-lg p-4 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="font-body-md text-body-md text-on-surface font-semibold">Consistency</span>
+<span class="font-stat-display text-stat-display text-on-surface text-2xl">88</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline w-[88%]"></div>
+</div>
+</div>
+<!-- Row 4: Progression -->
+<div class="bg-bg-card card-border rounded-lg p-4 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="font-body-md text-body-md text-on-surface font-semibold">Progression</span>
+<span class="font-stat-display text-stat-display text-on-surface text-2xl">65</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline w-[65%]"></div>
+</div>
+</div>
+<!-- Row 5: Balance -->
+<div class="bg-bg-card card-border rounded-lg p-4 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="font-body-md text-body-md text-on-surface font-semibold">Balance</span>
+<span class="font-stat-display text-stat-display text-on-surface text-2xl">81</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline w-[81%]"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-lowest docked full-width bottom-0 rounded-t-xl border-t border-outline-variant/20 shadow-lg fixed left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-6 pt-base md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-label-caps text-[10px]">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">fitness_center</span>
+<span class="font-label-caps text-label-caps text-[10px]">TRAIN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">qr_code_scanner</span>
+<span class="font-label-caps text-label-caps text-[10px]">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">groups</span>
+<span class="font-label-caps text-label-caps text-[10px]">FEED</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary filter drop-shadow-[0_0_8px_rgba(255,179,175,0.4)] scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-caps text-label-caps text-[10px]">PROFILE</span>
+</a>
+</nav>
+</body></html>

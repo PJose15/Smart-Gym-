@@ -1,0 +1,247 @@
+﻿[
+    {
+        "slug":  "accept-program",
+        "title":  "Accept Program — NEXTERA",
+        "screenId":  "ba61640583fb417190d198154c3747c2",
+        "width":  "780",
+        "height":  "2126"
+    },
+    {
+        "slug":  "challenge-detail",
+        "title":  "Challenge Detail — NEXTERA",
+        "screenId":  "1a8926a1a8364d7794c81582bf56e0ad",
+        "width":  "780",
+        "height":  "3086"
+    },
+    {
+        "slug":  "challenges-list",
+        "title":  "Challenges List — NEXTERA",
+        "screenId":  "60f04c537fae4f19a48152ef816ae242",
+        "width":  "780",
+        "height":  "2136"
+    },
+    {
+        "slug":  "challenges-list-v2",
+        "title":  "Challenges List — NEXTERA",
+        "screenId":  "7ba309cb8dd94fc4911b755933058640",
+        "width":  "780",
+        "height":  "2080"
+    },
+    {
+        "slug":  "daily-check-in",
+        "title":  "Daily Check-in — NEXTERA",
+        "screenId":  "d9f522f89bb24b5db0b7afbc98f61353",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "floor-health",
+        "title":  "Floor Health — NEXTERA",
+        "screenId":  "b892c1404cb44dc3b80a8beeec5d7b78",
+        "width":  "2560",
+        "height":  "2048"
+    },
+    {
+        "slug":  "gamification-celebrations",
+        "title":  "Gamification Celebrations — NEXTERA",
+        "screenId":  "032c8e623a2847e9abb1fce474e80dd9",
+        "width":  "780",
+        "height":  "3824"
+    },
+    {
+        "slug":  "generate-ai-program",
+        "title":  "Generate AI Program — NEXTERA",
+        "screenId":  "277d859ff3584244851f951d8dd83756",
+        "width":  "780",
+        "height":  "2564"
+    },
+    {
+        "slug":  "home",
+        "title":  "Home — NEXTERA",
+        "screenId":  "88572972113d480d84ffa2db5c57c787",
+        "width":  "780",
+        "height":  "2620"
+    },
+    {
+        "slug":  "home-v2",
+        "title":  "Home — NEXTERA",
+        "screenId":  "b8d2a0d45fc34bf9a8afa6c8e87221d8",
+        "width":  "780",
+        "height":  "2654"
+    },
+    {
+        "slug":  "leaderboard",
+        "title":  "Leaderboard — NEXTERA",
+        "screenId":  "36bb35bf2fae4577bf2d2ff9e6826846",
+        "width":  "780",
+        "height":  "1976"
+    },
+    {
+        "slug":  "leaderboard-v2",
+        "title":  "Leaderboard — NEXTERA",
+        "screenId":  "5678b642991046e4ab5b08bb73cbda9d",
+        "width":  "780",
+        "height":  "1980"
+    },
+    {
+        "slug":  "machine-screen",
+        "title":  "Machine Screen — NEXTERA",
+        "screenId":  "13aa1525a6be4c0aba78a990c6538cf7",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "machine-screen-v2",
+        "title":  "Machine Screen — NEXTERA",
+        "screenId":  "6e1bb67ded2f4b2a8860a55fca7f0e05",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "messages",
+        "title":  "Messages — NEXTERA",
+        "screenId":  "05d19dcf2aaf48b29b055006e6bf48d8",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "muscle-map",
+        "title":  "Muscle Map — NEXTERA",
+        "screenId":  "72f395fc5cf5423f8ad01463ed48f9ec",
+        "width":  "780",
+        "height":  "1960"
+    },
+    {
+        "slug":  "my-program",
+        "title":  "My Program — NEXTERA",
+        "screenId":  "838866de81794afa8e6dccfebc1f8bd4",
+        "width":  "780",
+        "height":  "2094"
+    },
+    {
+        "slug":  "my-program-v2",
+        "title":  "My Program — NEXTERA",
+        "screenId":  "9d21f33fa37b4e2780c4a784353852a8",
+        "width":  "780",
+        "height":  "2094"
+    },
+    {
+        "slug":  "onboarding",
+        "title":  "Onboarding — NEXTERA",
+        "screenId":  "2777498065224eebbbd32143412b9ba7",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "onboarding-v2",
+        "title":  "Onboarding — NEXTERA",
+        "screenId":  "75531774a95642759aae193789611250",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "performance-dna",
+        "title":  "Performance DNA — NEXTERA",
+        "screenId":  "170041a924c3495fb834614eaa202311",
+        "width":  "780",
+        "height":  "2936"
+    },
+    {
+        "slug":  "pr-celebration",
+        "title":  "PR Celebration — NEXTERA",
+        "screenId":  "a08a2b117456401ea52f0c0428654f40",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "profile",
+        "title":  "Profile — NEXTERA",
+        "screenId":  "27a2731dde6a4b37b37df2614ce11325",
+        "width":  "780",
+        "height":  "3868"
+    },
+    {
+        "slug":  "profile-v2",
+        "title":  "Profile — NEXTERA",
+        "screenId":  "45dd404a3de748ddbe8d1e44d0e88c0c",
+        "width":  "780",
+        "height":  "3866"
+    },
+    {
+        "slug":  "readiness",
+        "title":  "Readiness — NEXTERA",
+        "screenId":  "d8f035c5628f4395b4d24cb7b532c17b",
+        "width":  "780",
+        "height":  "2314"
+    },
+    {
+        "slug":  "rest-timer",
+        "title":  "Rest Timer — NEXTERA",
+        "screenId":  "77c1d9222b9148359f5c93aa12c56695",
+        "width":  "780",
+        "height":  "1958"
+    },
+    {
+        "slug":  "rest-timer-v2",
+        "title":  "Rest Timer — NEXTERA",
+        "screenId":  "dc42566edb334200a0c61e0541777f8e",
+        "width":  "780",
+        "height":  "1930"
+    },
+    {
+        "slug":  "scan-machine",
+        "title":  "Scan Machine — NEXTERA",
+        "screenId":  "f323cb54eb0445de97f25ffba5810094",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "session-summary",
+        "title":  "Session Summary — NEXTERA",
+        "screenId":  "3d55362903c34cea828abd1e0f7514e0",
+        "width":  "990",
+        "height":  "2004"
+    },
+    {
+        "slug":  "session-summary-v2",
+        "title":  "Session Summary — NEXTERA",
+        "screenId":  "c9a074d57f5a4a62aa9a853181721237",
+        "width":  "990",
+        "height":  "1956"
+    },
+    {
+        "slug":  "set-logger",
+        "title":  "Set Logger — NEXTERA",
+        "screenId":  "6e940715ac5e4efc9953fcf7245484d4",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "social-feed",
+        "title":  "Social Feed — NEXTERA",
+        "screenId":  "1d62e2632d024fb68f4c839f5bcc48ae",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "social-feed-v2",
+        "title":  "Social Feed — NEXTERA",
+        "screenId":  "a75514faf12b4410b49b5070a3a4cff5",
+        "width":  "780",
+        "height":  "1768"
+    },
+    {
+        "slug":  "trainer-roster",
+        "title":  "Trainer Roster — NEXTERA",
+        "screenId":  "2935764f31d448d184b87b18f6928b56",
+        "width":  "2560",
+        "height":  "2048"
+    },
+    {
+        "slug":  "weekly-check-in",
+        "title":  "Weekly Check-in — NEXTERA",
+        "screenId":  "57ccabcc8b0b4d789c16dede8b90260e",
+        "width":  "780",
+        "height":  "4160"
+    }
+]

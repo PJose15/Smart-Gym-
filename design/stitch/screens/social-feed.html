@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - Social Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e5e1e4",
+                      "on-tertiary-fixed-variant": "#8e1120",
+                      "surface-container-highest": "#353437",
+                      "surface": "#131315",
+                      "on-primary-fixed-variant": "#930018",
+                      "on-tertiary-fixed": "#410007",
+                      "background": "#131315",
+                      "primary": "#ffb3af",
+                      "tertiary-fixed": "#ffdad8",
+                      "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                      "secondary": "#ffb3b0",
+                      "surface-dim": "#131315",
+                      "inverse-primary": "#bf0023",
+                      "on-tertiary-container": "#fff6f5",
+                      "on-surface": "#e5e1e4",
+                      "tertiary-container": "#ca4046",
+                      "primary-fixed-dim": "#ffb3af",
+                      "tertiary-fixed-dim": "#ffb3b1",
+                      "error": "#ffb4ab",
+                      "surface-container": "#201f21",
+                      "secondary-fixed-dim": "#ffb3b0",
+                      "on-primary": "#68000e",
+                      "on-primary-fixed": "#410006",
+                      "on-secondary": "#680010",
+                      "outline-variant": "#5d3f3e",
+                      "bg-elevated": "#121214",
+                      "on-secondary-container": "#fff6f5",
+                      "surface-variant": "#353437",
+                      "secondary-fixed": "#ffdad8",
+                      "on-secondary-fixed-variant": "#93001b",
+                      "on-tertiary": "#680011",
+                      "bg-card": "#16161A",
+                      "surface-bright": "#39393b",
+                      "on-secondary-fixed": "#410006",
+                      "outline": "#ad8885",
+                      "inverse-on-surface": "#313032",
+                      "surface-tint": "#ffb3af",
+                      "inverse-surface": "#e5e1e4",
+                      "on-surface-variant": "#e7bdba",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-low": "#1c1b1d",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-fixed": "#ffdad7",
+                      "primary-container": "#e0142f",
+                      "error-container": "#93000a",
+                      "on-primary-container": "#fff5f4",
+                      "tertiary": "#ffb3b1",
+                      "text-secondary": "#B5B2B8",
+                      "on-error": "#690005",
+                      "gold": "#E8B339",
+                      "surface-container-high": "#2a2a2c",
+                      "secondary-container": "#e40430"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter-desktop": "24px",
+                      "sub": "4px",
+                      "base": "8px",
+                      "hero-margin": "64px",
+                      "section-gap": "32px",
+                      "gutter-mobile": "16px"
+              },
+              "fontFamily": {
+                      "stat-display": [
+                              "JetBrains Mono"
+                      ],
+                      "wordmark": [
+                              "Playfair Display"
+                      ],
+                      "hero-lg": [
+                              "Playfair Display"
+                      ],
+                      "headline-h1": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "stat-display": [
+                              "40px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "wordmark": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.12em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "hero-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+          .glow-active {
+              filter: drop-shadow(0 0 8px rgba(224,20,47,0.28));
+          }
+          .border-hairline {
+              border: 1px solid rgba(255,255,255,0.07);
+          }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md h-screen flex flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-gutter-mobile py-sub bg-background/80 backdrop-blur-md z-40 sticky top-0 shrink-0">
+<div class="flex items-center gap-base">
+<div class="w-10 h-10 rounded-full overflow-hidden border-hairline relative">
+<img class="w-full h-full object-cover" data-alt="A detailed, cinematic headshot of an elite athlete in a dramatically lit, dark gym environment. Deep blacks, intense crimson red accent lighting creating a moody, premium profile picture. High contrast, professional photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNLPuy67jem39QNqdF3WXcHQu2d4Sn5ONu01EMhRJ2yx99ESAq37zKwNmXvLDrH9VQ2NrIFZdtyT2kQznNkpUvEEgsIaPAFSPggsNe3Gjd6IFg3anWRCnls5os9ibD2DufO1GSfzASnFDeAi2fAaxUW5lehZXUmCChBCaA3KP5mQODgrMSrDBtUdwcrhaGB5UAK_HF1nYF8dK7voEmKhHnil84mVCcTgbLTwZQ-nArZB1wBTZ13cJ4PVSIMm3gV63ZaZLXnrkeVBk"/>
+</div>
+</div>
+<h1 class="font-wordmark text-headline-h1 text-on-surface tracking-widest text-center absolute left-1/2 -translate-x-1/2">NEXTERA</h1>
+<div class="flex items-center gap-base">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</div>
+</header>
+<!-- Navigation Drawer (Desktop) -->
+<div class="hidden lg:flex flex-col h-full py-hero-margin bg-surface-container-low dark:bg-surface-container-low docked left-0 h-full w-64 border-r border-outline-variant/10 fixed z-30">
+<h2 class="font-wordmark text-headline-h1 text-on-surface mb-section-gap px-gutter-desktop">NEXTERA ELITE</h2>
+<div class="px-gutter-desktop mb-8">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border-hairline">
+<img class="w-full h-full object-cover" data-alt="A highly detailed, cinematic headshot of an elite fitness trainer in a dramatically lit, dark gym environment. Deep blacks, intense crimson red accent lighting creating a moody, premium profile picture. High contrast, professional photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiAkGjE70ADkJX3vk2A1h7QoDXMKzR6gCOmkdqKAuc3ccgQDfv4Sz2SKXrOIzTJo_pkpQ6kOh7H_BSBoD68znD9FPmqwnu5coKp3FR7e1AkjoCxMY8YK5qIy7dq-NqKdhU6Cy3FMlm2hXRcEe5YDz_jrjpLLM9mKMmGRa0oGmLaGvtdXc0Vk6qwZgqVeNPVg7nd8h0OrAdwYxx6nkRerkj6T_gzObMaWjNaN1xq2WEu3QRdCl4eOwJxVkfo9Xcg6N9fd3Ge5LcKZc"/>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-primary">Lead Performance Coach</div>
+<div class="text-xs text-on-surface-variant">Admin Tier</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col">
+<a class="text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">settings_accessibility</span>
+<span class="font-body-md text-body-md">Trainer Hub</span>
+</a>
+<a class="bg-tertiary-container/20 text-primary border-r-4 border-primary px-gutter-desktop py-base transition-all duration-300 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined glow-active">group</span>
+<span class="font-body-md text-body-md font-bold">Client Roster</span>
+</a>
+<a class="text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-body-md text-body-md">Performance Data</span>
+</a>
+<a class="text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+<span class="font-body-md text-body-md">Inventory</span>
+</a>
+<a class="text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out flex items-center gap-3 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto w-full lg:pl-64 pb-24 md:pb-0 scroll-smooth">
+<!-- Sticky Feed Header -->
+<div class="sticky top-0 z-20 bg-background/95 backdrop-blur-md px-gutter-mobile py-base flex justify-between items-center border-b border-hairline">
+<h2 class="font-headline-h1 text-headline-h1 text-on-surface">Iron Fitness Feed</h2>
+<button class="flex items-center gap-1 text-primary font-label-caps text-label-caps hover:text-primary-container transition-colors">
+                Filter <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</button>
+</div>
+<!-- Segmented Control -->
+<div class="px-gutter-mobile py-base">
+<div class="flex bg-surface-container-high rounded-full p-1 border-hairline">
+<button class="flex-1 py-2 text-center rounded-full bg-bg-elevated text-primary font-label-caps text-label-caps shadow-md border-hairline">FEED</button>
+<button class="flex-1 py-2 text-center rounded-full text-on-surface-variant font-label-caps text-label-caps hover:text-on-surface transition-colors">LEADERBOARD</button>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="px-gutter-mobile pb-base flex gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary font-label-caps text-label-caps">All</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-hairline bg-surface-container text-on-surface-variant font-label-caps text-label-caps hover:border-primary/50 hover:text-primary transition-colors">PRs</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-hairline bg-surface-container text-on-surface-variant font-label-caps text-label-caps hover:border-primary/50 hover:text-primary transition-colors">Achievements</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-hairline bg-surface-container text-on-surface-variant font-label-caps text-label-caps hover:border-primary/50 hover:text-primary transition-colors">Streaks</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-hairline bg-surface-container text-on-surface-variant font-label-caps text-label-caps hover:border-primary/50 hover:text-primary transition-colors">Challenges</button>
+</div>
+<!-- Feed Content Container -->
+<div class="p-gutter-mobile space-y-section-gap max-w-3xl mx-auto">
+<!-- Event Card 1: Text Post -->
+<article class="bg-bg-card rounded-xl border-hairline p-gutter-mobile shadow-lg">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-hairline">
+<img class="w-full h-full object-cover" data-alt="A detailed headshot of a female athlete in a dark, moody gym setting. Cinematic crimson lighting highlights her profile. High-end, premium fitness aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs57KR7MyK81ZHIJDqrsUwlcWRxDYGF4zRCpIkkRBzT2LWHoCc1YI4GBnfVNJ29IDV-zz1KeJKhHtIPZ0sa4M2OSWOD_mAi0SE1jHv67YUCdhgLtQbwnm9zwLKjnSOTBVjr5kR0zF2lvVTDIR40K6IwWDHfOKqak9QeJAD7MLT9Ev-xp6_JqiTUE14zNg2URdWNcFRCNhBGOoaxG_cZwxFgI2dDPwHyuAjlg0pwYiBVLiRbz8xk256hznnSWMF7qe1uuCviL8rqCY"/>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface">Sarah M.</div>
+<div class="text-xs text-on-surface-variant">2h ago</div>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<p class="text-on-surface mb-2 font-body-md">Crushed leg day with the crew. Nothing better than shared grind.</p>
+<div class="flex gap-2 mb-4">
+<span class="text-primary text-xs">#NexteraStrong</span>
+<span class="text-primary text-xs">#LegDay</span>
+</div>
+<div class="rounded-lg overflow-hidden border-hairline mb-4 relative aspect-video">
+<img class="w-full h-full object-cover" data-alt="A cinematic, wide shot of a group of elite athletes working out together in a dark, high-end gym. Dramatic red lighting, deep shadows, premium fitness environment. High contrast." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCh7D_9Bcac9pN98sdTINrkJ-ejYxBTrNiIYPkPlHMjizHiAv_M_dWyOflmJSmsJA6Qy4zzWsraWSQGwIifJIHuxU17V1Tx8ghabaAQxMk6RsKzEww0XkPCtOoMX_Izsl0WuvGiAMQCBSiHFOwLxqtmsrJST3grRGCRW968RifCkJ6nQcbFqNZQQz76PneXWR8vVfK262o18Y3NMdpuWHvjc-4JqiqQN5504fbfuEHPVpH80O1I_X8iuHSKzWJoIeUM4syAzwxDiME"/>
+</div>
+<div class="flex gap-6 mb-4 pb-4 border-b border-hairline">
+<div class="flex flex-col">
+<span class="font-stat-display text-2xl text-on-surface">24</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">LIKES</span>
+</div>
+<div class="flex flex-col">
+<span class="font-stat-display text-2xl text-on-surface">8</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">COMMENTS</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex gap-2 overflow-x-auto no-scrollbar">
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">💪</button>
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">🔥</button>
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">🏆</button>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+</div>
+</article>
+<!-- Event Card 2: Workout Completed -->
+<article class="bg-bg-card rounded-xl border-hairline p-gutter-mobile shadow-lg">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-hairline">
+<img class="w-full h-full object-cover" data-alt="A detailed headshot of a male athlete in a dark, moody gym setting. Cinematic crimson lighting highlights his profile. High-end, premium fitness aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx_GoivHAOjS14DJ4guMdrRcCfy-apPm1m05mDhWMExz3nXp0IONJivyD0386U2zSNRLZHfXpnjaZAKoUMPX-5su3oflr08HlT4liJzJL11vs2f_Owjs6K_7AMeZisb1YhITgwtWYuPAmWPbzZvYieHBIphmhlYe59x8aw2B1GlT_VM786YowbSbE3m3JBwIe9Pc3XayKCQepJdijlCaJI1hU9vGlNr3eODgKkF9Abw8UZaMSJHk8rLL2IpxNvyz040sMr0bOmPSU"/>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface">Alex R. <span class="text-on-surface-variant lowercase font-normal">completed a workout</span></div>
+<div class="text-xs text-on-surface-variant">3h ago</div>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<h3 class="font-headline-h1 text-xl text-on-surface mb-4">Push Day Power</h3>
+<div class="grid grid-cols-3 gap-4 mb-4 pb-4 border-b border-hairline">
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant mb-1">TIME</span>
+<span class="font-stat-display text-2xl text-on-surface">45:12</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant mb-1">CAL</span>
+<span class="font-stat-display text-2xl text-on-surface">512</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant mb-1">VOLUME</span>
+<span class="font-stat-display text-2xl text-on-surface">18.4K <span class="text-xs">LBS</span></span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex gap-2">
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">👊</button>
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">👏</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-on-surface-variant">View all 2 comments</span>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Event Card 3: PR Alert -->
+<article class="bg-bg-card rounded-xl border-hairline p-gutter-mobile shadow-lg relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1" style="background: var(--color-energy-ribbon);"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-hairline">
+<img class="w-full h-full object-cover" data-alt="A detailed headshot of a female powerlifter in a dark, moody gym setting. Cinematic crimson lighting highlights her profile. High-end, premium fitness aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbUU9EHCI0YtRluIqBb2P6QDIA0aKAgAhWSlvPPxYFuLNeLG7NesxTlmMuotF9G6T40UgJFRQDke9Xgx8n1Xd9SWK_uwozEA6jnqzceEa3BKtfYA6lcMroYgOAIFbSQ6vBVNpiP8qdikKE5JiXrEOecZi7MbxIdv5J2MDx0bPSAwgUANUo5H9wJ_MDxEzmca_rHgWchI4nUy7vCAGeCwCpKwPHbKEPGi1o6X52N5jbN7Hq9u5_ynqYZ_fi20FX_a0jt7kuw2wohDU"/>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface">Maya K. <span class="text-on-surface-variant lowercase font-normal">hit a new PR</span></div>
+<div class="text-xs text-on-surface-variant">5h ago</div>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="bg-surface-container-low rounded-lg p-4 border-hairline mb-4 flex justify-between items-center">
+<div>
+<div class="text-on-surface-variant text-sm mb-1">Deadlift</div>
+<div class="flex items-baseline gap-2">
+<span class="font-stat-display text-3xl text-on-surface">225 <span class="text-sm font-body-md">LBS</span></span>
+<span class="text-emerald-400 font-stat-display text-sm">+15 lb</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-full bg-primary/20 border border-primary flex items-center justify-center glow-active">
+<span class="text-primary font-stat-display text-sm">PR</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex gap-2">
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">🔥</button>
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">🏆</button>
+<button class="h-8 px-3 rounded-full bg-surface-container-high border-hairline text-sm hover:bg-surface-bright transition-colors">🚀</button>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+</div>
+<div class="mt-4 pt-4 border-t border-hairline">
+<input class="w-full bg-surface-container-high border-hairline rounded-full py-2 px-4 text-sm text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-body-md" placeholder="Add a comment..." type="text"/>
+</div>
+</article>
+<!-- Event Card 4: Team Progress -->
+<article class="bg-bg-card rounded-xl border-hairline p-gutter-mobile shadow-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase">Team Progress</h3>
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container border-hairline flex items-center justify-center relative overflow-hidden">
+<span class="font-wordmark text-2xl text-primary z-10 relative">X</span>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface">NEXTERA CREW</div>
+<div class="text-xs text-on-surface-variant">12 Members</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-stat-display text-2xl text-primary glow-active">78%</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant uppercase">Weekly Goal</div>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-2 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 78%; background: var(--color-energy-ribbon);"></div>
+</div>
+</article>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-6 pt-base bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant/20 shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-[10px]">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">fitness_center</span>
+<span class="font-label-caps text-[10px]">TRAIN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">qr_code_scanner</span>
+<span class="font-label-caps text-[10px]">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary filter drop-shadow-[0_0_8px_rgba(255,179,175,0.4)] scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-label-caps text-[10px]">FEED</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-caps text-[10px]">PROFILE</span>
+</a>
+</nav>
+</body></html>

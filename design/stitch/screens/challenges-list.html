@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXTERA - Challenges</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:wght@600&amp;family=JetBrains+Mono:wght@800&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "tertiary": "#ffb3b1",
+                "surface-container-highest": "#353437",
+                "on-secondary": "#680010",
+                "bg-card": "#16161A",
+                "surface-container-high": "#2a2a2c",
+                "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                "inverse-on-surface": "#313032",
+                "on-primary-container": "#fff5f4",
+                "primary-fixed-dim": "#ffb3af",
+                "tertiary-fixed": "#ffdad8",
+                "inverse-surface": "#e5e1e4",
+                "primary-fixed": "#ffdad7",
+                "outline": "#ad8885",
+                "on-error": "#690005",
+                "on-primary": "#68000e",
+                "surface-variant": "#353437",
+                "surface": "#131315",
+                "on-primary-fixed-variant": "#930018",
+                "on-tertiary": "#680011",
+                "gold": "#E8B339",
+                "bg-elevated": "#121214",
+                "primary-container": "#e0142f",
+                "on-secondary-fixed": "#410006",
+                "surface-bright": "#39393b",
+                "error-container": "#93000a",
+                "on-error-container": "#ffdad6",
+                "secondary-fixed-dim": "#ffb3b0",
+                "primary": "#ffb3af",
+                "tertiary-container": "#ca4046",
+                "on-surface": "#e5e1e4",
+                "on-surface-variant": "#e7bdba",
+                "on-secondary-fixed-variant": "#93001b",
+                "on-tertiary-container": "#fff6f5",
+                "on-primary-fixed": "#410006",
+                "inverse-primary": "#bf0023",
+                "secondary": "#ffb3b0",
+                "surface-container-lowest": "#0e0e10",
+                "error": "#ffb4ab",
+                "surface-container-low": "#1c1b1d",
+                "on-secondary-container": "#fff6f5",
+                "surface-tint": "#ffb3af",
+                "secondary-container": "#e40430",
+                "outline-variant": "#5d3f3e",
+                "tertiary-fixed-dim": "#ffb3b1",
+                "secondary-fixed": "#ffdad8",
+                "on-tertiary-fixed-variant": "#8e1120",
+                "surface-container": "#201f21",
+                "background": "#131315",
+                "surface-dim": "#131315",
+                "on-background": "#e5e1e4",
+                "text-secondary": "#B5B2B8",
+                "on-tertiary-fixed": "#410007"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "base": "8px",
+                "gutter-mobile": "16px",
+                "sub": "4px",
+                "section-gap": "32px",
+                "hero-margin": "64px",
+                "gutter-desktop": "24px"
+        },
+        "fontFamily": {
+                "hero-lg": [
+                        "Playfair Display"
+                ],
+                "body-md": [
+                        "Inter"
+                ],
+                "wordmark": [
+                        "Playfair Display"
+                ],
+                "headline-h1": [
+                        "Inter"
+                ],
+                "stat-display": [
+                        "JetBrains Mono"
+                ],
+                "label-caps": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "hero-lg": [
+                        "40px",
+                        {
+                                "lineHeight": "1.1",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "15px",
+                        {
+                                "lineHeight": "1.6",
+                                "fontWeight": "400"
+                        }
+                ],
+                "wordmark": [
+                        "48px",
+                        {
+                                "lineHeight": "1.2",
+                                "letterSpacing": "0.12em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-h1": [
+                        "32px",
+                        {
+                                "lineHeight": "1.2",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "stat-display": [
+                        "40px",
+                        {
+                                "lineHeight": "1",
+                                "letterSpacing": "-0.03em",
+                                "fontWeight": "800"
+                        }
+                ],
+                "label-caps": [
+                        "12px",
+                        {
+                                "lineHeight": "1",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .pulse-urgent {
+            animation: pulse-urgent 1.8s infinite;
+        }
+
+        @keyframes pulse-urgent {
+            0% { box-shadow: 0 0 0 0 rgba(224, 20, 47, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(224, 20, 47, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(224, 20, 47, 0); }
+        }
+
+        .stagger-fade-in > * {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fade-in-up 0.5s ease-out forwards;
+        }
+
+        .stagger-fade-in > *:nth-child(1) { animation-delay: 0.1s; }
+        .stagger-fade-in > *:nth-child(2) { animation-delay: 0.2s; }
+        .stagger-fade-in > *:nth-child(3) { animation-delay: 0.3s; }
+        .stagger-fade-in > *:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fade-in-up {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .accent-line-animate {
+            width: 0;
+            transition: width 0.4s ease-out;
+        }
+
+        .progress-bar-fill {
+            width: 0;
+            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glow-active {
+            box-shadow: 0 0 20px rgba(224, 20, 47, 0.15);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md selection:bg-primary-container selection:text-white">
+<!-- Header (Task Context: Transactional / Task-Focused sub-page -> Suppress global nav shell, use back button) -->
+<header class="sticky top-0 z-40 bg-background/80 backdrop-blur-md px-gutter-mobile md:px-gutter-desktop py-sub border-b border-outline-variant/10">
+<div class="flex items-center w-full max-w-7xl mx-auto h-16">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/30 transition-colors text-on-surface mr-4 group">
+<span class="material-symbols-outlined text-2xl group-hover:-translate-x-1 transition-transform" data-icon="chevron_left">chevron_left</span>
+</button>
+<h1 class="font-hero-lg text-3xl text-on-surface flex-1 tracking-wide">Challenges</h1>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-gutter-mobile md:px-gutter-desktop py-section-gap">
+<!-- Tabs -->
+<div class="flex space-x-6 border-b border-outline-variant/20 mb-8 overflow-x-auto no-scrollbar pb-1">
+<button class="relative pb-2 font-label-caps text-label-caps text-primary tracking-widest whitespace-nowrap group">
+                ACTIVE
+                <div class="absolute bottom-[-1px] left-0 w-full h-[2px] bg-primary-container"></div>
+</button>
+<button class="relative pb-2 font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface tracking-widest whitespace-nowrap transition-colors">
+                JOINED
+            </button>
+<button class="relative pb-2 font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface tracking-widest whitespace-nowrap transition-colors">
+                COMPLETED
+            </button>
+<button class="relative pb-2 font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface tracking-widest whitespace-nowrap transition-colors">
+                ALL
+            </button>
+</div>
+<!-- Challenges Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-fade-in">
+<!-- Card 1: Active, Joined, Urgent -->
+<div class="challenge-card bg-bg-card rounded-xl border border-white/5 relative overflow-hidden flex flex-col glow-active">
+<!-- Animated Accent Line -->
+<div class="absolute top-0 left-0 h-[2px] bg-energy-ribbon accent-line-animate" style="width: 100%;"></div>
+<div class="p-4 flex-1 flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-caps text-label-caps text-text-secondary bg-surface-container px-2 py-1 rounded border border-white/5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="bar_chart">bar_chart</span>
+                            VOLUME
+                        </span>
+<span class="font-stat-display text-sm bg-primary-container text-white px-2 py-1 rounded pulse-urgent shadow-[0_0_8px_rgba(224,20,47,0.4)] tracking-tight">
+                            3D LEFT
+                        </span>
+</div>
+<h2 class="font-hero-lg text-2xl text-on-surface mb-1 tracking-wide">Titan's Ascent: <span class="font-stat-display text-2xl">100K</span> Lbs</h2>
+<p class="text-sm text-text-secondary mb-6 flex items-center gap-1 font-body-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="group">group</span> <span class="font-stat-display text-sm">248</span> participants · Ends Nov 30
+                    </p>
+<!-- Progress Section -->
+<div class="mt-auto">
+<div class="flex justify-between items-end mb-2">
+<span class="text-xs text-on-surface-variant font-body-md">Your Progress</span>
+<span class="font-stat-display text-xl text-primary tracking-tight">47K / 100K</span>
+</div>
+<div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden mb-4 relative">
+<!-- Glow under progress -->
+<div class="absolute top-0 left-0 h-full bg-primary-container/30 blur-[2px] w-[47%]"></div>
+<div class="h-full bg-primary-container rounded-full progress-bar-fill relative z-10" data-target="47%"></div>
+</div>
+<!-- Prize Row -->
+<div class="flex items-center gap-2 text-sm text-gold bg-surface-container-low p-2 rounded-lg mb-4 border border-gold/10 font-body-md">
+<span class="material-symbols-outlined text-[16px]" data-icon="emoji_events">emoji_events</span>
+<span>Free Premium Month</span>
+</div>
+<div class="w-full py-2.5 rounded-lg border border-primary/20 bg-primary/5 text-primary text-center font-label-caps text-sm tracking-widest flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+                            JOINED
+                        </div>
+</div>
+</div>
+</div>
+<!-- Card 2: Active, Not Joined -->
+<div class="challenge-card bg-bg-card rounded-xl border border-white/5 relative overflow-hidden flex flex-col hover:border-primary-container/30 transition-colors group">
+<div class="absolute top-0 left-0 h-[2px] bg-secondary accent-line-animate" style="width: 100%;"></div>
+<div class="p-4 flex-1 flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-caps text-label-caps text-text-secondary bg-surface-container px-2 py-1 rounded border border-white/5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="directions_run">directions_run</span>
+                            ENDURANCE
+                        </span>
+<span class="font-stat-display text-sm bg-surface-container-high text-text-secondary px-2 py-1 rounded tracking-tight">
+                            2W LEFT
+                        </span>
+</div>
+<h2 class="font-hero-lg text-2xl text-on-surface mb-1 tracking-wide">Winter Miles Challenge</h2>
+<p class="text-sm text-text-secondary mb-6 flex items-center gap-1 font-body-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="group">group</span> <span class="font-stat-display text-sm">1,024</span> participants · Ends Dec 15
+                    </p>
+<div class="mt-auto">
+<!-- Prize Row -->
+<div class="flex items-center gap-2 text-sm text-secondary bg-surface-container-low p-2 rounded-lg mb-4 border border-secondary/10 font-body-md">
+<span class="material-symbols-outlined text-[16px]" data-icon="redeem">redeem</span>
+<span>Exclusive Profile Badge</span>
+</div>
+<button class="w-full py-2.5 rounded-lg bg-primary-container text-white text-center font-body-md font-semibold text-sm flex items-center justify-center gap-2 hover:bg-secondary-container transition-colors shadow-[0_0_15px_rgba(224,20,47,0.2)] active:scale-[0.98]">
+                            Join Challenge
+                            <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3: Active, Joined, High Progress -->
+<div class="challenge-card bg-bg-card rounded-xl border border-white/5 relative overflow-hidden flex flex-col glow-active">
+<div class="absolute top-0 left-0 h-[2px] bg-energy-ribbon accent-line-animate" style="width: 100%;"></div>
+<div class="p-4 flex-1 flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-caps text-label-caps text-text-secondary bg-surface-container px-2 py-1 rounded border border-white/5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="fitness_center">fitness_center</span>
+                            CONSISTENCY
+                        </span>
+<span class="font-stat-display text-sm bg-surface-container-high text-text-secondary px-2 py-1 rounded tracking-tight">
+                            5D LEFT
+                        </span>
+</div>
+<h2 class="font-hero-lg text-2xl text-on-surface mb-1 tracking-wide"><span class="font-stat-display text-2xl">21</span> Days of Iron</h2>
+<p class="text-sm text-text-secondary mb-6 flex items-center gap-1 font-body-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="group">group</span> <span class="font-stat-display text-sm">512</span> participants · Ends Dec 02
+                    </p>
+<!-- Progress Section -->
+<div class="mt-auto">
+<div class="flex justify-between items-end mb-2">
+<span class="text-xs text-on-surface-variant font-body-md">Your Progress</span>
+<span class="font-stat-display text-xl text-primary tracking-tight">18 / 21</span>
+</div>
+<div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden mb-4 relative">
+<div class="absolute top-0 left-0 h-full bg-primary-container/30 blur-[2px] w-[85%]"></div>
+<div class="h-full bg-primary-container rounded-full progress-bar-fill relative z-10" data-target="85%"></div>
+</div>
+<div class="w-full py-2.5 rounded-lg border border-primary/20 bg-primary/5 text-primary text-center font-label-caps text-sm tracking-widest flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+                            JOINED
+                        </div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Trigger animations when elements scroll into view
+        document.addEventListener("DOMContentLoaded", () => {
+            const progressBars = document.querySelectorAll('.progress-bar-fill');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = entry.target.getAttribute('data-target');
+                        if (target) {
+                            entry.target.style.width = target;
+                        }
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            progressBars.forEach(bar => {
+                // Ensure initial state is 0 for the animation to work correctly on load
+                bar.style.width = '0%';
+                // Small delay to allow CSS transition to register
+                setTimeout(() => observer.observe(bar), 100);
+            });
+        });
+    </script>
+</body></html>

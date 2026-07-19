@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - Leaderboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#ffb3b0",
+                      "secondary-fixed": "#ffdad8",
+                      "tertiary-fixed-dim": "#ffb3b1",
+                      "surface-container-high": "#2a2a2c",
+                      "secondary-fixed-dim": "#ffb3b0",
+                      "bg-elevated": "#121214",
+                      "on-surface-variant": "#e7bdba",
+                      "on-secondary-fixed-variant": "#93001b",
+                      "error": "#ffb4ab",
+                      "surface-tint": "#ffb3af",
+                      "surface": "#131315",
+                      "surface-bright": "#39393b",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-container": "#e0142f",
+                      "on-primary-container": "#fff5f4",
+                      "primary-fixed-dim": "#ffb3af",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#353437",
+                      "tertiary-fixed": "#ffdad8",
+                      "on-secondary-fixed": "#410006",
+                      "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                      "text-secondary": "#B5B2B8",
+                      "on-tertiary": "#680011",
+                      "secondary-container": "#e40430",
+                      "on-tertiary-fixed": "#410007",
+                      "on-primary-fixed": "#410006",
+                      "primary": "#ffb3af",
+                      "on-secondary-container": "#fff6f5",
+                      "primary-fixed": "#ffdad7",
+                      "on-primary": "#68000e",
+                      "inverse-surface": "#e5e1e4",
+                      "surface-variant": "#353437",
+                      "on-tertiary-fixed-variant": "#8e1120",
+                      "bg-card": "#16161A",
+                      "inverse-on-surface": "#313032",
+                      "on-surface": "#e5e1e4",
+                      "on-tertiary-container": "#fff6f5",
+                      "background": "#131315",
+                      "outline-variant": "#5d3f3e",
+                      "on-error-container": "#ffdad6",
+                      "gold": "#E8B339",
+                      "on-secondary": "#680010",
+                      "surface-dim": "#131315",
+                      "inverse-primary": "#bf0023",
+                      "on-background": "#e5e1e4",
+                      "outline": "#ad8885",
+                      "error-container": "#93000a",
+                      "surface-container": "#201f21",
+                      "tertiary": "#ffb3b1",
+                      "on-primary-fixed-variant": "#930018",
+                      "tertiary-container": "#ca4046",
+                      "surface-container-low": "#1c1b1d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sub": "4px",
+                      "section-gap": "32px",
+                      "gutter-mobile": "16px",
+                      "hero-margin": "64px",
+                      "gutter-desktop": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-h1": [
+                              "Inter"
+                      ],
+                      "hero-lg": [
+                              "Playfair Display"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "wordmark": [
+                              "Playfair Display"
+                      ],
+                      "stat-display": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "headline-h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "hero-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "wordmark": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.12em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "stat-display": [
+                              "40px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "800"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Shimmer Animation */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .shimmer-medal {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-medal::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 2s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        /* Pulse Animation */
+        @keyframes pulse-rank {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.2); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .rank-pulse {
+            animation: pulse-rank 0.4s ease-out;
+        }
+
+        /* Glow Effects */
+        .glow-active {
+            box-shadow: 0 0 12px rgba(224,20,47,0.28);
+        }
+        .glow-text {
+            text-shadow: 0 0 8px rgba(224,20,47,0.4);
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* Staggered Entrance */
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideUp 0.4s ease forwards;
+        }
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stagger-item:nth-child(1) { animation-delay: 50ms; }
+        .stagger-item:nth-child(2) { animation-delay: 100ms; }
+        .stagger-item:nth-child(3) { animation-delay: 150ms; }
+        .stagger-item:nth-child(4) { animation-delay: 200ms; }
+        .stagger-item:nth-child(5) { animation-delay: 250ms; }
+        .stagger-item:nth-child(6) { animation-delay: 300ms; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col md:flex-row overflow-x-hidden selection:bg-primary-container selection:text-white">
+<!-- Desktop Navigation Drawer (Hidden on Mobile) -->
+<nav class="hidden lg:flex flex-col h-full py-hero-margin bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant/10 docked left-0 h-full w-64 fixed z-40">
+<div class="px-gutter-desktop">
+<h1 class="font-wordmark text-headline-h1 text-on-surface mb-section-gap tracking-widest uppercase">NEXTERA</h1>
+<div class="flex items-center gap-3 mb-section-gap">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/20">
+<img alt="Trainer avatar" class="w-full h-full object-cover" data-alt="A cinematic, high-contrast silhouette profile portrait of an elite male athlete against a dark gym background. Deep red volumetric lighting highlights the edges of his face. The overall mood is intense, disciplined, and premium." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy7wExsE3wAd-_VNE4-Fv7p9grt_6dY8fRJ5JJv-kAon7huprjzX5Bd7Z_8vrOioty1XHfDJafEXRw6nYdF6a1coNa0sRoQX3eClutqm9WslTIX3nvrJNrauZvh3SCDguoQAiw75VBWHLOwgF8dYhAlA8BEo_2ycojnACZqz-uKgYdIilNO_xERL4dqZ4DF58zbyHSPivET3fPklRKXKnevqnzyeCGgV-qx54pqATF85m_-wBTEvaKUarFs0jrCgSipFm79AcTtPc"/>
+</div>
+<div>
+<div class="font-headline-h1 text-label-caps uppercase text-on-surface">NEXTERA ELITE</div>
+<div class="font-body-md text-[11px] text-text-secondary">Lead Performance Coach</div>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto mt-4">
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md mt-2" href="#">
+<span class="material-symbols-outlined text-[20px]">settings_accessibility</span>
+<span>Trainer Hub</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md mt-2" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span>Client Roster</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md mt-2" href="#">
+<span class="material-symbols-outlined text-[20px]">monitoring</span>
+<span>Performance Data</span>
+</a>
+<a class="flex items-center gap-4 bg-tertiary-container/20 text-primary border-r-4 border-primary px-gutter-desktop py-base transition-all duration-300 ease-in-out font-body-md text-body-md mt-2" href="#">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+<span class="font-bold">Leaderboard</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md mt-2" href="#">
+<span class="material-symbols-outlined text-[20px]">precision_manufacturing</span>
+<span>Inventory</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-gutter-desktop py-base opacity-70 hover:bg-surface-variant/30 hover:text-on-surface transition-all duration-300 ease-in-out font-body-md text-body-md mt-2" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-64 relative pb-24 md:pb-0 min-h-screen flex flex-col">
+<!-- Top App Bar (Mobile & Desktop Header) -->
+<header class="flex justify-between items-center w-full px-gutter-mobile md:px-gutter-desktop py-sub md:py-base bg-background/80 backdrop-blur-md sticky top-0 z-30">
+<div class="flex items-center gap-3">
+<div class="lg:hidden w-8 h-8 rounded-full overflow-hidden border border-outline-variant/20">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="A cinematic, high-contrast silhouette profile portrait of an elite male athlete against a dark gym background. Deep red volumetric lighting highlights the edges of his face. The overall mood is intense, disciplined, and premium." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr3CSGGOa3g9sLNZ5_1I1tForMgcQ3ZLMebUrMjsZgQmEImJTJO4-38O--BpgD-loMnm6f2A5a_ISk4VINxXYIT45iGic9tEARf4sVQsjCPEy4xl6LenhMs-yBS1_-C2ZZQyxQ7CVDAF98r5atAVO483X9HmVpYyRwgl0B8klMvaIdW4Xr4KROjR3KEzWZGj8vIXFGXZeyQKjdO7DW-iqWqLFQ4SChZwHD40CcxC8AzbLCbArvGqPTLhqvmXbdXuxorIsVoWCpK-w"/>
+</div>
+<h1 class="font-wordmark text-wordmark text-on-surface tracking-widest uppercase md:hidden text-[24px]">NEXTERA</h1>
+<h2 class="hidden md:block font-headline-h1 text-headline-h1 text-on-surface tracking-tight">Leaderboard</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors hover:scale-95 duration-150 relative">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary-container rounded-full glow-active"></span>
+</button>
+</div>
+</header>
+<div class="px-gutter-mobile md:px-gutter-desktop py-6 flex-1 max-w-4xl mx-auto w-full flex flex-col">
+<!-- Segmented Controls -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
+<!-- Feed / Leaderboard Toggle -->
+<div class="flex p-1 bg-surface-container-high rounded-lg border border-white/5 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-6 py-2 rounded text-label-caps font-label-caps uppercase text-on-surface-variant hover:text-on-surface transition-colors">
+                        Feed
+                    </button>
+<button class="flex-1 sm:flex-none px-6 py-2 rounded bg-bg-card border border-white/10 text-primary glow-text text-label-caps font-label-caps uppercase shadow-[0_0_15px_rgba(224,20,47,0.15)] transition-all">
+                        Leaderboard
+                    </button>
+</div>
+<!-- Scope Toggle -->
+<div class="flex items-center gap-2 w-full sm:w-auto">
+<div class="flex p-1 bg-surface-container-high rounded-lg border border-white/5 flex-1 sm:flex-none">
+<button class="flex-1 sm:flex-none px-4 py-1.5 rounded bg-bg-card border border-white/10 text-on-surface text-[11px] font-label-caps uppercase transition-all">
+                            Gym
+                        </button>
+<button class="flex-1 sm:flex-none px-4 py-1.5 rounded text-[11px] font-label-caps uppercase text-on-surface-variant hover:text-on-surface transition-colors">
+                            Friends
+                        </button>
+</div>
+</div>
+</div>
+<!-- Metrics & Period -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+<!-- Metrics Chips -->
+<div class="flex gap-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto hide-scrollbar scroll-smooth">
+<button class="px-4 py-1.5 rounded-full border border-primary-container/30 bg-primary-container/10 text-primary text-[12px] font-label-caps uppercase whitespace-nowrap glow-active transition-all" onclick="animateSort()">
+                        XP
+                    </button>
+<button class="px-4 py-1.5 rounded-full border border-white/10 bg-surface-container-low text-on-surface-variant hover:bg-surface-variant/50 text-[12px] font-label-caps uppercase whitespace-nowrap transition-all" onclick="animateSort()">
+                        Volume
+                    </button>
+<button class="px-4 py-1.5 rounded-full border border-white/10 bg-surface-container-low text-on-surface-variant hover:bg-surface-variant/50 text-[12px] font-label-caps uppercase whitespace-nowrap transition-all" onclick="animateSort()">
+                        Sessions
+                    </button>
+<button class="px-4 py-1.5 rounded-full border border-white/10 bg-surface-container-low text-on-surface-variant hover:bg-surface-variant/50 text-[12px] font-label-caps uppercase whitespace-nowrap transition-all" onclick="animateSort()">
+                        Streak
+                    </button>
+</div>
+<!-- Period Selector -->
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-on-surface text-[12px] font-label-caps uppercase transition-colors shrink-0">
+                    This Week <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</button>
+</div>
+<!-- Leaderboard List -->
+<div class="flex flex-col gap-2 relative" id="leaderboard-container">
+<!-- Rank 1 -->
+<div class="stagger-item flex items-center justify-between p-4 bg-bg-card rounded border border-white/5 hover:border-white/10 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-8 flex justify-center">
+<div class="w-6 h-6 rounded-full bg-gold/20 border border-gold text-gold flex items-center justify-center text-[10px] font-bold shimmer-medal shadow-[0_0_10px_rgba(232,179,57,0.3)]">1</div>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+<img alt="User 1" class="w-full h-full object-cover" data-alt="A dramatic black and white profile photo of a muscular female athlete looking intensely focused. Low-key lighting creates deep shadows, embodying a highly disciplined, premium fitness aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAieYZHpGyR3VVxJa8GXxicoybRZsTGlWD7KdeUeuchYsbaeNl6lNGPgvJ3zssiQqOxOg1eKpmzbhIqOmSqOKwcprh8Hrs54pgMd-Zqv-Udi_r1HABzWhow0p-WmKJYPpsf2HY-1gR9CioXL_VNN6sPT0X_9OBFB983KedvAOujMxYYYBh1RuAUlCUnk-qGpoFcxeHUVy055E-Um58EWiRDkU31nAOGv5Rlc4fT7JjC45tQeIxvBUq-oWZ2Jc4VDcpEPiM7b9Vkwwg"/>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-on-surface text-[15px]">Sarah J.</span>
+<div class="flex items-center gap-1 text-[11px] text-primary">
+<span class="material-symbols-outlined text-[12px]">arrow_drop_up</span>
+<span>3</span>
+</div>
+</div>
+</div>
+<div class="font-stat-display text-[20px] text-on-surface tracking-tight">14,250</div>
+</div>
+<!-- Rank 2 -->
+<div class="stagger-item flex items-center justify-between p-4 bg-bg-card rounded border border-white/5 hover:border-white/10 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-8 flex justify-center">
+<div class="w-6 h-6 rounded-full bg-gray-400/20 border border-gray-400 text-gray-400 flex items-center justify-center text-[10px] font-bold shimmer-medal">2</div>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+<img alt="User 2" class="w-full h-full object-cover" data-alt="A gritty, high-contrast headshot of a male weightlifter with sweat on his brow, looking determined. Lit by a singular harsh overhead light in a dark, industrial gym setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbrlwgx19dGhTCoDz0q707qzz-WphQvl95mpkW7ZHmhvOzNwQ8VwGnFfxnH409olC3e6xfV-nOdAemSsveiA3rpBNKkIsaqCUEQffziI828mEfe1brtFpi0Puj9Dd5IJaKG6HtRJvWBNYqzaS6Yq125iBzAFvXEdrW6sqKRacvbx0Y9CnqqL4_mfhaXyXOvO8SLBWMN5fwIIwa69JB-NRGG5kH9t_lR96X5JQOutc_y9uNDYmj7OR1hi3HTuKE-3FgXw8n9vNLhe8"/>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-on-surface text-[15px]">Marcus T.</span>
+<div class="flex items-center gap-1 text-[11px] text-text-secondary">
+<span class="material-symbols-outlined text-[8px] opacity-50">circle</span>
+</div>
+</div>
+</div>
+<div class="font-stat-display text-[20px] text-text-secondary tracking-tight">13,900</div>
+</div>
+<!-- Rank 3 -->
+<div class="stagger-item flex items-center justify-between p-4 bg-bg-card rounded border border-white/5 hover:border-white/10 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-8 flex justify-center">
+<div class="w-6 h-6 rounded-full bg-[#CD7F32]/20 border border-[#CD7F32] text-[#CD7F32] flex items-center justify-center text-[10px] font-bold shimmer-medal">3</div>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+<img alt="User 3" class="w-full h-full object-cover" data-alt="A moody, stylized profile image of a sprinter at the starting line. Deep reds and blacks dominate the palette. The expression is singular focus and elite readiness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiMbK4JrheTZf_lN1SOc3rCui2zaFqBFNQuW1PTAxtNBNE51b6Ca0bN9e76xEMkdHsiXYAGU3ICXUYQ06hD_JnTvgeYoUibPeWFHIheLNRUxDoSoHjfr_MWdAWvRH_i7WMFqOEYvRtVONUDtdv8iGup9SleL0EO4rwGU2SZpWD3YfZWymprJimt51eEM1C9Lgroed6tSaJAoHgp4atZ0CLLiUyvmIYrVHZxFgBhksnjZnUlw1pj6Xnx-wuttACIStL8aRlYq22qqU"/>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-on-surface text-[15px]">Elena R.</span>
+<div class="flex items-center gap-1 text-[11px] text-error">
+<span class="material-symbols-outlined text-[12px]">arrow_drop_down</span>
+<span>1</span>
+</div>
+</div>
+</div>
+<div class="font-stat-display text-[20px] text-text-secondary tracking-tight">12,450</div>
+</div>
+<!-- Regular Rows -->
+<div class="stagger-item flex items-center justify-between p-3 px-4 bg-bg-card/50 rounded border border-white/5 hover:border-white/10 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-8 flex justify-center font-stat-display text-[14px] text-text-secondary">4</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/5">
+<img alt="User 4" class="w-full h-full object-cover" data-alt="A distant, silhouetted figure of an athlete doing a pull-up in a dimly lit, vast gym space. Minimalist and cinematic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuArYK60PJcIHmQ52lYGJ-_sFwpM0PGNzZQqCWnEJOxabTvN0J5PwC9H42HvNWfbAZ-Rpxu6gMWrAhNTZHsoBHbOJY041ihxkov-gnIm49eMBIX-oaYICUPUJnce-CdcPl63WughGKsa4ZwAjXKuJKwJIbjHu0vqJ5WctNATF2y9AVjrZyGgrgVfoEe-t22_W5dQiKBK_Aaoid58ptqu0VOSaNEEXR9Jt7CRHZKFBHbjPAKvUavYL8rq11UBqEuufaHYiWiUwqMaINc"/>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[14px] text-on-surface-variant">David K.</span>
+</div>
+</div>
+<div class="font-stat-display text-[16px] text-text-secondary/70">11,200</div>
+</div>
+<div class="stagger-item flex items-center justify-between p-3 px-4 bg-bg-card/50 rounded border border-white/5 hover:border-white/10 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-8 flex justify-center font-stat-display text-[14px] text-text-secondary">5</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/5">
+<img alt="User 5" class="w-full h-full object-cover" data-alt="Abstract crop of a hand gripping a barbell with chalk. Intense chiaroscuro lighting, deep red background ambiance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhWUAV0cf_UpNC9dGEmBl9-gKdGWeBVv_3oGkd6tt8Z-o93-Sg2fi5iScvCLcU70q_ubZP98b-ttR7VNAcHILO6DKsdEPhzoAdMNf_WfdTXlVBj8m6thLWqVLo0wEl0no4M7cGXS1dYjVVVmCPjqMPRzv6oTfx5V7SMtNc40y0YkLHmOmDxNBzZjBnkEoHA_qgnJP_sJggLKW5kIC74dbRshXiEXx3YoMRnyV-ZyDB4GzU-6lwKTvvhHuTjh9isEHJSK2FATxPx3g"/>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[14px] text-on-surface-variant">Alex W.</span>
+</div>
+</div>
+<div class="font-stat-display text-[16px] text-text-secondary/70">10,850</div>
+</div>
+<!-- Separator -->
+<div class="stagger-item py-4 flex justify-center">
+<span class="text-text-secondary/30 tracking-widest text-[20px] leading-none">···</span>
+</div>
+</div>
+<!-- Pinned User Row -->
+<div class="mt-auto pt-6 sticky bottom-0 bg-background/95 backdrop-blur-md z-20 pb-4">
+<div class="flex items-center justify-between p-4 bg-primary-container/10 rounded-r border border-white/10 border-l-[3px] border-l-primary shadow-[0_0_20px_rgba(224,20,47,0.05)]">
+<div class="flex items-center gap-4">
+<div class="w-8 flex justify-center font-stat-display text-[14px] text-primary glow-text">12</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-primary/30">
+<img alt="Current User" class="w-full h-full object-cover" data-alt="A cinematic, high-contrast silhouette profile portrait of an elite male athlete against a dark gym background. Deep red volumetric lighting highlights the edges of his face. The overall mood is intense, disciplined, and premium." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOuV1SqxmGi9AShemVFo2XUPvldaHrXX5ENDOMcD_KjFik_bqbO2hUyO9gH19J5nDM1wLBfH3XJXVVE-OtZ_XY5zbDxNpxPICXfShXMXQBCnlj1M4je_HUt4NNDutj6-Cek5bG3JnzuDYEc2o_F-LWibkVbN8yPXQkZTSmQxvq3XSFxQP70B877X4qsjPOWJkyn7Dzng4qWrBybFO8RHrtCYvxn3-uSCqtZqxN-6QCpKZ_VSTYeID7eMhLGo4RQz80yp-ED81pYwo"/>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-on-surface text-[15px]">You <span class="text-text-secondary font-normal text-[13px] ml-1">(Nextera Elite)</span></span>
+<div class="flex items-center gap-1 text-[11px] text-primary">
+<span class="material-symbols-outlined text-[12px]">arrow_drop_up</span>
+<span>2</span>
+</div>
+</div>
+</div>
+<div class="font-stat-display text-[20px] text-primary glow-text tracking-tight">8,420</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Navigation (Hidden on Desktop) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile pb-6 pt-base bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant/20 shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">home</span>
+<span class="font-label-caps text-label-caps text-[10px]">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">fitness_center</span>
+<span class="font-label-caps text-label-caps text-[10px]">TRAIN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">qr_code_scanner</span>
+<span class="font-label-caps text-label-caps text-[10px]">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary filter drop-shadow-[0_0_8px_rgba(255,179,175,0.4)] scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">groups</span>
+<span class="font-label-caps text-label-caps text-[10px]">FEED</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1">person</span>
+<span class="font-label-caps text-label-caps text-[10px]">PROFILE</span>
+</a>
+</nav>
+<script>
+        function animateSort() {
+            const container = document.getElementById('leaderboard-container');
+            const items = Array.from(container.children).filter(child => child.classList.contains('stagger-item'));
+            
+            // Simple visual feedback for the requested FLIP animation feel
+            items.forEach((item, index) => {
+                item.style.transition = 'none';
+                item.style.opacity = '0.5';
+                item.style.transform = 'scale(0.98)';
+                
+                setTimeout(() => {
+                    item.style.transition = 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)';
+                    item.style.opacity = '1';
+                    item.style.transform = 'scale(1)';
+                    
+                    // Add pulse effect to the numbers
+                    const score = item.querySelector('.font-stat-display');
+                    if(score) {
+                        score.classList.remove('rank-pulse');
+                        void score.offsetWidth; // trigger reflow
+                        score.classList.add('rank-pulse');
+                    }
+                }, 50 + (index * 30));
+            });
+        }
+    </script>
+</body></html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nextera - PR Celebration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@800&amp;family=Playfair+Display:ital,wght@0,600;1,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e5e1e4",
+                      "on-tertiary-fixed-variant": "#8e1120",
+                      "surface-container-highest": "#353437",
+                      "surface": "#131315",
+                      "on-primary-fixed-variant": "#930018",
+                      "on-tertiary-fixed": "#410007",
+                      "background": "#131315",
+                      "primary": "#ffb3af",
+                      "tertiary-fixed": "#ffdad8",
+                      "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                      "secondary": "#ffb3b0",
+                      "surface-dim": "#131315",
+                      "inverse-primary": "#bf0023",
+                      "on-tertiary-container": "#fff6f5",
+                      "on-surface": "#e5e1e4",
+                      "tertiary-container": "#ca4046",
+                      "primary-fixed-dim": "#ffb3af",
+                      "tertiary-fixed-dim": "#ffb3b1",
+                      "error": "#ffb4ab",
+                      "surface-container": "#201f21",
+                      "secondary-fixed-dim": "#ffb3b0",
+                      "on-primary": "#68000e",
+                      "on-primary-fixed": "#410006",
+                      "on-secondary": "#680010",
+                      "outline-variant": "#5d3f3e",
+                      "bg-elevated": "#121214",
+                      "on-secondary-container": "#fff6f5",
+                      "surface-variant": "#353437",
+                      "secondary-fixed": "#ffdad8",
+                      "on-secondary-fixed-variant": "#93001b",
+                      "on-tertiary": "#680011",
+                      "bg-card": "#16161A",
+                      "surface-bright": "#39393b",
+                      "on-secondary-fixed": "#410006",
+                      "outline": "#ad8885",
+                      "inverse-on-surface": "#313032",
+                      "surface-tint": "#ffb3af",
+                      "inverse-surface": "#e5e1e4",
+                      "on-surface-variant": "#e7bdba",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-low": "#1c1b1d",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-fixed": "#ffdad7",
+                      "primary-container": "#e0142f",
+                      "error-container": "#93000a",
+                      "on-primary-container": "#fff5f4",
+                      "tertiary": "#ffb3b1",
+                      "text-secondary": "#B5B2B8",
+                      "on-error": "#690005",
+                      "gold": "#E8B339",
+                      "surface-container-high": "#2a2a2c",
+                      "secondary-container": "#e40430"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter-desktop": "24px",
+                      "sub": "4px",
+                      "base": "8px",
+                      "hero-margin": "64px",
+                      "section-gap": "32px",
+                      "gutter-mobile": "16px"
+              },
+              "fontFamily": {
+                      "stat-display": [
+                              "JetBrains Mono"
+                      ],
+                      "wordmark": [
+                              "Playfair Display"
+                      ],
+                      "hero-lg": [
+                              "Playfair Display"
+                      ],
+                      "headline-h1": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "stat-display": [
+                              "40px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "wordmark": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.12em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "hero-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        /* Custom styles for glows and animations */
+        .nextera-glow {
+            box-shadow: 0 0 40px rgba(224, 20, 47, 0.4);
+        }
+        .text-glow-primary {
+            text-shadow: 0 0 20px rgba(255, 179, 175, 0.6);
+        }
+        .bg-radial-glow {
+            background: radial-gradient(circle at center, rgba(224, 20, 47, 0.15) 0%, rgba(10, 10, 12, 0) 70%);
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.5; transform: scale(0.95); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 8px;
+            height: 16px;
+            background-color: var(--color-primary);
+            animation: confetti-fall linear forwards;
+            top: -20px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md overflow-hidden relative">
+<!-- Confetti Container -->
+<div class="absolute inset-0 pointer-events-none z-0" id="confetti-container"></div>
+<!-- Background Glow Elements -->
+<div class="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+<div class="w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] rounded-full bg-primary-container/10 blur-[100px] animate-pulse-glow"></div>
+<div class="absolute w-full h-full bg-radial-glow"></div>
+</div>
+<!-- Top App Bar (Suppressed for immersive overlay, but kept in DOM for structure if needed, hidden visually) -->
+<nav aria-hidden="true" class="hidden"></nav>
+<!-- Main Content Area - PR Overlay -->
+<main class="flex-grow flex flex-col items-center justify-center relative z-10 px-gutter-mobile md:px-gutter-desktop py-hero-margin">
+<!-- Celebration Content Wrapper -->
+<div class="flex flex-col items-center text-center animate-float max-w-md w-full">
+<!-- Emoji Icon -->
+<div class="text-6xl mb-6 drop-shadow-[0_0_15px_rgba(255,179,175,0.4)]">
+                🏋️
+            </div>
+<!-- Title -->
+<h1 class="font-hero-lg text-hero-lg text-on-surface mb-2 tracking-wide text-glow-primary uppercase">
+                New Weight PR!
+            </h1>
+<!-- Exercise Name -->
+<p class="font-label-caps text-label-caps text-text-secondary uppercase tracking-widest mb-10">
+                Barbell Back Squat
+            </p>
+<!-- The Big Stat -->
+<div class="relative mb-8">
+<!-- Hexagon/Shield decorative background for the stat -->
+<div class="absolute inset-0 -m-8 flex items-center justify-center -z-10 opacity-30">
+<svg class="w-full h-full animate-[spin_60s_linear_infinite] text-primary-container" viewbox="0 0 100 100">
+<polygon fill="none" points="50,5 95,25 95,75 50,95 5,75 5,25" stroke="currentColor" stroke-width="0.5"></polygon>
+<polygon class="opacity-50" fill="none" points="50,15 85,30 85,70 50,85 15,70 15,30" stroke="currentColor" stroke-width="1"></polygon>
+</svg>
+</div>
+<div class="font-stat-display text-[80px] md:text-[100px] leading-none text-primary font-extrabold nextera-glow rounded-full px-6 py-2">
+                    225 <span class="text-[32px] md:text-[40px] text-primary/80 align-baseline ml-1">lb</span>
+</div>
+</div>
+<!-- Deltas & XP -->
+<div class="flex flex-col items-center gap-4 mb-12">
+<div class="flex items-center gap-2 bg-bg-elevated border border-[rgba(255,255,255,0.07)] rounded-full px-4 py-2 shadow-[0_0_15px_rgba(224,20,47,0.15)]">
+<span class="material-symbols-outlined text-primary-container text-sm" data-icon="trending_up">trending_up</span>
+<span class="font-label-caps text-label-caps text-primary-container">+15 lbs</span>
+</div>
+<div class="font-label-caps text-label-caps text-gold tracking-widest drop-shadow-[0_0_8px_rgba(232,179,57,0.5)]">
+                    +100 XP
+                </div>
+</div>
+<!-- Actions -->
+<div class="w-full flex flex-col gap-4 mt-8">
+<button class="w-full bg-primary-container text-on-primary-container font-label-caps text-label-caps py-4 rounded-full uppercase tracking-widest hover:bg-secondary-container transition-all hover:scale-[0.98] nextera-glow">
+                    Continue Workout
+                </button>
+<button class="w-full bg-transparent border border-primary-container/30 text-primary-container font-label-caps text-label-caps py-4 rounded-full uppercase tracking-widest hover:bg-primary-container/10 transition-colors">
+                    Share to Feed
+                </button>
+</div>
+</div>
+</main>
+<!-- Bottom Nav Bar (Suppressed for overlay) -->
+<nav aria-hidden="true" class="hidden"></nav>
+<script>
+        // Simple confetti script for atmospheric effect
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#E0142F', '#E8B339', '#ffb3af']; // Crimson, Gold, Primary
+
+            function createConfetti() {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti-piece');
+                
+                // Randomize properties
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Randomize size slightly
+                const scale = Math.random() * 0.5 + 0.5;
+                confetti.style.transform = `scale(${scale})`;
+                
+                // Randomize animation duration and delay
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                confetti.style.animationDelay = Math.random() * 5 + 's';
+
+                container.appendChild(confetti);
+
+                // Remove after animation completes to keep DOM clean
+                setTimeout(() => {
+                    confetti.remove();
+                }, 8000);
+            }
+
+            // Create initial batch
+            for(let i=0; i<30; i++) {
+                createConfetti();
+            }
+
+            // Continue creating occasionally
+            setInterval(createConfetti, 300);
+        });
+    </script>
+</body></html>

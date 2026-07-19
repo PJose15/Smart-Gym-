@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexera - Generate AI Program</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@800&family=Playfair+Display:wght@600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#ffb3b0",
+                        "secondary-fixed": "#ffdad8",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "surface-container-high": "#2a2a2c",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "bg-elevated": "#121214",
+                        "on-surface-variant": "#e7bdba",
+                        "on-secondary-fixed-variant": "#93001b",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#ffb3af",
+                        "surface": "#131315",
+                        "surface-bright": "#39393b",
+                        "surface-container-lowest": "#0e0e10",
+                        "primary-container": "#e0142f",
+                        "on-primary-container": "#fff5f4",
+                        "primary-fixed-dim": "#ffb3af",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#353437",
+                        "tertiary-fixed": "#ffdad8",
+                        "on-secondary-fixed": "#410006",
+                        "energy-ribbon": "linear-gradient(135deg, #FF2740, #8A0D1E)",
+                        "text-secondary": "#B5B2B8",
+                        "on-tertiary": "#680011",
+                        "secondary-container": "#e40430",
+                        "on-tertiary-fixed": "#410007",
+                        "on-primary-fixed": "#410006",
+                        "primary": "#ffb3af",
+                        "on-secondary-container": "#fff6f5",
+                        "primary-fixed": "#ffdad7",
+                        "on-primary": "#68000e",
+                        "inverse-surface": "#e5e1e4",
+                        "surface-variant": "#353437",
+                        "on-tertiary-fixed-variant": "#8e1120",
+                        "bg-card": "#16161A",
+                        "inverse-on-surface": "#313032",
+                        "on-surface": "#e5e1e4",
+                        "on-tertiary-container": "#fff6f5",
+                        "background": "#131315",
+                        "outline-variant": "#5d3f3e",
+                        "on-error-container": "#ffdad6",
+                        "gold": "#E8B339",
+                        "on-secondary": "#680010",
+                        "surface-dim": "#131315",
+                        "inverse-primary": "#bf0023",
+                        "on-background": "#e5e1e4",
+                        "outline": "#ad8885",
+                        "error-container": "#93000a",
+                        "surface-container": "#201f21",
+                        "tertiary": "#ffb3b1",
+                        "on-primary-fixed-variant": "#930018",
+                        "tertiary-container": "#ca4046",
+                        "surface-container-low": "#1c1b1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sub": "4px",
+                        "section-gap": "32px",
+                        "gutter-mobile": "16px",
+                        "hero-margin": "64px",
+                        "gutter-desktop": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-h1": ["Inter"],
+                        "hero-lg": ["Playfair Display"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "wordmark": ["Playfair Display"],
+                        "stat-display": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "hero-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "wordmark": ["48px", { "lineHeight": "1.2", "letterSpacing": "0.12em", "fontWeight": "600" }],
+                        "stat-display": ["40px", { "lineHeight": "1", "letterSpacing": "-0.03em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        /* Animations */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(224, 20, 47, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(224, 20, 47, 0.5); }
+        }
+        
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .btn-breathe {
+            animation: pulse-glow 3s infinite;
+        }
+        
+        .ripple-ring {
+            position: absolute;
+            border: 1px solid rgba(224, 20, 47, 0.4);
+            border-radius: 50%;
+            animation: ripple 2s linear infinite;
+        }
+        
+        .shimmer-text {
+            background: linear-gradient(90deg, #B5B2B8 0%, #fff 50%, #B5B2B8 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shimmer 2s linear infinite;
+        }
+        
+        /* Selectable items */
+        .chip-option {
+            transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .chip-option.selected {
+            background-color: #e0142f; /* primary-container */
+            color: #fff5f4; /* on-primary-container */
+            box-shadow: 0 0 12px rgba(224, 20, 47, 0.4);
+            border-color: transparent;
+        }
+        
+        .row-option {
+            transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .row-option.selected {
+            border-color: #e0142f;
+            background-color: rgba(224, 20, 47, 0.1);
+            box-shadow: inset 0 0 8px rgba(224, 20, 47, 0.2);
+        }
+
+        /* View transitions */
+        .view-transition {
+            transition: opacity 300ms ease-in-out, visibility 300ms ease-in-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen font-body-md text-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Placeholder (Hidden for this transactional view) -->
+<!-- View 1: Form -->
+<main class="view-transition opacity-100 visible w-full max-w-[1440px] mx-auto px-gutter-mobile md:px-gutter-desktop pt-12 pb-32" id="view-form">
+<!-- Header -->
+<header class="mb-section-gap max-w-2xl mx-auto text-center md:text-left">
+<h1 class="font-hero-lg text-hero-lg text-on-surface mb-base">Generate AI Program</h1>
+<p class="text-text-secondary">We'll use your training history and goals to synthesize an optimal protocol.</p>
+</header>
+<form class="max-w-2xl mx-auto space-y-section-gap">
+<!-- Section: Days Per Week -->
+<section class="bg-bg-card rounded-xl p-6 border border-white/5 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[1px] bg-energy-ribbon"></div>
+<h2 class="font-label-caps text-label-caps text-text-secondary mb-4 tracking-widest">DAYS PER WEEK</h2>
+<div class="flex flex-wrap gap-4">
+<button class="chip-option border border-outline-variant/30 rounded-full px-6 py-3 font-bold hover:bg-surface-bright active:scale-95" type="button">2</button>
+<button class="chip-option selected border border-outline-variant/30 rounded-full px-6 py-3 font-bold active:scale-95" type="button">3</button>
+<button class="chip-option border border-outline-variant/30 rounded-full px-6 py-3 font-bold hover:bg-surface-bright active:scale-95" type="button">4</button>
+<button class="chip-option border border-outline-variant/30 rounded-full px-6 py-3 font-bold hover:bg-surface-bright active:scale-95" type="button">5</button>
+</div>
+</section>
+<!-- Section: Focus -->
+<section class="bg-bg-card rounded-xl p-6 border border-white/5">
+<h2 class="font-label-caps text-label-caps text-text-secondary mb-4 tracking-widest">FOCUS</h2>
+<div class="space-y-3">
+<label class="row-option selected flex items-center justify-between p-4 rounded-lg border border-white/5 bg-surface cursor-pointer hover:border-outline-variant/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">fitness_center</span>
+<span class="font-bold">Full Body</span>
+</div>
+<input checked="" class="hidden" name="focus" type="radio" value="fullbody"/>
+<div class="w-5 h-5 rounded-full border-2 border-primary-container flex items-center justify-center bg-primary-container">
+<div class="w-2 h-2 rounded-full bg-on-primary-container"></div>
+</div>
+</label>
+<label class="row-option flex items-center justify-between p-4 rounded-lg border border-white/5 bg-surface cursor-pointer hover:border-outline-variant/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary">view_agenda</span>
+<span class="font-bold">Split (Upper/Lower)</span>
+</div>
+<input class="hidden" name="focus" type="radio" value="split"/>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant/50 flex items-center justify-center"></div>
+</label>
+<label class="row-option flex items-center justify-between p-4 rounded-lg border border-white/5 bg-surface cursor-pointer hover:border-outline-variant/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary">layers</span>
+<span class="font-bold">PPL (Push/Pull/Legs)</span>
+</div>
+<input class="hidden" name="focus" type="radio" value="ppl"/>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant/50 flex items-center justify-center"></div>
+</label>
+<label class="row-option flex items-center justify-between p-4 rounded-lg border border-white/5 bg-surface cursor-pointer hover:border-outline-variant/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary">bolt</span>
+<span class="font-bold">Strength</span>
+</div>
+<input class="hidden" name="focus" type="radio" value="strength"/>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant/50 flex items-center justify-center"></div>
+</label>
+<label class="row-option flex items-center justify-between p-4 rounded-lg border border-white/5 bg-surface cursor-pointer hover:border-outline-variant/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary">directions_run</span>
+<span class="font-bold">Conditioning</span>
+</div>
+<input class="hidden" name="focus" type="radio" value="conditioning"/>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant/50 flex items-center justify-center"></div>
+</label>
+</div>
+</section>
+<!-- Section: Length -->
+<section class="bg-bg-card rounded-xl p-6 border border-white/5">
+<h2 class="font-label-caps text-label-caps text-text-secondary mb-4 tracking-widest">LENGTH</h2>
+<div class="flex flex-wrap gap-4">
+<button class="chip-option border border-outline-variant/30 rounded-full px-6 py-3 font-bold hover:bg-surface-bright active:scale-95" type="button">4 WEEKS</button>
+<button class="chip-option selected border border-outline-variant/30 rounded-full px-6 py-3 font-bold active:scale-95" type="button">6 WEEKS</button>
+<button class="chip-option border border-outline-variant/30 rounded-full px-6 py-3 font-bold hover:bg-surface-bright active:scale-95" type="button">8 WEEKS</button>
+<button class="chip-option border border-outline-variant/30 rounded-full px-6 py-3 font-bold hover:bg-surface-bright active:scale-95" type="button">12 WEEKS</button>
+</div>
+</section>
+<!-- Sticky Bottom Action -->
+<div class="fixed bottom-0 left-0 w-full p-4 bg-background/80 backdrop-blur-md border-t border-white/5 z-40 md:relative md:bg-transparent md:border-none md:p-0 md:pt-8 flex justify-center">
+<button class="btn-breathe w-full max-w-md bg-primary-container text-on-primary-container font-headline-h1 text-body-md py-4 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform" id="btn-generate" type="button">
+<span>Generate My Program</span>
+<span class="text-xl">🤖</span>
+</button>
+</div>
+<!-- Extra padding for mobile scroll clearance -->
+<div class="h-24 md:hidden"></div>
+</form>
+</main>
+<!-- View 2: Generating State (Overlay) -->
+<div class="view-transition fixed inset-0 z-50 bg-background/95 backdrop-blur-sm opacity-0 invisible flex flex-col items-center justify-center p-6" id="view-generating">
+<!-- Glowing Orb & Robot -->
+<div class="relative w-48 h-48 flex items-center justify-center mb-12">
+<!-- Ripples -->
+<div class="ripple-ring inset-0" style="animation-delay: 0s;"></div>
+<div class="ripple-ring inset-4" style="animation-delay: 0.6s;"></div>
+<div class="ripple-ring inset-8" style="animation-delay: 1.2s;"></div>
+<!-- Central Orb -->
+<div class="absolute w-24 h-24 bg-primary-container rounded-full blur-xl opacity-50 animate-[pulse-glow_2s_infinite]"></div>
+<!-- Icon -->
+<div class="relative z-10 text-6xl transform scale-[1.08] transition-transform duration-1000" id="gen-icon">🤖</div>
+</div>
+<!-- Typography -->
+<h2 class="font-headline-h1 text-headline-h1 text-on-surface mb-4 text-center">Building your program...</h2>
+<p class="text-text-secondary shimmer-text text-center max-w-sm mb-8">AI is analyzing your telemetry data to construct the optimal protocol.</p>
+<!-- Spinner -->
+<svg class="animate-spin h-10 w-10 text-primary-container" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
+</svg></div></body></html>
