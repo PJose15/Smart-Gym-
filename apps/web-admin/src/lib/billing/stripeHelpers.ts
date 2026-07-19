@@ -43,7 +43,8 @@ export async function createCheckoutSession(
   gymId: string,
   customerId: string,
   tier: SubscriptionTier,
-  interval: BillingInterval
+  interval: BillingInterval,
+  urls?: { successUrl?: string; cancelUrl?: string }
 ): Promise<Stripe.Checkout.Session> {
   const stripe = getStripe();
   const priceId = getPriceId(tier, interval);
@@ -53,12 +54,18 @@ export async function createCheckoutSession(
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
+    payment_method_collection: 'always',
     subscription_data: {
       trial_period_days: 30,
+      trial_settings: {
+        end_behavior: {
+          missing_payment_method: 'cancel',
+        },
+      },
       metadata: { gym_id: gymId, tier },
     },
-    success_url: `${appUrl}/owner/billing?session_id={CHECKOUT_SESSION_ID}&success=true`,
-    cancel_url: `${appUrl}/owner/billing?cancelled=true`,
+    success_url: urls?.successUrl ?? `${appUrl}/owner/billing?session_id={CHECKOUT_SESSION_ID}&success=true`,
+    cancel_url: urls?.cancelUrl ?? `${appUrl}/owner/billing?cancelled=true`,
     metadata: { gym_id: gymId, tier },
   });
 }
@@ -78,6 +85,16 @@ export async function handleStripeWebhook(
   event: Stripe.Event
 ): Promise<{ action: string; gymId?: string }> {
   const admin = getAdminClient();
+
+  // ── Idempotency guard (Pitfall 1) ────────────────────────────────────────
+  // Insert the event id before processing. If the row already exists (unique
+  // violation), Supabase returns an empty array or a null-data + error result.
+  // Either way, short-circuit — Stripe must still receive 200 on dupes.
+  const { data: inserted } = await admin
+    .from('stripe_events_processed')
+    .insert({ event_id: event.id })
+    .select('event_id');
+  if (!inserted || inserted.length === 0) return { action: 'duplicate' };
 
   switch (event.type) {
     case 'customer.subscription.updated': {
@@ -176,6 +193,47 @@ export async function handleStripeWebhook(
       const sub = event.data.object as Stripe.Subscription;
       const gymId = sub.metadata.gym_id;
       return { action: 'trial_ending', gymId: gymId || undefined };
+    }
+
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const gymId = session.metadata?.gym_id;
+      if (!gymId) return { action: 'no_gym_id' };
+
+      // Stripe may send subscription as a string id or an expanded object
+      const rawSub = session.subscription;
+      const stripeSubscriptionId =
+        typeof rawSub === 'string' ? rawSub : (rawSub as { id: string } | null)?.id ?? null;
+
+      await admin
+        .from('gym_billing')
+        .update({
+          stripe_subscription_id: stripeSubscriptionId,
+          subscription_status: 'trialing',
+        })
+        .eq('gym_id', gymId);
+
+      // Also confirm trial state on gyms table
+      await admin
+        .from('gyms')
+        .update({ subscription_status: 'trial' })
+        .eq('id', gymId);
+
+      return { action: 'checkout_completed', gymId };
+    }
+
+    case 'checkout.session.expired': {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const gymId = session.metadata?.gym_id;
+      if (!gymId) return { action: 'no_gym_id' };
+
+      // Keep status trialing (retryable) — do NOT cancel
+      await admin
+        .from('gym_billing')
+        .update({ subscription_status: 'trialing' })
+        .eq('gym_id', gymId);
+
+      return { action: 'checkout_expired', gymId };
     }
 
     default:
