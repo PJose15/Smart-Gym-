@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-mobile-challenges/03-04-PLAN.md (ChallengeLeaderboard + detail screen + route registration)
-last_updated: "2026-07-19T20:52:21.349Z"
+stopped_at: Completed 03-mobile-challenges/03-03-PLAN.md (ChallengeCard + ChallengesScreenSkeleton + challenges list screen + tab registration)
+last_updated: "2026-07-19T20:54:02.553Z"
 last_activity: "2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
   percent: 78
 ---
 
@@ -88,9 +88,11 @@ Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-devic
 - [Phase 03-mobile-challenges]: Migration 028 applied to live DB — challenge_participants_member_gym_read policy confirmed; 115 rows visible for demo gym member
 - [Phase 03-mobile-challenges]: Dynamic cache key strings cast to CacheKey for clearCache/setCache calls; static imports only (no dynamic import() in mobile tsconfig)
 - [Phase 03-mobile-challenges]: useReducedMotion gates confetti; haptic fires unconditionally on join (haptics are non-visual per DOC_03)
+- [Phase 03-mobile-challenges]: ChallengeCard uses Pressable not AnimatedCard — AnimatedCard triggers entrance animations on every list render; Pressable with opacity feedback is more appropriate for list items
+- [Phase 03-mobile-challenges]: CHALLENGES_CACHE_KEY return cast as any — CacheKey type string & Record<string,never> trick does not widen to template literal strings in TypeScript 5.x
 
 ## Session Continuity
 
-Last session: 2026-07-19T20:52:21.332Z
-Stopped at: Completed 03-mobile-challenges/03-04-PLAN.md (ChallengeLeaderboard + detail screen + route registration)
+Last session: 2026-07-19T20:54:02.548Z
+Stopped at: Completed 03-mobile-challenges/03-03-PLAN.md (ChallengeCard + ChallengesScreenSkeleton + challenges list screen + tab registration)
 Resume with: Execute plan 01-09 — Stripe + OTP E2E onboarding checkpoint
