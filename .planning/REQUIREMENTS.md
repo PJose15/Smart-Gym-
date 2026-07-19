@@ -44,11 +44,11 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
 
 - [ ] **CHAL-01**: Member can browse active and completed gym challenges on mobile
   - Challenge cards show type badge (7 types), title, description, end-date countdown; active/completed tab toggle; consumes existing `/api/member/challenges` endpoints
-- [ ] **CHAL-02**: Member can join a challenge with one tap
+- [x] **CHAL-02**: Member can join a challenge with one tap
   - Join CTA on challenge detail → existing join endpoint; optimistic update + success haptic; disabled when already joined or ended
 - [ ] **CHAL-03**: Member sees their own progress within a joined challenge
   - Progress bar "You: current / goal" from existing `current_value`/`goal_value` API fields
-- [ ] **CHAL-04**: Member sees the challenge leaderboard with their own rank always visible
+- [x] **CHAL-04**: Member sees the challenge leaderboard with their own rank always visible
   - Top ranks with gold/silver/bronze badges; own row pinned when outside visible window; deep-link target handles deleted/ended challenges with a "no longer available" state (no crash)
 
 ### PROG — Mobile Program View
@@ -129,9 +129,9 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | FEED-03 | Phase 2 | ✅ Complete (2026-07-17) |
 | FEED-04 | Phase 2 | ✅ Complete (2026-07-17) |
 | CHAL-01 | Phase 3 | Pending |
-| CHAL-02 | Phase 3 | Pending |
+| CHAL-02 | Phase 3 | Complete |
 | CHAL-03 | Phase 3 | Pending |
-| CHAL-04 | Phase 3 | Pending |
+| CHAL-04 | Phase 3 | Complete |
 | PROG-01 | Phase 4 | Pending |
 | PROG-02 | Phase 4 | Pending |
 | PROG-03 | Phase 4 | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 01-gym-owner-self-serve-onboarding/01-09-PLAN.md (Task 1 automated gate); Task 2 E2E walkthrough awaiting human verification
-last_updated: "2026-07-19T18:47:11.565Z"
+stopped_at: Completed 03-mobile-challenges/03-01-PLAN.md Tasks 1-2; awaiting Task 3 db push approval
+last_updated: "2026-07-19T20:31:35.786Z"
 last_activity: "2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 14
+  completed_plans: 10
   percent: 78
 ---
 
@@ -79,9 +79,11 @@ Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-devic
 - **01-08**: Import valid-only rows — owner sees per-row validation report and confirms; invalid rows skipped, invalid_count in response
 - **01-08**: 'invited' treated same as 'pending' in findOrCreateMember status transition
 - [Phase 01-gym-owner-self-serve-onboarding]: Route files must only export HTTP method handlers — test utilities and types extracted to adjacent modules (cache.ts/types.ts pattern)
+- [Phase 03-mobile-challenges]: Bearer JWT falls through to cookie path on error — browser callers with unrelated Authorization headers are not broken
+- [Phase 03-mobile-challenges]: verifyMember request param is optional — all 36 existing call sites compile unchanged; only join route forwards request
 
 ## Session Continuity
 
-Last session: 2026-07-19T18:47:11.549Z
-Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-09-PLAN.md (Task 1 automated gate); Task 2 E2E walkthrough awaiting human verification
+Last session: 2026-07-19T20:31:35.781Z
+Stopped at: Completed 03-mobile-challenges/03-01-PLAN.md Tasks 1-2; awaiting Task 3 db push approval
 Resume with: Execute plan 01-09 — Stripe + OTP E2E onboarding checkpoint

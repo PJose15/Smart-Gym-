@@ -72,7 +72,7 @@ Plans:
   4. Member finds their own rank on the leaderboard even when outside the top ranks (pinned "YOU" row)
   5. Opening a deleted or ended challenge (e.g., from a stale deep link) shows a graceful "no longer available" state, never a crash
 **Dependency notes**: Consumption-only — challenge creation stays in web admin. Use aggregated screen endpoints (avoid the 20-query home-screen anti-pattern), leaderboard caching, and DOC_03 tokens/celebration components. Rank-change push trigger lands in Phase 6, not here.
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [ ] 03-01-PLAN.md — Migration 028 (challenge_participants member SELECT) + verifyMember Bearer JWT support [wave 1, checkpoint: db push]
@@ -125,7 +125,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Gym Owner Self-Serve Onboarding | 9/9 | Complete   | 2026-07-19 |
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
-| 3. Mobile Challenges | 0/5 | Planned | - |
+| 3. Mobile Challenges | 1/5 | In Progress|  |
 | 4. Mobile Program View | 0/? | Not started | - |
 | 5. UptimizeAI Agent Connection | 0/? | Not started | - |
 | 6. Notification Orchestration Wiring | 0/? | Not started | - |
