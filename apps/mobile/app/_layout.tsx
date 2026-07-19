@@ -154,6 +154,10 @@ export default function RootLayout() {
           name="coach-notes/[id]"
           options={{ title: 'Coach Note' }}
         />
+        <Stack.Screen
+          name="challenges/[id]"
+          options={{ title: 'Challenge', headerShown: true }}
+        />
       </Stack>
     </ErrorBoundary>
   );
