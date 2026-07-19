@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: completed
+stopped_at: Completed 01-02-PLAN.md — Stripe webhook hardening
+last_updated: "2026-07-19T16:44:53.895Z"
+last_activity: "2026-07-19 — Executed plan 01-01: migration 027 + react-hook-form/csv-parse installed"
+progress:
+  total_phases: 6
+  completed_phases: 0
+  total_plans: 9
+  completed_plans: 2
+  percent: 22
+---
+
 # State
 
 ## Project Reference
@@ -12,7 +28,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (in progress)
 Plan: 1 of 9 complete (01-01 done; checkpoint at Task 2 — awaiting DB push approval)
 Status: Plan 01-01 complete: migration 027 written + deps installed; DB push pending user approval
-Progress: [░█░░░░] 1/6 phases complete (Phase 2); Phase 1 in progress
+Progress: [██░░░░░░░░] 22%
 Last activity: 2026-07-19 — Executed plan 01-01: migration 027 + react-hook-form/csv-parse installed
 Next action: User approves migration 027 DB push → Claude runs `npx supabase db push --linked` → continue plan 01-02
 
@@ -42,9 +58,12 @@ Next action: User approves migration 027 DB push → Claude runs `npx supabase d
 - **01-01**: complete_gym_onboarding uses loop-with-exception-catch for slug uniqueness (up to 3 retries with `-XXXX` suffix)
 - **01-01**: bulk_import_members skips duplicates (not errors) — validate-then-import two-phase flow handles bad data before this runs
 - **01-01**: stripe_events_processed has no RLS policies (service_role bypasses RLS entirely)
+- [Phase 01-gym-owner-self-serve-onboarding]: Idempotency via insert-before-switch: empty/null data both treated as duplicate, never throw on 200 path
+- [Phase 01-gym-owner-self-serve-onboarding]: checkout.session.completed sets trialing only — authoritative sync via customer.subscription.updated which fires immediately after
+- [Phase 01-gym-owner-self-serve-onboarding]: checkout.session.expired keeps trialing (retryable) — owner can restart checkout without support intervention
 
 ## Session Continuity
 
-Last session: 2026-07-19 — executed plan 01-01 (migration 027 + deps), hit Task 2 checkpoint (DB push).
-Stopped at: Task 2 of plan 01-01 — awaiting user approval to run `npx supabase db push --linked`
+Last session: 2026-07-19T16:44:53.891Z
+Stopped at: Completed 01-02-PLAN.md — Stripe webhook hardening
 Resume with: User replies "approved" → Claude runs `npx supabase db push --linked` → verify objects → commit SUMMARY → plan 01-02

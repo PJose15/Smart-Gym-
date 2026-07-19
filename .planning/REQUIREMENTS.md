@@ -17,7 +17,7 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
 - [x] **ONBD-02**: Gym creation is atomic and resumable — no orphaned auth users or half-created gyms
   - Single transaction (Postgres RPC) creates `gyms`, `gym_memberships` (role=owner), `gym_settings`, `gym_billing` (trialing)
   - `onboarding_status` tracks partial completion; session refreshed post-creation so RLS sees the new membership immediately
-- [ ] **ONBD-03**: Stripe checkout completes the trial subscription safely, including retry and abandonment paths
+- [x] **ONBD-03**: Stripe checkout completes the trial subscription safely, including retry and abandonment paths
   - `stripe_events_processed` dedup table guards webhook idempotency before any new event handler ships
   - `checkout.session.completed` and `checkout.session.expired` handled; abandoned checkout shows "complete your subscription" banner; `payment_method_collection` + `trial_settings.end_behavior` configured
 - [ ] **ONBD-04**: First-machine setup wizard gets a new gym from zero machines to a printable QR code
@@ -119,7 +119,7 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 |-------------|-------|--------|
 | ONBD-01 | Phase 1 | Pending |
 | ONBD-02 | Phase 1 | Complete |
-| ONBD-03 | Phase 1 | Pending |
+| ONBD-03 | Phase 1 | Complete |
 | ONBD-04 | Phase 1 | Pending |
 | ONBD-05 | Phase 1 | Complete |
 | ONBD-06 | Phase 1 | Complete |
