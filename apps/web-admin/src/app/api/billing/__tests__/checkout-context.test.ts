@@ -70,7 +70,8 @@ jest.mock('@/lib/auth/verifyStaff', () => ({
       role: 'owner',
       permissions: {},
       admin: {
-        from: function (...args) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        from: function (...args: any[]) {
           return mockFrom(...args);
         },
       },
