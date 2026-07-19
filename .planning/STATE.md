@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-mobile-challenges/03-01-PLAN.md Tasks 1-2; awaiting Task 3 db push approval
-last_updated: "2026-07-19T20:31:35.786Z"
+stopped_at: Completed 03-mobile-challenges/03-02-PLAN.md
+last_updated: "2026-07-19T20:38:47.450Z"
 last_activity: "2026-07-19 — Executed plan 01-08: parseMembersCsv, import route, /setup/import page, verify-claim claim path fix"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 14
-  completed_plans: 10
+  completed_plans: 11
   percent: 78
 ---
 
@@ -81,9 +81,13 @@ Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint (real-devic
 - [Phase 01-gym-owner-self-serve-onboarding]: Route files must only export HTTP method handlers — test utilities and types extracted to adjacent modules (cache.ts/types.ts pattern)
 - [Phase 03-mobile-challenges]: Bearer JWT falls through to cookie path on error — browser callers with unrelated Authorization headers are not broken
 - [Phase 03-mobile-challenges]: verifyMember request param is optional — all 36 existing call sites compile unchanged; only join route forwards request
+- [Phase 03-mobile-challenges]: expo-haptics pinned to ~14.0.1 (SDK 52 compatible — Expo CLI confirms; pnpm default 57.x was wrong)
+- [Phase 03-mobile-challenges]: progressPct = my_score/top_score (no goal_value column in DB — research confirmed)
+- [Phase 03-mobile-challenges]: fetchChallengeDetail returns null (not throw) for missing challenge — stale deep link graceful handling
+- [Phase 03-mobile-challenges]: resolveMemberInfo exported from feedService.ts — challengeService reuses it for leaderboard name resolution
 
 ## Session Continuity
 
-Last session: 2026-07-19T20:31:35.781Z
-Stopped at: Completed 03-mobile-challenges/03-01-PLAN.md Tasks 1-2; awaiting Task 3 db push approval
+Last session: 2026-07-19T20:38:47.446Z
+Stopped at: Completed 03-mobile-challenges/03-02-PLAN.md
 Resume with: Execute plan 01-09 — Stripe + OTP E2E onboarding checkpoint
