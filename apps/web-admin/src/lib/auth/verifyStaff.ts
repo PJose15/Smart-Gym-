@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { StaffRole } from '@nexera/types';
 
-interface StaffVerifyResult {
+export interface StaffVerifyResult {
   user_id: string;
   gym_id: string;
   role: StaffRole;

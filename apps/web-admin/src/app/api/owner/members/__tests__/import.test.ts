@@ -68,7 +68,7 @@ function makeFormData(mode: string, csvContent = 'email,name\nbob@example.com,Bo
 let POST: (req: NextRequest) => Promise<Response>;
 
 beforeAll(async () => {
-  const mod = await import('../route');
+  const mod = await import('../import/route');
   POST = mod.POST;
 });
 
