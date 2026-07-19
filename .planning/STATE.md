@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Completed 01-gym-owner-self-serve-onboarding/01-07-PLAN.md
-last_updated: "2026-07-19T17:39:30Z"
+status: completed
+stopped_at: Completed 01-gym-owner-self-serve-onboarding/01-06-PLAN.md
+last_updated: "2026-07-19T17:51:56.039Z"
 last_activity: "2026-07-19 — Executed plan 01-07: /setup first-machine wizard page + 4 behavior tests"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 67
 ---
 
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (in progress)
-Plan: 6 of 9 complete (01-01 through 01-05 + 01-07 done)
-Status: Plans 01-01 through 01-05 + 01-07 complete; /setup wizard with first-machine flow + QR PDF download shipped; next: 01-08 (CSV member import) or 01-09 (onboarding checkpoint)
-Progress: [███████░░░] 67%
-Last activity: 2026-07-19 — Executed plan 01-07: /setup first-machine wizard page + 4 behavior tests
-Next action: Execute plan 01-08 — CSV member import wizard step
+Plan: 7 of 9 complete (01-01 through 01-08 excluding 01-06 order; 01-06 now done)
+Status: Plans 01-01 through 01-08 complete; subscribe Step 3 + live prices + context-aware checkout shipped; next: 01-09 (Stripe E2E onboarding checkpoint)
+Progress: [████████░░] 78%
+Last activity: 2026-07-19 — Executed plan 01-06: subscribe page, TierCard, prices route, context-aware checkout
+Next action: Execute plan 01-09 — Stripe E2E onboarding checkpoint
 
 ## Accumulated Context
 
@@ -70,9 +70,13 @@ Next action: Execute plan 01-08 — CSV member import wizard step
 - **01-07**: Auth error (401/network) renders inline sign-in prompt — no redirect — keeps owner in wizard shell
 - **01-07**: QR PDF download via plain anchor with download attribute to existing /api/machines/qr-pdf (no new query params needed)
 - **01-07**: 3-step state machine (machine-form/creating/qr-ready) with Suspense wrapping for useSearchParams RSC boundary
+- [Phase 01-gym-owner-self-serve-onboarding]: checkoutSchema context field onboarding enum — invalid values rejected 400; onboarding builds /setup success URL and /subscribe cancel URL
+- [Phase 01-gym-owner-self-serve-onboarding]: prices route uses getSession light check (not verifyStaff) + module-level 1hr TTL cache; _resetPricesCache exported for test isolation
+- [Phase 01-gym-owner-self-serve-onboarding]: PKCE code exchange: strip code param after exchange; always refreshSession before fetching protected data (Pitfall 3)
+- [Phase 01-gym-owner-self-serve-onboarding]: Resume banner: has_customer && !has_subscription signals abandoned checkout; auto-redirect to /setup when has_subscription=true
 
 ## Session Continuity
 
-Last session: 2026-07-19T17:39:30Z
-Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-07-PLAN.md
+Last session: 2026-07-19T17:51:56.034Z
+Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-06-PLAN.md
 Resume with: Execute plan 01-08 — CSV member import wizard step
