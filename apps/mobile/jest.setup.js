@@ -21,6 +21,7 @@ jest.mock('./src/lib/supabase', () => ({
     })),
     auth: {
       getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
       signOut: jest.fn(),
     },
     rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
