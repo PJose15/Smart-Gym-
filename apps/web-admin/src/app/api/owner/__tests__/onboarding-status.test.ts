@@ -40,7 +40,7 @@ jest.mock('@/lib/auth/verifyStaff', () => ({
 }));
 
 // ── Import after mocks ────────────────────────────────────────────────────────
-import { computeDaysRemaining } from '../onboarding-status/route';
+import { computeDaysRemaining } from '../onboarding-status/types';
 import { NextResponse } from 'next/server';
 
 // ── Helper: build admin mock with specified counts ────────────────────────────

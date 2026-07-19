@@ -175,7 +175,7 @@ describe('GET /api/billing/prices', () => {
     });
 
     // Reset module-level cache so each test starts fresh
-    const { _resetPricesCache } = await import('../prices/route');
+    const { _resetPricesCache } = await import('../prices/cache');
     _resetPricesCache();
   });
 
@@ -189,8 +189,9 @@ describe('GET /api/billing/prices', () => {
 
   test('Test 4a: GET returns prices with unit_amount+currency for all 6 combos', async () => {
     const { GET } = await import('../prices/route');
+    const req = new Request('http://localhost/api/billing/prices');
 
-    const res = await GET();
+    const res = await GET(req);
     expect(res.status).toBe(200);
 
     const body = await res.json();
@@ -207,14 +208,15 @@ describe('GET /api/billing/prices', () => {
 
   test('Test 4b: second call within TTL does not re-hit Stripe (module-level cache)', async () => {
     const { GET } = await import('../prices/route');
+    const req = new Request('http://localhost/api/billing/prices');
 
     // First call — cache was reset in beforeEach so Stripe is hit 6 times
-    await GET();
+    await GET(req);
     const callsAfterFirst = mockPricesRetrieve.mock.calls.length;
     expect(callsAfterFirst).toBe(6);
 
     // Second call within TTL — must NOT re-hit Stripe
-    await GET();
+    await GET(req);
     expect(mockPricesRetrieve.mock.calls.length).toBe(6);
   });
 });

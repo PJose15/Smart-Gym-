@@ -9,7 +9,7 @@ import { SessionsHourlyChart } from '@/components/owner/SessionsHourlyChart';
 import { SetupChecklist } from '@/components/owner/SetupChecklist';
 import { TrialCountdownBanner } from '@/components/owner/TrialCountdownBanner';
 import type { OwnerDashboardMetrics, MachinePerformance, PeakHourCell, ActivityFeedItem } from '@nexera/types';
-import type { OnboardingStatusResponse } from '@/app/api/owner/onboarding-status/route';
+import type { OnboardingStatusResponse } from '@/app/api/owner/onboarding-status/types';
 
 const sectionTitle: CSSProperties = { margin: '0 0 12px', fontSize: 15, fontWeight: 600, color: 'var(--color-text-secondary)' };
 const cardStyle: CSSProperties = { backgroundColor: 'var(--color-bg-raised)', borderRadius: 10, padding: 20, marginBottom: 20 };
