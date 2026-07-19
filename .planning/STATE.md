@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 1 of 6 — Gym Owner Self-Serve Onboarding (in progress)
-Plan: 1 of 9 complete (01-01 done; checkpoint at Task 2 — awaiting DB push approval)
-Status: Plan 01-01 complete: migration 027 written + deps installed; DB push pending user approval
+Plan: 4 of 9 complete (01-01 through 01-04 done; 01-01 Task 2 checkpoint resolved — migration 027 live)
+Status: Plans 01-01 through 01-04 complete; migration 027 applied to live DB; next: 01-05 (onboard route group)
 Progress: [██░░░░░░░░] 22%
 Last activity: 2026-07-19 — Executed plan 01-01: migration 027 + react-hook-form/csv-parse installed
-Next action: User approves migration 027 DB push → Claude runs `npx supabase db push --linked` → continue plan 01-02
+Next action: Continue plan 01-05 — (onboard)/ route group, register API with rollback, signup + verify-email pages
 
 ## Accumulated Context
 
@@ -69,4 +69,4 @@ Next action: User approves migration 027 DB push → Claude runs `npx supabase d
 
 Last session: 2026-07-19T16:49:02.025Z
 Stopped at: Completed 01-gym-owner-self-serve-onboarding/01-03-PLAN.md
-Resume with: User replies "approved" → Claude runs `npx supabase db push --linked` → verify objects → commit SUMMARY → plan 01-02
+Resume with: Execute plan 01-05 — (onboard)/ route group, register API, signup + verify-email pages

@@ -39,7 +39,7 @@
 **Plans:** 4/9 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — Migration 027 (idempotency table, 'invited' status, atomic-gym + bulk-import RPCs) + deps install [wave 1, checkpoint: db push]
+- [x] 01-01-PLAN.md — Migration 027 (idempotency table, 'invited' status, atomic-gym + bulk-import RPCs) + deps install [wave 1, checkpoint: db push] ✅ COMPLETE 2026-07-19
 - [ ] 01-02-PLAN.md — Stripe webhook idempotency + checkout.session.completed/expired + hardened createCheckoutSession [wave 1]
 - [ ] 01-03-PLAN.md — POST /api/machines route + shared MachineForm component [wave 1]
 - [ ] 01-04-PLAN.md — Owner dashboard setup checklist + trial countdown banner [wave 1]
