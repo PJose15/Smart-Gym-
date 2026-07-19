@@ -6,7 +6,7 @@
 
 import { parseMembersCsv, normalizeHeader } from '../parseMembersCsv';
 
-// Test 1: UTF-8 BOM-prefixed CSV parses; first header is 'email' not '﻿email'
+// Test 1: UTF-8 BOM-prefixed CSV parses; first header is 'email' not '\uFEFFemail'
 test('T1: BOM-prefixed CSV parses cleanly — first header is email', () => {
   const bom = '﻿';
   const csv = `${bom}email,name,phone\nbob@example.com,Bob Smith,+15551234567`;

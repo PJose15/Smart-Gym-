@@ -68,7 +68,7 @@ function buildAdminMock(opts: {
         };
       }
       const count = countsByTable[table] ?? 0;
-      const chain: Record<string, jest.Mock> & { then?: Function } = {
+      const chain: Record<string, jest.Mock> & { then?: (resolve: (v: { count: number; error: null }) => void) => Promise<unknown> } = {
         select: jest.fn(),
         eq: jest.fn(),
       };

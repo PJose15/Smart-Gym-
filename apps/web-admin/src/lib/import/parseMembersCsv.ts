@@ -25,7 +25,7 @@ export interface ParseResult {
  * Handles common Excel/Sheets export variants.
  */
 export function normalizeHeader(h: string): string {
-  const cleaned = h.replace(/^﻿/, '').toLowerCase().trim();
+  const cleaned = h.replace(/^\uFEFF/, '').toLowerCase().trim();
 
   // Email aliases
   if (
@@ -127,7 +127,7 @@ export function parseMembersCsv(text: string): ParseResult {
   const invalid: RowError[] = [];
 
   // Strip BOM manually (belt-and-braces on top of csv-parse bom:true)
-  const cleanText = text.replace(/^﻿/, '');
+  const cleanText = text.replace(/^\uFEFF/, '');
 
   let rows: Record<string, string>[];
   try {
