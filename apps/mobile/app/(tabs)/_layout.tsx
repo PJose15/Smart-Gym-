@@ -184,6 +184,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="challenges"
+        options={{
+          title: 'Challenges',
+          tabBarAccessibilityLabel: 'Challenges tab',
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabIcon
+              name="trophy-outline"
+              activeName="trophy"
+              size={size}
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
