@@ -20,10 +20,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const { tier, interval } = parsed.data;
+    const { tier, interval, context } = parsed.data;
 
     const rl = checkRateLimit(`billing-checkout:${user_id}`, 5, 300_000);
     if (rl) return rl;
+
+    // Build onboarding-specific return URLs
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const urls =
+      context === 'onboarding'
+        ? {
+            successUrl: `${appUrl}/setup?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${appUrl}/subscribe?cancelled=true`,
+          }
+        : undefined;
 
     // Get or create stripe customer
     const { data: billing } = await admin
@@ -62,7 +72,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const session = await createCheckoutSession(gym_id, customerId, tier, interval);
+    const session = await createCheckoutSession(gym_id, customerId, tier, interval, urls);
 
     return NextResponse.json({ checkout_url: session.url });
   } catch (err) {

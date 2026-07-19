@@ -112,6 +112,7 @@ export type TrainerInvitationInput = z.infer<typeof trainerInvitationSchema>;
 export const checkoutSchema = z.object({
   tier: z.enum(['starter', 'growth', 'pro']),
   interval: z.enum(['monthly', 'annual']),
+  context: z.enum(['onboarding']).optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
