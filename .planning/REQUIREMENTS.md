@@ -26,7 +26,7 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
   - Column mapping UI, preview, per-row error report ("47 imported, 3 failed — download error report"); BOM/encoding handling (Excel exports); all-or-nothing batch import capped at 500 rows/request; `csv-parse` server-side
 - [x] **ONBD-06**: Imported members can claim their accounts on mobile
   - Import creates members with `invited` status + claim email; first mobile phone-OTP login links the invited record to the auth user
-- [ ] **ONBD-07**: Owner dashboard shows post-signup setup checklist and trial countdown
+- [x] **ONBD-07**: Owner dashboard shows post-signup setup checklist and trial countdown
   - Checklist (add machine, import/invite members, share QR) with completion state; "X days left in trial → Upgrade" banner on dashboard
 
 ### FEED — Mobile Social Feed ✅ COMPLETE (delivered 2026-07-17, commits `cba42c0` + `af69753`)
@@ -123,7 +123,7 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | ONBD-04 | Phase 1 | Pending |
 | ONBD-05 | Phase 1 | Complete |
 | ONBD-06 | Phase 1 | Complete |
-| ONBD-07 | Phase 1 | Pending |
+| ONBD-07 | Phase 1 | Complete |
 | FEED-01 | Phase 2 | ✅ Complete (2026-07-17) |
 | FEED-02 | Phase 2 | ✅ Complete (2026-07-17) |
 | FEED-03 | Phase 2 | ✅ Complete (2026-07-17) |

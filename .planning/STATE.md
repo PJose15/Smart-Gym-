@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 01-02-PLAN.md — Stripe webhook hardening
-last_updated: "2026-07-19T16:44:53.895Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-07-19T16:46:53.569Z"
 last_activity: "2026-07-19 — Executed plan 01-01: migration 027 + react-hook-form/csv-parse installed"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 9
-  completed_plans: 2
+  completed_plans: 3
   percent: 22
 ---
 
@@ -61,9 +61,11 @@ Next action: User approves migration 027 DB push → Claude runs `npx supabase d
 - [Phase 01-gym-owner-self-serve-onboarding]: Idempotency via insert-before-switch: empty/null data both treated as duplicate, never throw on 200 path
 - [Phase 01-gym-owner-self-serve-onboarding]: checkout.session.completed sets trialing only — authoritative sync via customer.subscription.updated which fires immediately after
 - [Phase 01-gym-owner-self-serve-onboarding]: checkout.session.expired keeps trialing (retryable) — owner can restart checkout without support intervention
+- [Phase 01-gym-owner-self-serve-onboarding]: computeDaysRemaining exported as pure helper with injectable now param for deterministic tests
+- [Phase 01-gym-owner-self-serve-onboarding]: SetupChecklist returns null when all 3 items complete; has_shared_qr derived from machine_scan_events count
 
 ## Session Continuity
 
-Last session: 2026-07-19T16:44:53.891Z
-Stopped at: Completed 01-02-PLAN.md — Stripe webhook hardening
+Last session: 2026-07-19T16:46:53.552Z
+Stopped at: Completed 01-04-PLAN.md
 Resume with: User replies "approved" → Claude runs `npx supabase db push --linked` → verify objects → commit SUMMARY → plan 01-02
