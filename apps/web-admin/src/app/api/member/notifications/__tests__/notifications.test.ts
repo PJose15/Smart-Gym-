@@ -28,60 +28,40 @@ jest.mock('@/lib/rateLimit', () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
 }));
 
-// ─── Supabase mock ────────────────────────────────────────────────────────────
-// GET query chain:
-//   admin.from('notifications').select(...).eq(member_id).order(...).limit(n)
-//   + optional .lt('created_at', cursor)
-// Unread count chain:
-//   admin.from('notifications').select('*', { count: 'exact', head: true }).eq(member_id).is('read_at', null)
-// POST update chain:
-//   admin.from('notifications').update({read_at}).eq('id', notifId).eq('member_id', member_id).select('id').single()
-//   admin.from('notifications').select('id').eq('id', notifId).eq('member_id', member_id).maybeSingle() — existence check
+// ─── Supabase query chain mocks ───────────────────────────────────────────────
+// Query chains used in the routes (all routed via makeAdminMock per-test admin):
+//
+// GET list:  .from('notifications').select(...).eq(member_id).order(...)[.lt(cursor)].limit(n)
+// GET count: .from('notifications').select('*',{count:'exact',head:true}).eq(member_id).is('read_at',null)
+// POST upd:  .from('notifications').update({read_at}).eq(id).eq(member_id).select('id').single()
+// POST exist:.from('notifications').select('id').eq(id).eq(member_id).maybeSingle()
 
-// Mocks for list query
+// List query chain
 const mockListLimit = jest.fn();
 const mockListLt = jest.fn(() => ({ limit: mockListLimit }));
 const mockListOrder = jest.fn(() => ({ limit: mockListLimit, lt: mockListLt }));
 const mockListEq = jest.fn(() => ({ order: mockListOrder }));
-const mockListSelect = jest.fn(() => ({ eq: mockListEq }));
 
-// Mocks for unread count query
+// Unread count query chain
 const mockUnreadIs = jest.fn();
 const mockUnreadEq = jest.fn(() => ({ is: mockUnreadIs }));
-const mockUnreadSelect = jest.fn(() => ({ eq: mockUnreadEq }));
 
-// Mocks for POST update query
+// POST update query chain
 const mockUpdateSingle = jest.fn();
 const mockUpdateSelect = jest.fn(() => ({ single: mockUpdateSingle }));
 const mockUpdateEqMember = jest.fn(() => ({ select: mockUpdateSelect }));
 const mockUpdateEqId = jest.fn(() => ({ eq: mockUpdateEqMember }));
 const mockUpdate = jest.fn(() => ({ eq: mockUpdateEqId }));
 
-// Mocks for POST existence check
+// POST existence check chain
 const mockExistMaybeSingle = jest.fn();
 const mockExistEqMember = jest.fn(() => ({ maybeSingle: mockExistMaybeSingle }));
 const mockExistEqId = jest.fn(() => ({ eq: mockExistEqMember }));
-const mockExistSelect = jest.fn(() => ({ eq: mockExistEqId }));
 
+// Top-level module mock (required by Jest to intercept createClient at import time).
+// The actual per-test admin client is returned by mockVerifyMember — see makeAdminMock().
 jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    from: jest.fn((table: string) => {
-      if (table === 'notifications') {
-        return {
-          select: jest.fn((cols: unknown, opts?: unknown) => {
-            // Differentiate: head:true => unread count path; plain select => list path
-            if (opts && (opts as { head?: boolean }).head === true) {
-              return mockUnreadSelect(cols, opts);
-            }
-            // For update's .select('id') — differentiate by checking mockUpdate
-            return mockListSelect(cols);
-          }),
-          update: mockUpdate,
-        };
-      }
-      return {};
-    }),
-  })),
+  createClient: jest.fn(() => ({ from: jest.fn() })),
 }));
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -111,15 +91,26 @@ const SAMPLE_NOTIFICATIONS = [
 ];
 
 function makeAdminMock() {
+  let fromCallCount = 0;
   return {
     member_id: MEMBER_ID,
     admin: {
       from: jest.fn((table: string) => {
         if (table === 'notifications') {
+          fromCallCount++;
+          const thisFromCall = fromCallCount;
           return {
             select: jest.fn((cols: unknown, opts?: unknown) => {
+              // Head count query (unread count) — distinguished by opts.head
               if (opts && (opts as { head?: boolean }).head === true) {
                 return { eq: mockUnreadEq };
+              }
+              // POST route: from call 1 = update path (update is called, not select)
+              // POST route: from call 2 = existence check (.select('id').eq().eq().maybeSingle())
+              // GET route: from call 1 = list query; from call 2 = unread count (already caught above)
+              if (thisFromCall >= 2) {
+                // Existence check path
+                return { eq: mockExistEqId };
               }
               return { eq: mockListEq };
             }),
@@ -156,7 +147,9 @@ let POST: (req: NextRequest, ctx: { params: Promise<{ notifId: string }> }) => P
 beforeAll(async () => {
   const listMod = await import('../route');
   GET = listMod.GET;
-  const readMod = await import('../../[notifId]/read/route');
+  // Jest glob-expands [...] in dynamic import — use require() to bypass
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const readMod = require('../[notifId]/read/route') as { POST: typeof POST };
   POST = readMod.POST;
 });
 
@@ -180,6 +173,10 @@ beforeEach(() => {
   mockUpdateEqMember.mockReturnValue({ select: mockUpdateSelect });
   mockUpdateSelect.mockReturnValue({ single: mockUpdateSingle });
   mockUpdateSingle.mockResolvedValue({ data: { id: NOTIF_ID }, error: null });
+  // Default: existence check (used when update returns null — idempotency/404 path)
+  mockExistEqId.mockReturnValue({ eq: mockExistEqMember });
+  mockExistEqMember.mockReturnValue({ maybeSingle: mockExistMaybeSingle });
+  mockExistMaybeSingle.mockResolvedValue({ data: null, error: null });
 });
 
 // ─── GET tests ────────────────────────────────────────────────────────────────
