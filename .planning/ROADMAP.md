@@ -117,7 +117,7 @@ Plans:
 - [ ] 05-03-PLAN.md — Session-complete wiring (level-up, streak-broken, leaderboard-updated) + challenge-ended owner path [wave 2]
 - [ ] 05-04-PLAN.md — upgrade-opportunity (featureGate helpers + machine-limit) + new-gym-onboarded (register) [wave 2]
 - [ ] 05-05-PLAN.md — agent-daily cron: dormant members, checkin SLA, machine underutilization, challenge auto-expiry [wave 2]
-- [ ] 05-06-PLAN.md — at-risk per-member wiring + shared atRiskScan helper + agent-weekly cron (weekly-summary, at-risk early warning) [wave 2]
+- [x] 05-06-PLAN.md — at-risk per-member wiring + shared atRiskScan helper + agent-weekly cron (weekly-summary, at-risk early warning) [wave 2] ✅ COMPLETE 2026-07-20
 - [ ] 05-07-PLAN.md — Full automated gate + 13-automation staging walkthrough checkpoint (tier matrix, cooldown, PLATFORM_EVENTS sign-off) [wave 3]
 
 ### Phase 6: Notification Orchestration Wiring
@@ -141,7 +141,7 @@ Plans:
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
 | 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
 | 4. Mobile Program View | 2/3 | In Progress|  |
-| 5. UptimizeAI Agent Connection | 4/7 | In Progress|  |
+| 5. UptimizeAI Agent Connection | 6/7 | In Progress|  |
 | 6. Notification Orchestration Wiring | 0/? | Not started | - |
 
 ---

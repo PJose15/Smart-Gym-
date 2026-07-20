@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: active
-stopped_at: Completed 05-04-PLAN.md — upgrade-opportunity + new-gym-onboarded wired, all tests green
-last_updated: "2026-07-20T04:24:46.980Z"
-last_activity: "2026-07-19 — Executed plan 05-02: hardened /api/agents/trigger (cooldown dedup + UPTIMIZE forwarding + loop-safety schema, 366/366 tests, tsc clean)"
+stopped_at: Completed 05-06-PLAN.md — atRiskScan shared helper + at-risk route per-member triggers + agent-weekly cron (420 tests, tsc clean)
+last_updated: "2026-07-20T04:35:00.000Z"
+last_activity: "2026-07-20 — Executed plan 05-06: shared atRiskScan helper + owner at-risk per-member retention triggers + agent-weekly cron (weekly-summary + at-risk early-warning, 420/420 tests, tsc clean)"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 21
-  percent: 88
+  completed_plans: 22
+  percent: 92
 ---
 
 # State
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 5 of 6 — UptimizeAI Agent Connection (13 automations)
-Plan: 4 of 7 complete (05-01 through 05-04 executed)
-Status: Active — Wave 2 call sites progressing: featureGate upgrade helpers built, machine-limit 403 + registration success wired.
-Progress: [█████████░] 88%
-Last activity: 2026-07-20 — Executed plan 05-04: shouldTriggerUpgradeAgent + fireUpgradeOpportunity + machine-limit wiring + new-gym-onboarded register wiring (24 tests, tsc exit 0)
-Next action: Plan 05-05 — Wave 2 remaining automations (daily/weekly cron jobs, coach-tips, etc.)
+Plan: 6 of 7 complete (05-01 through 05-06 executed)
+Status: Active — Wave 2 call sites: session-complete (level-up/streak-broken/leaderboard-updated), challenge-ended, upgrade-opportunity, new-gym-onboarded, daily cron (4 scans), weekly cron (weekly-summary + at-risk early-warning), at-risk route wired.
+Progress: [█████████░] 92%
+Last activity: 2026-07-20 — Executed plan 05-06: shared atRiskScan helper + owner at-risk per-member retention triggers + agent-weekly cron (weekly-summary + at-risk early-warning, 420/420 tests, tsc clean)
+Next action: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch)
 
 ## Accumulated Context
 
@@ -108,9 +108,13 @@ Next action: Plan 05-05 — Wave 2 remaining automations (daily/weekly cron jobs
 - [Phase 05-uptimizeai-agent-connection]: machines.is_active filter confirmed in migration 001; per-gym machine_scan_events query uses idx_scan_events_gym_time index; challenge end_date compared as DATE string; dedup_key=challenge.id deduplicates cron + owner-complete paths via 24h cooldown
 - [Phase 05-uptimizeai-agent-connection]: UPGRADE_NUDGE_FEATURES excludes leaderboards/social_feed/push_notifications/franchise_support: low-value gates never spam revenue agent
 - [Phase 05-uptimizeai-agent-connection]: fireUpgradeOpportunity not inside checkFeatureAccess: only user-facing denial call sites trigger nudges, not internal/admin reads
+- [Phase 05-06-at-risk-weekly]: Single shared helper (atRiskScan.ts) for at-risk detection — eliminates logic duplication between owner route and weekly cron
+- [Phase 05-06-at-risk-weekly]: Zero-member gym suppression in agent-weekly — skip entirely if activeMembers === 0 (no weekly-summary, no at-risk scan)
+- [Phase 05-06-at-risk-weekly]: 7-day cooldown in trigger route absorbs both owner-route fires and weekly cron early-warning fires — no additional dedup logic at call sites
+- [Phase 05-06-at-risk-weekly]: gyms_scanned counter tracks only gyms that passed activeMembers > 0 check
 
 ## Session Continuity
 
-Last session: 2026-07-20T04:24:46.922Z
-Stopped at: Completed 05-04-PLAN.md — upgrade-opportunity + new-gym-onboarded wired, all tests green
-Resume with: Wave 1 Foundation complete (05-01 + 05-02). Next: plan 05-03 Wave 2 event-driven call sites (session complete level-up/streak-broken/leaderboard-updated, challenge-ended, at-risk per-member wiring)
+Last session: 2026-07-20T04:35:00.000Z
+Stopped at: Completed 05-06-PLAN.md — atRiskScan shared helper + at-risk route per-member triggers + agent-weekly cron (420 tests, tsc clean)
+Resume with: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch) to complete AGENT-03/AGENT-04 remaining automations
