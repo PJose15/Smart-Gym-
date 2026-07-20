@@ -148,7 +148,7 @@ beforeAll(async () => {
   const listMod = await import('../route');
   GET = listMod.GET;
   // Jest glob-expands [...] in dynamic import — use require() to bypass
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   const readMod = require('../[notifId]/read/route') as { POST: typeof POST };
   POST = readMod.POST;
 });

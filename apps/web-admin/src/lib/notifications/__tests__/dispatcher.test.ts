@@ -182,7 +182,7 @@ function setupHappyPath(overrides: {
   };
 
   // notifications (inbox + dedup count)
-  let notifInsertMock = jest.fn().mockResolvedValue({ data: { id: 'notif-01' }, error: null });
+  const notifInsertMock = jest.fn().mockResolvedValue({ data: { id: 'notif-01' }, error: null });
   let notifSelectCallCount = 0;
   tableHandlers['notifications'] = () => {
     notifSelectCallCount++;
