@@ -134,7 +134,7 @@ export function TodayZone({
           </View>
         )}
 
-        <ViewProgramLink onPress={() => router.push('/program')} />
+        <ViewProgramLink onPress={() => router.push('/program' as any)} />
       </AnimatedCard>
     );
   }
@@ -176,7 +176,7 @@ export function TodayZone({
           <Text style={sectionStyles.ctaText}>Start today's workout →</Text>
         </TouchableOpacity>
 
-        <ViewProgramLink onPress={() => router.push('/program')} />
+        <ViewProgramLink onPress={() => router.push('/program' as any)} />
       </AnimatedCard>
     );
   }
