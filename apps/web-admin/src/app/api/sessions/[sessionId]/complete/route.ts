@@ -9,6 +9,7 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { validateUUIDs, uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
+import { sendSessionCompletePush } from '@/lib/notifications/sessionPush';
 
 const completeSchema = z.object({
   member_id: uuidString,
@@ -159,6 +160,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       session_id: session.id,
       is_agent_initiated: false,
     }).catch(err => console.error('[session-complete] leaderboard-updated agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+
+    // Push notification: coalesced session-complete push (at most one push per session — NOTIF-02)
+    sendSessionCompletePush({
+      gym_id: session.gym_id,
+      member_id,
+      leveledUp: achievements.leveledUp,
+      badgesUnlocked: achievements.newAchievements.length,
+      isPersonalBest: session.is_personal_best ?? false,
+      streak,
+      previousStreak,
+    }).catch(err => console.error('[session-complete] push failed:', err instanceof Error ? err.message : 'Unknown error'));
 
     // Invalidate and refresh readiness score + muscle map (fire-and-forget)
     invalidateAndRefreshReadiness(member_id, session.gym_id, admin).catch(() => {});
