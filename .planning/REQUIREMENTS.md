@@ -66,13 +66,13 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
 
 - [ ] **AGENT-01**: Agent triggers actually reach the UptimizeAI engine (not just logged)
   - `/api/agents/trigger` forwards to `UPTIMIZE_WEBHOOK_URL` fire-and-forget after logging; failures recorded as `status: 'failed'` in `smartgym_agent_logs`
-- [ ] **AGENT-02**: Agent firing is loop-safe and deduplicated
+- [x] **AGENT-02**: Agent firing is loop-safe and deduplicated
   - Cooldown check against `smartgym_agent_logs` per (gym, agent, event, window) before firing; `is_agent_initiated` flag prevents agent → notification → agent loops; dead-table references (`error_log`, etc.) verified resolved before wiring (done via migrations 024-026)
 - [ ] **AGENT-03**: Event-driven automations fire from their source events
   - Wired call sites: session complete (level-up, streak-broken, leaderboard-updated), feature-gate denial (upgrade opportunity), at-risk detection, new-gym-onboarded, challenge-ended — plus the 3 already-wired Stripe billing triggers
-- [ ] **AGENT-04**: Scheduled automations fire from cron scans
+- [x] **AGENT-04**: Scheduled automations fire from cron scans
   - Daily/weekly cron routes cover: dormant members (14d), at-risk early warning, machine underutilization, check-in SLA overdue, weekly summary
-- [ ] **AGENT-05**: Every agent fire respects tier gating and is observable
+- [x] **AGENT-05**: Every agent fire respects tier gating and is observable
   - `checkAgentAccess()` tier gating enforced (Growth vs Pro agent sets); every fire logged with agent name, trigger event, status, payload; all 13 automations verifiably end-to-end in staging
 
 ### NOTIF — Notification Orchestration Wiring (24+ triggers)
@@ -137,10 +137,10 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | PROG-03 | Phase 4 | Complete |
 | PROG-04 | Phase 4 | Complete |
 | AGENT-01 | Phase 5 | Pending |
-| AGENT-02 | Phase 5 | Pending |
+| AGENT-02 | Phase 5 | Complete |
 | AGENT-03 | Phase 5 | Pending |
-| AGENT-04 | Phase 5 | Pending |
-| AGENT-05 | Phase 5 | Pending |
+| AGENT-04 | Phase 5 | Complete |
+| AGENT-05 | Phase 5 | Complete |
 | NOTIF-01 | Phase 6 | Pending |
 | NOTIF-02 | Phase 6 | Pending |
 | NOTIF-03 | Phase 6 | Pending |

@@ -39,10 +39,15 @@ const mockSupabaseUpdateEq = jest.fn();
 const mockSupabaseUpdate = jest.fn(() => ({ eq: mockSupabaseUpdateEq }));
 
 // Dedup query chain
+// Chain: .select('id').eq(gym_id).eq(agent_name).eq(trigger_event).gte(executed_at)
+//   then: .eq(member_id) OR .is('member_id', null)
+//   then (optional): .eq('payload->>dedup_key', ...)
+//   then: .limit(1)
 const mockDedupLimit = jest.fn();
-const mockDedupIs = jest.fn(() => ({ limit: mockDedupLimit }));
-const mockDedupEq4 = jest.fn(() => ({ eq: mockDedupEq5, is: mockDedupIs, limit: mockDedupLimit }));
+// After member/dedup eq or is — allows chaining to dedup_key eq or limit
 const mockDedupEq5 = jest.fn(() => ({ limit: mockDedupLimit }));
+const mockDedupIs = jest.fn(() => ({ eq: mockDedupEq5, limit: mockDedupLimit }));
+const mockDedupEq4 = jest.fn(() => ({ eq: mockDedupEq5, is: mockDedupIs, limit: mockDedupLimit }));
 const mockDedupGte = jest.fn(() => ({ eq: mockDedupEq4, is: mockDedupIs, limit: mockDedupLimit }));
 const mockDedupEq3 = jest.fn(() => ({ gte: mockDedupGte }));
 const mockDedupEq2 = jest.fn(() => ({ eq: mockDedupEq3 }));
@@ -198,7 +203,7 @@ describe('POST /api/agents/trigger — dedup + cooldown', () => {
       expect.objectContaining({ status: 'skipped', error_message: 'Cooldown window active' })
     );
     // The sent insert should NOT have been called
-    const calls = mockSupabaseInsert.mock.calls;
+    const calls = (mockSupabaseInsert.mock.calls as unknown as Array<[Record<string, unknown>]>);
     const sentCalls = calls.filter((c) => c[0]?.status === 'sent');
     expect(sentCalls).toHaveLength(0);
   });

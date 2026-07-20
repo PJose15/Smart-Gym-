@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 04-mobile-program-view/04-03-PLAN.md — ViewProgramLink in TodayZone, phase 4 gate green (mobile 227/227 + web-admin 347/347, tsc clean both apps)
-last_updated: "2026-07-20T01:32:31.512Z"
-last_activity: "2026-07-19 — Executed plan 03-05: final phase gate (mobile 189/189 + web-admin 347/347, tsc clean both apps)"
+status: verifying
+stopped_at: "Checkpoint: Task 3 — awaiting human db push of migration 029 to aztppxuapbgmadfigtys"
+last_updated: "2026-07-20T03:22:21.873Z"
+last_activity: "2026-07-19 — Executed plan 04-03: ViewProgramLink in TodayZone + phase 4 gate (mobile 227/227 + web-admin 347/347, tsc clean both apps)"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 17
-  completed_plans: 17
-  percent: 85
+  total_plans: 24
+  completed_plans: 18
+  percent: 100
 ---
 
 # State
@@ -97,9 +97,13 @@ Next action: Phase 5 — UptimizeAI Agent Connection (13 automations)
 - [Phase 04-mobile-program-view]: program/index is a Stack route (not tab) — tab bar is full at 6 items
 - [Phase 04-mobile-program-view]: program.days.length === 0 treated same as null program — empty state (malformed jsonb guard)
 - [Phase 04-mobile-program-view]: router.push('/program' as any) — Expo typed routes stale (gitignored .expo/types); as-any cast consistent with OverviewTab.tsx + ProfileHeader.tsx
+- [Phase 05-uptimizeai-agent-connection]: Echo receiver records reception via action_taken='echo-received' (never status — CHECK constraint allows only sent/failed/pending/skipped)
+- [Phase 05-uptimizeai-agent-connection]: DEMO_ECHO_AGENTS=true is the hard gate for echo route (returns 404 otherwise — never active in production)
+- [Phase 05-uptimizeai-agent-connection]: pg_cron agent-daily/agent-weekly jobs 404 harmlessly until plans 05-04/05-05 deploy the routes — by design
+- [Phase 05-uptimizeai-agent-connection]: is_agent_initiated lives in payload jsonb — no column migration needed; enforced at application layer
 
 ## Session Continuity
 
-Last session: 2026-07-20T01:32:31.508Z
-Stopped at: Completed 04-mobile-program-view/04-03-PLAN.md — ViewProgramLink in TodayZone, phase 4 gate green (mobile 227/227 + web-admin 347/347, tsc clean both apps)
+Last session: 2026-07-20T03:22:01.042Z
+Stopped at: Checkpoint: Task 3 — awaiting human db push of migration 029 to aztppxuapbgmadfigtys
 Resume with: Phase 4 complete — next: Phase 5 UptimizeAI Agent Connection, or run /gsd:verify-work for Phase 4 manual UAT
