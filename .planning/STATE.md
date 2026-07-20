@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: "Completed plan 05-05: agent-daily cron route with 4 daily scans (dormant/checkin-SLA/machine-underuse/challenge-expiry)"
-last_updated: "2026-07-20T04:08:12.517Z"
+status: active
+stopped_at: Completed 05-04-PLAN.md — upgrade-opportunity + new-gym-onboarded wired, all tests green
+last_updated: "2026-07-20T04:24:46.980Z"
 last_activity: "2026-07-19 — Executed plan 05-02: hardened /api/agents/trigger (cooldown dedup + UPTIMIZE forwarding + loop-safety schema, 366/366 tests, tsc clean)"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 20
-  percent: 79
+  completed_plans: 21
+  percent: 88
 ---
 
 # State
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 5 of 6 — UptimizeAI Agent Connection (13 automations)
-Plan: 2 of 7 complete (05-01 through 05-02 executed)
-Status: Active — Wave 1 (Foundation) complete: migration 029, echo receiver, trigger route hardened with cooldown dedup + UPTIMIZE forwarding. Ready for Wave 2 call sites.
-Progress: [████████░░] 79%
-Last activity: 2026-07-19 — Executed plan 05-02: hardened /api/agents/trigger (cooldown dedup + UPTIMIZE forwarding + loop-safety schema, 366/366 tests, tsc clean)
-Next action: Plan 05-03 — Wave 2 event-driven call sites (session complete, challenge-ended, at-risk wiring)
+Plan: 4 of 7 complete (05-01 through 05-04 executed)
+Status: Active — Wave 2 call sites progressing: featureGate upgrade helpers built, machine-limit 403 + registration success wired.
+Progress: [█████████░] 88%
+Last activity: 2026-07-20 — Executed plan 05-04: shouldTriggerUpgradeAgent + fireUpgradeOpportunity + machine-limit wiring + new-gym-onboarded register wiring (24 tests, tsc exit 0)
+Next action: Plan 05-05 — Wave 2 remaining automations (daily/weekly cron jobs, coach-tips, etc.)
 
 ## Accumulated Context
 
@@ -106,9 +106,11 @@ Next action: Plan 05-03 — Wave 2 event-driven call sites (session complete, ch
 - [Phase 05-02-trigger-hardening]: Skipped rows do NOT extend the cooldown window — only status=sent rows are the reference; skips leave the original window open for legitimate retries
 - [Phase 05-02-trigger-hardening]: UPTIMIZE_WEBHOOK_URL absent = no forwarding (staging-ready decision) — forwarding is optional; local dev and unset envs never break
 - [Phase 05-uptimizeai-agent-connection]: machines.is_active filter confirmed in migration 001; per-gym machine_scan_events query uses idx_scan_events_gym_time index; challenge end_date compared as DATE string; dedup_key=challenge.id deduplicates cron + owner-complete paths via 24h cooldown
+- [Phase 05-uptimizeai-agent-connection]: UPGRADE_NUDGE_FEATURES excludes leaderboards/social_feed/push_notifications/franchise_support: low-value gates never spam revenue agent
+- [Phase 05-uptimizeai-agent-connection]: fireUpgradeOpportunity not inside checkFeatureAccess: only user-facing denial call sites trigger nudges, not internal/admin reads
 
 ## Session Continuity
 
-Last session: 2026-07-20T04:05:45.284Z
-Stopped at: Completed plan 05-05: agent-daily cron route with 4 daily scans (dormant/checkin-SLA/machine-underuse/challenge-expiry)
+Last session: 2026-07-20T04:24:46.922Z
+Stopped at: Completed 05-04-PLAN.md — upgrade-opportunity + new-gym-onboarded wired, all tests green
 Resume with: Wave 1 Foundation complete (05-01 + 05-02). Next: plan 05-03 Wave 2 event-driven call sites (session complete level-up/streak-broken/leaderboard-updated, challenge-ended, at-risk per-member wiring)
