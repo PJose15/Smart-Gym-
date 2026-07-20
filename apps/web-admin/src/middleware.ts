@@ -16,8 +16,22 @@ function isCsrfExempt(pathname: string): boolean {
   )
 }
 
-function getAllowedOrigin(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || ''
+function getAllowedOrigins(): string[] {
+  // App URL plus any extra origins (comma-separated) — the Expo web preview
+  // (localhost:8083) calls these APIs cross-origin with Bearer auth.
+  return [
+    process.env.NEXT_PUBLIC_APP_URL,
+    ...(process.env.CORS_ALLOWED_ORIGINS?.split(',') ?? []),
+  ]
+    .filter((o): o is string => Boolean(o))
+    .map((o) => o.trim().replace(/\/$/, ''))
+}
+
+/** Echo the request origin when allowed; otherwise fall back to the app URL. */
+function resolveCorsOrigin(origin: string | null): string {
+  const allowed = getAllowedOrigins()
+  if (origin && allowed.includes(origin)) return origin
+  return allowed[0] ?? ''
 }
 
 export async function middleware(request: NextRequest) {
@@ -30,8 +44,8 @@ export async function middleware(request: NextRequest) {
 
   // API routes: CORS + CSRF protection
   if (pathname.startsWith('/api/')) {
-    const allowedOrigin = getAllowedOrigin()
     const origin = request.headers.get('origin')
+    const allowedOrigin = resolveCorsOrigin(origin)
 
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
@@ -64,7 +78,7 @@ export async function middleware(request: NextRequest) {
     // CSRF: validate Origin on state-changing methods
     const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)
     if (isStateChanging && !isCsrfExempt(pathname)) {
-      if (origin && allowedOrigin && origin !== allowedOrigin) {
+      if (origin && !getAllowedOrigins().includes(origin.replace(/\/$/, ''))) {
         return NextResponse.json(
           { error: 'CSRF origin mismatch' },
           { status: 403 }
