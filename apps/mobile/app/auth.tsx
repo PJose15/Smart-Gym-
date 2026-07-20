@@ -114,6 +114,26 @@ export default function AuthScreen() {
     }
   };
 
+  // Dev-only: password sign-in with the seeded demo member (Marcus Rodriguez,
+  // Iron Society). Phone OTP needs a live SMS provider, so dev builds get a
+  // one-tap bypass. Stripped from production bundles via __DEV__.
+  const handleDemoSignIn = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { error: pwError } = await supabase.auth.signInWithPassword({
+        email: 'member.demo@nexera.app',
+        password: 'NexeraDemo1!',
+      });
+      if (pwError) throw pwError;
+      router.replace('/(tabs)');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Demo sign-in failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ─── Step 2: Verify OTP ────────────────────────────
   const handleVerifyOTP = async () => {
     if (otpCode.length < 6) {
@@ -322,6 +342,17 @@ export default function AuthScreen() {
                     onPress={() => setIsReturningMember(false)}
                   >
                     <Text style={styles.secondaryBtnText}>New here? Create account</Text>
+                  </TouchableOpacity>
+                )}
+                {__DEV__ && (
+                  <TouchableOpacity
+                    style={styles.secondaryBtn}
+                    onPress={handleDemoSignIn}
+                    disabled={loading}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign in with demo account"
+                  >
+                    <Text style={styles.secondaryBtnText}>Demo sign-in (dev)</Text>
                   </TouchableOpacity>
                 )}
               </View>
