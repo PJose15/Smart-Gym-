@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { useUnreadFeedCount } from '../../src/hooks/useUnreadFeedCount';
+import { useUnreadNotifications } from '../../src/hooks/useUnreadNotifications';
 
 const USE_NATIVE = Platform.OS !== 'web';
 
@@ -152,10 +153,29 @@ const headerStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  bellBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  bellBadgeText: {
+    color: colors.white,
+    fontSize: 9,
+    fontFamily: typography.fontBold,
+    lineHeight: 16,
+  },
 });
 
 export default function TabLayout() {
   const { count: unreadFeedCount } = useUnreadFeedCount();
+  const { count: unreadNotifCount } = useUnreadNotifications();
 
   return (
     <Tabs
@@ -210,13 +230,24 @@ export default function TabLayout() {
           ),
           headerRight: () => (
             <TouchableOpacity
-              onPress={() => router.push('/coach-notes')}
+              onPress={() => router.push('/notifications' as any)}
               accessibilityRole="button"
-              accessibilityLabel="Coach notes"
+              accessibilityLabel={
+                unreadNotifCount > 0
+                  ? `Notifications, ${unreadNotifCount} unread`
+                  : 'Notifications'
+              }
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={headerStyles.bellButton}
             >
               <Ionicons name="notifications-outline" size={20} color={colors.text} />
+              {unreadNotifCount > 0 && (
+                <View style={headerStyles.bellBadge}>
+                  <Text style={headerStyles.bellBadgeText}>
+                    {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           ),
           tabBarIcon: ({ color, size, focused }) => (

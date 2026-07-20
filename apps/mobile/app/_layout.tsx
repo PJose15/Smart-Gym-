@@ -192,6 +192,10 @@ export default function RootLayout() {
           name="program/index"
           options={{ title: 'Your Program' }}
         />
+        <Stack.Screen
+          name="notifications/index"
+          options={{ title: 'Notifications' }}
+        />
       </Stack>
       </PhoneFrame>
     </ErrorBoundary>
