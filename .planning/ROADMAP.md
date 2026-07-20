@@ -131,7 +131,19 @@ Plans:
   4. Member reviews past notifications in an inbox with unread badge; read state syncs on tap
   5. Uninstalled devices stop receiving sends: stale Expo tokens are auto-deactivated via receipt polling, and delivery rate is visible to admins
 **Dependency notes**: Build order from research: dispatcher first (everything depends on it), then `NotificationType`/`NOTIFICATION_ROUTES` expansion, then trigger wiring by value (session-complete cluster → coaching → social), then preferences UI, inbox, receipt-polling cron. `is_agent_initiated` flag in the payload schema is required for Phase 5 loop safety — established by Phase 5 plan 05-02; the dispatcher must check `data.is_agent_initiated === true` and skip re-triggering agents. No PII in push bodies (lock-screen exposure).
-**Plans**: TBD
+**Plans:** 10 plans (4 waves)
+
+Plans:
+- [ ] 06-01-PLAN.md — NotificationType 4→24 + NOTIFICATION_ROUTES expansion + resolveNotificationRoute export [wave 1]
+- [ ] 06-02-PLAN.md — Migration 031: notification_log 'delivered' CHECK + receipt-poll index + 15-min pg_cron [wave 1, checkpoint: db push]
+- [ ] 06-03-PLAN.md — Central dispatcher (TDD RED-first): preference/quiet-hours/dedup/rate-cap guards, identity bridge, loop safety, inbox writes [wave 2]
+- [ ] 06-04-PLAN.md — Receipt-poll cron route (DeviceNotRegistered → token deactivation) + admin health delivery-rate block [wave 2]
+- [ ] 06-08-PLAN.md — Inbox API: GET /api/member/notifications + POST [notifId]/read [wave 2]
+- [ ] 06-05-PLAN.md — Session-complete coalesced push (barrage prevention) + challenge_rank_change + challenge_complete (owner path) [wave 3]
+- [ ] 06-06-PLAN.md — Coaching + social triggers: checkin_generated/reply, coach_note, program_assigned, feed_reaction/comment, new_follower [wave 3]
+- [ ] 06-07-PLAN.md — Operational + agent delivery: billing owner pushes, agent-daily/weekly cron pushes (is_agent_initiated: true), agent_welcome [wave 3]
+- [ ] 06-09-PLAN.md — Mobile inbox screen + unread bell badge + preferences UI (category toggles + quiet hours) [wave 3]
+- [ ] 06-10-PLAN.md — Full automated gate (7 checks) + device walkthrough checkpoint [wave 4]
 
 ## Progress
 
@@ -142,7 +154,7 @@ Plans:
 | 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
 | 4. Mobile Program View | 2/3 | In Progress|  |
 | 5. UptimizeAI Agent Connection | 7/7 | Complete   | 2026-07-20 |
-| 6. Notification Orchestration Wiring | 0/? | Not started | - |
+| 6. Notification Orchestration Wiring | 0/10 | Planned | - |
 
 ---
 *Roadmap created 2026-07-19. Next: `/gsd:plan-phase 1` (user priority: plan Owner Onboarding in full executable detail first).*
