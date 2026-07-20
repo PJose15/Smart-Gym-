@@ -3,6 +3,7 @@ import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 export async function POST(
   _req: NextRequest,
@@ -42,6 +43,30 @@ export async function POST(
       .from('gym_challenges')
       .update({ is_active: false })
       .eq('id', params.challengeId);
+
+    // Push: challenge_complete — notify all participants that the challenge has ended (fire-and-forget)
+    // Dispatcher's 5-min (member, type) dedup absorbs overlap when cron auto-expiry (06-07) also fires
+    {
+      const { data: participants } = await admin
+        .from('challenge_participants')
+        .select('member_id')
+        .eq('challenge_id', params.challengeId);
+
+      if (participants && participants.length > 0) {
+        for (const participant of participants) {
+          sendNotification({
+            gym_id: challenge.gym_id,
+            member_id: participant.member_id,
+            type: 'challenge_complete',
+            title: 'Challenge finished',
+            body: 'A challenge you joined has ended — see the final leaderboard',
+            data: { challenge_id: params.challengeId },
+          }).catch(err =>
+            console.error('[challenge-complete] push failed:', err instanceof Error ? err.message : 'Unknown error')
+          );
+        }
+      }
+    }
 
     // Agent: challenge-ended — dedup_key = challengeId prevents double-fire if cron auto-expiry also runs (fire-and-forget)
     triggerUptimizeAIAgent('growth-agent', {

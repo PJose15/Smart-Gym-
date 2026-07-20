@@ -258,7 +258,7 @@ describe('POST /api/sessions/[sessionId]/complete — push integration (06-05)',
     mockAchievements.mockResolvedValue({
       leveledUp: true,
       newLevel: { level: 3, name: 'Bronze', color: '#CD7F32' },
-      newAchievements: ['badge-1'],
+      newAchievements: [{ code: 'badge-1', title: 'First Badge', points: 100 }],
     });
     const admin = buildAdmin({ currentStreak: 7, recentDates: makeStreakContinuingDates(7), isPersonalBest: true });
     mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);

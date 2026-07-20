@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 interface SessionScoreInput {
   total_volume_lbs: number;
@@ -17,7 +18,7 @@ export async function updateChallengeScores(admin: SupabaseClient<any, 'public',
     // Find active challenges where this member is a participant
     const { data: participations } = await admin
       .from('challenge_participants')
-      .select('id, challenge_id, current_score')
+      .select('id, challenge_id, current_score, current_rank')
       .eq('member_id', memberId)
       .eq('gym_id', gymId);
 
@@ -157,6 +158,22 @@ export async function updateChallengeScores(admin: SupabaseClient<any, 'public',
         const myRank = rankUpdates.find(
           (r) => allParticipants[r.rank - 1]?.member_id === memberId
         )?.rank;
+
+        // challenge_rank_change push: member entered top 3 from outside top 3
+        // oldRank null/undefined means no prior rank (effectively unranked → treat as >3)
+        const oldRank = (participation as { current_rank?: number | null }).current_rank ?? null;
+        if (myRank && myRank <= 3 && (oldRank === null || oldRank > 3)) {
+          sendNotification({
+            gym_id: gymId,
+            member_id: memberId,
+            type: 'challenge_rank_change',
+            title: 'Leaderboard update',
+            body: 'You moved into the top 3 of a challenge',
+            data: { challenge_id: participation.challenge_id },
+          }).catch(err =>
+            console.error('[challengeScoring] challenge_rank_change push failed:', err instanceof Error ? err.message : 'Unknown error')
+          );
+        }
 
         if (myRank && newScore > 0) {
           if (myRank === 1) {
