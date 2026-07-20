@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 06-08-PLAN.md
-last_updated: "2026-07-20T13:58:48Z"
+status: "Active — Wave 2: dispatcher live (NOTIF-01/04), receipt-poll cron live (NOTIF-06), inbox API live (NOTIF-05)"
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-07-20T14:18:17.942Z"
 last_activity: "2026-07-20 — Executed plan 06-08: GET /api/member/notifications (paginated list + unread count) and POST /api/member/notifications/[notifId]/read (idempotent mark-read), 16 tests green (NOTIF-05)"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 28
+  completed_plans: 30
   percent: 94
 ---
 
@@ -124,9 +124,12 @@ Next action: Plan 06-09 — Mobile inbox screen (consumes both notification rout
 - [Phase 06-03-dispatcher]: Loop safety structurally enforced via test 14b reading dispatcher.ts source; comment wording avoids forbidden terms to keep source scan passing
 - [Phase 06-08-notifications-inbox]: Existence check after update distinguishes already-read (idempotent 200) from cross-member (404) — no pre-check penalty on happy path
 - [Phase 06-08-notifications-inbox]: Promise.all([listQuery, unreadQuery]) for single-round-trip GET latency; next_cursor = last row's created_at when rows.length === limit
+- [Phase 06-05]: pickSessionPushEvent is pure (no I/O) — enables deterministic unit testing; sendSessionCompletePush is the thin async wrapper and the only push call site in the route
+- [Phase 06-05]: challenge_rank_change treats current_rank null/undefined as unranked (>3) so first top-3 entry triggers push
+- [Phase 06-05]: challenge_complete sequential loop at launch scale; dispatcher 5-min dedup is the cron overlap guard (06-07)
 
 ## Session Continuity
 
-Last session: 2026-07-20T13:58:48Z
-Stopped at: Completed 06-08-PLAN.md
+Last session: 2026-07-20T14:18:17.934Z
+Stopped at: Completed 06-05-PLAN.md
 Resume with: Plan 06-09 — Mobile inbox screen consuming GET /api/member/notifications + POST mark-read
