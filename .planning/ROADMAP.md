@@ -131,7 +131,7 @@ Plans:
   4. Member reviews past notifications in an inbox with unread badge; read state syncs on tap
   5. Uninstalled devices stop receiving sends: stale Expo tokens are auto-deactivated via receipt polling, and delivery rate is visible to admins
 **Dependency notes**: Build order from research: dispatcher first (everything depends on it), then `NotificationType`/`NOTIFICATION_ROUTES` expansion, then trigger wiring by value (session-complete cluster → coaching → social), then preferences UI, inbox, receipt-polling cron. `is_agent_initiated` flag in the payload schema is required for Phase 5 loop safety — established by Phase 5 plan 05-02; the dispatcher must check `data.is_agent_initiated === true` and skip re-triggering agents. No PII in push bodies (lock-screen exposure).
-**Plans:** 6/10 plans executed
+**Plans:** 8/10 plans executed
 
 Plans:
 - [x] 06-01-PLAN.md — NotificationType 4→24 + NOTIFICATION_ROUTES expansion + resolveNotificationRoute export [wave 1] ✅ COMPLETE 2026-07-20
@@ -154,7 +154,7 @@ Plans:
 | 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
 | 4. Mobile Program View | 2/3 | In Progress|  |
 | 5. UptimizeAI Agent Connection | 7/7 | Complete   | 2026-07-20 |
-| 6. Notification Orchestration Wiring | 6/10 | In Progress|  |
+| 6. Notification Orchestration Wiring | 8/10 | In Progress|  |
 
 ---
 *Roadmap created 2026-07-19. Next: `/gsd:plan-phase 1` (user priority: plan Owner Onboarding in full executable detail first).*

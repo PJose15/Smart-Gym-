@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: "Active — Wave 2: dispatcher live (NOTIF-01/04), receipt-poll cron live (NOTIF-06), inbox API live (NOTIF-05)"
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-07-20T14:18:17.942Z"
-last_activity: "2026-07-20 — Executed plan 06-08: GET /api/member/notifications (paginated list + unread count) and POST /api/member/notifications/[notifId]/read (idempotent mark-read), 16 tests green (NOTIF-05)"
+stopped_at: Completed 06-09-PLAN.md
+last_updated: "2026-07-20T14:20:26.375Z"
+last_activity: "2026-07-20 — Executed plan 06-09: mobile inbox screen + bell badge (useUnreadNotifications) + 7 push-category toggles + quiet hours in settings, 258 mobile tests green (NOTIF-04 UI + NOTIF-05)"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 30
+  completed_plans: 32
   percent: 94
 ---
 
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 6 of 6 — Notification Orchestration Wiring (10 plans)
-Plan: 8 of 10 complete (06-01 + 06-02 + 06-03 + 06-04 + 06-08 executed; others executed in parallel)
-Status: Active — Wave 2: dispatcher live (NOTIF-01/04), receipt-poll cron live (NOTIF-06), inbox API live (NOTIF-05)
+Plan: 9 of 10 complete (06-01 + 06-02 + 06-03 + 06-04 + 06-05 + 06-06 + 06-07 + 06-08 + 06-09 executed)
+Status: Active — Wave 3: mobile inbox screen + bell badge + push preferences live (NOTIF-04 UI + NOTIF-05)
 Progress: [█████████░] 94%
-Last activity: 2026-07-20 — Executed plan 06-08: GET /api/member/notifications (paginated list + unread count) and POST /api/member/notifications/[notifId]/read (idempotent mark-read), 16 tests green (NOTIF-05)
-Next action: Plan 06-09 — Mobile inbox screen (consumes both notification routes)
+Last activity: 2026-07-20 — Executed plan 06-09: mobile inbox screen + bell badge (useUnreadNotifications) + 7 push-category toggles + quiet hours in settings, 258 mobile tests green (NOTIF-04 UI + NOTIF-05)
+Next action: Plan 06-10 — E2E verification gate (final plan)
 
 ## Accumulated Context
 
@@ -127,9 +127,14 @@ Next action: Plan 06-09 — Mobile inbox screen (consumes both notification rout
 - [Phase 06-05]: pickSessionPushEvent is pure (no I/O) — enables deterministic unit testing; sendSessionCompletePush is the thin async wrapper and the only push call site in the route
 - [Phase 06-05]: challenge_rank_change treats current_rank null/undefined as unranked (>3) so first top-3 entry triggers push
 - [Phase 06-05]: challenge_complete sequential loop at launch scale; dispatcher 5-min dedup is the cron overlap guard (06-07)
+- [Phase 06-07]: Billing pushes omit is_agent_initiated (Stripe events); all cron pushes set is_agent_initiated:true (agent outputs)
+- [Phase 06-07]: member_at_risk: ONE owner push per gym per run (no PII in title/body/data, barrage rule)
+- [Phase 06-notification-orchestration]: useUnreadNotifications: no Realtime subscription — notifications table not in publication; poll-on-focus for v1
+- [Phase 06-notification-orchestration]: Quiet hours time picker uses Alert (no new deps), 2-hour increments, times stored HH:MM:SS UTC
+- [Phase 06-07]: Webhook owner pushes wrapped in async IIFE with catch — webhook response never blocked by push failures
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:18:17.934Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-07-20T14:20:26.372Z
+Stopped at: Completed 06-07-PLAN.md
 Resume with: Plan 06-09 — Mobile inbox screen consuming GET /api/member/notifications + POST mark-read
