@@ -1,4 +1,4 @@
--- 031: get_leaderboard runs as SECURITY DEFINER.
+-- 033 (renumbered from 031 — collided with 031_notification_receipts_cron): get_leaderboard runs as SECURITY DEFINER.
 --
 -- The function was SECURITY INVOKER, so callers using a member JWT (the
 -- mobile app queries it directly) only saw their own rows under RLS and
