@@ -2,7 +2,6 @@
 
 import { useState, FormEvent, CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 
 const pageStyle: CSSProperties = {
   display: 'flex',
@@ -59,22 +58,17 @@ export default function StaffLoginPage() {
     setLoading(true);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Server-side sign-in sets the cookie session that the staff API
+      // routes read — the localStorage client session never reaches them.
+      const res = await fetch('/api/auth/staff/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) {
-        setError(authError.message);
-        setLoading(false);
-        return;
-      }
-
-      // Check role to determine redirect
-      const res = await fetch('/api/auth/staff/me');
       if (!res.ok) {
-        setError('Account does not have staff access.');
-        await supabase.auth.signOut();
+        const body = await res.json().catch(() => null);
+        setError(body?.error ?? 'Account does not have staff access.');
         setLoading(false);
         return;
       }
