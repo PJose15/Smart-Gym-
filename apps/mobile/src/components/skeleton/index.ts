@@ -8,3 +8,4 @@ export { MachineDetailSkeleton } from './MachineDetailSkeleton';
 export { LeaderboardScreenSkeleton } from './LeaderboardScreenSkeleton';
 export { FeedSkeleton } from './FeedSkeleton';
 export { ChallengesScreenSkeleton } from './ChallengesScreenSkeleton';
+export { ProgramScreenSkeleton } from './ProgramScreenSkeleton';
