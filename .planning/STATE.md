@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: "Checkpoint: Task 3 — awaiting human db push of migration 029 to aztppxuapbgmadfigtys"
-last_updated: "2026-07-20T03:22:21.873Z"
-last_activity: "2026-07-19 — Executed plan 04-03: ViewProgramLink in TodayZone + phase 4 gate (mobile 227/227 + web-admin 347/347, tsc clean both apps)"
+status: active
+stopped_at: "Completed 05-uptimizeai-agent-connection/05-02-PLAN.md — trigger route hardened: cooldown dedup + UPTIMIZE forwarding + loop-safety schema (366/366 web-admin tests, tsc clean)"
+last_updated: "2026-07-20T03:30:00Z"
+last_activity: "2026-07-19 — Executed plan 05-02: hardened /api/agents/trigger with cooldown dedup + UPTIMIZE fire-and-forget forwarding + is_agent_initiated schema"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 18
-  percent: 100
+  completed_plans: 19
+  percent: 79
 ---
 
 # State
@@ -25,12 +25,12 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 
 ## Current Position
 
-Phase: 4 of 6 — Mobile Program View — COMPLETE (all 3 plans executed)
-Plan: 3 of 3 complete (04-01 through 04-03 all executed)
-Status: Phase 4 automated gate green. VALIDATION.md signed off. Manual UAT deferred to /gsd:verify-work.
-Progress: [██████████] 100%
-Last activity: 2026-07-19 — Executed plan 04-03: ViewProgramLink in TodayZone + phase 4 gate (mobile 227/227 + web-admin 347/347, tsc clean both apps)
-Next action: Phase 5 — UptimizeAI Agent Connection (13 automations)
+Phase: 5 of 6 — UptimizeAI Agent Connection (13 automations)
+Plan: 2 of 7 complete (05-01 through 05-02 executed)
+Status: Active — Wave 1 (Foundation) complete: migration 029, echo receiver, trigger route hardened with cooldown dedup + UPTIMIZE forwarding. Ready for Wave 2 call sites.
+Progress: [████████░░] 79%
+Last activity: 2026-07-19 — Executed plan 05-02: hardened /api/agents/trigger (cooldown dedup + UPTIMIZE forwarding + loop-safety schema, 366/366 tests, tsc clean)
+Next action: Plan 05-03 — Wave 2 event-driven call sites (session complete, challenge-ended, at-risk wiring)
 
 ## Accumulated Context
 
@@ -101,9 +101,13 @@ Next action: Phase 5 — UptimizeAI Agent Connection (13 automations)
 - [Phase 05-uptimizeai-agent-connection]: DEMO_ECHO_AGENTS=true is the hard gate for echo route (returns 404 otherwise — never active in production)
 - [Phase 05-uptimizeai-agent-connection]: pg_cron agent-daily/agent-weekly jobs 404 harmlessly until plans 05-04/05-05 deploy the routes — by design
 - [Phase 05-uptimizeai-agent-connection]: is_agent_initiated lives in payload jsonb — no column migration needed; enforced at application layer
+- [Phase 05-02-trigger-hardening]: PLATFORM_EVENTS (new-gym-onboarded, upgrade-opportunity) bypass checkAgentAccess — platform-growth events about the gym; tier gating would make them dead code
+- [Phase 05-02-trigger-hardening]: Cooldown keyed by trigger_event (not agent_name) — each event has distinct semantic urgency (level-up=24h, member-at-risk=7d, weekly-summary=6d)
+- [Phase 05-02-trigger-hardening]: Skipped rows do NOT extend the cooldown window — only status=sent rows are the reference; skips leave the original window open for legitimate retries
+- [Phase 05-02-trigger-hardening]: UPTIMIZE_WEBHOOK_URL absent = no forwarding (staging-ready decision) — forwarding is optional; local dev and unset envs never break
 
 ## Session Continuity
 
-Last session: 2026-07-20T03:22:01.042Z
-Stopped at: Checkpoint: Task 3 — awaiting human db push of migration 029 to aztppxuapbgmadfigtys
-Resume with: Phase 4 complete — next: Phase 5 UptimizeAI Agent Connection, or run /gsd:verify-work for Phase 4 manual UAT
+Last session: 2026-07-20T03:30:00Z
+Stopped at: Completed 05-uptimizeai-agent-connection/05-02-PLAN.md — trigger route hardened (cooldown dedup + UPTIMIZE forwarding + loop-safety schema, 366/366 tests, tsc clean)
+Resume with: Wave 1 Foundation complete (05-01 + 05-02). Next: plan 05-03 Wave 2 event-driven call sites (session complete level-up/streak-broken/leaderboard-updated, challenge-ended, at-risk per-member wiring)
