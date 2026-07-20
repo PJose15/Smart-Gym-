@@ -14,7 +14,15 @@ export async function GET() {
     const today = now.toISOString().slice(0, 10);
 
     const dbStart = Date.now();
-    const [dbCheck, apiPerfRes, sessionsRes, errorsRes] = await Promise.all([
+    const [
+      dbCheck,
+      apiPerfRes,
+      sessionsRes,
+      errorsRes,
+      notifSentRes,
+      notifDeliveredRes,
+      notifFailedRes,
+    ] = await Promise.all([
       admin.from('gyms').select('id', { count: 'exact', head: true }).limit(1),
       admin
         .from('api_performance_log')
@@ -29,6 +37,24 @@ export async function GET() {
         .select('id', { count: 'exact', head: true })
         .eq('resolved', false)
         .gte('occurred_at', twentyFourHoursAgo),
+      // Notification delivery metrics (24h window).
+      // 'sent' = ticket accepted but receipt not yet polled (pending).
+      // delivery_rate is computed over resolved receipts only (delivered / (delivered + failed)).
+      admin
+        .from('notification_log')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'sent')
+        .gte('created_at', twentyFourHoursAgo),
+      admin
+        .from('notification_log')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'delivered')
+        .gte('created_at', twentyFourHoursAgo),
+      admin
+        .from('notification_log')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'failed')
+        .gte('created_at', twentyFourHoursAgo),
     ]);
     const dbLatencyMs = Date.now() - dbStart;
 
@@ -56,6 +82,18 @@ export async function GET() {
       request_count: v.count,
     }));
 
+    // Compute push delivery rate over resolved receipts only.
+    // 'sent' count = tickets accepted but not yet polled (pending resolution).
+    // delivery_rate is over resolved receipts only (delivered / (delivered + failed)).
+    const sent24h = notifSentRes.count ?? 0;
+    const delivered24h = notifDeliveredRes.count ?? 0;
+    const failed24h = notifFailedRes.count ?? 0;
+    const resolvedDenominator = delivered24h + failed24h;
+    const deliveryRate =
+      resolvedDenominator > 0
+        ? Math.round((delivered24h / resolvedDenominator) * 1000) / 1000
+        : null;
+
     return NextResponse.json({
       status,
       db_healthy: dbHealthy,
@@ -63,6 +101,12 @@ export async function GET() {
       sessions_today: sessionsRes.count ?? 0,
       unresolved_errors_24h: unresolvedErrors,
       api_performance: apiPerformance,
+      notifications: {
+        sent_24h: sent24h,
+        delivered_24h: delivered24h,
+        failed_24h: failed24h,
+        delivery_rate: deliveryRate,
+      },
     });
   } catch (err) {
     console.error('[/api/admin/health] Error:', err);
