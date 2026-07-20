@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: "Completed 06-02 Task 1 — migration 031 written and committed, awaiting human-action checkpoint (Task 2: apply migration to live DB)"
-last_updated: "2026-07-20T13:39:05.602Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-07-20T13:45:16.203Z"
 last_activity: "2026-07-20 — Executed plan 05-06: shared atRiskScan helper + owner at-risk per-member retention triggers + agent-weekly cron (weekly-summary + at-risk early-warning, 420/420 tests, tsc clean)"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 25
+  completed_plans: 26
   percent: 92
 ---
 
@@ -115,9 +115,11 @@ Next action: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joi
 - [Phase 05-uptimizeai-agent-connection]: jest.mock factory with jest.requireActual('zod') needed when module exports both functions and Zod schemas — auto-mock nulls schema to undefined
 - [Phase 06-notification-orchestration]: No expo_receipt_ids array column: single-receipt MVP per 06-RESEARCH.md Pitfall 5; multi-device coverage is post-launch
 - [Phase 06-notification-orchestration]: nexera-receipt-poll cron '*/15 * * * *': fires before route exists (404 harmlessly) — schedule-before-route pattern from migration 029
+- [Phase 06-notification-orchestration]: NOTIFICATION_ROUTES typed as Record<NotificationType,...>: adding new union member without map entry is a compile error — enforces totality
+- [Phase 06-notification-orchestration]: resolveNotificationRoute exported (not private): inbox screen (06-09) reuses it for tap-navigation without duplicating the route map
 
 ## Session Continuity
 
-Last session: 2026-07-20T13:39:05.596Z
-Stopped at: Completed 06-02 Task 1 — migration 031 written and committed, awaiting human-action checkpoint (Task 2: apply migration to live DB)
+Last session: 2026-07-20T13:45:16.197Z
+Stopped at: Completed 06-01-PLAN.md
 Resume with: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch) to complete AGENT-03/AGENT-04 remaining automations

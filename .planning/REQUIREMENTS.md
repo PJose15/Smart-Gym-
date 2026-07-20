@@ -81,7 +81,7 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
   - Central `dispatcher.ts` checks `notification_preferences`, quiet hours, 5-minute (profile, type) dedup, and per-member hourly rate cap before calling the `send-push-notification` Edge Function; opted-out members provably never receive pushes
 - [ ] **NOTIF-02**: The 24+ trigger types are wired from their event sources
   - Activity (PR, badge, level-up, streak, challenge rank/complete), social (feed reaction, comment), coaching (check-in generated/reply, coach note, program assigned), and operational (trial ending, payment failed, at-risk, weekly summary) triggers all dispatch through NOTIF-01
-- [ ] **NOTIF-03**: Every push deep-links to the right screen
+- [x] **NOTIF-03**: Every push deep-links to the right screen
   - `NotificationType` union expanded from 4 to full trigger set in `@nexera/types`; `NOTIFICATION_ROUTES` maps every type to a mobile route; deleted-resource targets render "not found" gracefully
 - [ ] **NOTIF-04**: Member controls notifications by category, with quiet hours
   - Mobile settings section with per-category toggles (activity, social, coaching, operational, agents) + quiet hours window; enforced server-side, not just UI
@@ -143,7 +143,7 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | AGENT-05 | Phase 5 | Complete |
 | NOTIF-01 | Phase 6 | Pending |
 | NOTIF-02 | Phase 6 | Pending |
-| NOTIF-03 | Phase 6 | Pending |
+| NOTIF-03 | Phase 6 | Complete |
 | NOTIF-04 | Phase 6 | Pending |
 | NOTIF-05 | Phase 6 | Pending |
 | NOTIF-06 | Phase 6 | Complete |
