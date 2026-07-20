@@ -90,8 +90,13 @@ Plans:
   2. Member scrolls all program days with exercises shown as sets × reps; today is visually highlighted and completed days are checked
   3. Member taps "Start today's workout" and lands in the workout/scan flow; tapping an exercise opens its detail screen
   4. Member without an assigned program sees a helpful empty state instead of a blank screen
-**Dependency notes**: Read-only view — no exercise swapping or editing from mobile (swaps stay in the machine/scan flow; editing stays in web admin; accept/reject is Tier 3 out of scope). Pure UI work, no new API routes.
-**Plans**: TBD
+**Dependency notes**: Read-only view — no exercise swapping or editing from mobile (swaps stay in the machine/scan flow; editing stays in web admin; accept/reject is Tier 3 out of scope). Pure UI work, no new API routes, no migration, no new deps (research confirmed RLS `programs_own` + migration 026 grants sufficient for direct mobile reads). Both AI-generated and trainer-approved programs live in `ai_programs` — trainer attribution via `trainer_approved_by` → `users.display_name` lookup. "Today" determination must match the home screen (`getTodaysProgramDay(created_at, days.length)`), not the DB `day_number`.
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Data layer TDD: programLogic (pure) + programService (direct Supabase) + CacheTTL.programData [wave 1]
+- [ ] 04-02-PLAN.md — Program screen: ProgramHeader/ProgramDayCard/skeleton + app/program/index.tsx route with today highlight, Start CTA, exercise links, empty state [wave 2]
+- [ ] 04-03-PLAN.md — TodayZone "View full program" entry link + full phase gate (mobile + web-admin suites, tsc, hex scan) [wave 3]
 
 ### Phase 5: UptimizeAI Agent Connection
 **Goal**: The 13 specified automations run end-to-end — real events fire real agents that take real actions, safely and observably
@@ -126,7 +131,7 @@ Plans:
 | 1. Gym Owner Self-Serve Onboarding | 9/9 | Complete   | 2026-07-19 |
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
 | 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
-| 4. Mobile Program View | 0/? | Not started | - |
+| 4. Mobile Program View | 0/3 | Planned | - |
 | 5. UptimizeAI Agent Connection | 0/? | Not started | - |
 | 6. Notification Orchestration Wiring | 0/? | Not started | - |
 
