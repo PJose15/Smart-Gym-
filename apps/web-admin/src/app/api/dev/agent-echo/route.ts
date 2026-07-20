@@ -29,7 +29,7 @@ function getAdminClient() {
  *       Reception is recorded via action_taken text column — never status.
  */
 export async function POST(request: Request) {
-  if (process.env.DEMO_ECHO_AGENTS !== 'true') {
+  if (process.env.NODE_ENV === 'production' || process.env.DEMO_ECHO_AGENTS !== 'true') {
     return NextResponse.json({ error: 'Not available' }, { status: 404 });
   }
 

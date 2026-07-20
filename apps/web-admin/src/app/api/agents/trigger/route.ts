@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { safeKeyEquals } from '@/lib/internalAuth';
 import { runAfterResponse } from '@/lib/asyncWork';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     const providedKey = request.headers.get('x-smartgym-internal-key');
-    if (providedKey !== internalKey) {
+    if (!safeKeyEquals(providedKey, internalKey)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

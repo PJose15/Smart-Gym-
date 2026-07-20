@@ -22,6 +22,7 @@ export async function triggerUptimizeAIAgent(
         'x-smartgym-internal-key': key,
       },
       body: JSON.stringify({ agent_name: agentName, payload }),
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!res.ok) {

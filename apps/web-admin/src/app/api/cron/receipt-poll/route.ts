@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { safeKeyEquals } from '@/lib/internalAuth';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -55,8 +56,8 @@ export async function POST(request: Request) {
       null;
 
     const isValidKey =
-      (internalKey && providedKey === internalKey) ||
-      (serviceRoleKey && providedKey === serviceRoleKey);
+      safeKeyEquals(providedKey, internalKey) ||
+      safeKeyEquals(providedKey, serviceRoleKey);
 
     if (!isValidKey) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
