@@ -24,6 +24,7 @@ export const CacheTTL = {
   todayExplanation: 30 * 60 * 1000,   // 30 minutes
   challengesList: 5 * 60 * 1000,      // 5 minutes
   challengeDetail: 2 * 60 * 1000,     // 2 minutes (leaderboard changes more often)
+  programData: 5 * 60 * 1000,         // 5 minutes (program changes infrequently mid-session)
 } as const;
 
 export type CacheKey = keyof typeof CacheTTL | (string & Record<string, never>);
