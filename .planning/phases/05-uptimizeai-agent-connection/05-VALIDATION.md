@@ -1,10 +1,15 @@
 ---
 phase: 5
 slug: uptimizeai-agent-connection
-status: planned
+status: complete
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-07-19
+gate_completed: 2026-07-20
+web_admin_tests: 426
+mobile_tests: 227
+ai_assist_tests: 399
+total_tests: 1052
 ---
 
 # Phase 5 — Validation Strategy
@@ -40,21 +45,21 @@ created: 2026-07-19
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 05-01 T1 | 05-01 | 1 | AGENT-02 | script check | `node -e` grep of migration 029 contents | ❌ created by task | ⬜ pending |
-| 05-01 T2 | 05-01 | 1 | AGENT-05 | typecheck | `cd apps/web-admin && npx tsc --noEmit` | ❌ created by task | ⬜ pending |
-| 05-01 T3 | 05-01 | 1 | AGENT-02/04 | checkpoint:human-action | db push + pg_indexes/cron.job inspection | — | ⬜ pending |
-| 05-02 T1 | 05-02 | 1 | AGENT-02 | unit (TDD RED-first) | `npx jest --testPathPattern="agents/trigger"` | ❌ Wave 0: task creates `agents/trigger/__tests__/trigger.test.ts` first | ⬜ pending |
-| 05-02 T2 | 05-02 | 1 | AGENT-01 | unit (TDD RED-first) | `npx jest --testPathPattern="agents/trigger"` | ❌ same file, extended RED-first | ⬜ pending |
-| 05-03 T1 | 05-03 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="complete-agents"` | ❌ Wave 0: task creates `sessions/[sessionId]/complete/__tests__/complete-agents.test.ts` first | ⬜ pending |
-| 05-03 T2 | 05-03 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="challenges.*complete"` | ❌ Wave 0: task creates `challenges/[challengeId]/complete/__tests__/complete.test.ts` first | ⬜ pending |
-| 05-04 T1 | 05-04 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="featureGate-upgrade"` | ❌ Wave 0: task creates `lib/billing/__tests__/featureGate-upgrade.test.ts` first | ⬜ pending |
-| 05-04 T2 | 05-04 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="onboard"` | ✅ extends existing `onboard/__tests__/register.test.ts` | ⬜ pending |
-| 05-05 T1 | 05-05 | 2 | AGENT-04 | unit (TDD RED-first) | `npx jest --testPathPattern="agent-daily"` | ❌ Wave 0: task creates `cron/agent-daily/__tests__/agent-daily.test.ts` first | ⬜ pending |
-| 05-05 T2 | 05-05 | 2 | AGENT-04 | unit (TDD RED-first) | `npx jest --testPathPattern="agent-daily"` | ❌ same file, extended RED-first | ⬜ pending |
-| 05-06 T1 | 05-06 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="atRiskScan\|at-risk"` | ❌ Wave 0: task creates `lib/agents/__tests__/atRiskScan.test.ts` + `owner/at-risk/__tests__/at-risk.test.ts` first | ⬜ pending |
-| 05-06 T2 | 05-06 | 2 | AGENT-04 | unit (TDD RED-first) | `npx jest --testPathPattern="agent-weekly"` | ❌ Wave 0: task creates `cron/agent-weekly/__tests__/agent-weekly.test.ts` first | ⬜ pending |
-| 05-07 T1 | 05-07 | 3 | AGENT-01..05 | full gate | `cd apps/web-admin && npx tsc --noEmit && npx jest --silent` (+ mobile + ai-assist suites) | ✅ | ⬜ pending |
-| 05-07 T2 | 05-07 | 3 | AGENT-05 | checkpoint:human-verify | 13-automation staging walkthrough vs Iron Society (echo receiver + logs + tier matrix + cooldown) | — | ⬜ pending |
+| 05-01 T1 | 05-01 | 1 | AGENT-02 | script check | `node -e` grep of migration 029 contents | ✅ `supabase/migrations/029_agent_dedup_index.sql` | ✅ PASS |
+| 05-01 T2 | 05-01 | 1 | AGENT-05 | typecheck | `cd apps/web-admin && npx tsc --noEmit` | ✅ trigger route + echo route + env.example | ✅ PASS |
+| 05-01 T3 | 05-01 | 1 | AGENT-02/04 | checkpoint:human-action | db push + pg_indexes/cron.job inspection | — | ✅ PASS (migration applied per 05-01 checkpoint) |
+| 05-02 T1 | 05-02 | 1 | AGENT-02 | unit (TDD RED-first) | `npx jest --testPathPattern="agents/trigger"` | ✅ `agents/trigger/__tests__/trigger.test.ts` | ✅ PASS |
+| 05-02 T2 | 05-02 | 1 | AGENT-01 | unit (TDD RED-first) | `npx jest --testPathPattern="agents/trigger"` | ✅ same file | ✅ PASS |
+| 05-03 T1 | 05-03 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="complete-agents"` | ✅ `sessions/[sessionId]/complete/__tests__/complete-agents.test.ts` | ✅ PASS (9/9) |
+| 05-03 T2 | 05-03 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="challenges.*complete"` | ✅ `challenges/[challengeId]/complete/__tests__/complete.test.ts` | ✅ PASS |
+| 05-04 T1 | 05-04 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="featureGate-upgrade"` | ✅ `lib/billing/__tests__/featureGate-upgrade.test.ts` | ✅ PASS |
+| 05-04 T2 | 05-04 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="onboard"` | ✅ `onboard/__tests__/register.test.ts` | ✅ PASS |
+| 05-05 T1 | 05-05 | 2 | AGENT-04 | unit (TDD RED-first) | `npx jest --testPathPattern="agent-daily"` | ✅ `cron/agent-daily/__tests__/agent-daily.test.ts` | ✅ PASS |
+| 05-05 T2 | 05-05 | 2 | AGENT-04 | unit (TDD RED-first) | `npx jest --testPathPattern="agent-daily"` | ✅ same file | ✅ PASS |
+| 05-06 T1 | 05-06 | 2 | AGENT-03 | unit (TDD RED-first) | `npx jest --testPathPattern="atRiskScan\|at-risk"` | ✅ `lib/agents/__tests__/atRiskScan.test.ts` + `owner/at-risk/__tests__/at-risk.test.ts` | ✅ PASS |
+| 05-06 T2 | 05-06 | 2 | AGENT-04 | unit (TDD RED-first) | `npx jest --testPathPattern="agent-weekly"` | ✅ `cron/agent-weekly/__tests__/agent-weekly.test.ts` | ✅ PASS |
+| 05-07 T1 | 05-07 | 3 | AGENT-01..05 | full gate | `cd apps/web-admin && npx tsc --noEmit && npx jest --silent` (+ mobile + ai-assist suites) | ✅ | ✅ PASS — web-admin 426/426, mobile 227/227, ai-assist 399/399, tsc clean both apps |
+| 05-07 T2 | 05-07 | 3 | AGENT-05 | checkpoint:human-verify | 13-automation staging walkthrough vs Iron Society (echo receiver + logs + tier matrix + cooldown) | — | ⏳ awaiting human walkthrough |
 
 ---
 
@@ -91,4 +96,4 @@ Dispatcher resolution (roadmap open question): **Option B adopted** per 05-RESEA
 - [x] Feedback latency < 60s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** planned — final sign-off recorded by plan 05-07 Task 1 (sets `wave_0_complete: true` + statuses to ✅)
+**Approval:** SIGNED OFF 2026-07-20 — automated gate green (Task 1 complete): web-admin 426/426 + mobile 227/227 + ai-assist 399/399 + tsc clean both apps. `wave_0_complete: true`. Task 2 (staging walkthrough) pending human verification.

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { z } from 'zod';
-import { validateUUIDs } from '@/lib/validation/uuid';
+import { validateUUIDs, uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 const deleteSchema = z.object({
-  member_id: z.string().uuid(),
+  member_id: uuidString,
 });
 
 interface RouteParams {

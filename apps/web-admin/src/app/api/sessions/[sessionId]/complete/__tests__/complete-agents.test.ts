@@ -15,7 +15,13 @@ jest.mock('@/lib/feedGenerator');
 jest.mock('@/lib/challengeScoring');
 jest.mock('@/lib/readiness/readinessCache');
 jest.mock('@/lib/muscleMap/muscleMapCache');
-jest.mock('@/lib/validation/uuid');
+jest.mock('@/lib/validation/uuid', () => {
+  const { z } = jest.requireActual('zod');
+  return {
+    validateUUIDs: jest.fn().mockReturnValue(null),
+    uuidString: z.string(),
+  };
+});
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 import { NextRequest } from 'next/server';

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkAchievementsForMember } from '@/lib/achievements';
 import { generateSessionFeedEvents } from '@/lib/feedGenerator';
@@ -6,12 +6,12 @@ import { updateChallengeScores } from '@/lib/challengeScoring';
 import { invalidateAndRefreshReadiness } from '@/lib/readiness/readinessCache';
 import { invalidateAndRefreshMuscleMap } from '@/lib/muscleMap/muscleMapCache';
 import { verifyMember } from '@/lib/auth/verifyMember';
-import { validateUUIDs } from '@/lib/validation/uuid';
+import { validateUUIDs, uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
 
 const completeSchema = z.object({
-  member_id: z.string().uuid(),
+  member_id: uuidString,
 });
 
 interface RouteParams {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }).catch(err => console.error('[session-complete] level-up agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
     }
 
-    // Agent: streak-broken — only when a real streak (>1) just reset to 1 (fire-and-forget)
+    // Agent: streak-broken â€” only when a real streak (>1) just reset to 1 (fire-and-forget)
     if (previousStreak > 1 && streak === 1) {
       triggerUptimizeAIAgent('engagement-agent', {
         event: 'streak-broken',
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       session_id: session.id,
     });
 
-    // Agent: leaderboard-updated — unconditional; 24h/member cooldown in trigger route caps flooding (fire-and-forget)
+    // Agent: leaderboard-updated â€” unconditional; 24h/member cooldown in trigger route caps flooding (fire-and-forget)
     triggerUptimizeAIAgent('engagement-agent', {
       event: 'leaderboard-updated',
       gym_id: session.gym_id,
