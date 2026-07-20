@@ -44,6 +44,14 @@ const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string }[] = [
   { value: 'advanced', label: 'Advanced' },
 ];
 
+/**
+ * Quiet hours hour steps for the Alert picker.
+ * HH values in 2-hour increments covering a full day (UTC, per Pitfall 7).
+ */
+const HOUR_OPTIONS: string[] = [
+  '00', '02', '04', '06', '08', '10', '12', '14', '16', '18', '20', '22',
+];
+
 const LIMITATION_OPTIONS: { value: string; label: string }[] = [
   { value: 'knee_sensitive', label: 'Knee Sensitive' },
   { value: 'lower_back_sensitive', label: 'Lower Back Sensitive' },
@@ -85,6 +93,20 @@ export default function SettingsScreen() {
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('kg');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationsLoaded, setNotificationsLoaded] = useState(false);
+  // Per-category push toggles (7 booleans — schema columns in notification_preferences)
+  const [pushPrs, setPushPrs] = useState(true);
+  const [pushAchievements, setPushAchievements] = useState(true);
+  const [pushLevelUp, setPushLevelUp] = useState(true);
+  const [pushChallengeRank, setPushChallengeRank] = useState(true);
+  const [pushTrainerNote, setPushTrainerNote] = useState(true);
+  const [pushNewProgram, setPushNewProgram] = useState(true);
+  const [pushGymFeed, setPushGymFeed] = useState(true);
+  // Quiet hours (persisted as 'HH:MM:SS' in UTC)
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
+  const [quietHoursStart, setQuietHoursStart] = useState('22:00:00');
+  const [quietHoursEnd, setQuietHoursEnd] = useState('07:00:00');
+  // For quiet hours time picker modal
+  const [showTimePicker, setShowTimePicker] = useState<'start' | 'end' | null>(null);
   const [showTrainingProfile, setShowTrainingProfile] = useState(false);
   const [trainingProfile, setTrainingProfile] = useState<TrainingProfileState>(DEFAULT_TRAINING_PROFILE);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -166,17 +188,29 @@ export default function SettingsScreen() {
           }
         }
 
-        // Notification preferences
+        // Notification preferences (global + 7 categories + 3 quiet-hours columns)
         if (isFeatureEnabled('push_notifications')) {
           try {
             const memberId = await getMemberId(user.id);
             if (memberId) {
               const { data: prefData } = await supabase
                 .from('notification_preferences')
-                .select('enabled')
+                .select(
+                  'enabled, push_prs, push_achievements, push_level_up, push_challenge_rank, push_trainer_note, push_new_program, push_gym_feed, quiet_hours_enabled, quiet_hours_start, quiet_hours_end',
+                )
                 .eq('member_id', memberId)
                 .maybeSingle();
               setNotificationsEnabled(prefData?.enabled ?? true);
+              setPushPrs(prefData?.push_prs ?? true);
+              setPushAchievements(prefData?.push_achievements ?? true);
+              setPushLevelUp(prefData?.push_level_up ?? true);
+              setPushChallengeRank(prefData?.push_challenge_rank ?? true);
+              setPushTrainerNote(prefData?.push_trainer_note ?? true);
+              setPushNewProgram(prefData?.push_new_program ?? true);
+              setPushGymFeed(prefData?.push_gym_feed ?? true);
+              setQuietHoursEnabled(prefData?.quiet_hours_enabled ?? false);
+              setQuietHoursStart(prefData?.quiet_hours_start ?? '22:00:00');
+              setQuietHoursEnd(prefData?.quiet_hours_end ?? '07:00:00');
             }
           } catch {
             // Non-critical
@@ -247,6 +281,53 @@ export default function SettingsScreen() {
     } catch (err) {
       console.warn('[settings] notification toggle failed:', err);
       setNotificationsEnabled(!enabled);
+    }
+  };
+
+  /**
+   * Optimistic upsert for a single push-category boolean.
+   * Rolls back to `!newValue` on error (mirrors handleToggleNotifications).
+   */
+  const handleTogglePushCategory = async (
+    column: string,
+    newValue: boolean,
+    setter: (v: boolean) => void,
+  ) => {
+    setter(newValue);
+    if (!userId) return;
+    try {
+      const memberId = await getMemberId(userId);
+      if (!memberId) return;
+      const { error: upsertErr } = await supabase.from('notification_preferences').upsert(
+        { member_id: memberId, [column]: newValue, updated_at: new Date().toISOString() },
+        { onConflict: 'member_id' },
+      );
+      if (upsertErr) throw upsertErr;
+    } catch (err) {
+      console.warn(`[settings] ${column} toggle failed:`, err);
+      setter(!newValue);
+    }
+  };
+
+  /** Persist quiet hours fields (enabled + start + end) together. */
+  const handleUpsertQuietHours = async (
+    patch: {
+      quiet_hours_enabled?: boolean;
+      quiet_hours_start?: string;
+      quiet_hours_end?: string;
+    },
+  ) => {
+    if (!userId) return;
+    try {
+      const memberId = await getMemberId(userId);
+      if (!memberId) return;
+      const { error: upsertErr } = await supabase.from('notification_preferences').upsert(
+        { member_id: memberId, ...patch, updated_at: new Date().toISOString() },
+        { onConflict: 'member_id' },
+      );
+      if (upsertErr) throw upsertErr;
+    } catch (err) {
+      console.warn('[settings] quiet hours upsert failed:', err);
     }
   };
 
@@ -509,23 +590,203 @@ export default function SettingsScreen() {
               </View>
             </View>
             {notificationsLoaded && (
-              <View style={[styles.preferenceRow, { marginTop: spacing.md }]}>
-                <Text variant="body" style={styles.preferenceLabel}>Notifications</Text>
-                <View style={styles.toggleContainer}>
-                  <TouchableOpacity
-                    style={[styles.toggleOption, notificationsEnabled && styles.toggleOptionActive]}
-                    onPress={() => handleToggleNotifications(true)}
-                  >
-                    <Text style={[styles.toggleOptionText, notificationsEnabled && styles.toggleOptionTextActive]}>On</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.toggleOption, !notificationsEnabled && styles.toggleOptionActive]}
-                    onPress={() => handleToggleNotifications(false)}
-                  >
-                    <Text style={[styles.toggleOptionText, !notificationsEnabled && styles.toggleOptionTextActive]}>Off</Text>
-                  </TouchableOpacity>
+              <>
+                {/* Global On/Off */}
+                <View style={[styles.preferenceRow, { marginTop: spacing.md }]}>
+                  <Text variant="body" style={styles.preferenceLabel}>Notifications</Text>
+                  <View style={styles.toggleContainer}>
+                    <TouchableOpacity
+                      style={[styles.toggleOption, notificationsEnabled && styles.toggleOptionActive]}
+                      onPress={() => handleToggleNotifications(true)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: notificationsEnabled }}
+                      accessibilityLabel="Notifications on"
+                    >
+                      <Text style={[styles.toggleOptionText, notificationsEnabled && styles.toggleOptionTextActive]}>On</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.toggleOption, !notificationsEnabled && styles.toggleOptionActive]}
+                      onPress={() => handleToggleNotifications(false)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: !notificationsEnabled }}
+                      accessibilityLabel="Notifications off"
+                    >
+                      <Text style={[styles.toggleOptionText, !notificationsEnabled && styles.toggleOptionTextActive]}>Off</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
+
+                {/* Per-category toggles — dimmed when global is off */}
+                <View style={[styles.categorySection, !notificationsEnabled && styles.categorySectionDisabled]}>
+                  {/* Activity group */}
+                  <Text variant="caption" color="textSecondary" style={styles.categoryGroupLabel}>Activity</Text>
+                  {([
+                    { label: 'PRs & records', col: 'push_prs', val: pushPrs, setter: setPushPrs },
+                    { label: 'Achievements & streaks', col: 'push_achievements', val: pushAchievements, setter: setPushAchievements },
+                    { label: 'Level ups', col: 'push_level_up', val: pushLevelUp, setter: setPushLevelUp },
+                    { label: 'Challenges & leaderboard', col: 'push_challenge_rank', val: pushChallengeRank, setter: setPushChallengeRank },
+                  ] as { label: string; col: string; val: boolean; setter: (v: boolean) => void }[]).map((item) => (
+                    <TouchableOpacity
+                      key={item.col}
+                      style={styles.categoryRow}
+                      onPress={() => {
+                        if (!notificationsEnabled) return;
+                        handleTogglePushCategory(item.col, !item.val, item.setter);
+                      }}
+                      disabled={!notificationsEnabled}
+                      accessibilityRole="switch"
+                      accessibilityState={{ checked: item.val, disabled: !notificationsEnabled }}
+                      accessibilityLabel={item.label}
+                    >
+                      <Text variant="caption" style={[styles.categoryLabel, !notificationsEnabled && { color: colors.textDisabled }]}>
+                        {item.label}
+                      </Text>
+                      <View style={[styles.categoryToggle, item.val && styles.categoryToggleActive]}>
+                        <Text style={[styles.toggleOptionText, item.val && styles.toggleOptionTextActive, { fontSize: 11 }]}>
+                          {item.val ? 'On' : 'Off'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+
+                  {/* Coaching group */}
+                  <Text variant="caption" color="textSecondary" style={[styles.categoryGroupLabel, { marginTop: spacing.md }]}>Coaching</Text>
+                  {([
+                    { label: 'Trainer notes & check-ins', col: 'push_trainer_note', val: pushTrainerNote, setter: setPushTrainerNote },
+                    { label: 'New programs', col: 'push_new_program', val: pushNewProgram, setter: setPushNewProgram },
+                  ] as { label: string; col: string; val: boolean; setter: (v: boolean) => void }[]).map((item) => (
+                    <TouchableOpacity
+                      key={item.col}
+                      style={styles.categoryRow}
+                      onPress={() => {
+                        if (!notificationsEnabled) return;
+                        handleTogglePushCategory(item.col, !item.val, item.setter);
+                      }}
+                      disabled={!notificationsEnabled}
+                      accessibilityRole="switch"
+                      accessibilityState={{ checked: item.val, disabled: !notificationsEnabled }}
+                      accessibilityLabel={item.label}
+                    >
+                      <Text variant="caption" style={[styles.categoryLabel, !notificationsEnabled && { color: colors.textDisabled }]}>
+                        {item.label}
+                      </Text>
+                      <View style={[styles.categoryToggle, item.val && styles.categoryToggleActive]}>
+                        <Text style={[styles.toggleOptionText, item.val && styles.toggleOptionTextActive, { fontSize: 11 }]}>
+                          {item.val ? 'On' : 'Off'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+
+                  {/* Social group */}
+                  <Text variant="caption" color="textSecondary" style={[styles.categoryGroupLabel, { marginTop: spacing.md }]}>Social</Text>
+                  <TouchableOpacity
+                    style={styles.categoryRow}
+                    onPress={() => {
+                      if (!notificationsEnabled) return;
+                      handleTogglePushCategory('push_gym_feed', !pushGymFeed, setPushGymFeed);
+                    }}
+                    disabled={!notificationsEnabled}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: pushGymFeed, disabled: !notificationsEnabled }}
+                    accessibilityLabel="Gym feed activity"
+                  >
+                    <Text variant="caption" style={[styles.categoryLabel, !notificationsEnabled && { color: colors.textDisabled }]}>
+                      Gym feed activity
+                    </Text>
+                    <View style={[styles.categoryToggle, pushGymFeed && styles.categoryToggleActive]}>
+                      <Text style={[styles.toggleOptionText, pushGymFeed && styles.toggleOptionTextActive, { fontSize: 11 }]}>
+                        {pushGymFeed ? 'On' : 'Off'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Quiet Hours */}
+                  <Text variant="caption" color="textSecondary" style={[styles.categoryGroupLabel, { marginTop: spacing.md }]}>Quiet Hours</Text>
+                  <Text variant="caption" style={styles.quietHoursNote}>
+                    Quiet hours use UTC for now
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.categoryRow}
+                    onPress={() => {
+                      if (!notificationsEnabled) return;
+                      const newVal = !quietHoursEnabled;
+                      setQuietHoursEnabled(newVal);
+                      handleUpsertQuietHours({ quiet_hours_enabled: newVal });
+                    }}
+                    disabled={!notificationsEnabled}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: quietHoursEnabled, disabled: !notificationsEnabled }}
+                    accessibilityLabel="Enable quiet hours"
+                  >
+                    <Text variant="caption" style={[styles.categoryLabel, !notificationsEnabled && { color: colors.textDisabled }]}>
+                      Enable quiet hours
+                    </Text>
+                    <View style={[styles.categoryToggle, quietHoursEnabled && styles.categoryToggleActive]}>
+                      <Text style={[styles.toggleOptionText, quietHoursEnabled && styles.toggleOptionTextActive, { fontSize: 11 }]}>
+                        {quietHoursEnabled ? 'On' : 'Off'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {quietHoursEnabled && notificationsEnabled && (
+                    <View style={styles.quietHoursTimeRow}>
+                      <View style={styles.quietHoursTimeBlock}>
+                        <Text variant="caption" color="textSecondary" style={styles.quietHoursTimeLabel}>From</Text>
+                        <TouchableOpacity
+                          style={styles.timeChip}
+                          onPress={() =>
+                            Alert.alert(
+                              'Start Hour (UTC)',
+                              'Select the hour when quiet hours begin',
+                              HOUR_OPTIONS.map((h) => ({
+                                text: h,
+                                onPress: () => {
+                                  const val = `${h}:00:00`;
+                                  setQuietHoursStart(val);
+                                  handleUpsertQuietHours({ quiet_hours_start: val });
+                                },
+                              })).concat([{ text: 'Cancel', onPress: () => {} }]),
+                            )
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Quiet hours start: ${quietHoursStart}`}
+                        >
+                          <Text variant="caption" style={styles.timeChipText}>
+                            {quietHoursStart.slice(0, 5)}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.quietHoursTimeBlock}>
+                        <Text variant="caption" color="textSecondary" style={styles.quietHoursTimeLabel}>Until</Text>
+                        <TouchableOpacity
+                          style={styles.timeChip}
+                          onPress={() =>
+                            Alert.alert(
+                              'End Hour (UTC)',
+                              'Select the hour when quiet hours end',
+                              HOUR_OPTIONS.map((h) => ({
+                                text: h,
+                                onPress: () => {
+                                  const val = `${h}:00:00`;
+                                  setQuietHoursEnd(val);
+                                  handleUpsertQuietHours({ quiet_hours_end: val });
+                                },
+                              })).concat([{ text: 'Cancel', onPress: () => {} }]),
+                            )
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Quiet hours end: ${quietHoursEnd}`}
+                        >
+                          <Text variant="caption" style={styles.timeChipText}>
+                            {quietHoursEnd.slice(0, 5)}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </>
             )}
           </Card>
         </View>
@@ -856,5 +1117,77 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.error,
     textAlign: 'center',
+  },
+  // Per-category notification toggles
+  categorySection: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  categorySectionDisabled: {
+    opacity: 0.5,
+  },
+  categoryGroupLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: spacing.xs,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+  },
+  categoryLabel: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  categoryToggle: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    minWidth: 36,
+    alignItems: 'center',
+  },
+  categoryToggleActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  // Quiet hours
+  quietHoursNote: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginBottom: spacing.xs,
+    fontStyle: 'italic',
+  },
+  quietHoursTimeRow: {
+    flexDirection: 'row',
+    marginTop: spacing.sm,
+    gap: spacing.lg,
+  },
+  quietHoursTimeBlock: {
+    alignItems: 'flex-start',
+  },
+  quietHoursTimeLabel: {
+    marginBottom: spacing.xs,
+  },
+  timeChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+  },
+  timeChipText: {
+    color: colors.primary,
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
