@@ -101,7 +101,7 @@ const SESSIONS = [
 
 describe('fetchGymAtRiskMembers', () => {
   it('returns only the at-risk member when one member is healthy and one is at-risk', async () => {
-    const admin = makeFullAdminMock(MEMBERS, SESSIONS) as Parameters<typeof fetchGymAtRiskMembers>[0];
+    const admin = makeFullAdminMock(MEMBERS, SESSIONS) as unknown as Parameters<typeof fetchGymAtRiskMembers>[0];
     const result: AtRiskMember[] = await fetchGymAtRiskMembers(admin, 'gym-123');
 
     expect(result).toHaveLength(1);
@@ -112,7 +112,7 @@ describe('fetchGymAtRiskMembers', () => {
   });
 
   it('returns [] for an empty gym (no members)', async () => {
-    const admin = makeFullAdminMock([], []) as Parameters<typeof fetchGymAtRiskMembers>[0];
+    const admin = makeFullAdminMock([], []) as unknown as Parameters<typeof fetchGymAtRiskMembers>[0];
     const result = await fetchGymAtRiskMembers(admin, 'gym-empty');
     expect(result).toEqual([]);
   });

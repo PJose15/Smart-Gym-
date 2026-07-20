@@ -3,15 +3,32 @@
  * Verifies per-member retention-agent firing (never once per request).
  */
 
-import { NextResponse } from 'next/server';
-import { GET } from '../route';
-
-// ─── Mocks ───────────────────────────────────────────────
+// jsdom does not define Request/Response globals that next/server requires.
+// The factory must be self-contained (jest.mock is hoisted; no outer refs allowed).
+jest.mock('next/server', () => {
+  class _MockNextResponse {
+    status: number;
+    _body: unknown;
+    constructor(body: unknown, init?: { status?: number }) {
+      this._body = body;
+      this.status = init?.status ?? 200;
+    }
+    async json() { return this._body; }
+    static json(body: unknown, init?: { status?: number }) {
+      return new _MockNextResponse(body, init);
+    }
+  }
+  return {
+    NextResponse: _MockNextResponse,
+    NextRequest: jest.fn(),
+  };
+});
 
 jest.mock('@/lib/auth/verifyStaff');
 jest.mock('@/lib/agents/atRiskScan');
 jest.mock('@/lib/billing/triggerAgent');
 
+import { GET } from '../route';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { fetchGymAtRiskMembers } from '@/lib/agents/atRiskScan';
 import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
@@ -30,7 +47,7 @@ const AT_RISK_MEMBERS = [
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockVerifyStaff.mockResolvedValue({ admin: MOCK_ADMIN, gym_id: GYM_ID } as Awaited<ReturnType<typeof verifyStaff>>);
+  mockVerifyStaff.mockResolvedValue({ admin: MOCK_ADMIN, gym_id: GYM_ID } as unknown as Awaited<ReturnType<typeof verifyStaff>>);
   mockTrigger.mockResolvedValue({ success: true });
 });
 
@@ -41,7 +58,6 @@ describe('GET /api/owner/at-risk', () => {
     mockFetchAtRisk.mockResolvedValue(AT_RISK_MEMBERS);
 
     const response = await GET();
-    const body = await response.json();
 
     // Two members → two separate agent calls
     expect(mockTrigger).toHaveBeenCalledTimes(2);
@@ -63,7 +79,7 @@ describe('GET /api/owner/at-risk', () => {
     });
 
     // member_id is never null (Pitfall 4)
-    const calls = mockTrigger.mock.calls;
+    const calls = mockTrigger.mock.calls as unknown as Array<[string, Record<string, unknown>]>;
     calls.forEach(([, payload]) => {
       expect(payload.member_id).not.toBeNull();
       expect(payload.member_id).not.toBeUndefined();
