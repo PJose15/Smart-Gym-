@@ -12,6 +12,12 @@
 
 import { NextRequest } from 'next/server';
 
+// ─── Mock triggerAgent ────────────────────────────────────
+const mockTriggerUptimizeAIAgent = jest.fn().mockResolvedValue({ success: true });
+jest.mock('@/lib/billing/triggerAgent', () => ({
+  triggerUptimizeAIAgent: (...args: unknown[]) => mockTriggerUptimizeAIAgent(...args),
+}));
+
 // ─── Mock rateLimit ───────────────────────────────────────
 const mockCheckRateLimit = jest.fn().mockReturnValue(null);
 jest.mock('@/lib/rateLimit', () => ({
@@ -190,4 +196,63 @@ test('T5: users insert failure triggers deleteUser rollback and returns 500', as
   expect(res.status).toBe(500);
   expect(mockDeleteUser).toHaveBeenCalledWith('user-abc123');
   expect(mockRpc).not.toHaveBeenCalled();
+});
+
+// ─── Agent wiring tests (new-gym-onboarded) ──────────────────────────────────
+
+// Test 6: successful registration fires growth-agent new-gym-onboarded (no PII)
+test('T6: successful registration fires growth-agent new-gym-onboarded with gym metadata (no email)', async () => {
+  const req = makeRequest(validBody);
+  const res = await POST(req);
+  expect(res.status).toBe(200);
+
+  // Allow fire-and-forget microtask to flush
+  await Promise.resolve();
+
+  expect(mockTriggerUptimizeAIAgent).toHaveBeenCalledTimes(1);
+  expect(mockTriggerUptimizeAIAgent).toHaveBeenCalledWith(
+    'growth-agent',
+    expect.objectContaining({
+      event: 'new-gym-onboarded',
+      gym_id: 'gym-uuid-789',
+      gym_name: 'Iron Society',
+      gym_type: 'independent',
+      is_agent_initiated: false,
+    })
+  );
+  // No owner PII in payload
+  const callPayload = mockTriggerUptimizeAIAgent.mock.calls[0][1] as Record<string, unknown>;
+  expect(callPayload).not.toHaveProperty('email');
+  expect(callPayload).not.toHaveProperty('owner_name');
+});
+
+// Test 7: duplicate email (409) → no agent call
+test('T7: duplicate email path does not fire agent', async () => {
+  mockSignUp.mockResolvedValue({
+    data: { user: { id: 'fake-id', email: 'alice@example.com', identities: [] } },
+    error: null,
+  });
+  const req = makeRequest(validBody);
+  await POST(req);
+  await Promise.resolve();
+  expect(mockTriggerUptimizeAIAgent).not.toHaveBeenCalled();
+});
+
+// Test 8: RPC failure → no agent call
+test('T8: RPC failure path does not fire agent', async () => {
+  mockRpc.mockResolvedValue({ data: null, error: { message: 'RPC failed' } });
+  const req = makeRequest(validBody);
+  await POST(req);
+  await Promise.resolve();
+  expect(mockTriggerUptimizeAIAgent).not.toHaveBeenCalled();
+});
+
+// Test 9: agent rejection does not change the 200 response
+test('T9: agent rejection does not affect the 200 success response', async () => {
+  mockTriggerUptimizeAIAgent.mockRejectedValue(new Error('webhook down'));
+  const req = makeRequest(validBody);
+  const res = await POST(req);
+  expect(res.status).toBe(200);
+  const body = await res.json();
+  expect(body).toHaveProperty('gym_id', 'gym-uuid-789');
 });
