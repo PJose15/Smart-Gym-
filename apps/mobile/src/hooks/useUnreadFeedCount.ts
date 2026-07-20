@@ -105,7 +105,11 @@ export function useUnreadFeedCount(): { count: number; refresh: () => void } {
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'gym_feed_events', filter: `gym_id=eq.${gymId}` },
-          () => {
+          (payload) => {
+            // Hidden events never count toward the badge (mirrors the
+            // .neq('priority', 'hidden') filter in refresh()).
+            const priority = (payload.new as { priority?: string } | null)?.priority;
+            if (priority === 'hidden') return;
             if (!cancelled) setCount((c) => c + 1);
           },
         )
@@ -115,7 +119,7 @@ export function useUnreadFeedCount(): { count: number; refresh: () => void } {
     return () => {
       cancelled = true;
       listeners.delete(listener);
-      channel?.unsubscribe();
+      if (channel) supabase.removeChannel(channel);
     };
   }, [refresh]);
 

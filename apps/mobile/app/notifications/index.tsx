@@ -129,9 +129,12 @@ export default function NotificationsScreen() {
     nextCursorRef.current = result.next_cursor;
     hasMoreRef.current = result.next_cursor !== null;
 
-    setNotifications((prev) =>
-      reset ? result.notifications : [...prev, ...result.notifications],
-    );
+    setNotifications((prev) => {
+      if (reset) return result.notifications;
+      // Dedupe by id — pages can overlap when rows arrive mid-pagination
+      const seen = new Set(prev.map((n) => n.id));
+      return [...prev, ...result.notifications.filter((n) => !seen.has(n.id))];
+    });
   }, []);
 
   useEffect(() => {
@@ -154,21 +157,8 @@ export default function NotificationsScreen() {
     setLoadingMore(false);
   }, [load, loadingMore]);
 
-  const handlePress = useCallback(async (item: InboxNotification) => {
-    // Optimistic: flip read_at in local state immediately
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n,
-      ),
-    );
-
-    // Server mark-read (best-effort; failures don't revert — next refresh resyncs)
-    await markRead(item.id);
-
-    // Refresh badge on all mounted hook instances
-    markInboxViewed();
-
-    // Deep-link navigation
+  const handlePress = useCallback((item: InboxNotification) => {
+    // Navigate FIRST — the tap must never wait on a network round-trip
     const path = resolveNotificationRoute(
       item.notification_type as NotificationType,
       item.data as Record<string, string>,
@@ -176,6 +166,20 @@ export default function NotificationsScreen() {
     if (path) {
       router.push(path as Href);
     }
+
+    // Optimistic: flip read_at in local state immediately
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n,
+      ),
+    );
+
+    // Badge reset on all mounted hook instances
+    markInboxViewed();
+
+    // Server mark-read in the background (best-effort; failures don't revert —
+    // next refresh resyncs)
+    Promise.resolve(markRead(item.id)).catch(() => undefined);
   }, []);
 
   if (loading) {
@@ -215,6 +219,7 @@ export default function NotificationsScreen() {
           notifications.length === 0 ? styles.emptyContent : styles.listContent
         }
         ListEmptyComponent={
+          error ? null : (
           <View style={styles.emptyState}>
             <View accessibilityElementsHidden>
               <Text variant="heading" style={styles.emptyIcon}>{'🔔'}</Text>
@@ -223,6 +228,7 @@ export default function NotificationsScreen() {
               No notifications yet — go crush a workout!
             </Text>
           </View>
+          )
         }
         ListFooterComponent={
           loadingMore ? (

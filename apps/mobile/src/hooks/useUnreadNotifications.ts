@@ -14,6 +14,7 @@
  * publication is extended post-launch.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { fetchInbox } from '../lib/notificationInboxService';
 
 // ─── Module-level listener set (mirrors useUnreadFeedCount) ──────────────────
@@ -58,6 +59,14 @@ export function useUnreadNotifications(): { count: number; refresh: () => void }
       listeners.delete(listener);
     };
   }, [refresh]);
+
+  // Refetch server truth whenever the host route regains focus (e.g. returning
+  // from the inbox screen) — poll-on-focus is the v1 realtime substitute.
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   return { count, refresh };
 }

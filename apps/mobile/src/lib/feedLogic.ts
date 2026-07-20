@@ -263,6 +263,9 @@ export function toggleReactionInList(
 /**
  * Merge feed pages, deduplicating by id. Existing events keep their position;
  * incoming events are appended (older page) or prepended (realtime).
+ *
+ * 'prepend' inserts fresh events AFTER the leading pinned block, so pinned
+ * events keep the very top of the feed.
  */
 export function mergeFeedEvents(
   existing: FeedEventFull[],
@@ -275,7 +278,12 @@ export function mergeFeedEvents(
     seen.add(e.id);
     return true;
   });
-  return position === 'append' ? [...existing, ...fresh] : [...fresh, ...existing];
+  if (position === 'append') return [...existing, ...fresh];
+
+  // Prepend: partition by is_pinned — fresh events go right after the pinned block.
+  const pinned = existing.filter((e) => e.is_pinned);
+  const unpinned = existing.filter((e) => !e.is_pinned);
+  return [...pinned, ...fresh, ...unpinned];
 }
 
 // ─── Filters (DOC_05 §4 — 5 chips, mapped to REAL schema event types) ───────

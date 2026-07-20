@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { FeedEventFull, ReactionType, WeightUnit } from '@nexera/types';
@@ -70,6 +70,14 @@ export default function FeedScreen() {
   eventsRef.current = events;
   const scrolledToDeepLink = useRef(false);
 
+  // Focus tracking for the realtime handler (ref so the subscription effect
+  // doesn't tear down/resubscribe on every focus change).
+  const isFocused = useIsFocused();
+  const isFocusedRef = useRef(isFocused);
+  isFocusedRef.current = isFocused;
+  const missedWhileBlurredRef = useRef(false);
+  const fetchFreshRef = useRef<(() => void) | null>(null);
+
   // ─── Initial load ─────────────────────────────────────
 
   const load = useCallback(async () => {
@@ -107,6 +115,12 @@ export default function FeedScreen() {
     useCallback(() => {
       getWeightUnit().then(setWeightUnit);
       markFeedViewed();
+      // Realtime inserts that arrived while this tab was blurred were NOT
+      // fetched (battery) — catch up now.
+      if (missedWhileBlurredRef.current) {
+        missedWhileBlurredRef.current = false;
+        fetchFreshRef.current?.();
+      }
     }, []),
   );
 
@@ -153,32 +167,45 @@ export default function FeedScreen() {
     const { gymId, memberId } = context;
     let fetching = false;
 
+    const fetchFresh = async () => {
+      if (fetching) return;
+      fetching = true;
+      try {
+        const newest = eventsRef.current.find((e) => !e.is_pinned) ?? eventsRef.current[0];
+        const since = newest?.created_at ?? new Date(0).toISOString();
+        const fresh = await fetchEventsSince(gymId, memberId, since);
+        if (fresh.length > 0) {
+          setEvents((prev) => mergeFeedEvents(prev, fresh, 'prepend'));
+        }
+        // User is watching the feed — new events are "seen", keep badge dark.
+        if (isFocusedRef.current) markFeedViewed();
+      } catch {
+        // transient realtime fetch failure — next insert retries
+      } finally {
+        fetching = false;
+      }
+    };
+    fetchFreshRef.current = fetchFresh;
+
     const channel = supabase
       .channel(`feed:${gymId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'gym_feed_events', filter: `gym_id=eq.${gymId}` },
-        async () => {
-          if (fetching) return;
-          fetching = true;
-          try {
-            const newest = eventsRef.current.find((e) => !e.is_pinned) ?? eventsRef.current[0];
-            const since = newest?.created_at ?? new Date(0).toISOString();
-            const fresh = await fetchEventsSince(gymId, memberId, since);
-            if (fresh.length > 0) {
-              setEvents((prev) => mergeFeedEvents(prev, fresh, 'prepend'));
-            }
-          } catch {
-            // transient realtime fetch failure — next insert retries
-          } finally {
-            fetching = false;
+        () => {
+          // Don't refetch while backgrounded — flag it and catch up on refocus.
+          if (!isFocusedRef.current) {
+            missedWhileBlurredRef.current = true;
+            return;
           }
+          fetchFresh();
         },
       )
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      fetchFreshRef.current = null;
+      supabase.removeChannel(channel);
     };
   }, [context]);
 

@@ -249,6 +249,23 @@ describe('mergeFeedEvents', () => {
     const merged = mergeFeedEvents([], [makeEvent({ id: 'x' }), makeEvent({ id: 'x' })]);
     expect(merged).toHaveLength(1);
   });
+
+  it('prepend inserts fresh events AFTER the pinned block', () => {
+    const existing = [
+      makeEvent({ id: 'pin-1', is_pinned: true }),
+      makeEvent({ id: 'pin-2', is_pinned: true }),
+      makeEvent({ id: 'old-1' }),
+      makeEvent({ id: 'old-2' }),
+    ];
+    const merged = mergeFeedEvents(existing, [makeEvent({ id: 'new-1' })], 'prepend');
+    expect(merged.map((e) => e.id)).toEqual(['pin-1', 'pin-2', 'new-1', 'old-1', 'old-2']);
+  });
+
+  it('prepend with no pinned block behaves like a plain prepend', () => {
+    const existing = [makeEvent({ id: 'old-1' })];
+    const merged = mergeFeedEvents(existing, [makeEvent({ id: 'new-1' })], 'prepend');
+    expect(merged.map((e) => e.id)).toEqual(['new-1', 'old-1']);
+  });
 });
 
 // ─── Filtering ──────────────────────────────────────────────────────────────
