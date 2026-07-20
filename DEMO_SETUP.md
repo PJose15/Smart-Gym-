@@ -137,6 +137,64 @@ every investor pitch (verify the restore on the demo machine).
 | After schema changes | Full re-seed (`seed-demo.ps1 -Confirm:$true`) + new snapshot |
 | Monthly | Full re-seed — challenge windows are anchored to the current month |
 
+## 8. Agent Staging Verification
+
+Verify that all 13 UptimizeAI agent automations reach the forwarding endpoint
+before pointing at a live UptimizeAI URL.
+
+### Setup (one time)
+
+Add these three lines to `apps/web-admin/.env.local` (create if it does not exist):
+
+```
+UPTIMIZE_WEBHOOK_URL=http://localhost:3000/api/dev/agent-echo
+UPTIMIZE_API_KEY=staging-echo-key
+DEMO_ECHO_AGENTS=true
+```
+
+Restart the dev server: `pnpm dev` (or `npx next dev` from `apps/web-admin`).
+
+### Firing a trigger
+
+Any action that fires an agent (session complete after a level-up, a feature
+gate denial, the billing webhook, etc.) will forward the payload to the echo
+receiver. You can also POST directly:
+
+```bash
+curl -s -X POST http://localhost:3000/api/agents/trigger \
+  -H "Content-Type: application/json" \
+  -H "x-smartgym-internal-key: <INTERNAL_WEBHOOK_KEY>" \
+  -d '{"agent_name":"engagement-agent","gym_id":"<GYM_UUID>","payload":{"event":"level-up","is_agent_initiated":false}}'
+```
+
+### Confirming reception
+
+1. **Console log** — the dev server terminal will show:
+   ```
+   [agent-echo] received: {"agent_name":"engagement-agent","payload":{...},"log_id":"<UUID>"}
+   ```
+
+2. **Database row** — query the live (or local) DB:
+   ```sql
+   SELECT action_taken, status, agent_name, trigger_event
+   FROM smartgym_agent_logs
+   WHERE action_taken = 'echo-received'
+   ORDER BY executed_at DESC
+   LIMIT 5;
+   ```
+   `action_taken` should be `'echo-received'`; `status` remains `'sent'`.
+
+### Going live
+
+When ready to connect to the real UptimizeAI engine:
+
+1. Set `UPTIMIZE_WEBHOOK_URL` to the URL provided by UptimizeAI.
+2. Set `UPTIMIZE_API_KEY` to the API key provided by UptimizeAI.
+3. Set `DEMO_ECHO_AGENTS=false` (or remove the var).
+4. Restart. No code changes required.
+
+---
+
 ## 7. Files
 
 | File | Purpose |
