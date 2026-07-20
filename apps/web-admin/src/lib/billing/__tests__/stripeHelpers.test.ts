@@ -5,12 +5,28 @@ import type Stripe from 'stripe';
 // can be referenced inside the factory.
 // We expose a mutable object whose .value is read at call time by the mock.
 const mockInsertState = {
-  value: { data: [{ event_id: 'evt_001' }] as { event_id: string }[] | null, error: null as { code: string } | null },
+  value: {
+    data: [{ event_id: 'evt_001' }] as { event_id: string }[] | null,
+    error: null as { code: string; message?: string } | null,
+  },
 };
 const mockFromCalls: string[] = [];
+const mockInCalls: Array<[string, unknown]> = [];
+const mockDeleteCalls: string[] = [];
+const mockUpdateState = { failGymBilling: false };
 
 jest.mock('@supabase/supabase-js', () => {
-  const makeEq = (result: unknown) => ({ eq: jest.fn().mockResolvedValue(result) });
+  // Filter result: awaitable directly (.eq() awaited) AND chainable via .in()
+  // to mirror the PostgREST builder used by the checkout guards.
+  const filterResult = (result: unknown) => ({
+    in: jest.fn((col: string, vals: unknown) => {
+      mockInCalls.push([col, vals]);
+      return Promise.resolve(result);
+    }),
+    then: (onFulfilled?: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
+      Promise.resolve(result).then(onFulfilled, onRejected),
+  });
+  const makeEq = (result: unknown) => ({ eq: jest.fn().mockReturnValue(filterResult(result)) });
   const makeEqSingle = () => ({
     eq: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: null }) }),
   });
@@ -25,11 +41,20 @@ jest.mock('@supabase/supabase-js', () => {
             insert: jest.fn().mockReturnValue({
               select: jest.fn().mockImplementation(() => Promise.resolve(mockInsertState.value)),
             }),
+            delete: jest.fn().mockReturnValue({
+              eq: jest.fn((_col: string, val: string) => {
+                mockDeleteCalls.push(val);
+                return Promise.resolve({ error: null });
+              }),
+            }),
           };
         }
         if (table === 'gym_billing') {
           return {
-            update: jest.fn().mockReturnValue(makeEq({ error: null })),
+            update: jest.fn().mockImplementation(() => {
+              if (mockUpdateState.failGymBilling) throw new Error('db down');
+              return makeEq({ error: null });
+            }),
             select: jest.fn().mockReturnValue(makeEqSingle()),
           };
         }
@@ -101,6 +126,51 @@ describe('handleStripeWebhook — idempotency guard', () => {
 
     const result = await handleStripeWebhook(event);
     expect(result).toEqual({ action: 'duplicate' });
+  });
+
+  it('T1c: non-23505 insert error throws (retryable — Stripe must retry)', async () => {
+    mockInsertState.value = { data: null, error: { code: '57014', message: 'statement timeout' } };
+
+    const event = makeEvent(
+      'customer.subscription.updated',
+      { id: 'sub_001', metadata: { gym_id: 'gym-1', tier: 'starter' }, status: 'trialing', items: { data: [] } }
+    );
+
+    await expect(handleStripeWebhook(event)).rejects.toThrow('stripe_events_processed insert failed');
+  });
+
+  it('T7: processing throw deletes the processed marker and rethrows', async () => {
+    mockDeleteCalls.length = 0;
+    mockInsertState.value = { data: [{ event_id: 'evt_boom' }], error: null };
+    mockUpdateState.failGymBilling = true;
+    try {
+      const event = makeEvent(
+        'checkout.session.completed',
+        { metadata: { gym_id: 'gym-30' }, subscription: 'sub_x' },
+        'evt_boom'
+      );
+      await expect(handleStripeWebhook(event)).rejects.toThrow('db down');
+      expect(mockDeleteCalls).toContain('evt_boom');
+    } finally {
+      mockUpdateState.failGymBilling = false;
+    }
+  });
+
+  it('T8: checkout.session.completed writes are guarded to trial states', async () => {
+    mockInCalls.length = 0;
+    mockInsertState.value = { data: [{ event_id: 'evt_guard' }], error: null };
+    const event = makeEvent(
+      'checkout.session.completed',
+      { metadata: { gym_id: 'gym-31' }, subscription: 'sub_y' },
+      'evt_guard'
+    );
+    const result = await handleStripeWebhook(event);
+    expect(result).toEqual({ action: 'checkout_completed', gymId: 'gym-31' });
+    // Both gym_billing and gyms updates carry the trial-state guard
+    expect(mockInCalls).toEqual([
+      ['subscription_status', ['trial', 'trialing']],
+      ['subscription_status', ['trial', 'trialing']],
+    ]);
   });
 
   it('T6: fresh event with customer.subscription.updated still returns { action: "subscription_updated" }', async () => {

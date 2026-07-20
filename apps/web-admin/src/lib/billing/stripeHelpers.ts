@@ -87,15 +87,21 @@ export async function handleStripeWebhook(
   const admin = getAdminClient();
 
   // ── Idempotency guard (Pitfall 1) ────────────────────────────────────────
-  // Insert the event id before processing. If the row already exists (unique
-  // violation), Supabase returns an empty array or a null-data + error result.
-  // Either way, short-circuit — Stripe must still receive 200 on dupes.
-  const { data: inserted } = await admin
+  // Insert the event id before processing. A unique violation (23505) means
+  // the event was already processed — short-circuit, Stripe must receive 200
+  // on dupes. Any OTHER insert error is a transient failure: throw so the
+  // webhook route returns 500 and Stripe retries the event.
+  const { data: inserted, error: insertError } = await admin
     .from('stripe_events_processed')
     .insert({ event_id: event.id })
     .select('event_id');
+  if (insertError) {
+    if (insertError.code === '23505') return { action: 'duplicate' };
+    throw new Error(`stripe_events_processed insert failed: ${insertError.message}`);
+  }
   if (!inserted || inserted.length === 0) return { action: 'duplicate' };
 
+  try {
   switch (event.type) {
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription;
@@ -205,19 +211,23 @@ export async function handleStripeWebhook(
       const stripeSubscriptionId =
         typeof rawSub === 'string' ? rawSub : (rawSub as { id: string } | null)?.id ?? null;
 
+      // Guard: only touch rows still in a trial state — an out-of-order
+      // checkout event must never downgrade an already-active subscription.
       await admin
         .from('gym_billing')
         .update({
           stripe_subscription_id: stripeSubscriptionId,
           subscription_status: 'trialing',
         })
-        .eq('gym_id', gymId);
+        .eq('gym_id', gymId)
+        .in('subscription_status', ['trial', 'trialing']);
 
       // Also confirm trial state on gyms table
       await admin
         .from('gyms')
         .update({ subscription_status: 'trial' })
-        .eq('id', gymId);
+        .eq('id', gymId)
+        .in('subscription_status', ['trial', 'trialing']);
 
       return { action: 'checkout_completed', gymId };
     }
@@ -227,17 +237,29 @@ export async function handleStripeWebhook(
       const gymId = session.metadata?.gym_id;
       if (!gymId) return { action: 'no_gym_id' };
 
-      // Keep status trialing (retryable) — do NOT cancel
+      // Keep status trialing (retryable) — do NOT cancel. Guard: never
+      // downgrade an already-active subscription on an out-of-order event.
       await admin
         .from('gym_billing')
         .update({ subscription_status: 'trialing' })
-        .eq('gym_id', gymId);
+        .eq('gym_id', gymId)
+        .in('subscription_status', ['trial', 'trialing']);
 
       return { action: 'checkout_expired', gymId };
     }
 
     default:
       return { action: 'unhandled', gymId: undefined };
+  }
+  } catch (err) {
+    // Processing failed AFTER the idempotency marker was written. Delete the
+    // marker before rethrowing so Stripe's retry can re-process the event
+    // instead of short-circuiting as a duplicate.
+    await admin
+      .from('stripe_events_processed')
+      .delete()
+      .eq('event_id', event.id);
+    throw err;
   }
 }
 
