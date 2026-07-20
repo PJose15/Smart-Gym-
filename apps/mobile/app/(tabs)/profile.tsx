@@ -18,7 +18,7 @@ import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
 import { getBadges } from '../../src/lib/badgeService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
-import { fetchMemberLevel, fetchDNAResult, fetchMuscleMap } from '../../src/lib/memberData';
+import { fetchMemberLevel, fetchDNAResult, fetchMuscleMap, getMemberId } from '../../src/lib/memberData';
 import type { DNACacheResult, MuscleMapCacheResult } from '../../src/lib/memberData';
 import type { LevelProgress } from '@nexera/ai-assist';
 import { Button, Text, Card } from '../../src/components';
@@ -253,26 +253,19 @@ export default function ProfileScreen() {
 
   const loadEnrichmentData = async (userId: string, currentGymId: string) => {
     try {
-      const [workoutsResult, exercisesResult, memberResult] = await Promise.all([
-        supabase
-          .from('workouts')
-          .select('id, started_at, finished_at')
-          .eq('profile_id', userId)
-          .eq('status', 'completed')
-          .order('started_at', { ascending: false })
-          .limit(500),
+      // Session data lives in workout_sessions keyed by member_id (members.id),
+      // not by the auth profile id — resolve the mapping first.
+      const memberId = await getMemberId(userId);
 
-        supabase
-          .from('workout_exercises')
-          .select(`
-            exercise_name,
-            machine_id,
-            machines(name, qr_slug),
-            sets(weight_kg, reps),
-            workouts!inner(profile_id)
-          `)
-          .eq('workouts.profile_id', userId)
-          .limit(500),
+      const [sessionsResult, memberResult] = await Promise.all([
+        memberId
+          ? supabase
+              .from('workout_sessions')
+              .select('id, session_date, sets_count, total_volume_lbs, machine_id, created_at, completed_at, machines(name, qr_slug)')
+              .eq('member_id', memberId)
+              .order('session_date', { ascending: false })
+              .limit(500)
+          : Promise.resolve({ data: [] }),
 
         supabase
           .from('gym_members')
@@ -288,50 +281,51 @@ export default function ProfileScreen() {
         setMemberSince(memberResult.data.created_at);
       }
 
-      // Lifetime stats from workouts
-      const workouts = workoutsResult.data ?? [];
-      let totalTimeMinutes = 0;
-      for (const w of workouts) {
-        if (w.started_at && w.finished_at) {
-          const mins = (new Date(w.finished_at).getTime() - new Date(w.started_at).getTime()) / 60000;
-          if (mins > 0 && mins < 300) totalTimeMinutes += mins;
-        }
-      }
-
-      // Calculate volume and sets from exercises, plus machine frequency
-      interface ProfileExerciseRow {
+      // Lifetime stats from workout_sessions (one row per machine session)
+      interface SessionRow {
+        id: string;
+        session_date: string | null;
+        sets_count: number | null;
+        total_volume_lbs: number | null;
         machine_id: string | null;
-        sets: Array<{ weight_kg?: number; reps?: number }>;
+        created_at: string | null;
+        completed_at: string | null;
         machines?: { name: string; qr_slug?: string } | null;
       }
-      const exercises = (exercisesResult.data ?? []) as unknown as ProfileExerciseRow[];
-      let totalVolumeKg = 0;
-      let totalSets = 0;
-      const machineFreq = new Map<string, { name: string; count: number; slug: string }>();
+      const sessions = (sessionsResult.data ?? []) as unknown as SessionRow[];
 
-      for (const ex of exercises) {
-        const sets = ex.sets ?? [];
-        for (const s of sets) {
-          totalSets++;
-          totalVolumeKg += (s.weight_kg ?? 0) * (s.reps ?? 0);
+      const LBS_TO_KG = 0.45359237;
+      let totalVolumeLbs = 0;
+      let totalSets = 0;
+      let totalTimeMinutes = 0;
+      const machineFreq = new Map<string, { name: string; count: number; slug: string }>();
+      const trainedDates = new Set<string>();
+
+      for (const s of sessions) {
+        totalSets += s.sets_count ?? 0;
+        totalVolumeLbs += Number(s.total_volume_lbs) || 0;
+        if (s.session_date) trainedDates.add(s.session_date);
+        if (s.created_at && s.completed_at) {
+          const mins = (new Date(s.completed_at).getTime() - new Date(s.created_at).getTime()) / 60000;
+          if (mins > 0 && mins < 300) totalTimeMinutes += mins;
         }
-        if (ex.machine_id && ex.machines?.name) {
-          const existing = machineFreq.get(ex.machine_id);
+        if (s.machine_id && s.machines?.name) {
+          const existing = machineFreq.get(s.machine_id);
           if (existing) {
             existing.count++;
           } else {
-            machineFreq.set(ex.machine_id, {
-              name: ex.machines.name,
+            machineFreq.set(s.machine_id, {
+              name: s.machines.name,
               count: 1,
-              slug: ex.machines.qr_slug ?? ex.machine_id,
+              slug: s.machines.qr_slug ?? s.machine_id,
             });
           }
         }
       }
 
       setLifetimeStats({
-        totalWorkouts: workouts.length,
-        totalVolumeKg: Math.round(totalVolumeKg),
+        totalWorkouts: sessions.length,
+        totalVolumeKg: Math.round(totalVolumeLbs * LBS_TO_KG),
         totalSets,
         totalTimeMinutes: Math.round(totalTimeMinutes),
       });
@@ -340,14 +334,15 @@ export default function ProfileScreen() {
       const sorted = Array.from(machineFreq.values()).sort((a, b) => b.count - a.count);
       setFavoriteMachines(sorted.slice(0, 3));
 
-      // Average workouts per week
-      if (workouts.length >= 2) {
-        const oldest = new Date(workouts[workouts.length - 1].started_at);
-        const newest = new Date(workouts[0].started_at);
+      // Average training days per week from distinct session dates
+      const dates = Array.from(trainedDates).sort();
+      if (dates.length >= 2) {
+        const oldest = new Date(dates[0]);
+        const newest = new Date(dates[dates.length - 1]);
         const weeks = Math.max(1, (newest.getTime() - oldest.getTime()) / (7 * 24 * 60 * 60 * 1000));
-        setAvgWorkoutsPerWeek(Math.round((workouts.length / weeks) * 10) / 10);
-      } else if (workouts.length === 1) {
-        setAvgWorkoutsPerWeek(workouts.length);
+        setAvgWorkoutsPerWeek(Math.round((dates.length / weeks) * 10) / 10);
+      } else if (dates.length === 1) {
+        setAvgWorkoutsPerWeek(1);
       }
     } catch (err) {
       console.warn('[profile] enrichment load failed:', err);

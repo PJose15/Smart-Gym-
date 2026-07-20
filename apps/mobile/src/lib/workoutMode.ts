@@ -32,6 +32,83 @@ export interface ModeContext {
   weekNumber?: number;
 }
 
+interface AiProgramDayJson {
+  day_number?: number;
+  name?: string;
+  exercises?: Array<{
+    exercise_name?: string;
+    default_sets?: number;
+    default_reps?: number;
+    machine_id?: string | null;
+  }>;
+}
+
+/**
+ * Extracts the day rotation from an ai_programs.program_data JSON blob.
+ * Canonical shape is `{ days: [...] }`; some rows nest days under
+ * `{ weeks: [{ days: [...] }] }` — fall back to the first week with days.
+ */
+export function extractAiProgramDays(programData: unknown): AiProgramDayJson[] {
+  const pd = programData as {
+    days?: AiProgramDayJson[];
+    weeks?: Array<{ days?: AiProgramDayJson[] }>;
+  } | null;
+  if (Array.isArray(pd?.days) && pd.days.length > 0) return pd.days;
+  const firstWeek = Array.isArray(pd?.weeks)
+    ? pd.weeks.find((w) => Array.isArray(w?.days) && w.days.length > 0)
+    : undefined;
+  return firstWeek?.days ?? [];
+}
+
+/** Loads mode context for an assignment that only carries an ai_program_id. */
+async function detectAiProgramMode(aiProgramId: string, assignedAt: string): Promise<ModeContext> {
+  const { data: aiProgram } = await supabase
+    .from('ai_programs')
+    .select('id, title, program_data')
+    .eq('id', aiProgramId)
+    .maybeSingle();
+
+  if (!aiProgram) return { mode: 'freestyle' };
+
+  const jsonDays = extractAiProgramDays(aiProgram.program_data);
+
+  if (jsonDays.length === 0) {
+    return {
+      mode: 'ai-program',
+      programId: aiProgram.id,
+      programTitle: aiProgram.title ?? undefined,
+    };
+  }
+
+  const todayDayNumber = getTodaysProgramDay(assignedAt, jsonDays.length);
+  const todayIdx = jsonDays.findIndex((d, i) => (d.day_number ?? i + 1) === todayDayNumber);
+  const today = jsonDays[todayIdx === -1 ? 0 : todayIdx];
+
+  const daysSinceStart = Math.floor(
+    (Date.now() - new Date(assignedAt).getTime()) / (1000 * 60 * 60 * 24),
+  );
+  const weekNumber = Math.floor(daysSinceStart / 7) + 1;
+
+  return {
+    mode: 'ai-program',
+    programId: aiProgram.id,
+    programTitle: aiProgram.title ?? undefined,
+    todayDay: {
+      dayNumber: todayDayNumber,
+      dayName: today.name ?? `Day ${todayDayNumber}`,
+      exercises: (today.exercises ?? []).map((ex, i) => ({
+        id: `ex-${i}`,
+        exercise_name: ex.exercise_name ?? 'Unknown',
+        default_sets: ex.default_sets ?? 3,
+        default_reps: ex.default_reps ?? 10,
+        machine_id: ex.machine_id ?? null,
+        order_index: i,
+      })),
+    },
+    weekNumber,
+  };
+}
+
 export async function detectWorkoutMode(userId: string): Promise<ModeContext> {
   // Resolve member_id from user_id
   const memberId = await getMemberId(userId);
@@ -48,6 +125,12 @@ export async function detectWorkoutMode(userId: string): Promise<ModeContext> {
 
   if (!assignment) {
     return { mode: 'freestyle' };
+  }
+
+  // Assignment may carry EITHER program_id (trainer-built program) OR
+  // ai_program_id (AI program stored as JSON in ai_programs.program_data).
+  if (!assignment.program_id && assignment.ai_program_id) {
+    return detectAiProgramMode(assignment.ai_program_id, assignment.assigned_at);
   }
 
   // Load program details

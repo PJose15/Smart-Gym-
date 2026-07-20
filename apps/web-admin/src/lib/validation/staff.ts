@@ -1,6 +1,7 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
+import { uuidString } from './uuid';
 
-// ─── Staff Login ─────────────────────────────────────────
+// â”€â”€â”€ Staff Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const staffLoginSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -9,19 +10,19 @@ export const staffLoginSchema = z.object({
 
 export type StaffLoginInput = z.infer<typeof staffLoginSchema>;
 
-// ─── Trainer Notes ───────────────────────────────────────
+// â”€â”€â”€ Trainer Notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const trainerNoteSchema = z.object({
   member_id: z.string().uuid('Invalid member'),
   note_type: z.enum(['general', 'form', 'injury', 'progress', 'program']),
   note_text: z.string().min(1, 'Note is required').max(2000, 'Note is too long'),
-  session_id: z.string().uuid().nullable().optional(),
+  session_id: uuidString.nullable().optional(),
   is_visible_to_member: z.boolean().optional().default(false),
 });
 
 export type TrainerNoteInput = z.infer<typeof trainerNoteSchema>;
 
-// ─── Trainer Messages ────────────────────────────────────
+// â”€â”€â”€ Trainer Messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const trainerMessageSchema = z.object({
   member_id: z.string().uuid('Invalid member'),
@@ -30,7 +31,7 @@ export const trainerMessageSchema = z.object({
 
 export type TrainerMessageInput = z.infer<typeof trainerMessageSchema>;
 
-// ─── Gym Settings ────────────────────────────────────────
+// â”€â”€â”€ Gym Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const gymSettingsSchema = z.object({
   // Branding
@@ -80,7 +81,7 @@ export const gymSettingsSchema = z.object({
 
 export type GymSettingsInput = z.infer<typeof gymSettingsSchema>;
 
-// ─── Member Settings ─────────────────────────────────────
+// â”€â”€â”€ Member Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const memberSettingsSchema = z.object({
   weight_unit: z.enum(['lbs', 'kg']).optional(),
@@ -97,7 +98,7 @@ export const memberSettingsSchema = z.object({
 
 export type MemberSettingsInput = z.infer<typeof memberSettingsSchema>;
 
-// ─── Trainer Invitations ─────────────────────────────────
+// â”€â”€â”€ Trainer Invitations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const trainerInvitationSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -107,7 +108,7 @@ export const trainerInvitationSchema = z.object({
 
 export type TrainerInvitationInput = z.infer<typeof trainerInvitationSchema>;
 
-// ─── Billing ────────────────────────────────────────────
+// â”€â”€â”€ Billing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const checkoutSchema = z.object({
   tier: z.enum(['starter', 'growth', 'pro']),

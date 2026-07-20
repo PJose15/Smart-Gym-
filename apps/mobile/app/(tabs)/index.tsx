@@ -31,6 +31,7 @@ import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import { typography } from '../../src/theme/typography';
 import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@nexera/types';
+import { extractAiProgramDays } from '../../src/lib/workoutMode';
 import { computeHeroState } from '../../src/lib/heroState';
 import type { HeroInput } from '../../src/lib/heroState';
 import { HeroZone } from '../../src/components/home/HeroZone';
@@ -303,7 +304,12 @@ export default function HomeScreen() {
         }
       }
 
-      // Load active program from ai_programs via member record
+      // Load active program via member record. The active
+      // member_program_assignments row is the source of truth — it points at
+      // EITHER a trainer-built program (program_id → programs/program_days/
+      // program_exercises) OR an AI program (ai_program_id → ai_programs
+      // with program_data JSON). Fall back to the latest active ai_programs
+      // row for members without an assignment row.
       const { data: memberRecord } = await supabase
         .from('members')
         .select('id')
@@ -316,33 +322,92 @@ export default function HomeScreen() {
         return;
       }
 
-      const { data: activeProgram } = await supabase
-        .from('ai_programs')
-        .select('id, program_data, sessions_per_week, day_number, created_at')
+      const { data: assignmentRow } = await supabase
+        .from('member_program_assignments')
+        .select('program_id, ai_program_id, assigned_at')
         .eq('member_id', memberRecord.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+        .eq('status', 'active')
+        .order('assigned_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (!activeProgram?.program_data) {
-        if (mountedRef.current) setLoading(false);
-        return;
+      interface ProgramDayExercise { exercise_name?: string; default_sets?: number; default_reps?: number; machine_id?: string | null }
+      interface HomeDay { id: string; program_id: string; day_number: number; name: string; exercises: ProgramDayExercise[] }
+
+      let days: HomeDay[] = [];
+      let assignedAt: string | null = null;
+
+      // Path A: trainer-built program (assignment has program_id)
+      if (assignmentRow?.program_id) {
+        const { data: programDays } = await supabase
+          .from('program_days')
+          .select('id, day_number, name')
+          .eq('program_id', assignmentRow.program_id)
+          .order('day_number');
+
+        if (programDays && programDays.length > 0) {
+          const dayIds = programDays.map((d: { id: string }) => d.id);
+          const { data: dayExercises } = await supabase
+            .from('program_exercises')
+            .select('id, program_day_id, exercise_name, default_sets, default_reps, machine_id, order_index')
+            .in('program_day_id', dayIds)
+            .order('order_index');
+
+          days = programDays.map((d: { id: string; day_number: number; name: string }) => ({
+            id: d.id,
+            program_id: assignmentRow.program_id as string,
+            day_number: d.day_number,
+            name: d.name,
+            exercises: (dayExercises ?? []).filter(
+              (e: { program_day_id: string }) => e.program_day_id === d.id,
+            ),
+          }));
+          assignedAt = assignmentRow.assigned_at;
+        }
       }
 
-      // Parse days from program_data JSON
-      interface ProgramDay { day_number?: number; name?: string; exercises?: Array<{ exercise_name?: string; default_sets?: number; default_reps?: number; machine_id?: string | null }> }
-      const programData = activeProgram.program_data as { days?: ProgramDay[] } | null;
-      const days = (programData?.days ?? []).map((d, idx) => ({
-          id: `day-${idx}`,
-          program_id: activeProgram.id,
-          day_number: d.day_number ?? idx + 1,
-          name: d.name ?? `Day ${idx + 1}`,
-          exercises: d.exercises ?? [],
-        }));
+      // Path B: AI program (assignment has ai_program_id, or legacy fallback
+      // to the latest active ai_programs row when no assignment exists)
+      if (days.length === 0) {
+        let aiProgram: { id: string; program_data: unknown; created_at: string } | null = null;
 
-      // Use created_at as assignment date for day cycling
-      const assignment = { assigned_at: activeProgram.created_at };
+        if (assignmentRow?.ai_program_id) {
+          const { data } = await supabase
+            .from('ai_programs')
+            .select('id, program_data, created_at')
+            .eq('id', assignmentRow.ai_program_id)
+            .maybeSingle();
+          aiProgram = data;
+        }
+
+        if (!aiProgram && !assignmentRow) {
+          const { data } = await supabase
+            .from('ai_programs')
+            .select('id, program_data, created_at')
+            .eq('member_id', memberRecord.id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          aiProgram = data;
+        }
+
+        if (aiProgram?.program_data) {
+          // Parse days from program_data JSON ({ days } or { weeks } shape)
+          const aiProgramId = aiProgram.id;
+          days = extractAiProgramDays(aiProgram.program_data).map((d, idx) => ({
+            id: `day-${idx}`,
+            program_id: aiProgramId,
+            day_number: d.day_number ?? idx + 1,
+            name: d.name ?? `Day ${idx + 1}`,
+            exercises: d.exercises ?? [],
+          }));
+          // Use assignment date (or program creation) for day cycling
+          assignedAt = assignmentRow?.assigned_at ?? aiProgram.created_at;
+        }
+      }
+
+      const assignment = { assigned_at: assignedAt ?? new Date().toISOString() };
 
       if (!days || days.length === 0) {
         if (mountedRef.current) setLoading(false);

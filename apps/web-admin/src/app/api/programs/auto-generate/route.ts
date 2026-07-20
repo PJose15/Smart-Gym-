@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { uuidString } from '@/lib/validation/uuid';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 const autoGenerateSchema = z.object({
-  member_id: z.string().uuid(),
-  gym_id: z.string().uuid(),
+  member_id: uuidString,
+  gym_id: uuidString,
 });
 
 function getAdminClient() {

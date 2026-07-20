@@ -156,18 +156,25 @@ export default function AuthPage() {
       return;
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    // Server-side sign-in sets the cookie session that member API routes
+    // read — a client-side (localStorage) session never reaches them.
+    const res = await fetch('/api/auth/member/signin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      setError(body?.error ?? 'Sign in failed.');
       setLoading(false);
       return;
     }
 
-    window.location.href = '/';
+    const data = await res.json();
+    // Members land on the member home; accounts without a member row
+    // (staff signing in here by mistake) go to the root dashboard.
+    window.location.href = data.member_id ? '/home' : '/';
   }
 
   return (

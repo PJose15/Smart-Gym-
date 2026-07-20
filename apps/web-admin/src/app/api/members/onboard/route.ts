@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
@@ -13,8 +14,8 @@ function getAdminClient() {
 }
 
 const onboardSchema = z.object({
-  member_id: z.string().uuid(),
-  gym_id: z.string().uuid(),
+  member_id: uuidString,
+  gym_id: uuidString,
   primary_goal: z.enum(['muscle-gain', 'strength', 'weight-loss', 'endurance', 'general-fitness']),
   experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'athlete']),
 });

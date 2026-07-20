@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Permissive zod UUID validator (hex shape only). zod 4's `.uuid()` enforces
+ * RFC 4122 version/variant bits, which rejects the synthetic fixed IDs used
+ * by seed/demo data (e.g. `00000000-0000-0000-0001-000000000001`). Postgres
+ * `uuid` accepts any hex-shaped value, so validate shape, not version.
+ */
+export const uuidString = z.string().regex(UUID_RE, 'Invalid UUID');
 
 /**
  * Validates that all provided values are valid UUIDs.

@@ -321,15 +321,26 @@ export default function FeedScreen() {
         <Text style={styles.headerTitle} numberOfLines={1}>
           {gymTitle}
         </Text>
-        <TouchableOpacity
-          onPress={() => router.push('/(tabs)/challenges')}
-          accessibilityRole="button"
-          accessibilityLabel="Open challenges"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={styles.challengesButton}
-        >
-          <Ionicons name="trophy-outline" size={20} color={colors.gold} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push('/leaderboard')}
+            accessibilityRole="button"
+            accessibilityLabel="Open leaderboard"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.leaderboardButton}
+          >
+            <Ionicons name="podium-outline" size={20} color={colors.primaryLight} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/challenges')}
+            accessibilityRole="button"
+            accessibilityLabel="Open challenges"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.challengesButton}
+          >
+            <Ionicons name="trophy-outline" size={20} color={colors.gold} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FeedFilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
@@ -405,6 +416,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   challengesButton: {
     width: 36,
     height: 36,
@@ -412,6 +428,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.goldSubtle,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  leaderboardButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySubtle,
     borderWidth: 1,
     borderColor: colors.border,
   },

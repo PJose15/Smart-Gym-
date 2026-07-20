@@ -1,8 +1,9 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
+import { uuidString } from './uuid';
 
 export const memberHomeQuerySchema = z.object({
-  member_id: z.string().uuid(),
-  gym_id: z.string().uuid(),
+  member_id: uuidString,
+  gym_id: uuidString,
 });
 
 export type MemberHomeQuery = z.infer<typeof memberHomeQuerySchema>;

@@ -1,4 +1,5 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
+import { uuidString } from './uuid';
 
 export const setSchema = z.object({
   weight_lbs: z.number().min(0).max(2000),
@@ -8,18 +9,18 @@ export const setSchema = z.object({
 });
 
 export const sessionUpsertSchema = z.object({
-  gym_id: z.string().uuid(),
-  machine_id: z.string().uuid(),
-  member_id: z.string().uuid(),
+  gym_id: uuidString,
+  machine_id: uuidString,
+  member_id: uuidString,
   session_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   workout_mode: z.enum(['ai_program', 'trainer_program', 'free']).default('free'),
   set: setSchema,
 });
 
 export const scanEventSchema = z.object({
-  machine_id: z.string().uuid(),
-  member_id: z.string().uuid().nullable(),
-  gym_id: z.string().uuid(),
+  machine_id: uuidString,
+  member_id: uuidString.nullable(),
+  gym_id: uuidString,
   workout_mode: z.enum(['ai_program', 'trainer_program', 'free']).default('free'),
   was_in_program: z.boolean().default(false),
 });

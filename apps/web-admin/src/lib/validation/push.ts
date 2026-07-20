@@ -1,8 +1,9 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
+import { uuidString } from './uuid';
 
 export const pushSubscribeSchema = z.object({
-  member_id: z.string().uuid(),
-  gym_id: z.string().uuid(),
+  member_id: uuidString,
+  gym_id: uuidString,
   subscription: z.object({
     endpoint: z.string().url(),
     keys: z.object({
@@ -15,7 +16,7 @@ export const pushSubscribeSchema = z.object({
 });
 
 export const pushUnsubscribeSchema = z.object({
-  member_id: z.string().uuid(),
+  member_id: uuidString,
   endpoint: z.string().url(),
 });
 

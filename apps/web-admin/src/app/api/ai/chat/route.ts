@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { uuidString } from '@/lib/validation/uuid';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -8,7 +9,7 @@ import { getCoachingInsight, GeminiProvider } from '@nexera/ai-assist';
 const gemini = new GeminiProvider();
 
 const chatSchema = z.object({
-  member_id: z.string().uuid(),
+  member_id: uuidString,
   message: z.string().trim().min(1).max(1000),
 });
 

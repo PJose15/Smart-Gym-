@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
@@ -13,9 +14,9 @@ function getAdminClient() {
 }
 
 const prCheckSchema = z.object({
-  session_id: z.string().uuid(),
-  member_id: z.string().uuid(),
-  machine_id: z.string().uuid(),
+  session_id: uuidString,
+  member_id: uuidString,
+  machine_id: uuidString,
   weight_lbs: z.number().min(0),
   reps: z.number().int().min(1),
 });
