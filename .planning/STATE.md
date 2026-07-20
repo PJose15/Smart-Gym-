@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: active
-stopped_at: "Finalized 05-01-SUMMARY.md — Task 3 checkpoint resolved: migration 029 applied to live DB, migrations 001-030 in sync"
-last_updated: "2026-07-20T03:36:46.581Z"
+status: completed
+stopped_at: "Completed plan 05-05: agent-daily cron route with 4 daily scans (dormant/checkin-SLA/machine-underuse/challenge-expiry)"
+last_updated: "2026-07-20T04:08:12.517Z"
 last_activity: "2026-07-19 — Executed plan 05-02: hardened /api/agents/trigger (cooldown dedup + UPTIMIZE forwarding + loop-safety schema, 366/366 tests, tsc clean)"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 19
+  completed_plans: 20
   percent: 79
 ---
 
@@ -105,9 +105,10 @@ Next action: Plan 05-03 — Wave 2 event-driven call sites (session complete, ch
 - [Phase 05-02-trigger-hardening]: Cooldown keyed by trigger_event (not agent_name) — each event has distinct semantic urgency (level-up=24h, member-at-risk=7d, weekly-summary=6d)
 - [Phase 05-02-trigger-hardening]: Skipped rows do NOT extend the cooldown window — only status=sent rows are the reference; skips leave the original window open for legitimate retries
 - [Phase 05-02-trigger-hardening]: UPTIMIZE_WEBHOOK_URL absent = no forwarding (staging-ready decision) — forwarding is optional; local dev and unset envs never break
+- [Phase 05-uptimizeai-agent-connection]: machines.is_active filter confirmed in migration 001; per-gym machine_scan_events query uses idx_scan_events_gym_time index; challenge end_date compared as DATE string; dedup_key=challenge.id deduplicates cron + owner-complete paths via 24h cooldown
 
 ## Session Continuity
 
-Last session: 2026-07-20T03:36:46.564Z
-Stopped at: Finalized 05-01-SUMMARY.md — Task 3 checkpoint resolved: migration 029 applied to live DB, migrations 001-030 in sync
+Last session: 2026-07-20T04:05:45.284Z
+Stopped at: Completed plan 05-05: agent-daily cron route with 4 daily scans (dormant/checkin-SLA/machine-underuse/challenge-expiry)
 Resume with: Wave 1 Foundation complete (05-01 + 05-02). Next: plan 05-03 Wave 2 event-driven call sites (session complete level-up/streak-broken/leaderboard-updated, challenge-ended, at-risk per-member wiring)

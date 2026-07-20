@@ -109,7 +109,7 @@ Plans:
   4. Starter-tier gyms get no agent fires; Growth/Pro gyms get exactly their tier's agent set
   5. Every fire — success, skip, dedup, or failure — is visible in `smartgym_agent_logs`
 **Dependency notes**: Sequenced before Phase 6 per milestone plan, but most agents output member pushes whose delivery layer lands in Phase 6. **RESOLVED at planning (2026-07-19): Option B per 05-RESEARCH.md** — no dispatcher in Phase 5; agent outputs scoped to logged actions + echo-receiver verification; member push delivery activates in Phase 6, which consumes the `is_agent_initiated` loop-safety flag Phase 5 puts in the payload schema. UptimizeAI is not yet a real external service (LOCKED): all forwarding goes to configurable `UPTIMIZE_WEBHOOK_URL`; staging target = dev echo receiver; go-live = one env var. Loop-safety dedup (AGENT-02, plan 05-02) lands before any new trigger call site (Pitfall 7). Note: `new-gym-onboarded` + `upgrade-opportunity` bypass gym-tier gating as documented PLATFORM_EVENTS (otherwise dead code — firing gyms never have Pro); human sign-off at the 05-07 gate.
-**Plans:** 2/7 plans executed
+**Plans:** 3/7 plans executed
 
 Plans:
 - [x] 05-01-PLAN.md — Migration 029 (dedup indexes + agent cron schedules) + echo receiver + UPTIMIZE env contract [wave 1, checkpoint: db push] ✅ COMPLETE (migration applied to live DB 2026-07-20; migrations 001-030 in sync)
@@ -141,7 +141,7 @@ Plans:
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
 | 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
 | 4. Mobile Program View | 2/3 | In Progress|  |
-| 5. UptimizeAI Agent Connection | 2/7 | In Progress|  |
+| 5. UptimizeAI Agent Connection | 3/7 | In Progress|  |
 | 6. Notification Orchestration Wiring | 0/? | Not started | - |
 
 ---
