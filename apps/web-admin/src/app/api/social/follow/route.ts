@@ -37,11 +37,20 @@ export async function POST(req: NextRequest) {
     // Verify follower belongs to this user
     const { data: member } = await admin
       .from('members')
-      .select('id')
+      .select('id, gym_id')
       .eq('id', follower_id)
       .eq('user_id', session.user.id)
       .maybeSingle();
     if (!member)
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    // Same-gym guard: the followed member must belong to the follower's gym
+    const { data: followedMember } = await admin
+      .from('members')
+      .select('id, gym_id')
+      .eq('id', following_id)
+      .maybeSingle();
+    if (!followedMember || followedMember.gym_id !== member.gym_id)
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { error } = await admin
@@ -57,13 +66,7 @@ export async function POST(req: NextRequest) {
       );
 
     // Notify the followed member — fire-and-forget
-    const { data: followedMember } = await admin
-      .from('members')
-      .select('id, gym_id')
-      .eq('id', following_id)
-      .maybeSingle();
-
-    if (followedMember) {
+    {
       sendNotification({
         gym_id: followedMember.gym_id,
         member_id: followedMember.id,
