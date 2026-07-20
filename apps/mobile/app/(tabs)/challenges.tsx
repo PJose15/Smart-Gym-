@@ -18,13 +18,13 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AccessibilityInfo,
   FlatList,
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import type { ChallengeListItem, WeightUnit } from '@nexera/types';
 import { Text } from '../../src/components/Text';
@@ -38,6 +38,7 @@ import { fetchFeedContext } from '../../src/lib/feedService';
 import { splitByStatus } from '../../src/lib/challengeLogic';
 import { cacheFirst, setCache, CacheTTL } from '../../src/lib/cacheManager';
 import { getWeightUnit } from '../../src/lib/weightUnit';
+import { useReducedMotion } from '../../src/hooks/useReducedMotion';
 
 type TabKey = 'active' | 'completed';
 
@@ -58,12 +59,8 @@ export default function ChallengesScreen() {
   const gymIdRef = useRef<string | null>(null);
   const memberIdRef = useRef<string | null>(null);
 
-  // Reduced-motion preference
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReducedMotion).catch(() => undefined);
-  }, []);
+  // Reduced-motion preference (shared hook — live subscription, not a one-shot)
+  const reducedMotion = useReducedMotion();
 
   // ─── Initial load ──────────────────────────────────────────────────────────
 
@@ -101,6 +98,29 @@ export default function ChallengesScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Refetch fresh data when the tab regains focus (bypasses cache TTL so a
+  // join made on the detail screen shows immediately — mirrors feed tab).
+  const firstFocusRef = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocusRef.current) {
+        // Initial load is handled by the mount effect above
+        firstFocusRef.current = false;
+        return;
+      }
+      const gymId = gymIdRef.current;
+      const memberId = memberIdRef.current;
+      if (!gymId || !memberId) return;
+      fetchChallenges(gymId, memberId)
+        .then(async (fresh) => {
+          await setCache(CHALLENGES_CACHE_KEY(gymId) as any, fresh);
+          setChallenges(fresh);
+          setError(false);
+        })
+        .catch(() => undefined); // keep current list on transient failure
+    }, []),
+  );
 
   // ─── Pull-to-refresh ───────────────────────────────────────────────────────
 

@@ -114,6 +114,15 @@ describe('fetchProgram', () => {
     expect(result).toBeNull();
   });
 
+  it('throws when the ai_programs query resolves with an error (network/RLS failure)', async () => {
+    const supaError = { message: 'network failure', code: 'PGRST000' };
+    (mockSupabase.from as jest.Mock).mockReturnValue(
+      makeSupabaseMock({ data: null, error: supaError }),
+    );
+
+    await expect(fetchProgram(memberId)).rejects.toEqual(supaError);
+  });
+
   it('happy path (trainer_approved_by: null): maps all scalar fields, parses days, trainer_name is null', async () => {
     const programMock = makeSupabaseMock({ data: BASE_PROGRAM_ROW, error: null });
     (mockSupabase.from as jest.Mock).mockReturnValue(programMock);

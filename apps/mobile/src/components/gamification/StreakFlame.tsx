@@ -5,6 +5,7 @@
  */
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Platform } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import Svg, { Path, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { colors } from '../../theme/colors';
 import {
@@ -27,6 +28,7 @@ interface StreakFlameProps {
 
 export function StreakFlame({ streakWeeks, size, showGlow = true }: StreakFlameProps) {
   const reducedMotion = useReducedMotion();
+  const isFocused = useIsFocused();
   const tier = getStreakTierFromWeeks(streakWeeks);
   const config = STREAK_TIER_CONFIG[tier];
   const width = size ?? config.size;
@@ -39,8 +41,9 @@ export function StreakFlame({ streakWeeks, size, showGlow = true }: StreakFlameP
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (tier === 0 || reducedMotion) {
-      // Static — reset to neutral pose
+    if (tier === 0 || reducedMotion || !isFocused) {
+      // Static — reset to neutral pose (also stops battery-draining loops
+      // while the host tab screen is unfocused but still mounted)
       swayAnim.setValue(0);
       scaleAnim.setValue(1);
       return;
@@ -93,7 +96,7 @@ export function StreakFlame({ streakWeeks, size, showGlow = true }: StreakFlameP
       swayAnim.setValue(0);
       scaleAnim.setValue(1);
     };
-  }, [tier, reducedMotion, config.speed, config.flicker, swayAnim, scaleAnim]);
+  }, [tier, reducedMotion, isFocused, config.speed, config.flicker, swayAnim, scaleAnim]);
 
   const rotate = useMemo(
     () =>

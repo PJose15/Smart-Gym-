@@ -34,6 +34,7 @@ import {
 } from '../../src/lib/challengeLogic';
 import {
   CHALLENGE_DETAIL_CACHE_KEY,
+  CHALLENGES_CACHE_KEY,
   fetchChallengeDetail,
   joinChallenge,
 } from '../../src/lib/challengeService';
@@ -223,9 +224,12 @@ export default function ChallengeDetailScreen() {
             setShowConfetti(true);
           }
 
-          // Background re-fetch to get real leaderboard row
+          // Background re-fetch to get real leaderboard row.
+          // Also clear the challenges LIST cache so the list screen doesn't
+          // show a stale "not joined" card for up to the cache TTL.
           const cacheKey = CHALLENGE_DETAIL_CACHE_KEY(resolvedId) as CacheKey;
           await clearCache(cacheKey);
+          await clearCache(CHALLENGES_CACHE_KEY(gymIdRef.current!) as CacheKey);
           const fresh = await fetchChallengeDetail(resolvedId, memberIdRef.current!);
           if (fresh) {
             setScreenState({ kind: 'detail', detail: fresh });

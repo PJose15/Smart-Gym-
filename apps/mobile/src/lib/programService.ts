@@ -75,7 +75,7 @@ export function PROGRAM_CACHE_KEY(memberId: string): string {
  * to handle null or malformed data without throwing.
  */
 export async function fetchProgram(memberId: string): Promise<ActiveProgram | null> {
-  const { data: program } = await supabase
+  const { data: program, error: programError } = await supabase
     .from('ai_programs')
     .select(
       'id, title, description, goal, duration_weeks, sessions_per_week, week_number, day_number, sessions_completed, sessions_total, on_track, program_data, generated_by, trainer_approved, trainer_approved_by, created_at',
@@ -85,6 +85,9 @@ export async function fetchProgram(memberId: string): Promise<ActiveProgram | nu
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  // Network/RLS failure must surface as an error state, not "no program"
+  if (programError) throw programError;
 
   if (!program) return null;
 

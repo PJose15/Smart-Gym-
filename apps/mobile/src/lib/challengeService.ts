@@ -135,13 +135,16 @@ export async function fetchChallengeDetail(
   challengeId: string,
   memberId: string,
 ): Promise<ChallengeDetail | null> {
-  const { data: challengeRow } = await supabase
+  const { data: challengeRow, error: challengeRowError } = await supabase
     .from('gym_challenges')
     .select(
       'id, title, description, challenge_type, start_date, end_date, is_active, top_score, entry_mode, prize_type, prize_description, created_at',
     )
     .eq('id', challengeId)
     .maybeSingle();
+
+  // Network/RLS failure must surface as an error state, not "not found"
+  if (challengeRowError) throw challengeRowError;
 
   // Graceful null — not a throw (handles deleted/stale deep link)
   if (!challengeRow) return null;

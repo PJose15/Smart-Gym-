@@ -184,6 +184,15 @@ describe('fetchChallengeDetail', () => {
     expect(result).toBeNull();
   });
 
+  it('throws when the gym_challenges query resolves with an error (network/RLS failure)', async () => {
+    const supaError = { message: 'network failure', code: 'PGRST000' };
+    (mockSupabase.from as jest.Mock).mockReturnValue(
+      makeSupabaseMock({ data: null, error: supaError }),
+    );
+
+    await expect(fetchChallengeDetail(challengeId, memberId)).rejects.toEqual(supaError);
+  });
+
   it('returns ChallengeDetail with participants and my_participation resolved', async () => {
     const challengeRow = {
       id: challengeId,
