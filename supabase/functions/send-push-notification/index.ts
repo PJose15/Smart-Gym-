@@ -3,7 +3,7 @@
  * Body: { profile_id, type, title, body, data? }
  *
  * Sends a push notification to a user via the Expo Push API.
- * Checks notification_preferences before sending.
+ * Preference checks happen upstream in the dispatcher (not here).
  * Logs all attempts to notification_log.
  */
 
@@ -56,19 +56,11 @@ Deno.serve(async (req: Request) => {
 
     const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Check if user has notifications enabled (default: enabled)
-    const { data: prefs } = await serviceClient
-      .from('notification_preferences')
-      .select('enabled')
-      .eq('profile_id', profile_id)
-      .maybeSingle();
-
-    if (prefs && prefs.enabled === false) {
-      return new Response(
-        JSON.stringify({ message: 'Notifications disabled by user' }),
-        { status: 200, headers },
-      );
-    }
+    // NOTE: preference enforcement (enabled, category, quiet hours, rate cap)
+    // is owned by the web-admin dispatcher (lib/notifications/dispatcher.ts)
+    // BEFORE this function is invoked. The previous check here queried
+    // notification_preferences by a nonexistent profile_id column and was
+    // dead code — removed intentionally.
 
     // Get active push tokens for the user
     const { data: tokens, error: tokensErr } = await serviceClient
