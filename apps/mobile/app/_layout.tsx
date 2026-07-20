@@ -188,6 +188,10 @@ export default function RootLayout() {
           name="challenges/[id]"
           options={{ title: 'Challenge', headerShown: true }}
         />
+        <Stack.Screen
+          name="program/index"
+          options={{ title: 'Your Program' }}
+        />
       </Stack>
       </PhoneFrame>
     </ErrorBoundary>
