@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-mobile-program-view/04-02-PLAN.md — 4 new files, 227/227 mobile, tsc clean
-last_updated: "2026-07-20T01:08:01.903Z"
+stopped_at: Completed 04-mobile-program-view/04-03-PLAN.md — ViewProgramLink in TodayZone, phase 4 gate green (mobile 227/227 + web-admin 347/347, tsc clean both apps)
+last_updated: "2026-07-20T01:32:31.512Z"
 last_activity: "2026-07-19 — Executed plan 03-05: final phase gate (mobile 189/189 + web-admin 347/347, tsc clean both apps)"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 17
-  completed_plans: 16
+  completed_plans: 17
   percent: 85
 ---
 
@@ -25,12 +25,12 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 
 ## Current Position
 
-Phase: 3 of 6 — Mobile Challenges (gate awaiting human device walkthrough)
-Plan: 5 of 5 complete (03-01 through 03-05 all executed)
-Status: Automated gate green. Phase 3 Task 2 (on-device walkthrough) awaiting human "approved" signal. After that, Phase 3 is complete.
-Progress: [█████████░] 85%
-Last activity: 2026-07-19 — Executed plan 03-05: final phase gate (mobile 189/189 + web-admin 347/347, tsc clean both apps)
-Next action: Human approves 03-05 Task 2 device walkthrough, then Phase 3 is COMPLETE — next: Phase 4 Mobile Program View
+Phase: 4 of 6 — Mobile Program View — COMPLETE (all 3 plans executed)
+Plan: 3 of 3 complete (04-01 through 04-03 all executed)
+Status: Phase 4 automated gate green. VALIDATION.md signed off. Manual UAT deferred to /gsd:verify-work.
+Progress: [██████████] 100%
+Last activity: 2026-07-19 — Executed plan 04-03: ViewProgramLink in TodayZone + phase 4 gate (mobile 227/227 + web-admin 347/347, tsc clean both apps)
+Next action: Phase 5 — UptimizeAI Agent Connection (13 automations)
 
 ## Accumulated Context
 
@@ -38,8 +38,8 @@ Next action: Human approves 03-05 Task 2 device walkthrough, then Phase 3 is COM
 - 6 phases for v1.0 (see ROADMAP.md):
   1. Gym Owner Self-Serve Onboarding (PLAN FIRST)
   2. Mobile Social Feed — ✅ COMPLETE 2026-07-17 (commits `cba42c0` + `af69753`, delivered pre-roadmap)
-  3. Mobile Challenges
-  4. Mobile Program View
+  3. Mobile Challenges — ✅ COMPLETE (automated gate: mobile 189/189 + web-admin 347/347)
+  4. Mobile Program View — ✅ COMPLETE 2026-07-19 (gate: mobile 227/227 + web-admin 347/347, tsc clean)
   5. UptimizeAI Agent Connection (13 automations)
   6. Notification Orchestration Wiring
 - User priority: Plan Phase 1 (Owner Onboarding) in full executable detail first.
@@ -96,9 +96,10 @@ Next action: Human approves 03-05 Task 2 device walkthrough, then Phase 3 is COM
 - [Phase 04-mobile-program-view]: program_data parsed as { days?: ProgramDay[] } | null with ?? [] fallback — malformed jsonb never throws
 - [Phase 04-mobile-program-view]: program/index is a Stack route (not tab) — tab bar is full at 6 items
 - [Phase 04-mobile-program-view]: program.days.length === 0 treated same as null program — empty state (malformed jsonb guard)
+- [Phase 04-mobile-program-view]: router.push('/program' as any) — Expo typed routes stale (gitignored .expo/types); as-any cast consistent with OverviewTab.tsx + ProfileHeader.tsx
 
 ## Session Continuity
 
-Last session: 2026-07-20T01:06:45.846Z
-Stopped at: Completed 04-mobile-program-view/04-02-PLAN.md — 4 new files, 227/227 mobile, tsc clean
-Resume with: Human approves 03-05 Task 2 walkthrough (reply "approved"), then Phase 3 is complete — next: plan Phase 4 Mobile Program View
+Last session: 2026-07-20T01:32:31.508Z
+Stopped at: Completed 04-mobile-program-view/04-03-PLAN.md — ViewProgramLink in TodayZone, phase 4 gate green (mobile 227/227 + web-admin 347/347, tsc clean both apps)
+Resume with: Phase 4 complete — next: Phase 5 UptimizeAI Agent Connection, or run /gsd:verify-work for Phase 4 manual UAT
