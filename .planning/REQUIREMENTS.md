@@ -85,7 +85,7 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
   - `NotificationType` union expanded from 4 to full trigger set in `@nexera/types`; `NOTIFICATION_ROUTES` maps every type to a mobile route; deleted-resource targets render "not found" gracefully
 - [x] **NOTIF-04**: Member controls notifications by category, with quiet hours
   - Mobile settings section with per-category toggles (activity, social, coaching, operational, agents) + quiet hours window; enforced server-side, not just UI
-- [ ] **NOTIF-05**: Member has a notification inbox with unread badge
+- [x] **NOTIF-05**: Member has a notification inbox with unread badge
   - `/notifications` screen listing history from `notifications` table; mark-read on tap; unread count badge on bell/tab icon
 - [x] **NOTIF-06**: Push delivery failures are detected and stale tokens cleaned up
   - Cron polls Expo receipts; `DeviceNotRegistered` deactivates `device_tokens`; failures reflected in `notification_log`; delivery rate visible to admin
@@ -145,7 +145,7 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | NOTIF-02 | Phase 6 | Pending |
 | NOTIF-03 | Phase 6 | Complete |
 | NOTIF-04 | Phase 6 | Complete |
-| NOTIF-05 | Phase 6 | Pending |
+| NOTIF-05 | Phase 6 | Complete |
 | NOTIF-06 | Phase 6 | Complete |
 
 **Coverage:** 30/30 v1.0 requirements mapped. No orphans, no duplicates.
