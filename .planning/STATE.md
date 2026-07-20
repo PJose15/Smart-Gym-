@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 06-01-PLAN.md
+stopped_at: Completed 06-02-PLAN.md
 last_updated: "2026-07-20T13:45:16.203Z"
-last_activity: "2026-07-20 — Executed plan 05-06: shared atRiskScan helper + owner at-risk per-member retention triggers + agent-weekly cron (weekly-summary + at-risk early-warning, 420/420 tests, tsc clean)"
+last_activity: "2026-07-20 — Executed plan 06-02: migration 031 applied (notification_log 'delivered' CHECK + idx_notification_log_receipt_pending + nexera-receipt-poll pg_cron every 15 min; migrations 001-031 in sync)"
 progress:
   total_phases: 6
   completed_phases: 4
@@ -25,12 +25,12 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 
 ## Current Position
 
-Phase: 5 of 6 — UptimizeAI Agent Connection (13 automations)
-Plan: 6 of 7 complete (05-01 through 05-06 executed)
-Status: Active — Wave 2 call sites: session-complete (level-up/streak-broken/leaderboard-updated), challenge-ended, upgrade-opportunity, new-gym-onboarded, daily cron (4 scans), weekly cron (weekly-summary + at-risk early-warning), at-risk route wired.
+Phase: 6 of 6 — Notification Orchestration Wiring (10 plans)
+Plan: 2 of 10 complete (06-01 + 06-02 executed)
+Status: Active — Wave 1 complete: NotificationType 4→24, NOTIFICATION_ROUTES 24 types, resolveNotificationRoute exported, migration 031 applied (status CHECK + receipt index + pg_cron schedule)
 Progress: [█████████░] 92%
-Last activity: 2026-07-20 — Executed plan 05-06: shared atRiskScan helper + owner at-risk per-member retention triggers + agent-weekly cron (weekly-summary + at-risk early-warning, 420/420 tests, tsc clean)
-Next action: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch)
+Last activity: 2026-07-20 — Executed plan 06-02: migration 031 applied (notification_log 'delivered' CHECK + idx_notification_log_receipt_pending + nexera-receipt-poll pg_cron every 15 min; migrations 001-031 in sync)
+Next action: Plan 06-03 — Central dispatcher (TDD RED-first): preference/quiet-hours/dedup/rate-cap guards, identity bridge, loop safety, inbox writes
 
 ## Accumulated Context
 
