@@ -66,6 +66,9 @@ function buildTableChain(table: string) {
   if (table === 'machine_scan_events') {
     return {
       select: jest.fn(() => ({
+        // Route queries: .select('machine_id').gte('scanned_at', sevenDaysAgo)
+        gte: jest.fn().mockResolvedValue({ data: mockScanEventsData, error: null }),
+        // Also support optional .eq() chaining for gym filtering
         eq: jest.fn(() => ({
           gte: jest.fn().mockResolvedValue({ data: mockScanEventsData, error: null }),
         })),
