@@ -8,6 +8,7 @@ import { invalidateAndRefreshMuscleMap } from '@/lib/muscleMap/muscleMapCache';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
 
 const completeSchema = z.object({
   member_id: z.string().uuid(),
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Fetch member data + recent sessions + total session count in parallel
     const points = 50;
     const [memberResult, recentSessionsResult, sessionCountResult] = await Promise.all([
-      admin.from('members').select('smartgym_score, best_streak, display_name').eq('id', member_id).single(),
+      admin.from('members').select('smartgym_score, best_streak, current_streak, display_name').eq('id', member_id).single(),
       admin.from('workout_sessions').select('session_date').eq('member_id', member_id)
         .not('completed_at', 'is', null).order('session_date', { ascending: false }).limit(30),
       admin.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('member_id', member_id)
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const scoreBeforeSession = memberResult.data?.smartgym_score || 0;
     const bestStreak = memberResult.data?.best_streak || 0;
+    const previousStreak = memberResult.data?.current_streak || 0;
     const displayName = memberResult.data?.display_name || 'Member';
     const totalSessions = sessionCountResult.count || 0;
 
@@ -106,6 +108,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check achievements and level-ups (pass original score for accurate level-up detection)
     const achievements = await checkAchievementsForMember(admin, member_id, session.gym_id, scoreBeforeSession);
 
+    // Agent: level-up (fire-and-forget)
+    if (achievements.leveledUp) {
+      triggerUptimizeAIAgent('engagement-agent', {
+        event: 'level-up',
+        gym_id: session.gym_id,
+        member_id,
+        new_level: achievements.newLevel?.level ?? null,
+        is_agent_initiated: false,
+      }).catch(err => console.error('[session-complete] level-up agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+    }
+
+    // Agent: streak-broken — only when a real streak (>1) just reset to 1 (fire-and-forget)
+    if (previousStreak > 1 && streak === 1) {
+      triggerUptimizeAIAgent('engagement-agent', {
+        event: 'streak-broken',
+        gym_id: session.gym_id,
+        member_id,
+        previous_streak: previousStreak,
+        is_agent_initiated: false,
+      }).catch(err => console.error('[session-complete] streak-broken agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+    }
+
     // Generate feed events (fire-and-forget)
     generateSessionFeedEvents(admin, {
       member_id,
@@ -126,6 +150,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       machine_id: null,
       session_id: session.id,
     });
+
+    // Agent: leaderboard-updated — unconditional; 24h/member cooldown in trigger route caps flooding (fire-and-forget)
+    triggerUptimizeAIAgent('engagement-agent', {
+      event: 'leaderboard-updated',
+      gym_id: session.gym_id,
+      member_id,
+      session_id: session.id,
+      is_agent_initiated: false,
+    }).catch(err => console.error('[session-complete] leaderboard-updated agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
 
     // Invalidate and refresh readiness score + muscle map (fire-and-forget)
     invalidateAndRefreshReadiness(member_id, session.gym_id, admin).catch(() => {});

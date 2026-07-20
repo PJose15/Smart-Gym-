@@ -210,7 +210,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
 
     // Default admin: streak=3, continuing dates
     const admin = buildAdmin({ currentStreak: 3, recentDates: makeStreakContinuingDates(3) });
-    mockVerifyMember.mockResolvedValue({ admin } as Awaited<ReturnType<typeof verifyMember>>);
+    mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);
   });
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
   // ──────────────────────────────────────────────────────────────────────────
 
   it('fires engagement-agent level-up when achievements.leveledUp is true', async () => {
-    mockAchievements.mockResolvedValue({ leveledUp: true, newLevel: { level: 5 }, newAchievements: [] });
+    mockAchievements.mockResolvedValue({ leveledUp: true, newLevel: { level: 5, name: 'Gold', color: '#FFD700' }, newAchievements: [] });
 
     const res = await POST(makeRequest(), makeParams());
     expect(res.status).toBe(200);
@@ -253,7 +253,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
   it('fires engagement-agent streak-broken when previousStreak > 1 and new streak = 1', async () => {
     // member had streak of 5, dates show gap → resets to 1
     const admin = buildAdmin({ currentStreak: 5, recentDates: makeStreakResetDates() });
-    mockVerifyMember.mockResolvedValue({ admin } as Awaited<ReturnType<typeof verifyMember>>);
+    mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);
 
     const res = await POST(makeRequest(), makeParams());
     expect(res.status).toBe(200);
@@ -273,7 +273,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
 
   it('does NOT fire streak-broken for first-ever session (previousStreak = 0)', async () => {
     const admin = buildAdmin({ currentStreak: 0, recentDates: makeStreakContinuingDates(1) });
-    mockVerifyMember.mockResolvedValue({ admin } as Awaited<ReturnType<typeof verifyMember>>);
+    mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);
 
     const res = await POST(makeRequest(), makeParams());
     expect(res.status).toBe(200);
@@ -286,7 +286,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
 
   it('does NOT fire streak-broken when streak is continuing (prevStreak=3, new=4)', async () => {
     const admin = buildAdmin({ currentStreak: 3, recentDates: makeStreakContinuingDates(4) });
-    mockVerifyMember.mockResolvedValue({ admin } as Awaited<ReturnType<typeof verifyMember>>);
+    mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);
 
     const res = await POST(makeRequest(), makeParams());
     expect(res.status).toBe(200);
@@ -299,7 +299,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
 
   it('does NOT fire streak-broken when previousStreak = 1 (boundary: condition is > 1)', async () => {
     const admin = buildAdmin({ currentStreak: 1, recentDates: makeStreakResetDates() });
-    mockVerifyMember.mockResolvedValue({ admin } as Awaited<ReturnType<typeof verifyMember>>);
+    mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);
 
     const res = await POST(makeRequest(), makeParams());
     expect(res.status).toBe(200);
@@ -336,7 +336,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
   // ──────────────────────────────────────────────────────────────────────────
 
   it('returns the expected response shape regardless of agent calls', async () => {
-    mockAchievements.mockResolvedValue({ leveledUp: true, newLevel: { level: 7 }, newAchievements: [] });
+    mockAchievements.mockResolvedValue({ leveledUp: true, newLevel: { level: 7, name: 'Platinum', color: '#E5E4E2' }, newAchievements: [] });
 
     const res = await POST(makeRequest(), makeParams());
     expect(res.status).toBe(200);
@@ -351,7 +351,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
       }),
       new_achievements: expect.arrayContaining([]),
       leveled_up: true,
-      new_level: { level: 7 },
+      new_level: expect.objectContaining({ level: 7 }),
     });
   });
 
@@ -361,7 +361,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
 
   it('still returns 200 when triggerUptimizeAIAgent rejects', async () => {
     mockTrigger.mockRejectedValue(new Error('Agent service down'));
-    mockAchievements.mockResolvedValue({ leveledUp: true, newLevel: { level: 3 }, newAchievements: [] });
+    mockAchievements.mockResolvedValue({ leveledUp: true, newLevel: { level: 3, name: 'Bronze', color: '#CD7F32' }, newAchievements: [] });
 
     const res = await POST(makeRequest(), makeParams());
     expect(res.status).toBe(200);
