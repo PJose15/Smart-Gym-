@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
 import { fetchGymAtRiskMembers } from '@/lib/agents/atRiskScan';
+import { resolveOwnerProfileId, sendNotification } from '@/lib/notifications/dispatcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
     let summaries_triggered = 0;
     let at_risk_triggered = 0;
     let gyms_scanned = 0;
+    let pushes_dispatched = 0;
 
     // Process in batches of 10 with Promise.allSettled — one gym error never
     // aborts other gyms
@@ -84,7 +86,7 @@ export async function POST(request: Request) {
           const activeMembers = activeMemberCount ?? 0;
 
           // Skip gym entirely if no active members — no weekly-summary for empty gyms
-          if (activeMembers === 0) return { summaries: 0, at_risk: 0 };
+          if (activeMembers === 0) return { summaries: 0, at_risk: 0, pushes: 0 };
 
           gyms_scanned++;
 
@@ -106,6 +108,21 @@ export async function POST(request: Request) {
             is_agent_initiated: false,
           });
 
+          // Owner push: weekly_summary — is_agent_initiated: true (agent cron output)
+          let gymPushes = 0;
+          const weeklySummaryOwnerProfileId = await resolveOwnerProfileId(admin, gym.id);
+          if (weeklySummaryOwnerProfileId) {
+            await sendNotification({
+              gym_id: gym.id,
+              profile_id: weeklySummaryOwnerProfileId,
+              type: 'weekly_summary',
+              title: 'Your weekly gym summary',
+              body: 'Your weekly summary is ready — open your dashboard.',
+              is_agent_initiated: true,
+            }).catch(err => console.error('[agent-weekly] weekly_summary push failed:', err));
+            gymPushes++;
+          }
+
           // d. Early warning: at-risk member scan
           const atRiskMembers = await fetchGymAtRiskMembers(admin, gym.id);
           let gymAtRiskCount = 0;
@@ -122,7 +139,23 @@ export async function POST(request: Request) {
             gymAtRiskCount++;
           }
 
-          return { summaries: 1, at_risk: gymAtRiskCount };
+          // Owner push: member_at_risk — ONE per gym per run (no PII in title/body/data)
+          if (atRiskMembers.length > 0) {
+            const atRiskOwnerProfileId = weeklySummaryOwnerProfileId ?? await resolveOwnerProfileId(admin, gym.id);
+            if (atRiskOwnerProfileId) {
+              await sendNotification({
+                gym_id: gym.id,
+                profile_id: atRiskOwnerProfileId,
+                type: 'member_at_risk',
+                title: 'Members may be at risk',
+                body: 'Some members show at-risk patterns. Review retention insights.',
+                is_agent_initiated: true,
+              }).catch(err => console.error('[agent-weekly] member_at_risk push failed:', err));
+              gymPushes++;
+            }
+          }
+
+          return { summaries: 1, at_risk: gymAtRiskCount, pushes: gymPushes };
         })
       );
 
@@ -131,13 +164,14 @@ export async function POST(request: Request) {
         if (result.status === 'fulfilled') {
           summaries_triggered += result.value.summaries;
           at_risk_triggered += result.value.at_risk;
+          pushes_dispatched += result.value.pushes ?? 0;
         } else {
           console.error('[agent-weekly] Gym scan error:', result.reason);
         }
       }
     }
 
-    return NextResponse.json({ summaries_triggered, at_risk_triggered, gyms_scanned });
+    return NextResponse.json({ summaries_triggered, at_risk_triggered, gyms_scanned, pushes_dispatched });
   } catch (err) {
     console.error('[agent-weekly] Error:', err instanceof Error ? err.message : 'Unknown error');
     return NextResponse.json(

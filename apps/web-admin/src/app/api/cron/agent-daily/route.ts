@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
+import { resolveOwnerProfileId, sendNotification } from '@/lib/notifications/dispatcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
     let checkins_triggered = 0;
     let machines_triggered = 0;
     let challenges_expired = 0;
+    let pushes_dispatched = 0;
 
     // ── Scan 1: Dormant members (14d inactive) ──────────────────────────────────
     const { data: dormantMembers } = await admin
@@ -86,6 +88,21 @@ export async function POST(request: Request) {
           )
         );
         dormant_triggered += results.filter(r => r.status === 'fulfilled').length;
+
+        // Push: re-engagement alert per dormant member — fire-and-forget
+        const pushResults = await Promise.allSettled(
+          batch.map(m =>
+            sendNotification({
+              gym_id: m.gym_id,
+              member_id: m.id,
+              type: 'agent_dormant_alert',
+              title: 'We miss you',
+              body: 'It has been a while — your gym is ready when you are.',
+              is_agent_initiated: true,
+            })
+          )
+        );
+        pushes_dispatched += pushResults.filter(r => r.status === 'fulfilled').length;
       }
     }
 
@@ -115,6 +132,24 @@ export async function POST(request: Request) {
         );
         checkins_triggered += results.filter(r => r.status === 'fulfilled').length;
       }
+
+      // Owner push: one per unique affected gym (dispatcher 5-min dedup absorbs multi-checkin gyms)
+      const affectedGymIds = [...new Set<string>(overdueCheckins.map(c => c.gym_id))];
+      const ownerPushResults = await Promise.allSettled(
+        affectedGymIds.map(async gymId => {
+          const ownerProfileId = await resolveOwnerProfileId(admin, gymId);
+          if (!ownerProfileId) return;
+          return sendNotification({
+            gym_id: gymId,
+            profile_id: ownerProfileId,
+            type: 'checkin_overdue',
+            title: 'Check-ins overdue',
+            body: 'Some member check-ins are past their deadline.',
+            is_agent_initiated: true,
+          });
+        })
+      );
+      pushes_dispatched += ownerPushResults.filter(r => r.status === 'fulfilled').length;
     }
 
     // ── Scan 3: Machine underutilization (zero scans in 7d) ─────────────────────
@@ -164,6 +199,24 @@ export async function POST(request: Request) {
         );
         machines_triggered += results.filter(r => r.status === 'fulfilled').length;
       }
+
+      // Owner push: one per unique underutilized gym (dispatcher 5-min dedup absorbs multi-machine gyms)
+      const underutilizedGymIds = [...new Set<string>(underutilizedMachines.map(m => m.gym_id))];
+      const machineOwnerResults = await Promise.allSettled(
+        underutilizedGymIds.map(async gymId => {
+          const ownerProfileId = await resolveOwnerProfileId(admin, gymId);
+          if (!ownerProfileId) return;
+          return sendNotification({
+            gym_id: gymId,
+            profile_id: ownerProfileId,
+            type: 'machine_underutilized',
+            title: 'Machine usage alert',
+            body: 'A machine is seeing unusually low usage. See analytics.',
+            is_agent_initiated: true,
+          });
+        })
+      );
+      pushes_dispatched += machineOwnerResults.filter(r => r.status === 'fulfilled').length;
     }
 
     // ── Scan 4: Challenge auto-expiry (end_date < today, still active) ──────────
@@ -188,6 +241,29 @@ export async function POST(request: Request) {
               .update({ is_active: false })
               .eq('id', c.id);
 
+            // Push: challenge_complete to each participant (fire-and-forget per participant)
+            const { data: participants } = await admin
+              .from('challenge_participants')
+              .select('member_id')
+              .eq('challenge_id', c.id);
+
+            if (participants && participants.length > 0) {
+              const participantResults = await Promise.allSettled(
+                participants.map((p: { member_id: string }) =>
+                  sendNotification({
+                    gym_id: c.gym_id,
+                    member_id: p.member_id,
+                    type: 'challenge_complete',
+                    title: 'Challenge finished',
+                    body: 'A challenge you joined has ended — see the final leaderboard.',
+                    data: { challenge_id: c.id },
+                    is_agent_initiated: true,
+                  })
+                )
+              );
+              pushes_dispatched += participantResults.filter(r => r.status === 'fulfilled').length;
+            }
+
             return triggerUptimizeAIAgent('growth-agent', {
               event: 'challenge-ended',
               gym_id: c.gym_id,
@@ -207,6 +283,7 @@ export async function POST(request: Request) {
       checkins_triggered,
       machines_triggered,
       challenges_expired,
+      pushes_dispatched,
     });
   } catch (err) {
     console.error('[agent-daily] Error:', err instanceof Error ? err.message : 'Unknown error');

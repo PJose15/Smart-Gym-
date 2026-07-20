@@ -21,6 +21,14 @@ jest.mock('@/lib/billing/triggerAgent', () => ({
   triggerUptimizeAIAgent: (...args: unknown[]) => mockTriggerAgent(...args),
 }));
 
+// ─── Mock dispatcher (resolveOwnerProfileId + sendNotification) ──────────────
+const mockResolveOwnerProfileId = jest.fn();
+const mockSendNotification = jest.fn();
+jest.mock('@/lib/notifications/dispatcher', () => ({
+  resolveOwnerProfileId: (...args: unknown[]) => mockResolveOwnerProfileId(...args),
+  sendNotification: (...args: unknown[]) => mockSendNotification(...args),
+}));
+
 // ─── Supabase mock ─────────────────────────────────────────
 // Per-table canned data:
 let mockMembersData: Array<{ id: string; gym_id: string }> = [];
@@ -28,6 +36,7 @@ let mockCheckinsData: Array<{ id: string; member_id: string; gym_id: string }> =
 let mockMachinesData: Array<{ id: string; gym_id: string }> = [];
 let mockScanEventsData: Array<{ machine_id: string }> = [];
 let mockChallengesData: Array<{ id: string; gym_id: string }> = [];
+let mockParticipantsData: Array<{ member_id: string }> = [];
 
 // For gym_challenges update
 const mockChallengeUpdateEq = jest.fn().mockResolvedValue({ error: null });
@@ -85,6 +94,13 @@ function buildTableChain(table: string) {
       update: mockChallengeUpdate,
     };
   }
+  if (table === 'challenge_participants') {
+    return {
+      select: jest.fn(() => ({
+        eq: jest.fn().mockResolvedValue({ data: mockParticipantsData, error: null }),
+      })),
+    };
+  }
   return {};
 }
 
@@ -132,9 +148,14 @@ beforeEach(() => {
   mockMachinesData = [];
   mockScanEventsData = [];
   mockChallengesData = [];
+  mockParticipantsData = [];
 
   // Default: triggerAgent returns success
   mockTriggerAgent.mockResolvedValue({ success: true });
+
+  // Default: dispatcher returns success
+  mockResolveOwnerProfileId.mockResolvedValue('owner-profile-uuid');
+  mockSendNotification.mockResolvedValue('sent');
 });
 
 // ─── Auth tests ───────────────────────────────────────────

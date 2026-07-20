@@ -26,6 +26,14 @@ jest.mock('@/lib/agents/atRiskScan', () => ({
   fetchGymAtRiskMembers: (...args: unknown[]) => mockFetchAtRisk(...args),
 }));
 
+// ─── Mock dispatcher (resolveOwnerProfileId + sendNotification) ──────────────
+const mockResolveOwnerProfileId = jest.fn();
+const mockSendNotification = jest.fn();
+jest.mock('@/lib/notifications/dispatcher', () => ({
+  resolveOwnerProfileId: (...args: unknown[]) => mockResolveOwnerProfileId(...args),
+  sendNotification: (...args: unknown[]) => mockSendNotification(...args),
+}));
+
 // ─── Supabase mock ─────────────────────────────────────────
 // Per-table data seeded per test:
 let mockGymsData: Array<{ id: string; name: string }> = [];
@@ -126,6 +134,8 @@ beforeEach(() => {
 
   mockTriggerAgent.mockResolvedValue({ success: true });
   mockFetchAtRisk.mockResolvedValue([]);
+  mockResolveOwnerProfileId.mockResolvedValue('owner-profile-uuid');
+  mockSendNotification.mockResolvedValue('sent');
 });
 
 // ─── Auth tests ───────────────────────────────────────────
