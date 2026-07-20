@@ -112,7 +112,7 @@ Plans:
 **Plans:** 2/7 plans executed
 
 Plans:
-- [ ] 05-01-PLAN.md — Migration 029 (dedup indexes + agent cron schedules) + echo receiver + UPTIMIZE env contract [wave 1, checkpoint: db push]
+- [x] 05-01-PLAN.md — Migration 029 (dedup indexes + agent cron schedules) + echo receiver + UPTIMIZE env contract [wave 1, checkpoint: db push] ✅ COMPLETE (migration applied to live DB 2026-07-20; migrations 001-030 in sync)
 - [ ] 05-02-PLAN.md — Trigger route hardening: cooldown dedup, is_agent_initiated, UPTIMIZE forwarding + failure recording (TDD) [wave 1]
 - [ ] 05-03-PLAN.md — Session-complete wiring (level-up, streak-broken, leaderboard-updated) + challenge-ended owner path [wave 2]
 - [ ] 05-04-PLAN.md — upgrade-opportunity (featureGate helpers + machine-limit) + new-gym-onboarded (register) [wave 2]

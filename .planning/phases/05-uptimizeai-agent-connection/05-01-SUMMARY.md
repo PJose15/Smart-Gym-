@@ -25,7 +25,7 @@ decisions:
 metrics:
   duration_seconds: 581
   completed_date: "2026-07-20"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
   files_created: 2
   files_modified: 2
@@ -80,18 +80,20 @@ None — plan executed exactly as written.
 
 The two pre-existing tsc errors in `trigger.test.ts` (tuple type errors at line 202) were present before this plan in commit `c989fe4` (TDD RED phase of plan 05-02). They are intentional RED-phase placeholder errors in an adjacent plan's test file. Out of scope per deviation boundary rule.
 
-## Checkpoint State — Task 3
+## Task 3 — Migration 029 Applied to Live DB (checkpoint resolved)
 
-Task 3 is `type="checkpoint:human-action"` (blocking). Migration 029 was written in Task 1 but has NOT been applied to the live Supabase project (aztppxuapbgmadfigtys). Awaiting human approval and `db push`.
+Task 3 was a `type="checkpoint:human-action"` blocking gate. Migration 029 was applied to the live Supabase project (aztppxuapbgmadfigtys) by the user via `npx supabase db push --linked`.
 
-**Verification queries after applying:**
-```sql
-SELECT indexname FROM pg_indexes WHERE tablename = 'smartgym_agent_logs';
--- Expected: idx_agent_logs_dedup, idx_agent_logs_member_dedup (among others)
-
-SELECT jobname FROM cron.job WHERE jobname LIKE 'nexera-agent-%';
--- Expected: nexera-agent-daily, nexera-agent-weekly
+**CLI output confirming application:**
 ```
+Applying migration 029_agent_dedup_and_cron.sql...
+Applying migration 030_service_role_grants.sql...
+Finished supabase db push.
+```
+
+Migration 030 (`030_service_role_grants.sql`) was a pre-existing committed migration from a parallel session (service_role grants restore, commit `b266b3c`) that had not yet been pushed — it was applied alongside 029 as part of the same push batch. Both applied cleanly.
+
+**Result:** Migrations 001-030 are now in sync local↔remote. The two partial indexes and both pg_cron schedules from migration 029 are live on the DB. The pg_cron jobs (`nexera-agent-daily`, `nexera-agent-weekly`) will 404 harmlessly until plans 05-04/05-05 deploy the cron routes — this is by design.
 
 ## Self-Check: PASSED
 
@@ -99,3 +101,6 @@ SELECT jobname FROM cron.job WHERE jobname LIKE 'nexera-agent-%';
 - `apps/web-admin/src/app/api/dev/agent-echo/route.ts` — FOUND
 - commit `0373341` — FOUND (chore(05-01): add migration 029)
 - commit `e5aa7b0` — FOUND (feat(05-01): echo receiver route + UptimizeAI env contract)
+- Migration 029 applied to live DB — CONFIRMED (supabase db push output, user-verified)
+- Migration 030 applied alongside (pre-existing commit `b266b3c`, parallel session) — CONFIRMED
+- All 3 tasks complete.
