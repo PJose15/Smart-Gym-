@@ -69,6 +69,15 @@ export async function POST(request: NextRequest) {
   }
 
   // 7. Insert — with collision retry on 23505
+  // category must satisfy the machines.category CHECK
+  // ('strength','cardio','cable','functional','other') — map from equipment_type.
+  const categoryFromEquipment: Record<string, string> = {
+    cardio: 'cardio',
+    cable: 'cable',
+    bodyweight: 'functional',
+  };
+  const category = categoryFromEquipment[equipment_type] ?? 'strength';
+
   const insertPayload = (qr_slug: string) => ({
     gym_id,
     name,
@@ -84,6 +93,10 @@ export async function POST(request: NextRequest) {
     difficulty,
     primary_muscles: target_muscles,
     secondary_muscles: [] as string[],
+    // Populated so AI program generation (which reads muscle_groups/category)
+    // sees wizard-created machines.
+    muscle_groups: target_muscles,
+    category,
   });
 
   let result = await admin
