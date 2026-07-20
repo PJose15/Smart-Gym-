@@ -14,7 +14,7 @@ export async function POST(
     if (uuidError) return uuidError;
     const result = await verifyStaff('owner');
     if (result instanceof NextResponse) return result;
-    const { admin, user_id } = result;
+    const { admin, user_id, gym_id } = result;
 
     const rl = checkRateLimit(`challenge-complete:${user_id}`, 20, 60_000);
     if (rl) return rl;
@@ -26,6 +26,10 @@ export async function POST(
       .eq('id', params.challengeId)
       .maybeSingle();
     if (!challenge || !challenge.is_active) {
+      return NextResponse.json({ error: 'Challenge not found or already complete' }, { status: 404 });
+    }
+    // IDOR guard: challenge must belong to the caller's gym (404 to avoid leaking existence)
+    if (challenge.gym_id !== gym_id) {
       return NextResponse.json({ error: 'Challenge not found or already complete' }, { status: 404 });
     }
 
