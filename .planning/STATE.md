@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: "Completed 05-07 Task 1 automated gate — waiting human verification at checkpoint:human-verify (Task 2: staging walkthrough)"
-last_updated: "2026-07-20T05:30:56.865Z"
+stopped_at: "Completed 06-02 Task 1 — migration 031 written and committed, awaiting human-action checkpoint (Task 2: apply migration to live DB)"
+last_updated: "2026-07-20T13:39:05.602Z"
 last_activity: "2026-07-20 — Executed plan 05-06: shared atRiskScan helper + owner at-risk per-member retention triggers + agent-weekly cron (weekly-summary + at-risk early-warning, 420/420 tests, tsc clean)"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 34
+  completed_plans: 25
   percent: 92
 ---
 
@@ -113,9 +113,11 @@ Next action: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joi
 - [Phase 05-06-at-risk-weekly]: 7-day cooldown in trigger route absorbs both owner-route fires and weekly cron early-warning fires — no additional dedup logic at call sites
 - [Phase 05-06-at-risk-weekly]: gyms_scanned counter tracks only gyms that passed activeMembers > 0 check
 - [Phase 05-uptimizeai-agent-connection]: jest.mock factory with jest.requireActual('zod') needed when module exports both functions and Zod schemas — auto-mock nulls schema to undefined
+- [Phase 06-notification-orchestration]: No expo_receipt_ids array column: single-receipt MVP per 06-RESEARCH.md Pitfall 5; multi-device coverage is post-launch
+- [Phase 06-notification-orchestration]: nexera-receipt-poll cron '*/15 * * * *': fires before route exists (404 harmlessly) — schedule-before-route pattern from migration 029
 
 ## Session Continuity
 
-Last session: 2026-07-20T05:30:30.433Z
-Stopped at: Completed 05-07 Task 1 automated gate — waiting human verification at checkpoint:human-verify (Task 2: staging walkthrough)
+Last session: 2026-07-20T13:39:05.596Z
+Stopped at: Completed 06-02 Task 1 — migration 031 written and committed, awaiting human-action checkpoint (Task 2: apply migration to live DB)
 Resume with: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch) to complete AGENT-03/AGENT-04 remaining automations

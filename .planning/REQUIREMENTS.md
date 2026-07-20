@@ -87,7 +87,7 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
   - Mobile settings section with per-category toggles (activity, social, coaching, operational, agents) + quiet hours window; enforced server-side, not just UI
 - [ ] **NOTIF-05**: Member has a notification inbox with unread badge
   - `/notifications` screen listing history from `notifications` table; mark-read on tap; unread count badge on bell/tab icon
-- [ ] **NOTIF-06**: Push delivery failures are detected and stale tokens cleaned up
+- [x] **NOTIF-06**: Push delivery failures are detected and stale tokens cleaned up
   - Cron polls Expo receipts; `DeviceNotRegistered` deactivates `device_tokens`; failures reflected in `notification_log`; delivery rate visible to admin
 
 ---
@@ -146,7 +146,7 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | NOTIF-03 | Phase 6 | Pending |
 | NOTIF-04 | Phase 6 | Pending |
 | NOTIF-05 | Phase 6 | Pending |
-| NOTIF-06 | Phase 6 | Pending |
+| NOTIF-06 | Phase 6 | Complete |
 
 **Coverage:** 30/30 v1.0 requirements mapped. No orphans, no duplicates.
 
