@@ -35,10 +35,10 @@ describe('confetti configs (DOC_03 §11)', () => {
     expect(LEVEL_UP_CONFETTI.gravity).toBe(0.75);
   });
 
-  test('T4: spec colors include brand purple; achievement palette is focused', () => {
-    expect(PR_CONFETTI.colors).toContain('#7C5CFF');
-    expect(ACHIEVEMENT_CONFETTI.colors).toEqual(['#7C5CFF', '#FFD700', '#FFFFFF']);
-    expect(LEVEL_UP_CONFETTI.colors).toEqual(['#7C5CFF', '#9070FF', '#FFD700', '#FFFFFF']);
+  test('T4: spec colors include brand crimson; achievement palette is focused', () => {
+    expect(PR_CONFETTI.colors).toContain('#E0142F');
+    expect(ACHIEVEMENT_CONFETTI.colors).toEqual(['#E0142F', '#E8B339', '#FFFFFF']);
+    expect(LEVEL_UP_CONFETTI.colors).toEqual(['#E0142F', '#FF2740', '#E8B339', '#FFFFFF']);
   });
 });
 

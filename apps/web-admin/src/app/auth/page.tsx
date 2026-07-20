@@ -18,11 +18,8 @@ const logoStyle: CSSProperties = {
   margin: 0,
   textAlign: 'center',
   color: 'var(--color-text-primary)',
-  letterSpacing: '0.5px',
-};
-
-const logoAccentStyle: CSSProperties = {
-  color: 'var(--color-blue)',
+  letterSpacing: 3,
+  fontFamily: 'var(--font-serif)',
 };
 
 const subtitleStyle: CSSProperties = {
@@ -180,7 +177,7 @@ export default function AuthPage() {
   return (
     <div style={containerStyle} className="auth-card-enter">
       <h1 style={logoStyle}>
-        Nex<span style={logoAccentStyle}>era</span>
+        NEXERA
       </h1>
       <p style={subtitleStyle}>
         {mode === 'signin' ? 'Admin Panel' : 'Create Account'}

@@ -58,7 +58,7 @@ export function MetricCard({ title, value, subtitle, change, placeholder, flashO
       style={{ ...cardStyle, border: flashBorder }}
     >
       <div style={{ color: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 500 }}>{title}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: placeholder ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}>
+      <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)', color: placeholder ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}>
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
       {change !== undefined && (

@@ -33,7 +33,7 @@ const quickActionBtnStyle: CSSProperties = {
   fontSize: 'var(--text-sm)',
   fontWeight: 500,
   textDecoration: 'none',
-  border: '1px solid rgba(124, 92, 255, 0.2)',
+  border: '1px solid var(--border-accent)',
   cursor: 'pointer',
   transition: 'background-color var(--duration-fast), transform var(--duration-instant)',
   minHeight: 'var(--tap-target-min)',
@@ -59,7 +59,7 @@ const activeWorkoutsBannerStyle: CSSProperties = {
   fontSize: 'var(--text-sm)',
   fontWeight: 500,
   color: 'var(--color-blue-light)',
-  border: '1px solid rgba(124, 92, 255, 0.15)',
+  border: '1px solid var(--border-accent)',
   fontFamily: 'var(--font-sans)',
 };
 

@@ -53,8 +53,9 @@ export function DayCard({ day, isToday, dayIndex }: DayCardProps) {
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: 'var(--color-card-bg, #1e1e2e)',
-  borderRadius: 12,
+  backgroundColor: 'var(--color-bg-raised)',
+  border: '1px solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-lg, 16px)',
   padding: 14,
   display: 'flex',
   flexDirection: 'column',
@@ -63,8 +64,8 @@ const cardStyle: CSSProperties = {
 };
 
 const todayAccentStyle: CSSProperties = {
-  borderLeftColor: 'var(--color-blue, #3b82f6)',
-  backgroundColor: 'var(--color-card-bg-elevated, #252538)',
+  borderLeftColor: 'var(--accent, #E0142F)',
+  backgroundColor: 'var(--color-bg-elevated)',
 };
 
 const headerStyle: CSSProperties = {
@@ -84,8 +85,8 @@ const todayBadgeStyle: CSSProperties = {
   fontWeight: 700,
   padding: '2px 8px',
   borderRadius: 12,
-  backgroundColor: 'var(--color-blue-surface, rgba(59,130,246,0.12))',
-  color: 'var(--color-blue, #3b82f6)',
+  backgroundColor: 'var(--accent-subtle, rgba(224,20,47,0.10))',
+  color: 'var(--accent-hover, #FF2740)',
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
 };
@@ -107,10 +108,11 @@ const exerciseNumStyle: CSSProperties = {
   width: 20,
   height: 20,
   borderRadius: '50%',
-  backgroundColor: 'var(--color-border, rgba(255,255,255,0.08))',
-  color: 'var(--color-text-tertiary, rgba(255,255,255,0.45))',
+  backgroundColor: 'var(--color-bg-elevated)',
+  color: 'var(--color-text-muted)',
   fontSize: 11,
   fontWeight: 600,
+  fontFamily: 'var(--font-mono)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -124,13 +126,14 @@ const exerciseNameStyle: CSSProperties = {
 
 const exerciseDetailStyle: CSSProperties = {
   color: 'var(--color-text-secondary)',
+  fontFamily: 'var(--font-mono)',
   fontVariantNumeric: 'tabular-nums',
   whiteSpace: 'nowrap',
 };
 
 const emptyExStyle: CSSProperties = {
   fontSize: 13,
-  color: 'var(--color-text-tertiary, rgba(255,255,255,0.45))',
+  color: 'var(--color-text-muted)',
   margin: 0,
   fontStyle: 'italic',
 };

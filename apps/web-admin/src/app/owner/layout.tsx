@@ -115,9 +115,12 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     <div style={layoutStyle}>
       <aside style={sidebarStyle}>
         <div style={logoStyle}>
-          <h1 style={{ margin: 0, fontSize: 'var(--text-md)', fontWeight: 600 }}>
-            Nexera <span style={{ color: 'var(--color-blue)' }}>Owner</span>
+          <h1 style={{ margin: 0, fontSize: 'var(--text-md)', fontWeight: 600, fontFamily: 'var(--font-serif)', letterSpacing: 3 }}>
+            NEXERA
           </h1>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Owner
+          </span>
         </div>
         <nav>
           {navItems.map((item) => {

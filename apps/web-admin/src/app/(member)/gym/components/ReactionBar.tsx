@@ -33,8 +33,8 @@ function btnStyle(isActive: boolean): CSSProperties {
     cursor: 'pointer',
     fontSize: 12,
     fontWeight: 600,
-    backgroundColor: isActive ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-    color: isActive ? '#60A5FA' : 'var(--color-text-secondary)',
+    backgroundColor: isActive ? 'var(--accent-subtle, rgba(224, 20, 47, 0.10))' : 'rgba(255, 255, 255, 0.06)',
+    color: isActive ? 'var(--accent-hover, #FF2740)' : 'var(--color-text-secondary)',
     transition: 'all 0.15s ease',
   };
 }

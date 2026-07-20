@@ -142,7 +142,7 @@ export function MemberAvatar({
             width: outerPx,
             height: outerPx,
             borderRadius: '50%',
-            border: `2px solid ${levelColor || '#FFD700'}`,
+            border: `2px solid ${levelColor || 'var(--gold, #E8B339)'}`,
           }}
         />
       )}

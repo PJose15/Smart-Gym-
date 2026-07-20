@@ -45,7 +45,7 @@ export function getStreakTier(streakDays: number): StreakTier {
 
 export const STREAK_TIER_CONFIG: Record<StreakTier, StreakTierConfig> = {
   0: {
-    color: 'var(--streak-cold, #606070)',
+    color: 'var(--streak-cold, #6B6870)',
     size: 16,
     glowColor: 'transparent',
     glowSize: 0,

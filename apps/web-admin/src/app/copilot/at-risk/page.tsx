@@ -49,9 +49,9 @@ const badgeStyle: CSSProperties = {
 const reasonBadge = (type: string): CSSProperties => ({
   ...badgeStyle,
   backgroundColor:
-    type === 'no_workouts_7d' ? 'rgba(255, 215, 0,0.15)' :
+    type === 'no_workouts_7d' ? 'var(--color-gold-subtle)' :
     type === 'repeated_discomfort' ? 'var(--color-red-light)' :
-    'rgba(124, 92, 255,0.15)',
+    'var(--accent-subtle)',
   color:
     type === 'no_workouts_7d' ? 'var(--color-gold)' :
     type === 'repeated_discomfort' ? 'var(--color-red)' :
@@ -212,9 +212,9 @@ export default function AtRiskPage() {
           return (
             <div style={statsStripStyle}>
               <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{members.length} at-risk member{members.length !== 1 ? 's' : ''}</span>
-              {inactiveCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(255, 215, 0,0.15)', color: 'var(--color-gold)' }}>{inactiveCount} inactive</span>}
+              {inactiveCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold)' }}>{inactiveCount} inactive</span>}
               {discomfortCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{discomfortCount} discomfort</span>}
-              {plateauCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(124, 92, 255,0.15)', color: 'var(--color-purple)' }}>{plateauCount} plateauing</span>}
+              {plateauCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--accent-subtle)', color: 'var(--color-purple)' }}>{plateauCount} plateauing</span>}
               <span style={statsChipStyle}>{allReasons.length} total flag{allReasons.length !== 1 ? 's' : ''}</span>
             </div>
           );

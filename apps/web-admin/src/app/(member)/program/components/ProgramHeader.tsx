@@ -47,7 +47,7 @@ export function ProgramHeader({
           {generatedBy === 'ai' ? '🤖 AI-Generated' : `🏋️ Built by ${trainerName || 'Trainer'}`}
         </span>
         {trainerApproved && (
-          <span style={{ ...badgeStyle, backgroundColor: 'var(--color-green-surface, rgba(34,197,94,0.12))', color: 'var(--color-green, #22c55e)' }} aria-label="Trainer approved">
+          <span style={{ ...badgeStyle, backgroundColor: 'var(--color-green-subtle, rgba(0,200,150,0.10))', color: 'var(--color-green, #00C896)' }} aria-label="Trainer approved">
             ✓ Trainer Approved
           </span>
         )}
@@ -69,18 +69,19 @@ export function ProgramHeader({
       {/* Week indicator + status */}
       <div style={weekRowStyle}>
         <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-          Week {weekNumber} of {durationWeeks}
+          Week <span style={{ fontFamily: 'var(--font-mono)' }}>{weekNumber}</span> of{' '}
+          <span style={{ fontFamily: 'var(--font-mono)' }}>{durationWeeks}</span>
         </span>
         <span
           aria-label={onTrack ? 'Program status: on track' : 'Program status: behind schedule'}
           style={{
             ...statusBadgeStyle,
             backgroundColor: onTrack
-              ? 'var(--color-green-surface, rgba(34,197,94,0.12))'
-              : 'var(--color-amber-surface, rgba(245,158,11,0.12))',
+              ? 'var(--color-green-subtle, rgba(0,200,150,0.10))'
+              : 'var(--color-amber-subtle, rgba(255,107,53,0.10))',
             color: onTrack
-              ? 'var(--color-green, #22c55e)'
-              : 'var(--color-amber, #f59e0b)',
+              ? 'var(--color-green, #00C896)'
+              : 'var(--color-amber, #FF6B35)',
           }}
         >
           {onTrack ? 'On Track' : 'Behind'}
@@ -99,25 +100,28 @@ export function ProgramHeader({
         <div style={{ ...progressFillStyle, width: `${progressPct}%` }} />
       </div>
       <div style={progressLabelStyle}>
-        <span>{sessionsCompleted} / {sessionsTotal} sessions</span>
-        <span>{progressPct}%</span>
+        <span style={{ fontFamily: 'var(--font-mono)' }}>{sessionsCompleted} / {sessionsTotal} sessions</span>
+        <span style={{ fontFamily: 'var(--font-mono)' }}>{progressPct}%</span>
       </div>
     </div>
   );
 }
 
 const cardStyle: CSSProperties = {
-  backgroundColor: 'var(--color-card-bg, #1e1e2e)',
-  borderRadius: 12,
+  backgroundColor: 'var(--color-bg-raised)',
+  border: '1px solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-xl, 22px)',
   padding: 16,
   display: 'flex',
   flexDirection: 'column',
   gap: 10,
 };
 
+// Serif brand moment — the program title (Playfair Display)
 const titleStyle: CSSProperties = {
-  fontSize: 'var(--text-xl, 20px)',
-  fontWeight: 700,
+  fontSize: 'var(--text-xl, 24px)',
+  fontWeight: 600,
+  fontFamily: 'var(--font-serif)',
   color: 'var(--color-text-primary)',
   margin: 0,
 };
@@ -140,8 +144,8 @@ const badgeStyle: CSSProperties = {
   fontWeight: 600,
   padding: '4px 10px',
   borderRadius: 20,
-  backgroundColor: 'var(--color-blue-surface, rgba(59,130,246,0.12))',
-  color: 'var(--color-blue, #3b82f6)',
+  backgroundColor: 'var(--accent-subtle, rgba(224,20,47,0.10))',
+  color: 'var(--accent-hover, #FF2740)',
 };
 
 const metaRowStyle: CSSProperties = {
@@ -170,14 +174,14 @@ const statusBadgeStyle: CSSProperties = {
 const progressTrackStyle: CSSProperties = {
   height: 6,
   borderRadius: 3,
-  backgroundColor: 'var(--color-border, rgba(255,255,255,0.08))',
+  backgroundColor: 'var(--color-bg-elevated)',
   overflow: 'hidden',
 };
 
 const progressFillStyle: CSSProperties = {
   height: '100%',
   borderRadius: 3,
-  backgroundColor: 'var(--color-blue, #3b82f6)',
+  backgroundColor: 'var(--accent, #E0142F)',
   transition: 'width 0.3s ease',
 };
 
@@ -185,5 +189,5 @@ const progressLabelStyle: CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   fontSize: 12,
-  color: 'var(--color-text-tertiary, rgba(255,255,255,0.45))',
+  color: 'var(--color-text-muted)',
 };

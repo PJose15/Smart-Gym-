@@ -14,10 +14,10 @@ interface DNADimensionRowProps {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 75) return '#00C896';
-  if (score >= 50) return '#7C5CFF';
-  if (score >= 25) return '#FFB020';
-  return '#606070';
+  if (score >= 75) return 'var(--color-green, #00C896)';
+  if (score >= 50) return 'var(--accent, #E0142F)';
+  if (score >= 25) return 'var(--color-warning, #FFB020)';
+  return 'var(--color-text-muted, #6B6870)';
 }
 
 function formatSignalLabel(key: string): string {
@@ -130,7 +130,7 @@ export function DNADimensionRow({
         </div>
         <span style={{ ...scoreStyle, color }}>{Math.round(score)}</span>
         {diff != null && diff !== 0 && (
-          <span style={{ fontSize: 11, color: diff > 0 ? '#00C896' : '#FFB020', minWidth: 32 }}>
+          <span style={{ fontSize: 11, color: diff > 0 ? 'var(--color-green, #00C896)' : 'var(--color-warning, #FFB020)', minWidth: 32 }}>
             {diff > 0 ? '\u25B2' : '\u25BC'} {Math.abs(diff)}
           </span>
         )}

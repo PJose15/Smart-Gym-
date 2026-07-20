@@ -17,6 +17,7 @@ interface StatTile {
 
 const tileStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
+  border: '1px solid var(--color-border-subtle)',
   borderRadius: 'var(--radius-sm, 8px)',
   padding: '10px 8px',
   textAlign: 'center',
@@ -28,11 +29,11 @@ export function QuickStatsRow({ stats }: QuickStatsRowProps) {
   const unit = useWeightUnit();
 
   const tiles: StatTile[] = [
-    { label: 'Sessions/wk', value: String(stats.sessions_this_week), color: '#3B82F6' },
-    { label: `${unit}/wk`, value: formatVolumeDisplay(stats.volume_this_week_lbs, unit), color: '#10B981' },
-    { label: 'PRs/mo', value: String(stats.prs_this_month), color: '#FBBF24' },
-    { label: 'All Sessions', value: String(stats.all_time_sessions), color: '#A78BFA' },
-    { label: `Total ${unit}`, value: formatVolumeDisplay(stats.all_time_volume_lbs, unit), color: '#F97316' },
+    { label: 'Sessions/wk', value: String(stats.sessions_this_week), color: 'var(--accent-hover, #FF2740)' },
+    { label: `${unit}/wk`, value: formatVolumeDisplay(stats.volume_this_week_lbs, unit), color: 'var(--color-green, #00C896)' },
+    { label: 'PRs/mo', value: String(stats.prs_this_month), color: 'var(--gold, #E8B339)' },
+    { label: 'All Sessions', value: String(stats.all_time_sessions), color: 'var(--color-text-primary)' },
+    { label: `Total ${unit}`, value: formatVolumeDisplay(stats.all_time_volume_lbs, unit), color: 'var(--color-amber, #FF6B35)' },
   ];
 
   return (

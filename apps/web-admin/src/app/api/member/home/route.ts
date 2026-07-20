@@ -4,7 +4,36 @@ import { memberHomeQuerySchema } from '@/lib/validation/member';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { getReadinessScore } from '@/lib/readiness/readinessCache';
 import { getMuscleMap } from '@/lib/muscleMap/muscleMapCache';
-import type { HomeScreenData } from '@nexera/types';
+import type { HomeScreenData, ProgramContextData } from '@nexera/types';
+
+interface AiProgramDayJson {
+  day_number?: number;
+  name?: string;
+  exercises?: Array<{ exercise_name?: string; default_sets?: number; default_reps?: number }>;
+}
+
+/**
+ * Extracts the day list from ai_programs.program_data JSON.
+ * Handles both { days: [...] } and { weeks: [{ days: [...] }] } shapes
+ * (mirrors apps/mobile/src/lib/workoutMode.ts).
+ */
+function extractAiProgramDays(programData: unknown): AiProgramDayJson[] {
+  const pd = programData as {
+    days?: AiProgramDayJson[];
+    weeks?: Array<{ days?: AiProgramDayJson[] }>;
+  } | null;
+  if (Array.isArray(pd?.days) && pd.days.length > 0) return pd.days;
+  const firstWeek = Array.isArray(pd?.weeks)
+    ? pd.weeks.find((w) => Array.isArray(w?.days) && w.days.length > 0)
+    : undefined;
+  return firstWeek?.days ?? [];
+}
+
+/** Whole days elapsed since the assignment started (never negative). */
+function daysSince(dateStr: string): number {
+  const elapsed = Date.now() - new Date(dateStr).getTime();
+  return Math.max(0, Math.floor(elapsed / 86400000));
+}
 
 /**
  * GET /api/member/home?member_id=...&gym_id=...
@@ -62,16 +91,15 @@ export async function GET(request: NextRequest) {
         .limit(1)
         .maybeSingle(),
 
-      // 3. Active program context
+      // 3. Active program assignment — the source of truth. Points at EITHER
+      // a trainer-built program (program_id → programs/program_days/
+      // program_exercises) OR an AI program (ai_program_id → ai_programs
+      // with program_data JSON). Resolved after this batch.
       admin
         .from('member_program_assignments')
-        .select(`
-          id, program_id, current_week, sessions_completed, is_active,
-          ai_programs(id, title, total_weeks, total_sessions, status)
-        `)
+        .select('id, program_id, ai_program_id, assigned_at, status')
         .eq('member_id', member_id)
-        .eq('gym_id', gym_id)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .order('assigned_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -163,13 +191,148 @@ export async function GET(request: NextRequest) {
       ? Math.floor((Date.now() - new Date(member.last_session_date).getTime()) / 86400000)
       : null;
 
-    const program = programResult.data as {
-      id: string; program_id: string; current_week: number;
-      sessions_completed: number; is_active: boolean;
-      ai_programs: { id: string; title: string; total_weeks: number; total_sessions: number; status: string } | null;
+    // ─── Resolve active program (trainer OR AI) ─────────────────────────────
+    const assignment = programResult.data as {
+      id: string; program_id: string | null; ai_program_id: string | null;
+      assigned_at: string; status: string;
     } | null;
-    const aiProgram = program?.ai_programs ?? null;
-    const isProgramComplete = aiProgram?.status === 'completed';
+
+    let programData: ProgramContextData | null = null;
+    let isProgramComplete = false;
+
+    // Path A: trainer-built program (assignment carries program_id)
+    if (assignment?.program_id) {
+      const [progResult, daysResult] = await Promise.all([
+        admin
+          .from('programs')
+          .select('id, name, duration_weeks, sessions_per_week')
+          .eq('id', assignment.program_id)
+          .maybeSingle(),
+        admin
+          .from('program_days')
+          .select('id, day_number, name')
+          .eq('program_id', assignment.program_id)
+          .order('day_number'),
+      ]);
+
+      const prog = progResult.data as {
+        id: string; name: string; duration_weeks: number | null; sessions_per_week: number | null;
+      } | null;
+      const days = (daysResult.data ?? []) as Array<{ id: string; day_number: number; name: string }>;
+
+      if (prog) {
+        const totalWeeks = prog.duration_weeks || 1;
+        const elapsed = daysSince(assignment.assigned_at);
+        const weekNumber = Math.min(Math.floor(elapsed / 7) + 1, totalWeeks);
+        const sessionsTotal = (prog.duration_weeks || 0) * (prog.sessions_per_week || 0);
+
+        // Sessions completed since the program was assigned
+        const { count: completedCount } = await admin
+          .from('workout_sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('member_id', member_id)
+          .gte('session_date', assignment.assigned_at.split('T')[0])
+          .not('completed_at', 'is', null);
+
+        // Today's day in the rotation → exercise list
+        let todayExercises: Array<{ name: string; sets: number; reps: number }> = [];
+        if (days.length > 0) {
+          const todayDay = days[elapsed % days.length];
+          const { data: dayExercises } = await admin
+            .from('program_exercises')
+            .select('exercise_name, default_sets, default_reps, order_index')
+            .eq('program_day_id', todayDay.id)
+            .order('order_index');
+          todayExercises = ((dayExercises ?? []) as Array<{
+            exercise_name: string; default_sets: number | null; default_reps: number | null;
+          }>).map((e) => ({
+            name: e.exercise_name,
+            sets: e.default_sets || 0,
+            reps: e.default_reps || 0,
+          }));
+        }
+
+        programData = {
+          program_id: prog.id,
+          program_name: prog.name,
+          week_number: weekNumber,
+          total_weeks: totalWeeks,
+          sessions_completed: completedCount || 0,
+          sessions_total: sessionsTotal,
+          today_exercises: todayExercises,
+          progress_pct: sessionsTotal > 0
+            ? Math.min(100, Math.round(((completedCount || 0) / sessionsTotal) * 100))
+            : 0,
+          is_complete: false,
+        };
+      }
+    }
+
+    // Path B: AI program (assignment carries ai_program_id, or legacy
+    // fallback to the latest active ai_programs row when no assignment exists)
+    if (!programData) {
+      interface AiProgramRow {
+        id: string; title: string; duration_weeks: number | null;
+        sessions_per_week: number | null; program_data: unknown;
+        week_number: number | null; sessions_completed: number | null;
+        sessions_total: number | null; completed_at: string | null; created_at: string;
+      }
+      const aiSelect = 'id, title, duration_weeks, sessions_per_week, program_data, week_number, sessions_completed, sessions_total, completed_at, created_at';
+      let aiProgramRow: AiProgramRow | null = null;
+
+      if (assignment?.ai_program_id) {
+        const { data } = await admin
+          .from('ai_programs')
+          .select(aiSelect)
+          .eq('id', assignment.ai_program_id)
+          .maybeSingle();
+        aiProgramRow = data as AiProgramRow | null;
+      } else if (!assignment) {
+        const { data } = await admin
+          .from('ai_programs')
+          .select(aiSelect)
+          .eq('member_id', member_id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        aiProgramRow = data as AiProgramRow | null;
+      }
+
+      if (aiProgramRow) {
+        isProgramComplete = !!aiProgramRow.completed_at;
+        const jsonDays = extractAiProgramDays(aiProgramRow.program_data);
+        const assignedAt = assignment?.assigned_at ?? aiProgramRow.created_at;
+        const elapsed = daysSince(assignedAt);
+        const totalWeeks = aiProgramRow.duration_weeks || 1;
+        const weekNumber = aiProgramRow.week_number
+          || Math.min(Math.floor(elapsed / 7) + 1, totalWeeks);
+        const sessionsTotal = aiProgramRow.sessions_total
+          ?? (aiProgramRow.duration_weeks || 0) * (aiProgramRow.sessions_per_week || 0);
+        const sessionsCompleted = aiProgramRow.sessions_completed || 0;
+
+        const todayDay = jsonDays.length > 0 ? jsonDays[elapsed % jsonDays.length] : null;
+        const todayExercises = (todayDay?.exercises ?? []).map((e) => ({
+          name: e.exercise_name || 'Exercise',
+          sets: e.default_sets || 0,
+          reps: e.default_reps || 0,
+        }));
+
+        programData = {
+          program_id: aiProgramRow.id,
+          program_name: aiProgramRow.title,
+          week_number: weekNumber,
+          total_weeks: totalWeeks,
+          sessions_completed: sessionsCompleted,
+          sessions_total: sessionsTotal,
+          today_exercises: todayExercises,
+          progress_pct: sessionsTotal > 0
+            ? Math.min(100, Math.round((sessionsCompleted / sessionsTotal) * 100))
+            : 0,
+          is_complete: isProgramComplete,
+        };
+      }
+    }
 
     // Check if leveled up recently (within last 24 hours)
     const leveledUpRecently = member.leveled_up_at
@@ -194,37 +357,18 @@ export async function GET(request: NextRequest) {
       newLevelName: leveledUpRecently ? levelProgress.current.name : null,
       newLevelNumber: leveledUpRecently ? levelProgress.current.level : null,
       programComplete: isProgramComplete,
-      programName: aiProgram?.title || null,
+      programName: programData?.program_name || null,
       recentPR,
       prExercise: recentPR && lastSession ? (lastSession.machines?.name || null) : null,
       currentStreak: member.current_streak || 0,
       daysSinceLastWorkout,
-      hasProgram: !!program && !isProgramComplete,
-      programWeek: program?.current_week || null,
-      programTotalWeeks: aiProgram?.total_weeks || null,
+      hasProgram: !!programData && !isProgramComplete,
+      programWeek: programData?.week_number || null,
+      programTotalWeeks: programData?.total_weeks || null,
       trainedToday,
       todaySessions: todaySessions.length,
       hasUnreadCheckIn,
     });
-
-    // Build program context
-    let programData = null;
-    if (program && aiProgram && !isProgramComplete) {
-      const progressPct = aiProgram.total_sessions > 0
-        ? Math.round((program.sessions_completed / aiProgram.total_sessions) * 100)
-        : 0;
-      programData = {
-        program_id: aiProgram.id,
-        program_name: aiProgram.title,
-        week_number: program.current_week || 1,
-        total_weeks: aiProgram.total_weeks,
-        sessions_completed: program.sessions_completed || 0,
-        sessions_total: aiProgram.total_sessions,
-        today_exercises: [], // Populated when program day endpoint is built
-        progress_pct: progressPct,
-        is_complete: false,
-      };
-    }
 
     // Build challenge data
     let challengeData = null;

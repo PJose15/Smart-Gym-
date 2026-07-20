@@ -89,10 +89,10 @@ export function AnimatedLeaderboard({
       {myRank !== null && (
         <div style={positionCardStyle}>
           <div>
-            <div style={{ fontSize: 11, color: '#60A5FA', fontWeight: 600, textTransform: 'uppercase' as const }}>
+            <div style={{ fontSize: 11, color: 'var(--accent-hover, #FF2740)', fontWeight: 600, textTransform: 'uppercase' as const }}>
               Your Position
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
               #{myRank}
             </div>
           </div>
@@ -153,14 +153,14 @@ const toastStyle: CSSProperties = {
 };
 
 const positionCardStyle: CSSProperties = {
-  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  backgroundColor: 'var(--accent-subtle, rgba(224, 20, 47, 0.10))',
   borderRadius: 10,
   padding: 12,
   marginBottom: 16,
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  border: '1px solid rgba(59, 130, 246, 0.2)',
+  border: '1px solid var(--border-accent, rgba(224, 20, 47, 0.28))',
 };
 
 function rowStyle(isCurrent: boolean): CSSProperties {
@@ -170,7 +170,7 @@ function rowStyle(isCurrent: boolean): CSSProperties {
     gap: 10,
     padding: '10px 12px',
     borderRadius: 8,
-    backgroundColor: isCurrent ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+    backgroundColor: isCurrent ? 'var(--accent-subtle, rgba(224, 20, 47, 0.10))' : 'transparent',
   };
 }
 
@@ -178,6 +178,7 @@ const rankNumStyle: CSSProperties = {
   width: 32,
   fontSize: 14,
   fontWeight: 700,
+  fontFamily: 'var(--font-mono)',
   color: 'var(--color-text-secondary)',
   textAlign: 'center',
 };
@@ -201,6 +202,6 @@ function nameStyle(isCurrent: boolean): CSSProperties {
     flex: 1,
     fontSize: 14,
     fontWeight: isCurrent ? 700 : 500,
-    color: isCurrent ? '#60A5FA' : 'var(--color-text-secondary)',
+    color: isCurrent ? 'var(--accent-hover, #FF2740)' : 'var(--color-text-secondary)',
   };
 }

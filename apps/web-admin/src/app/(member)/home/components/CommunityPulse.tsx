@@ -11,7 +11,8 @@ interface CommunityPulseProps {
 
 const cardStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
-  borderRadius: 'var(--radius-md, 12px)',
+  border: '1px solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-lg, 16px)',
   padding: 'var(--space-4, 16px)',
   animation: 'slideUpFade 0.4s ease-out 0.35s both',
 };

@@ -68,7 +68,7 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Weekly Leaderboard
         </div>
-        <Link href="/gym/leaderboard" style={{ fontSize: 12, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>
+        <Link href="/gym/leaderboard" style={{ fontSize: 12, color: 'var(--accent-hover, #FF2740)', textDecoration: 'none', fontWeight: 600 }}>
           See All
         </Link>
       </div>
@@ -86,15 +86,15 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
               gap: 10,
               padding: '6px 8px',
               borderRadius: 8,
-              backgroundColor: entry.is_current_user ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+              backgroundColor: entry.is_current_user ? 'var(--accent-subtle, rgba(224, 20, 47, 0.10))' : 'transparent',
             }}>
-              <div style={{ width: 28, fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)', textAlign: 'center' }}>
+              <div style={{ width: 28, fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)', textAlign: 'center' }}>
                 {RANK_MEDALS[entry.rank] || `#${entry.rank}`}
               </div>
-              <div style={{ flex: 1, fontSize: 13, fontWeight: entry.is_current_user ? 700 : 500, color: entry.is_current_user ? '#60A5FA' : 'var(--color-text-secondary)' }}>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: entry.is_current_user ? 700 : 500, color: entry.is_current_user ? 'var(--accent-hover, #FF2740)' : 'var(--color-text-secondary)' }}>
                 {entry.full_name}{entry.is_current_user ? ' (You)' : ''}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
                 {entry.total_points.toLocaleString()}
               </div>
             </div>
@@ -107,12 +107,12 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
           marginTop: 8,
           padding: '8px 10px',
           borderRadius: 8,
-          backgroundColor: 'rgba(59, 130, 246, 0.08)',
+          backgroundColor: 'var(--accent-subtle, rgba(224, 20, 47, 0.10))',
           fontSize: 13,
           color: 'var(--color-text-secondary)',
           textAlign: 'center',
         }}>
-          Your rank: <span style={{ fontWeight: 700, color: '#60A5FA' }}>#{myRank}</span>
+          Your rank: <span style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent-hover, #FF2740)' }}>#{myRank}</span>
         </div>
       )}
     </div>

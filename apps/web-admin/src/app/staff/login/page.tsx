@@ -36,7 +36,7 @@ const inputStyle: CSSProperties = {
 const buttonStyle: CSSProperties = {
   width: '100%',
   padding: '12px 0',
-  backgroundColor: 'var(--color-blue)',
+  backgroundColor: 'var(--accent)',
   color: 'var(--color-text-primary)',
   border: 'none',
   borderRadius: 'var(--radius-md)',

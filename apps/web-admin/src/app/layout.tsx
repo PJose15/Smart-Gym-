@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono, Playfair_Display } from 'next/font/google';
 import { AppShell } from '@/components/AppShell';
 import '@/styles/tokens.css';
 import '@/styles/animations.css';
@@ -20,6 +20,15 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ['400', '500', '700'],
 });
 
+// Editorial serif (Stitch Red-Luxury design system) — brand moments,
+// hero headlines, and the NEXERA wordmark only.
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+  weight: ['600', '700'],
+});
+
 export const metadata: Metadata = {
   title: 'Nexera Admin',
   description: 'Nexera AI-powered gym fitness platform',
@@ -32,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable}`}>
       <body style={{ margin: 0, fontFamily: 'var(--font-sans)', backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)', colorScheme: 'dark' as const, WebkitFontSmoothing: 'antialiased' }}>
         <AppShell>
           {children}

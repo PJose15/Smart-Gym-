@@ -46,7 +46,7 @@ const podiumStyle: CSSProperties = {
 
 function podiumCardStyle(rank: number, isCurrent: boolean): CSSProperties {
   const heights: Record<number, number> = { 1: 120, 2: 100, 3: 85 };
-  const colors: Record<number, string> = { 1: '#EAB308', 2: 'var(--color-text-secondary)', 3: '#CD7F32' };
+  const colors: Record<number, string> = { 1: 'var(--gold, #E8B339)', 2: 'var(--silver, #C0C0C0)', 3: 'var(--bronze, #CD7F32)' };
   return {
     display: 'flex',
     flexDirection: 'column',
@@ -57,7 +57,7 @@ function podiumCardStyle(rank: number, isCurrent: boolean): CSSProperties {
     backgroundColor: 'var(--color-bg-raised)',
     borderRadius: 12,
     padding: 10,
-    border: isCurrent ? '2px solid var(--color-blue)' : `2px solid ${colors[rank] || 'var(--color-bg-elevated)'}`,
+    border: isCurrent ? '2px solid var(--accent, #E0142F)' : `2px solid ${colors[rank] || 'var(--color-bg-elevated)'}`,
     order: rank === 1 ? 1 : rank === 2 ? 0 : 2,
   };
 }
@@ -83,7 +83,7 @@ export default function LeaderboardFullPage() {
 
   return (
     <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)', paddingBottom: 100 }}>
-      <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, marginBottom: 16 }}>
+      <h1 style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', margin: 0, marginBottom: 16 }}>
         Leaderboard
       </h1>
 
@@ -113,7 +113,7 @@ export default function LeaderboardFullPage() {
                   <div style={{
                     fontSize: 12,
                     fontWeight: 600,
-                    color: entry.is_current_user ? '#60A5FA' : 'var(--color-text-secondary)',
+                    color: entry.is_current_user ? 'var(--accent-hover, #FF2740)' : 'var(--color-text-secondary)',
                     textAlign: 'center',
                     lineHeight: 1.2,
                     marginTop: 4,
@@ -124,7 +124,7 @@ export default function LeaderboardFullPage() {
                   }}>
                     {entry.full_name}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)', marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)', marginTop: 2 }}>
                     {entry.total_points.toLocaleString()}
                   </div>
                 </div>

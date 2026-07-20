@@ -249,7 +249,7 @@ export default function LeaderboardPage() {
                       {rankMedals[row.rank] || `#${row.rank}`}
                     </td>
                     <td style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any }}>{row.full_name}</td>
-                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 'var(--weight-bold)' as any, color: 'var(--color-purple-light)' }}>
+                    <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 'var(--weight-bold)' as any, fontFamily: 'var(--font-mono)', color: 'var(--color-purple-light)' }}>
                       {row.total_points.toLocaleString()}
                     </td>
                   </tr>

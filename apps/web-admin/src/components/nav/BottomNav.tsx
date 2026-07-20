@@ -10,7 +10,7 @@ interface NavTab {
 }
 
 const ICON_SIZE = 24;
-const ACTIVE_COLOR = 'var(--color-blue)';
+const ACTIVE_COLOR = 'var(--accent, #E0142F)';
 const INACTIVE_COLOR = 'var(--color-text-muted)';
 
 const HomeIcon = (active: boolean) => (
@@ -66,7 +66,7 @@ const navStyle: CSSProperties = {
   left: 0,
   right: 0,
   height: 64,
-  backgroundColor: 'var(--color-bg-base)',
+  backgroundColor: 'var(--color-bg-raised, #121214)',
   borderTop: '1px solid var(--color-border-subtle)',
   display: 'flex',
   alignItems: 'center',
@@ -123,18 +123,20 @@ export function BottomNav({ unreadCheckIn }: BottomNavProps) {
                     right: -2,
                     width: 8,
                     height: 8,
-                    background: '#FFD700',
+                    background: 'var(--gold, #E8B339)',
                     borderRadius: '50%',
-                    border: '1.5px solid var(--color-bg-base)',
+                    border: '1.5px solid var(--color-bg-raised, #121214)',
                   }}
                 />
               )}
             </span>
             <span style={{
               fontSize: 10,
-              fontWeight: active ? 600 : 400,
+              fontWeight: active ? 600 : 500,
               color: active ? ACTIVE_COLOR : INACTIVE_COLOR,
               lineHeight: 1,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
             }}>
               {tab.label}
             </span>

@@ -63,9 +63,12 @@ export function TrainerSidebar() {
   return (
     <aside style={sidebarStyle}>
       <div style={logoStyle}>
-        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
-          Nexera <span style={{ color: 'var(--color-blue)' }}>Trainer</span>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-serif)', letterSpacing: 3 }}>
+          NEXERA
         </h1>
+        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Trainer
+        </span>
       </div>
       <nav>
         {navItems.map((item) => {

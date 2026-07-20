@@ -27,11 +27,11 @@ const headerStyle: CSSProperties = {
 
 const lowestStyle: CSSProperties = {
   fontSize: 11,
-  color: '#FF4D6A',
+  color: 'var(--color-red, #FF4D6A)',
   marginTop: 10,
   padding: '6px 10px',
   borderRadius: 6,
-  background: 'rgba(255,77,106,0.1)',
+  background: 'var(--color-red-subtle, rgba(255, 77, 106, 0.10))',
 };
 
 export function TrainerDNACard({ scores, archetype, isBuilding }: TrainerDNACardProps) {

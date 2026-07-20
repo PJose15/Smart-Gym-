@@ -12,7 +12,7 @@ const containerStyle: CSSProperties = { padding: '0 0 24px' };
 const sectionTitleStyle: CSSProperties = { fontSize: 14, fontWeight: 700, color: 'var(--color-text-secondary)', margin: '0 0 12px' };
 const gridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8, marginBottom: 20 };
 const tileStyle: CSSProperties = { background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 10px', textAlign: 'center' };
-const tileScoreStyle: CSSProperties = { fontSize: 22, fontWeight: 800, color: '#FFD700', margin: 0 };
+const tileScoreStyle: CSSProperties = { fontSize: 22, fontWeight: 800, color: 'var(--gold, #E8B339)', fontFamily: 'var(--font-mono)', margin: 0 };
 const tileLabelStyle: CSSProperties = { fontSize: 11, color: 'var(--color-text-secondary)', margin: '4px 0 0' };
 const archetypeRowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' };
 const memberCountStyle: CSSProperties = { fontSize: 13, color: 'var(--color-text-muted)', marginTop: 16 };
@@ -33,7 +33,7 @@ export function GymDNAStats({ gymId }: GymDNAStatsProps) {
   if (!data) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: '#FF4D6A', fontSize: 13 }}>{error || 'Unable to load gym DNA stats.'}</p>
+        <p style={{ color: 'var(--color-red, #FF4D6A)', fontSize: 13 }}>{error || 'Unable to load gym DNA stats.'}</p>
       </div>
     );
   }

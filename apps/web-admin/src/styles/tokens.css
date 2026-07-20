@@ -1,101 +1,101 @@
-/* Nexera Design System — Design Tokens */
+﻿/* Nexera Design System â€” Design Tokens */
 /* Source of truth: DOC_03_Design_System.md (Sections 2, 3, 16) */
 
 :root {
-  /* ── BACKGROUND SYSTEM ──────────────────────────────── */
+  /* â”€â”€ BACKGROUND SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   /* Legacy names repointed to DOC_03 values:
      base=--bg-base, raised=--bg-elevated, elevated=--bg-card, highest=--bg-card-hover */
-  --color-bg-base:      #0D0D0F;
-  --color-bg-raised:    #141416;
-  --color-bg-elevated:  #1A1A1F;
-  --color-bg-highest:   #1F1F26;
-  --color-bg-overlay:   rgba(13, 13, 15, 0.8);
+  --color-bg-base:      #0A0A0C;
+  --color-bg-raised:    #121214;
+  --color-bg-elevated:  #16161A;
+  --color-bg-highest:   #201F21;
+  --color-bg-overlay:   rgba(10, 10, 12, 0.8);
 
   /* DOC_03 spec-named background tokens */
-  --bg-base:            #0D0D0F;
-  --bg-elevated:        #141416;
-  --bg-card:            #1A1A1F;
-  --bg-card-hover:      #1F1F26;
-  --bg-overlay:         rgba(13, 13, 15, 0.8);
-  --bg-input:           #1A1A1F;
-  --bg-input-focus:     #1F1F26;
+  --bg-base:            #0A0A0C;
+  --bg-elevated:        #121214;
+  --bg-card:            #16161A;
+  --bg-card-hover:      #201F21;
+  --bg-overlay:         rgba(10, 10, 12, 0.8);
+  --bg-input:           #16161A;
+  --bg-input-focus:     #201F21;
   --bg-success-subtle:  #0D2818;
   --bg-warning-subtle:  #261D0A;
   --bg-error-subtle:    #260D0D;
-  --bg-skeleton:        #1F1F26;
-  --bg-skeleton-shine:  #252530;
+  --bg-skeleton:        #201F21;
+  --bg-skeleton-shine:  #252528;
 
-  /* ── BORDER SYSTEM ──────────────────────────────────── */
-  --color-border-subtle:  rgba(255, 255, 255, 0.05);
-  --color-border-default: rgba(255, 255, 255, 0.10);
-  --color-border-strong:  rgba(255, 255, 255, 0.20);
-  --color-border-focus:   #7C5CFF;
+  /* â”€â”€ BORDER SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --color-border-subtle:  rgba(255, 255, 255, 0.04);
+  --color-border-default: rgba(255, 255, 255, 0.07);
+  --color-border-strong:  rgba(255, 255, 255, 0.16);
+  --color-border-focus:   #E0142F;
 
-  --border-subtle:        rgba(255, 255, 255, 0.05);
-  --border-default:       rgba(255, 255, 255, 0.10);
-  --border-strong:        rgba(255, 255, 255, 0.20);
-  --border-accent:        rgba(124, 92, 255, 0.25);
+  --border-subtle:        rgba(255, 255, 255, 0.04);
+  --border-default:       rgba(255, 255, 255, 0.07);
+  --border-strong:        rgba(255, 255, 255, 0.16);
+  --border-accent:        rgba(224, 20, 47, 0.28);
   --border-success:       rgba(0, 200, 150, 0.25);
   --border-error:         rgba(255, 77, 106, 0.25);
 
-  /* ── TEXT SYSTEM ────────────────────────────────────── */
+  /* â”€â”€ TEXT SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-text-primary:   #FFFFFF;
-  --color-text-secondary: #A0A0B0;
-  --color-text-muted:     #606070;
-  --color-text-disabled:  #3A3A45;
-  --color-text-inverse:   #0D0D0F;
+  --color-text-secondary: #B5B2B8;
+  --color-text-muted:     #6B6870;
+  --color-text-disabled:  #3A383E;
+  --color-text-inverse:   #0A0A0C;
 
   --text-primary:         #FFFFFF;
-  --text-secondary:       #A0A0B0;
-  --text-tertiary:        #606070;
-  --text-disabled:        #3A3A45;
-  --text-inverse:         #0D0D0F;
+  --text-secondary:       #B5B2B8;
+  --text-tertiary:        #6B6870;
+  --text-disabled:        #3A383E;
+  --text-inverse:         #0A0A0C;
   --text-on-accent:       #FFFFFF;
 
-  /* ── BRAND / ACCENT: NEXERA PURPLE ──────────────────── */
-  --accent:               #7C5CFF;
-  --accent-hover:         #9070FF;
-  --accent-pressed:       #6040E0;
-  --accent-subtle:        rgba(124, 92, 255, 0.10);
-  --accent-glow:          rgba(124, 92, 255, 0.25);
+  /* â”€â”€ BRAND / ACCENT: NEXERA PURPLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --accent:               #E0142F;
+  --accent-hover:         #FF2740;
+  --accent-pressed:       #8A0D1E;
+  --accent-subtle:        rgba(224, 20, 47, 0.10);
+  --accent-glow:          rgba(224, 20, 47, 0.28);
 
-  /* Legacy "blue" accent — repointed to the Nexera Purple brand accent
+  /* Legacy "blue" accent â€” repointed to the Nexera Purple brand accent
      (old blue was the primary accent; ~90 files reference these names) */
-  --color-blue:           #7C5CFF;
-  --color-blue-light:     #9070FF;
-  --color-blue-dark:      #6040E0;
-  --color-blue-subtle:    rgba(124, 92, 255, 0.10);
+  --color-blue:           #E0142F;
+  --color-blue-light:     #FF2740;
+  --color-blue-dark:      #8A0D1E;
+  --color-blue-subtle:    rgba(224, 20, 47, 0.10);
 
-  /* ── ACCENT: GOLD ─────────────────────────────────── */
-  --color-gold:           #FFD700;
-  --color-gold-light:     #FFE566;
-  --color-gold-dark:      #D4B300;
-  --color-gold-subtle:    rgba(255, 215, 0, 0.10);
+  /* â”€â”€ ACCENT: GOLD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --color-gold:           #E8B339;
+  --color-gold-light:     #F2C75C;
+  --color-gold-dark:      #C4922A;
+  --color-gold-subtle:    rgba(232, 179, 57, 0.10);
 
-  /* ── ACCENT: AMBER/FIRE (streak) ──────────────────── */
+  /* â”€â”€ ACCENT: AMBER/FIRE (streak) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-amber:          #FF6B35;
   --color-amber-light:    #FF8F66;
   --color-amber-dark:     #E5501F;
   --color-amber-subtle:   rgba(255, 107, 53, 0.10);
 
-  /* ── ACCENT: GREEN (success) ──────────────────────── */
+  /* â”€â”€ ACCENT: GREEN (success) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-green:          #00C896;
   --color-green-light:    #00E0A8;
   --color-green-dark:     #00A87E;
   --color-green-subtle:   rgba(0, 200, 150, 0.10);
 
-  /* ── ACCENT: PURPLE ───────────────────────────────── */
-  --color-purple:         #7C5CFF;
-  --color-purple-light:   #9070FF;
-  --color-purple-dark:    #6040E0;
-  --color-purple-subtle:  rgba(124, 92, 255, 0.10);
+  /* â”€â”€ ACCENT: PURPLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --color-purple:         #E0142F;
+  --color-purple-light:   #FF2740;
+  --color-purple-dark:    #8A0D1E;
+  --color-purple-subtle:  rgba(224, 20, 47, 0.10);
 
-  /* ── ACCENT: RED (error) ──────────────────────────── */
+  /* â”€â”€ ACCENT: RED (error) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-red:            #FF4D6A;
   --color-red-light:      #FF7A90;
   --color-red-subtle:     rgba(255, 77, 106, 0.10);
 
-  /* ── SEMANTIC / INTENT COLORS ───────────────────────── */
+  /* â”€â”€ SEMANTIC / INTENT COLORS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-success:        #00C896;
   --color-warning:        #FFB020;
   --color-error:          #FF4D6A;
@@ -114,68 +114,69 @@
   --info:                 #3B82F6;
   --info-subtle:          rgba(59, 130, 246, 0.10);
 
-  /* ── GAMIFICATION ───────────────────────────────────── */
-  --gold:                 #FFD700;
-  --gold-glow:            rgba(255, 215, 0, 0.25);
+  /* â”€â”€ GAMIFICATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --gold:                 #E8B339;
+  --gold-glow:            rgba(232, 179, 57, 0.25);
   --silver:               #C0C0C0;
   --bronze:               #CD7F32;
-  --xp-color:             #7C5CFF;
-  --streak-cold:          #606070;
+  --xp-color:             #E0142F;
+  --streak-cold:          #6B6870;
   --streak-warm:          #FFB020;
   --streak-hot:           #FF6B35;
   --streak-fire:          #FF3D00;
   --streak-inferno:       #FF1744;
   --streak-legend:        #D500F9;
 
-  /* ── READINESS ZONES ────────────────────────────────── */
+  /* â”€â”€ READINESS ZONES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --readiness-peak:       #00C896;
-  --readiness-ready:      #7C5CFF;
+  --readiness-ready:      #E0142F;
   --readiness-moderate:   #FFB020;
-  --readiness-rest:       #FF4D6A;
+  --readiness-rest:       #FF7A90;
 
-  /* ── DNA DIMENSIONS ─────────────────────────────────── */
-  --dna-power:            #FF4D6A;
+  /* â”€â”€ DNA DIMENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --dna-power:            #FF2740;
   --dna-consistency:      #00C896;
-  --dna-progression:      #7C5CFF;
+  --dna-progression:      #E0142F;
   --dna-balance:          #3B82F6;
   --dna-mindset:          #FFB020;
 
-  /* ── MUSCLE RECOVERY ────────────────────────────────── */
+  /* â”€â”€ MUSCLE RECOVERY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --muscle-fresh:         #00C896;
-  --muscle-primed:        #7C5CFF;
+  --muscle-primed:        #E0142F;
   --muscle-trained:       #3B82F6;
   --muscle-fatigued:      #FFB020;
-  --muscle-recovering:    #FF4D6A;
+  --muscle-recovering:    #FF7A90;
 
-  /* ── LEVEL COLORS ───────────────────────────────────── */
-  --level-color-1:        #A0A0B0;
+  /* â”€â”€ LEVEL COLORS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --level-color-1:        #B5B2B8;
   --level-color-2:        #00C896;
   --level-color-3:        #00C896;
   --level-color-4:        #3B82F6;
   --level-color-5:        #3B82F6;
-  --level-color-6:        #7C5CFF;
-  --level-color-7:        #7C5CFF;
+  --level-color-6:        #E0142F;
+  --level-color-7:        #E0142F;
   --level-color-8:        #FF6B35;
   --level-color-9:        #FF6B35;
-  --level-color-10:       #FFD700;
+  --level-color-10:       #E8B339;
 
-  /* ── GYM THEME ──────────────────────────────────────── */
+  /* â”€â”€ GYM THEME â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --gym-primary:          var(--accent);
   --gym-primary-dark:     var(--accent-pressed);
   --gym-primary-light:    var(--accent-subtle);
   --gym-text-on-primary:  #FFFFFF;
 
-  /* ── FONT FAMILY ────────────────────────────────────── */
+  /* â”€â”€ FONT FAMILY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   /* --font-inter / --font-mono are injected by next/font in app/layout.tsx.
      --font-mono resolves directly to the next/font variable (with built-in fallbacks). */
   --font-sans:    var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-display: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-serif:   var(--font-playfair), Georgia, serif;
   --font-body:    var(--font-inter), system-ui, sans-serif;
 
-  /* ── SEMANTIC TYPE SCALE (DOC_03 §3) ────────────────── */
+  /* â”€â”€ SEMANTIC TYPE SCALE (DOC_03 Â§3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   /* Usage: `font: var(--text-h1); letter-spacing: var(--text-h1-tracking);`
      (font shorthand = weight size/line-height family) */
-  --text-display:          800 48px/1.1 var(--font-sans);
+  --text-display:          600 48px/1.1 var(--font-serif);
   --text-display-tracking: -0.02em;
   --text-h1:               700 32px/1.2 var(--font-sans);
   --text-h1-tracking:      -0.01em;
@@ -195,12 +196,12 @@
   --text-tiny-tracking:    0.02em;
   --text-label:            600 12px/1.0 var(--font-sans);   /* uppercase; apply text-transform separately */
   --text-label-tracking:   0.05em;
-  --text-stat:             700 24px/1.0 var(--font-mono);   /* size varies — override font-size after applying */
+  --text-stat:             700 24px/1.0 var(--font-mono);   /* size varies â€” override font-size after applying */
   --text-stat-tracking:    -0.02em;
   --text-stat-large:       800 40px/1.0 var(--font-mono);
   --text-stat-large-tracking: -0.03em;
 
-  /* ── FONT SIZES ─────────────────────────────────────── */
+  /* â”€â”€ FONT SIZES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --text-xs:   11px;
   --text-sm:   13px;
   --text-base: 15px;
@@ -212,24 +213,24 @@
   --text-4xl:  40px;
   --text-5xl:  52px;
 
-  /* ── FONT WEIGHTS ───────────────────────────────────── */
+  /* â”€â”€ FONT WEIGHTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --weight-regular: 400;
   --weight-medium:  500;
   --weight-bold:    600;
 
-  /* ── LINE HEIGHTS ───────────────────────────────────── */
+  /* â”€â”€ LINE HEIGHTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --leading-tight:  1.2;
   --leading-snug:   1.35;
   --leading-normal: 1.5;
   --leading-relaxed: 1.65;
 
-  /* ── LETTER SPACING ─────────────────────────────────── */
+  /* â”€â”€ LETTER SPACING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --tracking-tight:  -0.02em;
   --tracking-normal:  0;
   --tracking-wide:    0.04em;
   --tracking-wider:   0.08em;
 
-  /* ── SPACING SCALE ──────────────────────────────────── */
+  /* â”€â”€ SPACING SCALE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --space-1:   4px;
   --space-2:   8px;
   --space-3:   12px;
@@ -245,36 +246,36 @@
   --space-20:  80px;
   --space-24:  96px;
 
-  /* ── LAYOUT ─────────────────────────────────────────── */
+  /* â”€â”€ LAYOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --page-padding-x:       16px;
   --page-padding-x-lg:    24px;
   --content-max-width:    480px;
   --card-padding:         16px;
   --card-padding-lg:      20px;
 
-  /* ── TOUCH TARGETS ──────────────────────────────────── */
+  /* â”€â”€ TOUCH TARGETS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --tap-target-min:    44px;
   --tap-target-pref:  52px;
   --tap-target-lg:    56px;
   --input-height-gym: 56px;
 
-  /* ── BORDER RADIUS ──────────────────────────────────── */
+  /* â”€â”€ BORDER RADIUS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --radius-sm:    6px;
-  --radius-md:    10px;
-  --radius-lg:    14px;
-  --radius-xl:    20px;
+  --radius-md:    12px;
+  --radius-lg:    16px;
+  --radius-xl:    22px;
   --radius-2xl:   28px;
   --radius-full:  9999px;
 
-  /* ── SHADOWS ────────────────────────────────────────── */
+  /* â”€â”€ SHADOWS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-xl:   0 16px 48px rgba(0, 0, 0, 0.6);
-  --shadow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
-  --shadow-blue: 0 0 20px rgba(124, 92, 255, 0.3);
+  --shadow-gold: 0 0 20px rgba(232, 179, 57, 0.3);
+  --shadow-blue: 0 0 20px rgba(224, 20, 47, 0.3);
 
-  /* ── Z-INDEX SCALE ──────────────────────────────────── */
+  /* â”€â”€ Z-INDEX SCALE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --z-base:         0;
   --z-raised:       10;
   --z-sticky:       100;
@@ -284,7 +285,7 @@
   --z-toast:        500;
   --z-celebration:  600;
 
-  /* ── DURATIONS ──────────────────────────────────────── */
+  /* â”€â”€ DURATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --duration-instant:  80ms;
   --duration-fast:     150ms;
   --duration-normal:   250ms;
@@ -292,7 +293,7 @@
   --duration-slower:   600ms;
   --duration-slowest:  800ms;
 
-  /* ── EASING ─────────────────────────────────────────── */
+  /* â”€â”€ EASING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --ease-default:       cubic-bezier(0.4, 0, 0.2, 1);
   --ease-in:            cubic-bezier(0.4, 0, 1, 1);
   --ease-out:           cubic-bezier(0, 0, 0.2, 1);

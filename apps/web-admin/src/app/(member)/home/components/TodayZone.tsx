@@ -12,7 +12,8 @@ interface TodayZoneProps {
 
 const cardStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
-  borderRadius: 'var(--radius-md, 12px)',
+  border: '1px solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-lg, 16px)',
   padding: 'var(--space-4, 16px)',
   animation: 'slideUpFade 0.4s ease-out 0.1s both',
 };
@@ -38,7 +39,8 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
           {program.program_name}
         </div>
         <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 12 }}>
-          Week {program.week_number} of {program.total_weeks}
+          Week <span style={{ fontFamily: 'var(--font-mono)' }}>{program.week_number}</span> of{' '}
+          <span style={{ fontFamily: 'var(--font-mono)' }}>{program.total_weeks}</span>
         </div>
 
         {/* Progress bar */}
@@ -52,12 +54,12 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
           <div style={{
             height: '100%',
             width: `${program.progress_pct}%`,
-            backgroundColor: 'var(--color-blue)',
+            backgroundColor: 'var(--accent, #E0142F)',
             borderRadius: 3,
             transition: 'width 0.4s ease-out',
           }} />
         </div>
-        <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>
           {program.sessions_completed} / {program.sessions_total} sessions
         </div>
 
@@ -72,7 +74,7 @@ export function TodayZone({ program, todaySessions }: TodayZoneProps) {
                 color: 'var(--color-text-secondary)',
               }}>
                 <span>{ex.name}</span>
-                <span style={{ color: 'var(--color-text-muted)' }}>{ex.sets}x{ex.reps}</span>
+                <span style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{ex.sets}x{ex.reps}</span>
               </div>
             ))}
           </div>

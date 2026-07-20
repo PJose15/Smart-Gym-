@@ -14,10 +14,19 @@ interface MomentumZoneProps {
 const tileStyle: CSSProperties = {
   flex: 1,
   backgroundColor: 'var(--color-bg-raised)',
-  borderRadius: 'var(--radius-md, 12px)',
+  border: '1px solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-lg, 16px)',
   padding: '12px',
   textAlign: 'center',
   minWidth: 0,
+};
+
+// Numbers are heroes — mono, big
+const tileValueStyle: CSSProperties = {
+  fontSize: 22,
+  fontWeight: 800,
+  fontFamily: 'var(--font-mono)',
+  letterSpacing: '-0.02em',
 };
 
 export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps) {
@@ -32,7 +41,7 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
     }}>
       {/* Streak tile */}
       <div style={tileStyle}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-streak, #FF6B35)' }}>
+        <div style={{ ...tileValueStyle, color: 'var(--color-streak, #FF6B35)' }}>
           {streak}
         </div>
         <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>
@@ -46,7 +55,7 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
 
       {/* Week dots tile */}
       <div style={tileStyle}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: '#34D399' }}>
+        <div style={{ ...tileValueStyle, color: 'var(--color-green, #00C896)' }}>
           {weekSessions}
         </div>
         <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>
@@ -58,7 +67,7 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
               width: 6,
               height: 6,
               borderRadius: '50%',
-              backgroundColor: filled ? '#34D399' : 'var(--color-bg-elevated)',
+              backgroundColor: filled ? 'var(--color-green, #00C896)' : 'var(--color-bg-elevated)',
             }} />
           ))}
         </div>
@@ -66,7 +75,7 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
 
       {/* Level tile */}
       <div style={tileStyle}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: level.color }}>
+        <div style={{ ...tileValueStyle, color: level.color }}>
           {level.level}
         </div>
         <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>

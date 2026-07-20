@@ -32,7 +32,7 @@ export const PR_CONFETTI: ConfettiConfig = {
   duration: 800,
   spread: 60,
   startVelocity: 35,
-  colors: ['#7C5CFF', '#00C896', '#FFD700', '#FF4D6A', '#3B82F6', '#FFFFFF'],
+  colors: ['#E0142F', '#00C896', '#E8B339', '#FF4D6A', '#3B82F6', '#FFFFFF'],
   shapes: ['square', 'circle', 'ribbon'],
   gravity: 0.8,
 };
@@ -43,7 +43,7 @@ export const ACHIEVEMENT_CONFETTI: ConfettiConfig = {
   duration: 800,
   spread: 40,
   startVelocity: 25,
-  colors: ['#7C5CFF', '#FFD700', '#FFFFFF'],
+  colors: ['#E0142F', '#E8B339', '#FFFFFF'],
   shapes: ['circle', 'square'],
   gravity: 0.7,
 };
@@ -54,7 +54,7 @@ export const LEVEL_UP_CONFETTI: ConfettiConfig = {
   duration: 1000,
   spread: 80,
   startVelocity: 30,
-  colors: ['#7C5CFF', '#9070FF', '#FFD700', '#FFFFFF'],
+  colors: ['#E0142F', '#FF2740', '#E8B339', '#FFFFFF'],
   shapes: ['square', 'circle'],
   gravity: 0.75,
 };

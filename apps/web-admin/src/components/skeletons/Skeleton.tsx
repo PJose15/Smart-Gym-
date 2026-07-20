@@ -14,7 +14,7 @@ interface SkeletonProps {
 
 /**
  * Base skeleton block — DOC_03 Section 14.
- * Shimmer (base #1F1F26 → shine #252530, 1.5s linear, left-to-right) comes
+ * Shimmer (base var(--bg-skeleton) → shine var(--bg-skeleton-shine), 1.5s linear, left-to-right) comes
  * from the single shared `.skeleton` CSS animation in animations.css —
  * never define per-instance animations.
  */

@@ -18,7 +18,7 @@ interface AmbientGlowProps {
 /** Recovery state → ambient glow rgba — DOC_03 Section 13 */
 const AMBIENT_COLORS: Record<AmbientRecoveryState, string> = {
   fresh: 'rgba(0, 200, 150, 0.15)', // green glow
-  primed: 'rgba(124, 92, 255, 0.15)', // purple glow — optimal
+  primed: 'rgba(224, 20, 47, 0.15)', // crimson glow — optimal
   trained: 'rgba(59, 130, 246, 0.12)', // blue glow
   fatigued: 'rgba(255, 176, 32, 0.10)', // warning glow
   recovering: 'rgba(255, 77, 106, 0.08)', // light red glow

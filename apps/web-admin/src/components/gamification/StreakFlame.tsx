@@ -56,7 +56,7 @@ export function StreakFlame({ streakDays, size, showGlow = true }: StreakFlamePr
             <stop offset="40%" stopColor={config.color} stopOpacity={1} />
             <stop
               offset="100%"
-              stopColor={tier === 5 ? '#9C00FF' : tier === 0 ? 'var(--streak-cold, #606070)' : '#FF3D00'}
+              stopColor={tier === 5 ? 'var(--color-gold-light, #F2C75C)' : tier === 0 ? 'var(--streak-cold, #6B6870)' : 'var(--streak-fire, #FF3D00)'}
               stopOpacity={0.8}
             />
           </radialGradient>

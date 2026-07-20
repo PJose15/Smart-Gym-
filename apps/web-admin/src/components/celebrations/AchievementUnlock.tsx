@@ -22,18 +22,18 @@ interface AchievementUnlockProps {
 
 /** Rarity border colors — DOC_03 §9 (token-backed where a token exists) */
 const RARITY_COLORS: Record<AchievementRarity, string> = {
-  common: 'var(--text-tertiary, #606070)',
+  common: 'var(--text-tertiary, #6B6870)',
   rare: 'var(--info, #3B82F6)',
-  epic: 'var(--accent, #7C5CFF)',
-  legendary: 'var(--gold, #FFD700)',
+  epic: 'var(--accent, #E0142F)',
+  legendary: 'var(--gold, #E8B339)',
 };
 
 /** Rarity glow intensity — DOC_03 §9 */
 const RARITY_GLOW: Record<AchievementRarity, string> = {
-  common: '0 0 16px rgba(96,96,112,0.3)',
+  common: '0 0 16px rgba(107,104,112,0.3)',
   rare: '0 0 24px rgba(59,130,246,0.4)',
-  epic: '0 0 32px rgba(124,92,255,0.5)',
-  legendary: '0 0 48px rgba(255,215,0,0.6)',
+  epic: '0 0 32px rgba(224,20,47,0.5)',
+  legendary: '0 0 48px rgba(232,179,57,0.6)',
 };
 
 /**
@@ -88,8 +88,8 @@ export function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockP
     borderRadius: 24,
     background:
       achievement.rarity === 'legendary'
-        ? 'linear-gradient(135deg, var(--bg-card, #1A1A1F) 0%, #1A1A2E 100%)'
-        : 'var(--bg-card, #1A1A1F)',
+        ? 'linear-gradient(135deg, var(--bg-card, #16161A) 0%, var(--bg-warning-subtle, #261D0A) 100%)'
+        : 'var(--bg-card, #16161A)',
     border: `3px solid ${rarityColor}`,
     boxShadow: rarityGlow,
     display: 'flex',
@@ -165,7 +165,7 @@ export function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockP
           borderRadius: 'var(--radius-full)',
           backgroundColor: 'var(--accent-subtle)',
           border: '1px solid var(--border-accent)',
-          color: 'var(--xp-color, #7C5CFF)',
+          color: 'var(--xp-color, #E0142F)',
           fontSize: 'var(--text-sm)',
           fontWeight: 'var(--weight-bold)',
           fontFamily: 'var(--font-mono)',

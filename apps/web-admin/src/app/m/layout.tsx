@@ -10,7 +10,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#0D0D0F',
+  themeColor: '#0A0A0C',
 };
 
 export default function MobileLayout({
@@ -22,7 +22,7 @@ export default function MobileLayout({
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: 'var(--color-bg-base, #0D0D0F)',
+        backgroundColor: 'var(--color-bg-base, #0A0A0C)',
         color: 'var(--color-text-primary, #FFFFFF)',
         fontFamily: 'var(--font-sans)',
         display: 'flex',

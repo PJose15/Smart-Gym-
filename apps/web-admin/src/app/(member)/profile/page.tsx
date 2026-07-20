@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useMember } from '@/lib/contexts/MemberContext';
 import { formatVolume } from '@/lib/weight';
 import { MemberAvatar } from '@/components/ui/MemberAvatar';
@@ -57,20 +58,20 @@ function ProfileSkeleton() {
         width: w,
         height: h,
         borderRadius: 6,
-        backgroundColor: 'var(--color-surface-secondary, #1e1e2e)',
+        backgroundColor: 'var(--color-bg-elevated)',
       }}
     />
   );
   return (
     <div style={{ padding: 16, paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: 'var(--color-surface-secondary, #1e1e2e)' }} />
+        <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: 'var(--color-bg-elevated)' }} />
         {bar('120px', 18)}
         {bar('80px')}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} style={{ height: 64, borderRadius: 12, backgroundColor: 'var(--color-surface-secondary, #1e1e2e)' }} />
+          <div key={i} style={{ height: 64, borderRadius: 12, backgroundColor: 'var(--color-bg-elevated)' }} />
         ))}
       </div>
       {bar('100%', 48)}
@@ -94,10 +95,10 @@ function formatGoal(goal: string | null): string {
 }
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: 'var(--color-surface, #141420)',
-  borderRadius: 12,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 16,
   padding: 16,
-  border: '1px solid var(--color-border, #2a2a3e)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -193,7 +194,7 @@ export default function ProfilePage() {
               dna={dna ?? undefined}
             />
             <div style={{ textAlign: 'center' }}>
-              <h1 style={{ fontSize: 'var(--text-xl, 20px)', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
+              <h1 style={{ fontSize: 'var(--text-2xl, 28px)', fontWeight: 600, margin: 0, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}>
                 {member.display_name}
               </h1>
               {dna?.archetype && !dna.is_building && (
@@ -219,7 +220,7 @@ export default function ProfilePage() {
               <span style={{ fontSize: 15, fontWeight: 700, color: profile.level.current.color }}>
                 {profile.level.current.name}
               </span>
-              <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
                 Lv.{profile.level.current.level}
               </span>
             </div>
@@ -227,7 +228,7 @@ export default function ProfilePage() {
               style={{
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: 'var(--color-surface-secondary, #1e1e2e)',
+                backgroundColor: 'var(--color-bg-elevated)',
                 overflow: 'hidden',
               }}
             >
@@ -259,7 +260,7 @@ export default function ProfilePage() {
                 { label: 'Time', value: formatDuration(profile.stats.total_duration_min) },
               ].map((stat) => (
                 <div key={stat.label} style={cardStyle}>
-                  <p style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
+                  <p style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>
                     {stat.value}
                   </p>
                   <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '4px 0 0' }}>
@@ -275,7 +276,7 @@ export default function ProfilePage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>Avg / Week</p>
-                <p style={{ fontSize: 20, fontWeight: 700, margin: '2px 0 0', color: 'var(--color-text-primary)' }}>
+                <p style={{ fontSize: 20, fontWeight: 700, margin: '2px 0 0', color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}>
                   {profile.stats.avg_workouts_per_week}
                 </p>
               </div>
@@ -295,18 +296,42 @@ export default function ProfilePage() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <StreakFlame streakDays={profile.streak.current} size={22} />
-                  <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--color-streak, #FF6B35)' }}>
+                  <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--color-streak, #FF6B35)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>
                     {profile.streak.current}d
                   </p>
                 </div>
                 <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>Current</p>
               </div>
               <div>
-                <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
+                <p style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>
                   {profile.streak.best}d
                 </p>
                 <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>Best</p>
               </div>
+            </div>
+          </div>
+
+          {/* Coaching links — Check-Ins + Readiness */}
+          <div>
+            <p style={sectionTitle}>Coaching</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { href: '/check-ins', label: 'Weekly Check-Ins', sub: 'Reviews from your coach', dot: 'var(--gold, #E8B339)' },
+                { href: '/readiness', label: 'Readiness', sub: 'Today’s training readiness', dot: 'var(--readiness-peak, #00C896)' },
+              ].map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none' }}
+                >
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: l.dot, flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>{l.label}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>{l.sub}</span>
+                  </span>
+                  <span aria-hidden="true" style={{ color: 'var(--color-text-muted)', fontSize: 16 }}>&rsaquo;</span>
+                </Link>
+              ))}
             </div>
           </div>
 

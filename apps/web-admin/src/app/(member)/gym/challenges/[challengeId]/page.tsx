@@ -25,8 +25,8 @@ const joinBtnStyle: CSSProperties = {
   padding: '14px 0',
   borderRadius: 10,
   border: 'none',
-  backgroundColor: 'var(--color-blue)',
-  color: 'var(--color-text-primary)',
+  backgroundColor: 'var(--accent, #E0142F)',
+  color: 'var(--text-on-accent, #FFFFFF)',
   fontSize: 15,
   fontWeight: 700,
   cursor: 'pointer',
@@ -109,7 +109,7 @@ export default function ChallengeDetailPage({ params }: PageProps) {
         <div style={{ fontSize: 48, marginBottom: 8 }}>
           {CHALLENGE_ICONS[data.challenge_type] || '\uD83C\uDFAF'}
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', margin: 0 }}>
           {data.title}
         </h1>
         {data.description && (
@@ -138,13 +138,13 @@ export default function ChallengeDetailPage({ params }: PageProps) {
       {/* Prize info */}
       {data.prize_description && (
         <div style={{
-          backgroundColor: 'rgba(234, 179, 8, 0.08)',
+          backgroundColor: 'var(--color-gold-subtle, rgba(232, 179, 57, 0.10))',
           borderRadius: 10,
           padding: 12,
           marginBottom: 16,
-          border: '1px solid rgba(234, 179, 8, 0.2)',
+          border: '1px solid rgba(232, 179, 57, 0.25)',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#EAB308', textTransform: 'uppercase', marginBottom: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--gold, #E8B339)', textTransform: 'uppercase', marginBottom: 4 }}>
             Prize
           </div>
           <div style={{ fontSize: 14, color: 'var(--color-text-primary)' }}>{data.prize_description}</div>
@@ -193,7 +193,7 @@ export default function ChallengeDetailPage({ params }: PageProps) {
                     gap: 10,
                     padding: '10px 12px',
                     borderRadius: 8,
-                    backgroundColor: isCurrent ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                    backgroundColor: isCurrent ? 'var(--accent-subtle, rgba(224, 20, 47, 0.10))' : 'transparent',
                   }}
                 >
                   <div style={{ width: 28, fontSize: 14, fontWeight: 700, color: 'var(--color-text-secondary)', textAlign: 'center' }}>
@@ -217,10 +217,10 @@ export default function ChallengeDetailPage({ params }: PageProps) {
                       {p.display_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div style={{ flex: 1, fontSize: 14, fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#60A5FA' : 'var(--color-text-secondary)' }}>
+                  <div style={{ flex: 1, fontSize: 14, fontWeight: isCurrent ? 700 : 500, color: isCurrent ? 'var(--accent-hover, #FF2740)' : 'var(--color-text-secondary)' }}>
                     {p.display_name}{isCurrent ? ' (You)' : ''}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
                     {p.current_score.toLocaleString()}
                   </div>
                 </div>
@@ -241,10 +241,10 @@ function StatChip({ label, value, highlight }: { label: string; value: string; h
       backgroundColor: highlight ? 'var(--color-blue-subtle)' : 'var(--color-bg-raised)',
       textAlign: 'center',
     }}>
-      <div style={{ fontSize: 10, color: highlight ? '#60A5FA' : 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 10, color: highlight ? 'var(--accent-hover, #FF2740)' : 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
         {label}
       </div>
-      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)', marginTop: 2 }}>{value}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)', marginTop: 2 }}>{value}</div>
     </div>
   );
 }

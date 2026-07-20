@@ -99,7 +99,7 @@ test('T1: shows skeleton while member is loading', () => {
   const { container } = render(<ProgressPage />);
 
   // Skeleton has placeholder divs
-  const skeletonBlocks = container.querySelectorAll('div[style*="background-color: var(--color-surface-secondary"]');
+  const skeletonBlocks = container.querySelectorAll('div[style*="background-color: var(--color-bg-elevated)"]');
   expect(skeletonBlocks.length).toBeGreaterThan(0);
   // No actual data
   expect(container.textContent).not.toContain('Progress');
@@ -163,7 +163,7 @@ test('T5: highlights last volume bar in blue', async () => {
   });
 
   // The volume chart section: find bars inside the chart (height-based bars)
-  // The last bar (W8) should have blue; others have surface-secondary
+  // The last bar (W8) should have the crimson accent; others the elevated surface
   // Query all bars within the flex container that has alignItems: flex-end (the chart area)
   const chartContainer = Array.from(result!.container.querySelectorAll('div')).find(
     (el) => el.style.alignItems === 'flex-end' && el.style.height === '100px'
@@ -171,10 +171,10 @@ test('T5: highlights last volume bar in blue', async () => {
   expect(chartContainer).toBeTruthy();
   const bars = chartContainer!.querySelectorAll('div[style*="border-radius: 4"]');
   expect(bars.length).toBe(8);
-  // Last bar is blue
-  expect((bars[7] as HTMLElement).style.backgroundColor).toBe('var(--color-blue, #60A5FA)');
-  // First bar is not blue
-  expect((bars[0] as HTMLElement).style.backgroundColor).toBe('var(--color-surface-secondary, #2a2a3e)');
+  // Last bar is the crimson accent
+  expect((bars[7] as HTMLElement).style.backgroundColor).toBe('var(--accent, #E0142F)');
+  // First bar is not highlighted
+  expect((bars[0] as HTMLElement).style.backgroundColor).toBe('var(--color-bg-elevated)');
 });
 
 // T6: Renders 30-day calendar dots
@@ -193,8 +193,8 @@ test('T6: renders 30-day calendar with dots', async () => {
   expect(dayDots.length).toBe(30);
 });
 
-// T7: Active calendar days have blue background
-test('T7: active calendar days have blue background', async () => {
+// T7: Active calendar days have crimson accent background
+test('T7: active calendar days have accent background', async () => {
   mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
 
@@ -204,7 +204,7 @@ test('T7: active calendar days have blue background', async () => {
   });
 
   // 5 active workout dates in our mock
-  const activeDots = result!.container.querySelectorAll('div[style*="background-color: var(--color-blue"]');
+  const activeDots = result!.container.querySelectorAll('div[style*="background-color: var(--accent"]');
   // At least the calendar active ones (could also match the volume chart bar)
   expect(activeDots.length).toBeGreaterThanOrEqual(5);
 });

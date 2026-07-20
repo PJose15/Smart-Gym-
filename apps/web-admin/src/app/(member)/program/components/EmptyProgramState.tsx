@@ -30,8 +30,9 @@ const iconStyle: CSSProperties = {
 };
 
 const headingStyle: CSSProperties = {
-  fontSize: 'var(--text-lg, 18px)',
-  fontWeight: 700,
+  fontSize: 'var(--text-lg, 20px)',
+  fontWeight: 600,
+  fontFamily: 'var(--font-serif)',
   color: 'var(--color-text-primary)',
   margin: 0,
 };

@@ -42,10 +42,10 @@ interface ProgressData {
 }
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: 'var(--color-surface, #141420)',
-  borderRadius: 12,
+  backgroundColor: 'var(--color-bg-raised)',
+  borderRadius: 16,
   padding: 16,
-  border: '1px solid var(--color-border, #2a2a3e)',
+  border: '1px solid var(--color-border-subtle)',
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -60,14 +60,14 @@ const sectionTitle: React.CSSProperties = {
 function ProgressSkeleton() {
   return (
     <div style={{ padding: 16, paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ height: 22, width: 120, borderRadius: 6, backgroundColor: 'var(--color-surface-secondary, #1e1e2e)' }} />
+      <div style={{ height: 22, width: 120, borderRadius: 6, backgroundColor: 'var(--color-bg-elevated)' }} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} style={{ height: 64, borderRadius: 12, backgroundColor: 'var(--color-surface-secondary, #1e1e2e)' }} />
+          <div key={i} style={{ height: 64, borderRadius: 12, backgroundColor: 'var(--color-bg-elevated)' }} />
         ))}
       </div>
-      <div style={{ height: 140, borderRadius: 12, backgroundColor: 'var(--color-surface-secondary, #1e1e2e)' }} />
-      <div style={{ height: 100, borderRadius: 12, backgroundColor: 'var(--color-surface-secondary, #1e1e2e)' }} />
+      <div style={{ height: 140, borderRadius: 12, backgroundColor: 'var(--color-bg-elevated)' }} />
+      <div style={{ height: 100, borderRadius: 12, backgroundColor: 'var(--color-bg-elevated)' }} />
     </div>
   );
 }
@@ -91,7 +91,7 @@ function VolumeChart({ data }: { data: WeeklyVolume[] }) {
                   minHeight: 4,
                   height: `${pct}%`,
                   borderRadius: 4,
-                  backgroundColor: isLast ? 'var(--color-blue, #60A5FA)' : 'var(--color-surface-secondary, #2a2a3e)',
+                  backgroundColor: isLast ? 'var(--accent, #E0142F)' : 'var(--color-bg-elevated)',
                   transition: 'height 0.3s ease',
                 }}
               />
@@ -143,8 +143,9 @@ function WorkoutCalendar({ dates }: { dates: string[] }) {
               justifyContent: 'center',
               fontSize: 10,
               fontWeight: d.active ? 700 : 400,
-              color: d.active ? '#fff' : 'var(--color-text-muted)',
-              backgroundColor: d.active ? 'var(--color-blue, #60A5FA)' : 'var(--color-surface-secondary, #1e1e2e)',
+              fontFamily: 'var(--font-mono)',
+              color: d.active ? 'var(--text-on-accent, #FFFFFF)' : 'var(--color-text-muted)',
+              backgroundColor: d.active ? 'var(--accent, #E0142F)' : 'var(--color-bg-elevated)',
             }}
           >
             {d.label}
@@ -217,7 +218,7 @@ export default function ProgressPage() {
     <SkeletonGate loading={loading} skeleton={<ProgressSkeleton />}>
       {data && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, paddingTop: 24 }}>
-          <h1 style={{ fontSize: 'var(--text-xl, 20px)', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
+          <h1 style={{ fontSize: 'var(--text-xl, 24px)', fontWeight: 600, margin: 0, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}>
             Progress
           </h1>
 
@@ -230,7 +231,7 @@ export default function ProgressPage() {
               { label: 'Streak', value: `${data.stats.current_streak}d` },
             ].map((s) => (
               <div key={s.label} style={cardStyle}>
-                <p style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>
+                <p style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>
                   {s.value}
                 </p>
                 <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '4px 0 0' }}>
@@ -271,7 +272,7 @@ export default function ProgressPage() {
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--color-orange, #F97316)' }}>
+                      <p style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--gold, #E8B339)', fontFamily: 'var(--font-mono)' }}>
                         {pr.est_1rm}
                       </p>
                       <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: 0 }}>Est. 1RM</p>

@@ -264,7 +264,7 @@ const selectStyle: CSSProperties = {
   width: '100%',
   padding: '10px 12px',
   borderRadius: 8,
-  border: '1px solid var(--color-border-subtle, rgba(255,255,255,0.1))',
+  border: '1px solid var(--color-border-subtle, rgba(255,255,255,0.04))',
   backgroundColor: 'var(--color-bg-base)',
   color: 'var(--color-text-primary)',
   fontSize: 13,
@@ -284,7 +284,7 @@ const btnPrimary: CSSProperties = {
 const btnSecondary: CSSProperties = {
   backgroundColor: 'transparent',
   color: 'var(--color-text-secondary)',
-  border: '1px solid var(--color-border-subtle, rgba(255,255,255,0.1))',
+  border: '1px solid var(--color-border-subtle, rgba(255,255,255,0.04))',
   borderRadius: 8,
   padding: '8px 16px',
   fontSize: 13,

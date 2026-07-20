@@ -35,14 +35,15 @@ const EVENT_ICONS: Record<string, string> = {
 
 const cardStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
-  borderRadius: 12,
+  border: '1px solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-lg, 16px)',
   padding: 14,
   transition: 'transform 0.15s ease',
 };
 
 const pinnedStyle: CSSProperties = {
   ...cardStyle,
-  border: '1px solid rgba(59, 130, 246, 0.3)',
+  border: '1px solid var(--border-accent, rgba(224, 20, 47, 0.28))',
 };
 
 function timeAgo(dateStr: string): string {
@@ -102,7 +103,7 @@ export function FeedEventCard({ event, memberId, onToggleReaction }: FeedEventCa
 
         <div style={{ flex: 1, minWidth: 0 }}>
           {event.is_pinned && (
-            <div style={{ fontSize: 10, color: '#60A5FA', fontWeight: 600, marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: 10, color: 'var(--accent-hover, #FF2740)', fontWeight: 600, marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Pinned
             </div>
           )}

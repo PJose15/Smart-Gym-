@@ -168,8 +168,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div style={shellStyle}>
       <nav style={sidebarStyle}>
         <div style={{ marginBottom: 24 }}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)' }}>Nexera</span>
-          <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-red)', marginLeft: 6 }}>Admin</span>
+          <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: 3 }}>NEXERA</span>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>Admin</div>
         </div>
 
         {NAV_GROUPS.map((group, gi) => (

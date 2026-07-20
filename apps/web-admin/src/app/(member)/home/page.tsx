@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useMember } from '@/lib/contexts/MemberContext';
 import { SkeletonGate } from '@/components/skeleton';
 import { HeroZone } from './components/HeroZone';
@@ -72,6 +73,37 @@ export default function HomePage() {
             avatarUrl={member?.avatar_url}
             muscleMap={data.muscleMap}
           />
+
+          {/* Quick links — Readiness + Check-Ins */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[
+              { href: '/readiness', label: 'Readiness', dot: 'var(--readiness-peak, #00C896)' },
+              { href: '/check-ins', label: 'Check-Ins', dot: 'var(--gold, #E8B339)' },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '10px 12px',
+                  backgroundColor: 'var(--color-bg-raised)',
+                  border: '1px solid var(--color-border-subtle)',
+                  borderRadius: 'var(--radius-full, 9999px)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: 'var(--color-text-primary)',
+                  textDecoration: 'none',
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: l.dot }} />
+                {l.label}
+              </Link>
+            ))}
+          </div>
 
           <TodayZone
             program={data.program}

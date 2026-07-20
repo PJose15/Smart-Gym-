@@ -251,7 +251,7 @@ const signInLinkStyle: CSSProperties = {
 function CheckCircleIcon() {
   return (
     <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden="true">
-      <rect width="56" height="56" rx="28" fill="var(--accent-subtle, rgba(124,92,255,0.12))" />
+      <rect width="56" height="56" rx="28" fill="var(--accent-subtle, rgba(224,20,47,0.12))" />
       <path
         d="M18 28l7 7 13-14"
         stroke="var(--accent)"

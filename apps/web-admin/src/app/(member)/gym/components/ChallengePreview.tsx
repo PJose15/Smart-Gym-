@@ -37,7 +37,7 @@ const joinBtnStyle: CSSProperties = {
 const joinedBadgeStyle: CSSProperties = {
   padding: '4px 10px',
   borderRadius: 6,
-  backgroundColor: 'var(--color-green-light)',
+  backgroundColor: 'var(--color-green-subtle, rgba(0, 200, 150, 0.10))',
   color: 'var(--color-green)',
   fontSize: 11,
   fontWeight: 600,
@@ -102,7 +102,7 @@ export function ChallengePreview({ memberId, gymId }: ChallengePreviewProps) {
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Active Challenges
         </div>
-        <Link href="/gym/challenges" style={{ fontSize: 12, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>
+        <Link href="/gym/challenges" style={{ fontSize: 12, color: 'var(--accent-hover, #FF2740)', textDecoration: 'none', fontWeight: 600 }}>
           See All
         </Link>
       </div>

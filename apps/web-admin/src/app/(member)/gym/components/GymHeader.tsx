@@ -25,8 +25,8 @@ const avatarStyle: CSSProperties = {
   justifyContent: 'center',
   fontSize: 22,
   fontWeight: 700,
-  color: '#fff',
-  background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+  color: 'var(--text-on-accent, #FFFFFF)',
+  background: 'linear-gradient(135deg, var(--accent-hover, #FF2740), var(--accent-pressed, #8A0D1E))',
   flexShrink: 0,
 };
 
@@ -45,7 +45,7 @@ export function GymHeader({ gymName, logoUrl, memberCount }: GymHeaderProps) {
         </div>
       )}
       <div style={{ flex: 1 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', margin: 0 }}>
           {gymName}
         </h1>
         {memberCount != null && (
