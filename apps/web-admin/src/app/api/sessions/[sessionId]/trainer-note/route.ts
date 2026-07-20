@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 const sessionNoteSchema = z.object({
   note: z.string().trim().min(1).max(2000),
@@ -45,16 +46,33 @@ export async function PATCH(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    const { error } = await admin
+    const { data: createdNote, error } = await admin
       .from('trainer_member_notes')
       .insert({
         trainer_id: user_id,
         member_id: ws.member_id,
         note_text: note,
         session_id: ws.id,
-      });
+      })
+      .select('id')
+      .single();
 
-    if (error) return NextResponse.json({ error: 'Failed to add note' }, { status: 500 });
+    if (error || !createdNote) {
+      return NextResponse.json({ error: 'Failed to add note' }, { status: 500 });
+    }
+
+    // Notify member via dispatcher — fire-and-forget, deep-links to /coach-notes/[id]
+    sendNotification({
+      gym_id,
+      member_id: ws.member_id,
+      type: 'coach_note',
+      title: 'New coach note',
+      body: 'Your trainer left you a note.',
+      data: { note_id: createdNote.id },
+    }).catch((err) => {
+      console.error('[trainer-note] Notification dispatch failed:', err);
+    });
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

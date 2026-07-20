@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,9 +77,9 @@ export async function POST(
       );
     }
 
-    // If has trainer, create notification for the trainer
+    // If has trainer, notify them via dispatcher (no PII in push body)
     if (updated.trainer_id) {
-      // Look up trainer's member record for notification
+      // Look up trainer's member record for notification targeting
       const { data: trainerMember } = await admin
         .from('members')
         .select('id')
@@ -87,18 +88,15 @@ export async function POST(
         .maybeSingle();
 
       if (trainerMember) {
-        await admin.from('notifications').insert({
-          member_id: trainerMember.id,
+        sendNotification({
           gym_id: updated.gym_id,
-          notification_type: 'coach_note',
-          title: 'Member replied to check-in',
-          body: replyText.trim().slice(0, 100),
-          data: {
-            check_in_id: checkInId,
-            member_id: memberId,
-          },
-          channel: 'in-app',
-          status: 'sent',
+          member_id: trainerMember.id,
+          type: 'checkin_reply',
+          title: 'Check-in reply',
+          body: 'A member replied to their weekly check-in.',
+          data: { check_in_id: checkInId },
+        }).catch((err) => {
+          console.error('[check-ins/reply] Notification dispatch failed:', err);
         });
       }
     }

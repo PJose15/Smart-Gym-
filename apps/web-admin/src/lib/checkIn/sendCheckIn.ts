@@ -1,7 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 /**
- * Send a check-in to a member: update sent_at and create notification.
+ * Send a check-in to a member: update sent_at and dispatch checkin_generated push.
+ * The dispatcher owns the inbox row — no direct notifications.insert here.
  */
 export async function sendCheckInToMember(
   checkInId: string,
@@ -19,18 +21,15 @@ export async function sendCheckInToMember(
     })
     .eq('id', checkInId);
 
-  // Create in-app notification
-  await admin.from('notifications').insert({
-    member_id: memberId,
+  // Dispatch via central notification dispatcher (dispatcher writes inbox row)
+  await sendNotification({
     gym_id: gymId,
-    notification_type: 'coach_note',
+    member_id: memberId,
+    type: 'checkin_generated',
     title: 'Your weekly check-in is ready',
     body: 'Your Nexera Coach reviewed your week. Tap to read.',
-    data: {
-      check_in_id: checkInId,
-      url: '/program/check-in',
-    },
-    channel: 'in-app',
-    status: 'sent',
+    data: { check_in_id: checkInId },
+  }).catch((err) => {
+    console.error('[sendCheckIn] Notification dispatch failed:', err);
   });
 }
