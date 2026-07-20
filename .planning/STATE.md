@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: "Active — Wave 3: mobile inbox screen + bell badge + push preferences live (NOTIF-04 UI + NOTIF-05)"
-stopped_at: Completed 06-06-PLAN.md
-last_updated: "2026-07-20T14:26:43.395Z"
+stopped_at: Completed 06-10-PLAN.md (Task 1 gate; Task 2 awaiting human device walkthrough)
+last_updated: "2026-07-20T14:34:31.657Z"
 last_activity: "2026-07-20 — Executed plan 06-09: mobile inbox screen + bell badge (useUnreadNotifications) + 7 push-category toggles + quiet hours in settings, 258 mobile tests green (NOTIF-04 UI + NOTIF-05)"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 34
-  completed_plans: 33
+  completed_plans: 34
   percent: 94
 ---
 
@@ -134,9 +134,10 @@ Next action: Plan 06-10 — E2E verification gate (final plan)
 - [Phase 06-07]: Webhook owner pushes wrapped in async IIFE with catch — webhook response never blocked by push failures
 - [Phase 06-notification-orchestration]: Feed owner lookup inline (not cached): gym_feed_events select member_id+gym_id per reaction/comment — low volume, no caching overhead
 - [Phase 06-notification-orchestration]: 23505 race branch for reactions: dispatch only on clean insert success branch to avoid double-fire on duplicate-tap
+- [Phase 06-notification-orchestration]: leaderboard_rank has no emitting call site — documented as post-launch gap, not fixed in gate plan (route logic regressions go back as gap-closure plans)
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:26:31.845Z
-Stopped at: Completed 06-06-PLAN.md
+Last session: 2026-07-20T14:34:31.653Z
+Stopped at: Completed 06-10-PLAN.md (Task 1 gate; Task 2 awaiting human device walkthrough)
 Resume with: Plan 06-09 — Mobile inbox screen consuming GET /api/member/notifications + POST mark-read
