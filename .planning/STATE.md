@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: "Completed 03-mobile-challenges/03-05-PLAN.md — automated gate green (935 tests, both tsc clean); Task 2 on-device walkthrough awaiting human sign-off"
-last_updated: "2026-07-19T20:57:21Z"
+stopped_at: Completed 04-mobile-program-view/04-01-PLAN.md — 38 new tests, 227/227 mobile, tsc clean
+last_updated: "2026-07-20T00:53:28.923Z"
 last_activity: "2026-07-19 — Executed plan 03-05: final phase gate (mobile 189/189 + web-admin 347/347, tsc clean both apps)"
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 14
-  completed_plans: 14
+  completed_phases: 2
+  total_plans: 17
+  completed_plans: 15
   percent: 85
 ---
 
@@ -91,9 +91,12 @@ Next action: Human approves 03-05 Task 2 device walkthrough, then Phase 3 is COM
 - [Phase 03-mobile-challenges]: ChallengeCard uses Pressable not AnimatedCard — AnimatedCard triggers entrance animations on every list render; Pressable with opacity feedback is more appropriate for list items
 - [Phase 03-mobile-challenges]: CHALLENGES_CACHE_KEY return cast as any — CacheKey type string & Record<string,never> trick does not widen to template literal strings in TypeScript 5.x
 - [Phase 03-mobile-challenges — Gate 03-05]: Automated gate passed: mobile 189/189, web-admin 347/347, both tsc clean, zero hardcoded hex in challenge files; total test count 935
+- [Phase 04-mobile-program-view]: resolveTodayDayNumber mirrors @nexera/utils getTodaysProgramDay with injected now — home-screen TodayZone consistency wins over DB day_number
+- [Phase 04-mobile-program-view]: fetchProgram returns null (not throw) for no active program — PROG-04 empty state handled gracefully
+- [Phase 04-mobile-program-view]: program_data parsed as { days?: ProgramDay[] } | null with ?? [] fallback — malformed jsonb never throws
 
 ## Session Continuity
 
-Last session: 2026-07-19T20:57:21Z
-Stopped at: "Completed 03-mobile-challenges/03-05-PLAN.md — automated gate green; Task 2 on-device walkthrough awaiting human sign-off"
+Last session: 2026-07-20T00:53:28.919Z
+Stopped at: Completed 04-mobile-program-view/04-01-PLAN.md — 38 new tests, 227/227 mobile, tsc clean
 Resume with: Human approves 03-05 Task 2 walkthrough (reply "approved"), then Phase 3 is complete — next: plan Phase 4 Mobile Program View

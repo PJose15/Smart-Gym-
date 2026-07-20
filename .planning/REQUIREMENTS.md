@@ -53,13 +53,13 @@ Scope: the 6 capabilities that block public launch. Everything pre-GSD is captur
 
 ### PROG — Mobile Program View
 
-- [ ] **PROG-01**: Member can open a full program view showing plan metadata and overall progress
+- [x] **PROG-01**: Member can open a full program view showing plan metadata and overall progress
   - Program header (name, goal, weeks, sessions/week, trainer) + week progress bar from existing `/api/member/[id]/program` response
-- [ ] **PROG-02**: Member sees every program day with its exercises, with today highlighted and past days marked complete
+- [x] **PROG-02**: Member sees every program day with its exercises, with today highlighted and past days marked complete
   - Day cards list exercises as "sets × reps" chips; today gets active accent state; completed days show checkmarks
 - [ ] **PROG-03**: Member can start today's workout or drill into an exercise from the program view
   - "Start today's workout" CTA routes into the scan/workout flow; exercise names link to existing `/exercise/[name]` screen
-- [ ] **PROG-04**: Member with no assigned program sees a useful empty state
+- [x] **PROG-04**: Member with no assigned program sees a useful empty state
   - "No program assigned yet" explanation with request/next-step CTA where tier allows
 
 ### AGENT — UptimizeAI Agent Connection (13 automations)
@@ -132,10 +132,10 @@ Mirrors PROJECT.md — deferred to post-launch milestones:
 | CHAL-02 | Phase 3 | Complete |
 | CHAL-03 | Phase 3 | Complete |
 | CHAL-04 | Phase 3 | Complete |
-| PROG-01 | Phase 4 | Pending |
-| PROG-02 | Phase 4 | Pending |
+| PROG-01 | Phase 4 | Complete |
+| PROG-02 | Phase 4 | Complete |
 | PROG-03 | Phase 4 | Pending |
-| PROG-04 | Phase 4 | Pending |
+| PROG-04 | Phase 4 | Complete |
 | AGENT-01 | Phase 5 | Pending |
 | AGENT-02 | Phase 5 | Pending |
 | AGENT-03 | Phase 5 | Pending |
