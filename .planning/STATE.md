@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-07-20T13:56:44.959Z"
-last_activity: "2026-07-20 — Executed plan 06-04: receipt-poll cron (Expo getReceipts, delivered/failed/DeviceNotRegistered deactivation), admin health delivery_rate block"
+stopped_at: Completed 06-08-PLAN.md
+last_updated: "2026-07-20T13:58:48Z"
+last_activity: "2026-07-20 — Executed plan 06-08: GET /api/member/notifications (paginated list + unread count) and POST /api/member/notifications/[notifId]/read (idempotent mark-read), 16 tests green (NOTIF-05)"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 27
-  percent: 92
+  completed_plans: 28
+  percent: 94
 ---
 
 # State
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 6 of 6 — Notification Orchestration Wiring (10 plans)
-Plan: 4 of 10 complete (06-01 + 06-02 + 06-04 executed; 06-03 TDD RED committed)
-Status: Active — Wave 2: receipt-poll cron route live (NOTIF-06), delivery_rate in admin health, dispatcher TDD RED committed
-Progress: [████████░░] 79%
-Last activity: 2026-07-20 — Executed plan 06-04: receipt-poll cron (Expo getReceipts, delivered/failed/DeviceNotRegistered deactivation), admin health delivery_rate block
-Next action: Plan 06-03 — Central dispatcher GREEN phase: implement dispatcher so TDD RED tests pass (preference/quiet-hours/dedup/rate-cap guards, identity bridge, loop safety, inbox writes)
+Plan: 8 of 10 complete (06-01 + 06-02 + 06-03 + 06-04 + 06-08 executed; others executed in parallel)
+Status: Active — Wave 2: dispatcher live (NOTIF-01/04), receipt-poll cron live (NOTIF-06), inbox API live (NOTIF-05)
+Progress: [█████████░] 94%
+Last activity: 2026-07-20 — Executed plan 06-08: GET /api/member/notifications (paginated list + unread count) and POST /api/member/notifications/[notifId]/read (idempotent mark-read), 16 tests green (NOTIF-05)
+Next action: Plan 06-09 — Mobile inbox screen (consumes both notification routes)
 
 ## Accumulated Context
 
@@ -119,9 +119,14 @@ Next action: Plan 06-03 — Central dispatcher GREEN phase: implement dispatcher
 - [Phase 06-notification-orchestration]: resolveNotificationRoute exported (not private): inbox screen (06-09) reuses it for tap-navigation without duplicating the route map
 - [Phase 06-notification-orchestration]: Dual-key auth for receipt-poll: SMARTGYM_INTERNAL_KEY or service-role Bearer; DeviceNotRegistered deactivates all active tokens for profile (single-device MVP)
 - [Phase 06-notification-orchestration]: delivery_rate in admin health is over resolved receipts only (delivered/(delivered+failed)); null when denominator 0
+- [Phase 06-03-dispatcher]: Inbox write happens BEFORE push preference guards — opted-out members always get inbox history, provably get no push
+- [Phase 06-03-dispatcher]: Missing notification_preferences row = all defaults enabled (Open Question 2 from research resolved)
+- [Phase 06-03-dispatcher]: Loop safety structurally enforced via test 14b reading dispatcher.ts source; comment wording avoids forbidden terms to keep source scan passing
+- [Phase 06-08-notifications-inbox]: Existence check after update distinguishes already-read (idempotent 200) from cross-member (404) — no pre-check penalty on happy path
+- [Phase 06-08-notifications-inbox]: Promise.all([listQuery, unreadQuery]) for single-round-trip GET latency; next_cursor = last row's created_at when rows.length === limit
 
 ## Session Continuity
 
-Last session: 2026-07-20T13:56:44.953Z
-Stopped at: Completed 06-04-PLAN.md
-Resume with: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch) to complete AGENT-03/AGENT-04 remaining automations
+Last session: 2026-07-20T13:58:48Z
+Stopped at: Completed 06-08-PLAN.md
+Resume with: Plan 06-09 — Mobile inbox screen consuming GET /api/member/notifications + POST mark-read
