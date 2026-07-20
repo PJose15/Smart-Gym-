@@ -17,7 +17,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   // Member routes → handled by (member) layout (dark theme, BottomNav, MemberAuthGate)
-  const memberPaths = ['/home', '/program', '/progress', '/gym', '/profile'];
+  const memberPaths = ['/home', '/program', '/progress', '/gym', '/profile', '/check-ins', '/readiness'];
   if (memberPaths.some((p) => pathname === p || pathname?.startsWith(p + '/'))) {
     return <>{children}</>;
   }
