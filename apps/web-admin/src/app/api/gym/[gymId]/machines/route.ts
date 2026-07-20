@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { fireUpgradeOpportunity } from '@/lib/billing/featureGate';
 
 const TIER_LIMITS: Record<string, number> = { starter: 5, growth: 25, pro: Infinity };
 
@@ -58,6 +59,8 @@ export async function POST(
       .eq('is_active', true);
 
     if ((count ?? 0) >= limit) {
+      // Fire-and-forget revenue nudge — response path unaffected
+      fireUpgradeOpportunity(gymId, 'max_machines', 'growth');
       return NextResponse.json(
         { error: `Machine limit reached for your tier (${limit})` },
         { status: 403 }

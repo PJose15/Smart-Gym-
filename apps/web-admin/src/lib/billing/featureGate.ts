@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { SubscriptionTier, FeatureAccessResult, TierFeatures } from '@nexera/types';
 import { SUBSCRIPTION_TIERS } from './tiers';
+import { triggerUptimizeAIAgent } from './triggerAgent';
 
 function getAdminClient() {
   return createClient(
@@ -11,6 +12,49 @@ function getAdminClient() {
 }
 
 type FeatureKey = keyof TierFeatures;
+
+/**
+ * Features whose denial is high-intent enough to nudge the revenue agent.
+ * Internal/low-value gates (leaderboards, social_feed, push_notifications,
+ * franchise_support, uptimizeai_agents) are deliberately excluded to avoid spam.
+ */
+const UPGRADE_NUDGE_FEATURES: FeatureKey[] = [
+  'ai_programs',
+  'challenges',
+  'coach_notes',
+  'custom_branding',
+  'max_machines',
+];
+
+/** Returns true if a feature-gate denial for this feature should fire the revenue-agent upgrade nudge. */
+export function shouldTriggerUpgradeAgent(feature: FeatureKey): boolean {
+  return UPGRADE_NUDGE_FEATURES.includes(feature);
+}
+
+/**
+ * Fire-and-forget revenue-agent upgrade nudge.
+ * Guarded by UPGRADE_NUDGE_FEATURES — features not in the list are silently ignored.
+ * 7-day per-(gym, feature) cooldown enforced by the trigger route via dedup_key.
+ * Never throws — errors are logged and swallowed.
+ */
+export function fireUpgradeOpportunity(
+  gymId: string,
+  feature: FeatureKey,
+  requiredTier?: SubscriptionTier
+): void {
+  if (!shouldTriggerUpgradeAgent(feature)) return;
+
+  triggerUptimizeAIAgent('revenue-agent', {
+    event: 'upgrade-opportunity',
+    gym_id: gymId,
+    feature,
+    dedup_key: feature,
+    required_tier: requiredTier ?? null,
+    is_agent_initiated: false,
+  }).catch((err: unknown) => {
+    console.error('[featureGate] upgrade-opportunity trigger failed:', err);
+  });
+}
 
 export async function checkFeatureAccess(
   gymId: string,
