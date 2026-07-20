@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: active
-stopped_at: Completed 05-06-PLAN.md — atRiskScan shared helper + at-risk route per-member triggers + agent-weekly cron (420 tests, tsc clean)
-last_updated: "2026-07-20T04:35:00.000Z"
+status: completed
+stopped_at: "Completed 05-07 Task 1 automated gate — waiting human verification at checkpoint:human-verify (Task 2: staging walkthrough)"
+last_updated: "2026-07-20T05:30:56.865Z"
 last_activity: "2026-07-20 — Executed plan 05-06: shared atRiskScan helper + owner at-risk per-member retention triggers + agent-weekly cron (weekly-summary + at-risk early-warning, 420/420 tests, tsc clean)"
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 24
   percent: 92
 ---
 
@@ -112,9 +112,10 @@ Next action: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joi
 - [Phase 05-06-at-risk-weekly]: Zero-member gym suppression in agent-weekly — skip entirely if activeMembers === 0 (no weekly-summary, no at-risk scan)
 - [Phase 05-06-at-risk-weekly]: 7-day cooldown in trigger route absorbs both owner-route fires and weekly cron early-warning fires — no additional dedup logic at call sites
 - [Phase 05-06-at-risk-weekly]: gyms_scanned counter tracks only gyms that passed activeMembers > 0 check
+- [Phase 05-uptimizeai-agent-connection]: jest.mock factory with jest.requireActual('zod') needed when module exports both functions and Zod schemas — auto-mock nulls schema to undefined
 
 ## Session Continuity
 
-Last session: 2026-07-20T04:35:00.000Z
-Stopped at: Completed 05-06-PLAN.md — atRiskScan shared helper + at-risk route per-member triggers + agent-weekly cron (420 tests, tsc clean)
+Last session: 2026-07-20T05:30:30.433Z
+Stopped at: Completed 05-07 Task 1 automated gate — waiting human verification at checkpoint:human-verify (Task 2: staging walkthrough)
 Resume with: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch) to complete AGENT-03/AGENT-04 remaining automations
