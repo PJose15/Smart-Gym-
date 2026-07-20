@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Active — Wave 2: dispatcher live (NOTIF-01/04), receipt-poll cron live (NOTIF-06), inbox API live (NOTIF-05)"
-stopped_at: Completed 06-09-PLAN.md
-last_updated: "2026-07-20T14:20:26.375Z"
+status: "Active — Wave 3: mobile inbox screen + bell badge + push preferences live (NOTIF-04 UI + NOTIF-05)"
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-07-20T14:26:43.395Z"
 last_activity: "2026-07-20 — Executed plan 06-09: mobile inbox screen + bell badge (useUnreadNotifications) + 7 push-category toggles + quiet hours in settings, 258 mobile tests green (NOTIF-04 UI + NOTIF-05)"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 32
+  completed_plans: 33
   percent: 94
 ---
 
@@ -132,9 +132,11 @@ Next action: Plan 06-10 — E2E verification gate (final plan)
 - [Phase 06-notification-orchestration]: useUnreadNotifications: no Realtime subscription — notifications table not in publication; poll-on-focus for v1
 - [Phase 06-notification-orchestration]: Quiet hours time picker uses Alert (no new deps), 2-hour increments, times stored HH:MM:SS UTC
 - [Phase 06-07]: Webhook owner pushes wrapped in async IIFE with catch — webhook response never blocked by push failures
+- [Phase 06-notification-orchestration]: Feed owner lookup inline (not cached): gym_feed_events select member_id+gym_id per reaction/comment — low volume, no caching overhead
+- [Phase 06-notification-orchestration]: 23505 race branch for reactions: dispatch only on clean insert success branch to avoid double-fire on duplicate-tap
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:20:26.372Z
-Stopped at: Completed 06-07-PLAN.md
+Last session: 2026-07-20T14:26:31.845Z
+Stopped at: Completed 06-06-PLAN.md
 Resume with: Plan 06-09 — Mobile inbox screen consuming GET /api/member/notifications + POST mark-read
