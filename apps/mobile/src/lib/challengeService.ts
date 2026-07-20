@@ -233,7 +233,16 @@ export async function joinChallenge(
 
   if (!session?.access_token) return 'error';
 
-  const apiBase = process.env.EXPO_PUBLIC_API_URL ?? '';
+  const apiBase = process.env.EXPO_PUBLIC_API_URL;
+  if (!apiBase) {
+    if (__DEV__) {
+      console.warn(
+        '[challengeService] EXPO_PUBLIC_API_URL is not set — challenge join is unavailable. ' +
+          'Add it to your .env / EAS build profile.',
+      );
+    }
+    return 'error';
+  }
 
   try {
     const res = await fetch(

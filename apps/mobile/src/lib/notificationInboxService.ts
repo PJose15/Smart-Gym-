@@ -53,7 +53,16 @@ export async function fetchInbox(cursor?: string): Promise<InboxResult | null> {
     const memberId = await getMemberId(session.user.id);
     if (!memberId) return null;
 
-    const apiBase = process.env.EXPO_PUBLIC_API_URL ?? '';
+    const apiBase = process.env.EXPO_PUBLIC_API_URL;
+    if (!apiBase) {
+      if (__DEV__) {
+        console.warn(
+          '[notificationInboxService] EXPO_PUBLIC_API_URL is not set — inbox is unavailable. ' +
+            'Add it to your .env / EAS build profile.',
+        );
+      }
+      return null;
+    }
 
     const params = new URLSearchParams({ member_id: memberId });
     if (cursor) params.set('cursor', cursor);
@@ -96,7 +105,16 @@ export async function markRead(notificationId: string): Promise<boolean> {
     const memberId = await getMemberId(session.user.id);
     if (!memberId) return false;
 
-    const apiBase = process.env.EXPO_PUBLIC_API_URL ?? '';
+    const apiBase = process.env.EXPO_PUBLIC_API_URL;
+    if (!apiBase) {
+      if (__DEV__) {
+        console.warn(
+          '[notificationInboxService] EXPO_PUBLIC_API_URL is not set — mark-read is unavailable. ' +
+            'Add it to your .env / EAS build profile.',
+        );
+      }
+      return false;
+    }
 
     const res = await fetch(
       `${apiBase}/api/member/notifications/${notificationId}/read`,

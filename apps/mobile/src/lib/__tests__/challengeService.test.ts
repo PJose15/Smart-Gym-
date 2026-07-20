@@ -296,8 +296,36 @@ describe('joinChallenge', () => {
   const memberId = 'mem-xyz';
   const gymId = 'gym-abc';
 
+  beforeAll(() => {
+    process.env.EXPO_PUBLIC_API_URL = 'https://api.test.nexera.app';
+  });
+
+  afterAll(() => {
+    delete process.env.EXPO_PUBLIC_API_URL;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('returns "error" without fetching when EXPO_PUBLIC_API_URL is missing', async () => {
+    const saved = process.env.EXPO_PUBLIC_API_URL;
+    delete process.env.EXPO_PUBLIC_API_URL;
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
+        data: { session: { access_token: 'tok-abc' } },
+        error: null,
+      });
+      global.fetch = jest.fn();
+
+      const result = await joinChallenge(challengeId, memberId, gymId);
+      expect(result).toBe('error');
+      expect(global.fetch).not.toHaveBeenCalled();
+    } finally {
+      process.env.EXPO_PUBLIC_API_URL = saved;
+      warnSpy.mockRestore();
+    }
   });
 
   it('returns "joined" on 201 response', async () => {

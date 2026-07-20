@@ -64,12 +64,20 @@ export default function ProgramScreen() {
 
   // ─── Load ─────────────────────────────────────────────────────────────────
 
-  const load = useCallback(async (bypassCache = false) => {
-    let mounted = true;
+  // Mounted flag tied to unmount cleanup — guards setState after unmount
+  // (the previous `let mounted` local was dead code: nothing ever flipped it)
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
+  const load = useCallback(async (bypassCache = false) => {
     try {
       const ctx = await fetchFeedContext();
-      if (!mounted) return;
+      if (!mountedRef.current) return;
 
       if (!ctx) {
         setScreenState({ kind: 'error' });
@@ -91,7 +99,7 @@ export default function ProgramScreen() {
         );
       }
 
-      if (!mounted) return;
+      if (!mountedRef.current) return;
 
       if (program === null || program.days.length === 0) {
         setScreenState({ kind: 'empty' });
@@ -99,16 +107,12 @@ export default function ProgramScreen() {
         setScreenState({ kind: 'loaded', program });
       }
     } catch {
-      if (mounted) setScreenState({ kind: 'error' });
+      if (mountedRef.current) setScreenState({ kind: 'error' });
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
-    const cleanup = load(false);
-    return () => { cleanup?.then(fn => fn?.()); };
+    load(false);
   }, [load]);
 
   // ─── Pull-to-refresh ──────────────────────────────────────────────────────
