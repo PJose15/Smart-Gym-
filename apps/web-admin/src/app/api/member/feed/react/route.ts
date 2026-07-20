@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { feedReactSchema } from '@/lib/validation/feed';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +58,27 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ error: 'Failed to add reaction' }, { status: 500 });
       }
+
+      // Notify event owner of new reaction (skip self-reactions)
+      const { data: feedEvent } = await admin
+        .from('gym_feed_events')
+        .select('member_id, gym_id')
+        .eq('id', event_id)
+        .maybeSingle();
+
+      if (feedEvent && feedEvent.member_id !== member_id) {
+        sendNotification({
+          gym_id: feedEvent.gym_id,
+          member_id: feedEvent.member_id,
+          type: 'feed_reaction',
+          title: 'New reaction',
+          body: 'Someone reacted to your activity.',
+          data: { event_id },
+        }).catch((err: unknown) => {
+          console.error('[feed/react] sendNotification error:', err);
+        });
+      }
+
       return NextResponse.json({ toggled: true, reaction_type });
     }
   } catch {

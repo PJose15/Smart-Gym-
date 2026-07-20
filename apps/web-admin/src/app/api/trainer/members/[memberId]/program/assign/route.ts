@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 /** Shape returned by Supabase join: program_days(*, program_exercises(*)) */
 interface ProgramExerciseRow {
@@ -150,6 +151,18 @@ export async function POST(
         assigned_by: user_id,
         ai_program_id: newProgram.id,
       });
+
+    // Notify member of new program assignment — fire-and-forget
+    sendNotification({
+      gym_id,
+      member_id: memberId,
+      type: 'program_assigned',
+      title: 'New training program',
+      body: 'Your trainer assigned you a new program.',
+      data: { program_id: newProgram.id },
+    }).catch((err: unknown) => {
+      console.error('[trainer/program/assign] sendNotification error:', err);
+    });
 
     return NextResponse.json({ success: true, program_id: newProgram.id });
   } catch (err) {

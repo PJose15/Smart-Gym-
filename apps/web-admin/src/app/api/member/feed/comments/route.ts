@@ -3,6 +3,7 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { feedCommentsQuerySchema, feedCommentSchema } from '@/lib/validation/feed';
 import { checkRateLimit } from '@/lib/rateLimit';
 import type { FeedComment } from '@nexera/types';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 export async function GET(request: NextRequest) {
   try {
@@ -118,6 +119,26 @@ export async function POST(request: NextRequest) {
     await admin.rpc('increment_comment_count', { p_event_id: event_id, p_delta: 1 }).then(({ error: rpcErr }) => {
       if (rpcErr) console.error('[comments] increment_comment_count failed:', rpcErr.message);
     });
+
+    // Notify event owner of new comment (skip self-comments)
+    const { data: feedEvent } = await admin
+      .from('gym_feed_events')
+      .select('member_id, gym_id')
+      .eq('id', event_id)
+      .maybeSingle();
+
+    if (feedEvent && feedEvent.member_id !== member_id) {
+      sendNotification({
+        gym_id: feedEvent.gym_id,
+        member_id: feedEvent.member_id,
+        type: 'feed_comment',
+        title: 'New comment',
+        body: 'Someone commented on your activity.',
+        data: { event_id },
+      }).catch((err: unknown) => {
+        console.error('[feed/comments] sendNotification error:', err);
+      });
+    }
 
     return NextResponse.json({
       id: comment.id,

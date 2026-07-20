@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,6 +55,27 @@ export async function POST(req: NextRequest) {
         { error: 'Failed to follow' },
         { status: 500 }
       );
+
+    // Notify the followed member — fire-and-forget
+    const { data: followedMember } = await admin
+      .from('members')
+      .select('id, gym_id')
+      .eq('id', following_id)
+      .maybeSingle();
+
+    if (followedMember) {
+      sendNotification({
+        gym_id: followedMember.gym_id,
+        member_id: followedMember.id,
+        type: 'new_follower',
+        title: 'New follower',
+        body: 'Someone at your gym started following you.',
+        data: {},
+      }).catch((err: unknown) => {
+        console.error('[social/follow] sendNotification error:', err);
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
