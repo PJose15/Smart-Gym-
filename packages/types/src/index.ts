@@ -750,10 +750,18 @@ export interface FranchiseTotals {
 // ============================================================================
 
 export type NotificationType =
-  | 'coach_note'
-  | 'badge_unlocked'
-  | 'streak_milestone'
-  | 'leaderboard_rank';
+  // Activity
+  | 'pr_achieved' | 'badge_unlocked' | 'level_up' | 'streak_milestone'
+  | 'streak_broken' | 'leaderboard_rank' | 'challenge_rank_change' | 'challenge_complete'
+  // Social
+  | 'feed_reaction' | 'feed_comment' | 'new_follower'
+  // Coaching
+  | 'coach_note' | 'checkin_generated' | 'checkin_reply' | 'program_assigned'
+  // Operational (owner/trainer-facing)
+  | 'trial_ending' | 'payment_failed' | 'subscription_cancelled'
+  | 'member_at_risk' | 'weekly_summary' | 'checkin_overdue' | 'machine_underutilized'
+  // Agent-initiated (member-facing, is_agent_initiated=true)
+  | 'agent_dormant_alert' | 'agent_welcome';
 
 export interface DeviceToken {
   id: string;
@@ -766,11 +774,26 @@ export interface DeviceToken {
   updated_at: string;
 }
 
+/**
+ * Matches the notification_preferences table (migrations 001 + 021).
+ * Keyed by member_id (members.id — not profile_id).
+ * Postgres `time` columns (quiet_hours_start/end) arrive as 'HH:MM:SS' strings.
+ * SMS/email preference columns are out of scope for v1.0 push work.
+ */
 export interface NotificationPreferences {
   id: string;
-  profile_id: string;
+  member_id: string;
   enabled: boolean;
-  created_at: string;
+  push_prs: boolean;
+  push_achievements: boolean;
+  push_level_up: boolean;
+  push_challenge_rank: boolean;
+  push_new_program: boolean;
+  push_trainer_note: boolean;
+  push_gym_feed: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
   updated_at: string;
 }
 
