@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Platform, View, StyleSheet } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Animated, Platform, TouchableOpacity, View, StyleSheet, Text } from 'react-native';
+import { router, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { colors } from '../../src/theme/colors';
@@ -78,12 +78,46 @@ function AnimatedTabIcon({
   );
 }
 
+// The design's signature center scan button: a raised crimson circle that
+// floats above the tab bar with an emissive glow (home.png bottom nav).
+function ScanFab({ focused }: { focused: boolean }) {
+  return (
+    <View style={tabIconStyles.fabWrapper}>
+      <View style={[tabIconStyles.fab, focused && tabIconStyles.fabFocused]}>
+        <Ionicons name="scan-outline" size={26} color={colors.white} />
+      </View>
+    </View>
+  );
+}
+
 const tabIconStyles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     justifyContent: 'center',
     width: 50,
     height: 40,
+  },
+  fabWrapper: {
+    width: 64,
+    alignItems: 'center',
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginTop: -26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderWidth: 1,
+    borderColor: colors.primaryLight,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+  },
+  fabFocused: {
+    backgroundColor: colors.primaryLight,
   },
   glowPill: {
     position: 'absolute',
@@ -97,6 +131,26 @@ const tabIconStyles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     marginTop: 2,
+  },
+});
+
+const headerStyles = StyleSheet.create({
+  wordmark: {
+    fontFamily: typography.fontSerif,
+    fontSize: 20,
+    letterSpacing: 4,
+    color: colors.text,
+  },
+  bellButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });
 
@@ -147,18 +201,26 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarAccessibilityLabel: 'Home tab',
+          // Branded top bar per home.png: serif wordmark left, bell right.
+          headerTitleAlign: 'left',
+          headerTitle: () => (
+            <Text style={headerStyles.wordmark} accessibilityRole="header">
+              NEXERA
+            </Text>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/coach-notes')}
+              accessibilityRole="button"
+              accessibilityLabel="Coach notes"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={headerStyles.bellButton}
+            >
+              <Ionicons name="notifications-outline" size={20} color={colors.text} />
+            </TouchableOpacity>
+          ),
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon name="home-outline" activeName="home" size={size} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="scan"
-        options={{
-          title: 'Scan',
-          tabBarAccessibilityLabel: 'Scan QR code tab',
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon name="qr-code-outline" activeName="qr-code" size={size} color={color} focused={focused} />
           ),
         }}
       />
@@ -184,19 +246,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="scan"
+        options={{
+          title: '',
+          tabBarAccessibilityLabel: 'Scan machine QR code',
+          tabBarIcon: ({ focused }) => <ScanFab focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="challenges"
         options={{
+          // Off the bar to match the design's 5-slot nav — reachable from the
+          // feed header trophy button and challenge cards.
+          href: null,
           title: 'Challenges',
-          tabBarAccessibilityLabel: 'Challenges tab',
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon
-              name="trophy-outline"
-              activeName="trophy"
-              size={size}
-              color={color}
-              focused={focused}
-            />
-          ),
         }}
       />
       <Tabs.Screen

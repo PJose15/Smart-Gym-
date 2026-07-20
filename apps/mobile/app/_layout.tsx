@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { Stack, Redirect, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -35,6 +35,35 @@ import {
   needsRefresh,
 } from '../src/lib/featureFlags';
 import { useOfflineSync } from '../src/lib/hooks/useOfflineSync';
+
+// On web, the phone-designed UI is previewed inside a centered phone-width
+// frame instead of stretching across the desktop viewport.
+function PhoneFrame({ children }: { children: React.ReactNode }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return (
+    <View style={frameStyles.backdrop}>
+      <View style={frameStyles.frame}>{children}</View>
+    </View>
+  );
+}
+
+const frameStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  frame: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 430,
+    backgroundColor: colors.background,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+});
 
 export default function RootLayout() {
   useOfflineSync();
@@ -112,6 +141,7 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
+      <PhoneFrame>
       <StatusBar style="light" />
       <OfflineBanner />
       {/* Redirect unauthenticated users to auth */}
@@ -159,6 +189,7 @@ export default function RootLayout() {
           options={{ title: 'Challenge', headerShown: true }}
         />
       </Stack>
+      </PhoneFrame>
     </ErrorBoundary>
   );
 }

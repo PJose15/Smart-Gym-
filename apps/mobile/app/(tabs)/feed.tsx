@@ -18,7 +18,8 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import type { FeedEventFull, ReactionType, WeightUnit } from '@nexera/types';
 import { supabase } from '../../src/lib/supabase';
 import { Text } from '../../src/components/Text';
@@ -320,6 +321,15 @@ export default function FeedScreen() {
         <Text style={styles.headerTitle} numberOfLines={1}>
           {gymTitle}
         </Text>
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/challenges')}
+          accessibilityRole="button"
+          accessibilityLabel="Open challenges"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={styles.challengesButton}
+        >
+          <Ionicons name="trophy-outline" size={20} color={colors.gold} />
+        </TouchableOpacity>
       </View>
 
       <FeedFilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
@@ -386,11 +396,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm + 4,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  challengesButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.goldSubtle,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   headerTitle: {
     fontSize: typography.h2Size,
