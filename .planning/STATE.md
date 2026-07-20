@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-mobile-program-view/04-01-PLAN.md — 38 new tests, 227/227 mobile, tsc clean
-last_updated: "2026-07-20T00:53:28.923Z"
+stopped_at: Completed 04-mobile-program-view/04-02-PLAN.md — 4 new files, 227/227 mobile, tsc clean
+last_updated: "2026-07-20T01:08:01.903Z"
 last_activity: "2026-07-19 — Executed plan 03-05: final phase gate (mobile 189/189 + web-admin 347/347, tsc clean both apps)"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
   percent: 85
 ---
 
@@ -94,9 +94,11 @@ Next action: Human approves 03-05 Task 2 device walkthrough, then Phase 3 is COM
 - [Phase 04-mobile-program-view]: resolveTodayDayNumber mirrors @nexera/utils getTodaysProgramDay with injected now — home-screen TodayZone consistency wins over DB day_number
 - [Phase 04-mobile-program-view]: fetchProgram returns null (not throw) for no active program — PROG-04 empty state handled gracefully
 - [Phase 04-mobile-program-view]: program_data parsed as { days?: ProgramDay[] } | null with ?? [] fallback — malformed jsonb never throws
+- [Phase 04-mobile-program-view]: program/index is a Stack route (not tab) — tab bar is full at 6 items
+- [Phase 04-mobile-program-view]: program.days.length === 0 treated same as null program — empty state (malformed jsonb guard)
 
 ## Session Continuity
 
-Last session: 2026-07-20T00:53:28.919Z
-Stopped at: Completed 04-mobile-program-view/04-01-PLAN.md — 38 new tests, 227/227 mobile, tsc clean
+Last session: 2026-07-20T01:06:45.846Z
+Stopped at: Completed 04-mobile-program-view/04-02-PLAN.md — 4 new files, 227/227 mobile, tsc clean
 Resume with: Human approves 03-05 Task 2 walkthrough (reply "approved"), then Phase 3 is complete — next: plan Phase 4 Mobile Program View
