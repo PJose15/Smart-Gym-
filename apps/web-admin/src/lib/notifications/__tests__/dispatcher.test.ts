@@ -108,6 +108,7 @@ import {
   sendNotification,
   resolveOwnerProfileId,
   isInQuietWindow,
+  currentTimeInZone,
   CATEGORY_COLUMN_MAP,
 } from '../dispatcher';
 
@@ -716,5 +717,58 @@ describe('CATEGORY_COLUMN_MAP', () => {
   it('unmapped types (agent_dormant_alert, trial_ending) are undefined in map', () => {
     expect(CATEGORY_COLUMN_MAP['agent_dormant_alert']).toBeUndefined();
     expect(CATEGORY_COLUMN_MAP['trial_ending']).toBeUndefined();
+  });
+});
+
+// ── currentTimeInZone (quiet-hours timezone support, migration 032) ────────
+
+describe('currentTimeInZone', () => {
+  // 2024-06-15T12:00:00Z — fixed instant for deterministic zone math
+  const noonUtc = new Date('2024-06-15T12:00:00Z');
+
+  it('null timezone → UTC (legacy behavior)', () => {
+    expect(currentTimeInZone(null, noonUtc)).toBe('12:00:00');
+  });
+
+  it('undefined timezone → UTC', () => {
+    expect(currentTimeInZone(undefined, noonUtc)).toBe('12:00:00');
+  });
+
+  it('invalid IANA name → falls back to UTC', () => {
+    expect(currentTimeInZone('Not/AZone', noonUtc)).toBe('12:00:00');
+  });
+
+  it('America/New_York (EDT, UTC-4 in June) → 08:00:00', () => {
+    expect(currentTimeInZone('America/New_York', noonUtc)).toBe('08:00:00');
+  });
+
+  it('Asia/Tokyo (UTC+9) → 21:00:00', () => {
+    expect(currentTimeInZone('Asia/Tokyo', noonUtc)).toBe('21:00:00');
+  });
+
+  it('h23: midnight renders 00, not 24', () => {
+    // 15:00 UTC = 00:00 in UTC+9
+    const d = new Date('2024-06-15T15:00:00Z');
+    expect(currentTimeInZone('Asia/Tokyo', d)).toBe('00:00:00');
+  });
+
+  it('member in Tokyo at 23:00 local is inside a 22:00–07:00 overnight window even though UTC is 14:00', () => {
+    const d = new Date('2024-06-15T14:00:00Z'); // 23:00 Tokyo
+    const localTime = currentTimeInZone('Asia/Tokyo', d);
+    expect(isInQuietWindow(localTime, '22:00:00', '07:00:00')).toBe(true);
+    // Same instant evaluated in UTC would NOT be quiet — the old bug
+    expect(isInQuietWindow(currentTimeInZone(null, d), '22:00:00', '07:00:00')).toBe(false);
+  });
+
+  it('member in New York at 06:30 local is still inside an overnight 22:00–07:00 window', () => {
+    const d = new Date('2024-06-15T10:30:00Z'); // 06:30 EDT
+    const localTime = currentTimeInZone('America/New_York', d);
+    expect(isInQuietWindow(localTime, '22:00:00', '07:00:00')).toBe(true);
+  });
+
+  it('member in New York at 12:00 local (16:00 UTC) is outside the overnight window', () => {
+    const d = new Date('2024-06-15T16:00:00Z'); // 12:00 EDT
+    const localTime = currentTimeInZone('America/New_York', d);
+    expect(isInQuietWindow(localTime, '22:00:00', '07:00:00')).toBe(false);
   });
 });

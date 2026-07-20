@@ -82,6 +82,33 @@ export function isInQuietWindow(nowTime: string, start: string, end: string): bo
   }
 }
 
+/**
+ * Returns the current wall-clock time as 'HH:MM:SS' in the given IANA
+ * timezone (notification_preferences.timezone, migration 032). Null, empty,
+ * or invalid timezone falls back to UTC — the pre-timezone behavior.
+ */
+export function currentTimeInZone(
+  timezone: string | null | undefined,
+  now: Date = new Date()
+): string {
+  if (timezone) {
+    try {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(now);
+      const get = (t: string) => parts.find(pt => pt.type === t)?.value ?? '00';
+      return `${get('hour')}:${get('minute')}:${get('second')}`;
+    } catch {
+      // Invalid IANA name → fall back to UTC
+    }
+  }
+  return now.toISOString().slice(11, 19);
+}
+
 // ── Admin client factory ──────────────────────────────────────────────────────
 
 function createAdminClient(): SupabaseClient {
@@ -207,7 +234,7 @@ export async function sendNotification(input: {
     // ── Step 3: Inbox write (member-facing only, BEFORE push guards) ──────────
 
     if (resolvedMemberId) {
-      await admin.from('notifications').insert({
+      const { error: inboxError } = await admin.from('notifications').insert({
         member_id: resolvedMemberId,
         gym_id,
         notification_type: type,
@@ -221,6 +248,9 @@ export async function sendNotification(input: {
         status: 'sent',
         sent_at: new Date().toISOString(),
       });
+      if (inboxError) {
+        console.error('[dispatcher] inbox insert failed:', inboxError.message);
+      }
     }
 
     // ── Step 4: Push guards ───────────────────────────────────────────────────
@@ -230,12 +260,19 @@ export async function sendNotification(input: {
       return 'no_devices';
     }
 
-    // Guard 4b + 4c + 4d: fetch preferences (missing row = all defaults enabled)
-    const { data: prefs } = await admin
-      .from('notification_preferences')
-      .select('*')
-      .eq('member_id', resolvedMemberId ?? '')
-      .maybeSingle();
+    // Guard 4b + 4c + 4d: fetch preferences (missing row = all defaults enabled).
+    // Owner-only sends (resolvedMemberId null) have no preferences row — skip
+    // the query entirely instead of matching .eq('member_id', '') which only
+    // produces a silent Postgres error.
+    let prefs: Record<string, unknown> | null = null;
+    if (resolvedMemberId) {
+      const { data: prefsRow } = await admin
+        .from('notification_preferences')
+        .select('*')
+        .eq('member_id', resolvedMemberId)
+        .maybeSingle();
+      prefs = prefsRow as Record<string, unknown> | null;
+    }
 
     if (prefs) {
       // Guard 4b: global enabled check
@@ -249,12 +286,14 @@ export async function sendNotification(input: {
         return 'skipped';
       }
 
-      // Guard 4d: quiet hours (unconditional — no urgency exception)
+      // Guard 4d: quiet hours (unconditional — no urgency exception).
+      // prefs.timezone (IANA, migration 032) localizes 'now'; null → UTC.
       if ((prefs as { quiet_hours_enabled: boolean }).quiet_hours_enabled) {
-        const nowUtcTime = new Date().toISOString().slice(11, 19);
+        const tz = (prefs as { timezone?: string | null }).timezone ?? null;
+        const nowTime = currentTimeInZone(tz);
         const start = (prefs as { quiet_hours_start: string }).quiet_hours_start;
         const end = (prefs as { quiet_hours_end: string }).quiet_hours_end;
-        if (isInQuietWindow(nowUtcTime, start, end)) {
+        if (isInQuietWindow(nowTime, start, end)) {
           return 'skipped';
         }
       }
