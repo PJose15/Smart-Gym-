@@ -44,12 +44,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Accept both header forms
+    // Accept both header forms. pg_cron (migration 029) sends the service-role
+    // key as the Bearer token, so accept either credential (dual-header
+    // pattern — mirrors cron/receipt-poll).
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const providedKey =
       request.headers.get('x-smartgym-internal-key') ??
       request.headers.get('authorization')?.replace('Bearer ', '') ??
       null;
-    if (providedKey !== internalKey) {
+    const isValidKey =
+      (internalKey && providedKey === internalKey) ||
+      (serviceRoleKey && providedKey === serviceRoleKey);
+    if (!isValidKey) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
