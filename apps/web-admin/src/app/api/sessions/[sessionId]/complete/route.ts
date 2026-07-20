@@ -50,13 +50,31 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Get the session
     const { data: session, error: sessionError } = await admin
       .from('workout_sessions')
-      .select('id, gym_id, member_id, sets_count, total_volume_lbs, best_weight_lbs, is_personal_best, session_date')
+      .select('id, gym_id, member_id, sets_count, total_volume_lbs, best_weight_lbs, is_personal_best, session_date, completed_at')
       .eq('id', sessionId)
       .eq('member_id', member_id)
       .single();
 
     if (sessionError || !session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    // Idempotency guard: if the session is already completed, return the
+    // existing summary WITHOUT re-awarding points/achievements/pushes.
+    if (session.completed_at) {
+      return NextResponse.json({
+        success: true,
+        already_completed: true,
+        summary: {
+          session_id: sessionId,
+          sets_count: session.sets_count,
+          total_volume_lbs: session.total_volume_lbs,
+          best_weight_lbs: session.best_weight_lbs,
+          is_personal_best: session.is_personal_best,
+          points_awarded: 0,
+          streak: null,
+        },
+      });
     }
 
     // Mark session as completed

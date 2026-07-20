@@ -70,7 +70,7 @@ function makeStreakContinuingDates(count: number): string[] {
 }
 
 /** Build a chainable Supabase admin mock for this route's query pattern */
-function buildAdmin(opts: { currentStreak: number; recentDates: string[] }) {
+function buildAdmin(opts: { currentStreak: number; recentDates: string[]; completedAt?: string | null }) {
   // The route calls admin.from() in this order:
   //   1. workout_sessions SELECT (single) — fetch session
   //   2. workout_sessions UPDATE — mark completed
@@ -123,6 +123,7 @@ function buildAdmin(opts: { currentStreak: number; recentDates: string[] }) {
                     best_weight_lbs: 100,
                     is_personal_best: false,
                     session_date: '2024-01-15',
+                    completed_at: opts.completedAt ?? null,
                   },
                   error: null,
                 }),
@@ -222,6 +223,27 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
   // ──────────────────────────────────────────────────────────────────────────
   // level-up
   // ──────────────────────────────────────────────────────────────────────────
+
+  it('already-completed session returns already_completed=true and fires nothing', async () => {
+    const admin = buildAdmin({
+      currentStreak: 3,
+      recentDates: makeStreakContinuingDates(3),
+      completedAt: '2024-01-15T10:00:00.000Z',
+    });
+    mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);
+
+    const res = await POST(makeRequest(), makeParams());
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.already_completed).toBe(true);
+    expect(json.summary.session_id).toBe(SESSION_ID);
+    // No points/achievements/agents/feed/challenge side effects re-fired
+    expect(mockAchievements).not.toHaveBeenCalled();
+    expect(mockTrigger).not.toHaveBeenCalled();
+    expect(mockFeedEvents).not.toHaveBeenCalled();
+    expect(mockChallengeScores).not.toHaveBeenCalled();
+  });
 
   it('fires engagement-agent level-up when achievements.leveledUp is true', async () => {
     mockAchievements.mockResolvedValue({ leveledUp: true, newLevel: { level: 5, name: 'Gold', color: '#FFD700' }, newAchievements: [] });
