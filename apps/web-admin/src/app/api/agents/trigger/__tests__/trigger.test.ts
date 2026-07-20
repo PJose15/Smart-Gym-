@@ -49,7 +49,9 @@ const mockDedupEq5 = jest.fn(() => ({ limit: mockDedupLimit }));
 const mockDedupIs = jest.fn(() => ({ eq: mockDedupEq5, limit: mockDedupLimit }));
 const mockDedupEq4 = jest.fn(() => ({ eq: mockDedupEq5, is: mockDedupIs, limit: mockDedupLimit }));
 const mockDedupGte = jest.fn(() => ({ eq: mockDedupEq4, is: mockDedupIs, limit: mockDedupLimit }));
-const mockDedupEq3 = jest.fn(() => ({ gte: mockDedupGte }));
+// .eq('status', 'sent') — skipped/failed rows must not extend the cooldown window
+const mockDedupEqStatus = jest.fn(() => ({ gte: mockDedupGte }));
+const mockDedupEq3 = jest.fn(() => ({ eq: mockDedupEqStatus, gte: mockDedupGte }));
 const mockDedupEq2 = jest.fn(() => ({ eq: mockDedupEq3 }));
 const mockDedupEq1 = jest.fn(() => ({ eq: mockDedupEq2 }));
 const mockDedupSelect = jest.fn(() => ({ eq: mockDedupEq1 }));
@@ -163,6 +165,20 @@ describe('cooldown.ts pure functions', () => {
 
 // ─── Route dedup tests ────────────────────────────────────
 describe('POST /api/agents/trigger — dedup + cooldown', () => {
+  test('dedup query filters status=sent — skipped/failed rows do not extend the cooldown window', async () => {
+    // Regression: caught live in the Phase 5 staging walkthrough. Tier-skipped rows
+    // were extending the cooldown, suppressing legitimate fires after an upgrade.
+    mockDedupLimit.mockResolvedValue({ data: [], error: null });
+
+    const req = makeRequest({
+      agent_name: 'engagement-agent',
+      payload: { event: 'level-up', gym_id: 'gym-abc', member_id: 'member-xyz' },
+    });
+    await POST(req);
+
+    expect(mockDedupEqStatus).toHaveBeenCalledWith('status', 'sent');
+  });
+
   test('outside cooldown window — inserts sent row, returns 200 { success: true }', async () => {
     mockDedupLimit.mockResolvedValue({ data: [], error: null });
 

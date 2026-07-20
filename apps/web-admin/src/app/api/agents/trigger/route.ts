@@ -118,6 +118,7 @@ export async function POST(request: Request) {
         .eq('gym_id', gymId)
         .eq('agent_name', agent_name)
         .eq('trigger_event', triggerEvent)
+        .eq('status', 'sent')
         .gte('executed_at', getCooldownWindowStart(triggerEvent));
 
       // Member scoping: member A firing never blocks member B
