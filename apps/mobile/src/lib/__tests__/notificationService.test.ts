@@ -7,6 +7,10 @@
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
+jest.mock('react-native', () => ({
+  Platform: { OS: 'ios' },
+}));
+
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
   getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
@@ -138,7 +142,7 @@ describe('resolveNotificationRoute — static routes', () => {
 
   it('streak_broken routes to /(tabs)/', () => {
     const result = resolveNotificationRoute('streak_broken', {});
-    expect(result).toMatch(/^\/(tabs)\//);
+    expect(result).toBe('/(tabs)/');
   });
 
   it('badge_unlocked routes to /(tabs)/profile', () => {

@@ -114,20 +114,81 @@ export async function unregisterPushToken(): Promise<void> {
   }
 }
 
-// â”€â”€â”€ Deep Link Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Deep Link Handler ───────────────────────────────────────────────────────
 
+/**
+ * Maps every NotificationType to a route resolver function.
+ * Typed as Record<NotificationType, ...> so tsc enforces totality:
+ * adding a new union member without updating this map is a compile error.
+ *
+ * Deep-link safety note: challenges/[id] and coach-notes/[id] both render
+ * graceful “not found” states for stale IDs (verified Phase 3) — no extra
+ * guard needed here.
+ */
 const NOTIFICATION_ROUTES: Record<
   NotificationType,
   (data: Record<string, string>) => string
 > = {
+  // ── Activity ──────────────────────────────────────────────────────────────
+  pr_achieved: () => '/(tabs)/progress',
+  badge_unlocked: () => '/(tabs)/profile',
+  level_up: () => '/(tabs)/profile',
+  streak_milestone: () => '/(tabs)/profile',
+  // streak_broken: nudge member back to the home tab (motivation context)
+  streak_broken: () => '/(tabs)/',
+  leaderboard_rank: () => '/leaderboard',
+  challenge_rank_change: (data) => {
+    const id = data.challenge_id?.trim();
+    return id ? `/challenges/${id}` : '/(tabs)/feed';
+  },
+  challenge_complete: (data) => {
+    const id = data.challenge_id?.trim();
+    return id ? `/challenges/${id}` : '/(tabs)/feed';
+  },
+
+  // ── Social ────────────────────────────────────────────────────────────────
+  feed_reaction: () => '/(tabs)/feed',
+  feed_comment: () => '/(tabs)/feed',
+  new_follower: () => '/(tabs)/feed',
+
+  // ── Coaching ──────────────────────────────────────────────────────────────
   coach_note: (data) => {
     const noteId = data.note_id?.trim();
     return noteId ? `/coach-notes/${noteId}` : '/(tabs)/profile';
   },
-  badge_unlocked: () => '/(tabs)/profile',
-  streak_milestone: () => '/(tabs)/profile',
-  leaderboard_rank: () => '/leaderboard',
+  checkin_generated: () => '/coach-notes',
+  checkin_reply: () => '/coach-notes',
+  program_assigned: () => '/program',
+
+  // ── Operational (owner/trainer-facing; safe home-tab fallback on member app)
+  trial_ending: () => '/(tabs)/profile',
+  payment_failed: () => '/(tabs)/profile',
+  subscription_cancelled: () => '/(tabs)/profile',
+  member_at_risk: () => '/(tabs)/profile',
+  weekly_summary: () => '/(tabs)/profile',
+  checkin_overdue: () => '/(tabs)/profile',
+  machine_underutilized: () => '/(tabs)/profile',
+
+  // ── Agent-initiated (member-facing) ────────────────────────────────────
+  // agent_dormant_alert / agent_welcome: nudge back to home for re-engagement
+  agent_dormant_alert: () => '/(tabs)/',
+  agent_welcome: () => '/(tabs)/',
 };
+
+/**
+ * Resolves a notification type + data payload to a mobile route string.
+ * Returns null when the type is unrecognised (defensive — union is exhaustive).
+ *
+ * Exported so the Phase 6 inbox screen (plan 06-09) can reuse this for
+ * tap-navigation without duplicating the route map.
+ */
+export function resolveNotificationRoute(
+  type: NotificationType,
+  data: Record<string, string>,
+): string | null {
+  const resolver = NOTIFICATION_ROUTES[type];
+  return resolver ? resolver(data) : null;
+}
 
 /**
  * Handles a notification response (tap) by navigating to the relevant screen.
@@ -140,10 +201,12 @@ export function handleNotificationResponse(
     | undefined;
   const type = data?.type as NotificationType | undefined;
 
-  if (type && NOTIFICATION_ROUTES[type]) {
-    const path = NOTIFICATION_ROUTES[type](data ?? {});
-    trackEvent('push_notification_tapped', { type });
-    router.push(path as Href);
+  if (type) {
+    const path = resolveNotificationRoute(type, data ?? {});
+    if (path) {
+      trackEvent('push_notification_tapped', { type });
+      router.push(path as Href);
+    }
   }
 }
 
