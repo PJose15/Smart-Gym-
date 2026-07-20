@@ -16,7 +16,8 @@ const nextConfig = {
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co",
+      // dicebear + placehold.co serve the demo/seed avatar and logo images
+      "img-src 'self' data: blob: https://*.supabase.co https://api.dicebear.com https://placehold.co",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://api.stripe.com",
       "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
