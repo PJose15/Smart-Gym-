@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { generateSlug } from '@nexera/utils';
 import { onboardRegisterSchema } from '@/lib/validation/onboard';
+import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -105,6 +106,20 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: 'Failed to set up gym. Please try again.' }, { status: 500 });
   }
+
+  // Fire-and-forget growth-agent event after successful gym creation.
+  // PLATFORM_EVENT: new gyms are 'starter' tier — the trigger route bypasses checkAgentAccess
+  // for this event (see trigger route cooldown.ts rationale). No dedup_key needed: 30-day
+  // cooldown per (gym, event) makes this once-per-gym in practice. No owner PII in payload.
+  triggerUptimizeAIAgent('growth-agent', {
+    event: 'new-gym-onboarded',
+    gym_id: gymId,
+    gym_name: gym_name,
+    gym_type: gym_type,
+    is_agent_initiated: false,
+  }).catch((err: unknown) => {
+    console.error('[onboard/register] new-gym-onboarded trigger failed:', err);
+  });
 
   return NextResponse.json({ gym_id: gymId, email });
 }
