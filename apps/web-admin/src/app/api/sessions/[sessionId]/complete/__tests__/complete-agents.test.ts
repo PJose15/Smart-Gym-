@@ -206,8 +206,8 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
     mockRateLimit.mockReturnValue(null);
     mockValidateUUIDs.mockReturnValue(null);
     mockTrigger.mockResolvedValue({ success: true });
-    mockFeedEvents.mockReturnValue(undefined as unknown as ReturnType<typeof generateSessionFeedEvents>);
-    mockChallengeScores.mockReturnValue(undefined as unknown as ReturnType<typeof updateChallengeScores>);
+    mockFeedEvents.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof generateSessionFeedEvents>>);
+    mockChallengeScores.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof updateChallengeScores>>);
     mockRefreshReadiness.mockResolvedValue(undefined);
     mockRefreshMuscleMap.mockResolvedValue(undefined);
 

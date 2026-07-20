@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { runAfterResponse } from '@/lib/asyncWork';
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from '@/lib/billing/stripeClient';
 import { handleStripeWebhook } from '@/lib/billing/stripeHelpers';
@@ -46,12 +47,12 @@ export async function POST(request: Request) {
       const gymId = result.gymId;
       switch (result.action) {
         case 'subscription_cancelled':
-          triggerUptimizeAIAgent('retention-agent', {
+          runAfterResponse(triggerUptimizeAIAgent('retention-agent', {
             event: 'subscription-cancelled',
             gym_id: gymId,
-          }).catch(err => console.error('[webhook] retention-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+          }).catch(err => console.error('[webhook] retention-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error')));
           // Owner push — fire-and-forget (never block webhook response)
-          ;(async () => {
+          runAfterResponse((async () => {
             try {
               const admin = getAdminClient();
               const ownerProfileId = await resolveOwnerProfileId(admin, gymId);
@@ -67,15 +68,15 @@ export async function POST(request: Request) {
             } catch (err) {
               console.error('[webhook] subscription_cancelled push failed:', err instanceof Error ? err.message : 'Unknown error');
             }
-          })();
+          })());
           break;
         case 'payment_failed':
-          triggerUptimizeAIAgent('revenue-agent', {
+          runAfterResponse(triggerUptimizeAIAgent('revenue-agent', {
             event: 'payment-failed',
             gym_id: gymId,
-          }).catch(err => console.error('[webhook] revenue-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+          }).catch(err => console.error('[webhook] revenue-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error')));
           // Owner push — fire-and-forget
-          ;(async () => {
+          runAfterResponse((async () => {
             try {
               const admin = getAdminClient();
               const ownerProfileId = await resolveOwnerProfileId(admin, gymId);
@@ -91,15 +92,15 @@ export async function POST(request: Request) {
             } catch (err) {
               console.error('[webhook] payment_failed push failed:', err instanceof Error ? err.message : 'Unknown error');
             }
-          })();
+          })());
           break;
         case 'trial_ending':
-          triggerUptimizeAIAgent('engagement-agent', {
+          runAfterResponse(triggerUptimizeAIAgent('engagement-agent', {
             event: 'trial-ending-soon',
             gym_id: gymId,
-          }).catch(err => console.error('[webhook] engagement-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+          }).catch(err => console.error('[webhook] engagement-agent trigger failed:', err instanceof Error ? err.message : 'Unknown error')));
           // Owner push — fire-and-forget
-          ;(async () => {
+          runAfterResponse((async () => {
             try {
               const admin = getAdminClient();
               const ownerProfileId = await resolveOwnerProfileId(admin, gymId);
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
             } catch (err) {
               console.error('[webhook] trial_ending push failed:', err instanceof Error ? err.message : 'Unknown error');
             }
-          })();
+          })());
           break;
       }
     }

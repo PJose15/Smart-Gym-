@@ -11,6 +11,7 @@
  */
 
 import { sendNotification } from '@/lib/notifications/dispatcher';
+import { runAfterResponse } from '@/lib/asyncWork';
 import type { NotificationType } from '@nexera/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -113,7 +114,7 @@ export async function sendSessionCompletePush(input: SendSessionCompletePushInpu
   const event = pickSessionPushEvent(sessionInput);
   if (!event) return;
 
-  sendNotification({
+  runAfterResponse(sendNotification({
     gym_id,
     member_id,
     type: event.type,
@@ -122,5 +123,5 @@ export async function sendSessionCompletePush(input: SendSessionCompletePushInpu
     ...(event.data ? { data: event.data } : {}),
   }).catch(err =>
     console.error('[sessionPush] push dispatch failed:', err instanceof Error ? err.message : 'Unknown error')
-  );
+  ));
 }

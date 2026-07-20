@@ -196,8 +196,8 @@ describe('POST /api/sessions/[sessionId]/complete — push integration (06-05)',
     mockValidateUUIDs.mockReturnValue(null);
     mockTrigger.mockResolvedValue({ success: true });
     mockSend.mockResolvedValue('sent');
-    mockFeedEvents.mockReturnValue(undefined as unknown as ReturnType<typeof generateSessionFeedEvents>);
-    mockChallengeScores.mockReturnValue(undefined as unknown as ReturnType<typeof updateChallengeScores>);
+    mockFeedEvents.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof generateSessionFeedEvents>>);
+    mockChallengeScores.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof updateChallengeScores>>);
     mockRefreshReadiness.mockResolvedValue(undefined);
     mockRefreshMuscleMap.mockResolvedValue(undefined);
     mockAchievements.mockResolvedValue({ leveledUp: false, newLevel: null, newAchievements: [] });

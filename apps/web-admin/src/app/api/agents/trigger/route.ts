@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { runAfterResponse } from '@/lib/asyncWork';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { checkAgentAccess } from '@/lib/billing/featureGate';
@@ -169,7 +170,7 @@ export async function POST(request: Request) {
     // This is a locked staging-ready decision: forwarding is optional by design.
     const webhookUrl = process.env.UPTIMIZE_WEBHOOK_URL;
     if (webhookUrl) {
-      fetch(webhookUrl, {
+      runAfterResponse(fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,7 +186,7 @@ export async function POST(request: Request) {
             .update({ status: 'failed', error_message: String(err) })
             .eq('id', logRow.id);
         }
-      });
+      }));
     }
 
     return NextResponse.json({ success: true, log_id: logRow?.id ?? null });

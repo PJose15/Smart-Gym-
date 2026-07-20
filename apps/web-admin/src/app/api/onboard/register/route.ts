@@ -5,6 +5,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { generateSlug } from '@nexera/utils';
 import { onboardRegisterSchema } from '@/lib/validation/onboard';
 import { triggerUptimizeAIAgent } from '@/lib/billing/triggerAgent';
+import { runAfterResponse } from '@/lib/asyncWork';
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
   // PLATFORM_EVENT: new gyms are 'starter' tier — the trigger route bypasses checkAgentAccess
   // for this event (see trigger route cooldown.ts rationale). No dedup_key needed: 30-day
   // cooldown per (gym, event) makes this once-per-gym in practice. No owner PII in payload.
-  triggerUptimizeAIAgent('growth-agent', {
+  runAfterResponse(triggerUptimizeAIAgent('growth-agent', {
     event: 'new-gym-onboarded',
     gym_id: gymId,
     gym_name: gym_name,
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
     is_agent_initiated: false,
   }).catch((err: unknown) => {
     console.error('[onboard/register] new-gym-onboarded trigger failed:', err);
-  });
+  }));
 
   return NextResponse.json({ gym_id: gymId, email });
 }

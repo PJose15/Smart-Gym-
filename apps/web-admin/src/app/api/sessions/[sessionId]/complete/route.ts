@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
+import { runAfterResponse } from '@/lib/asyncWork';
 import { z } from 'zod';
 import { checkAchievementsForMember } from '@/lib/achievements';
 import { generateSessionFeedEvents } from '@/lib/feedGenerator';
@@ -111,28 +112,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Agent: level-up (fire-and-forget)
     if (achievements.leveledUp) {
-      triggerUptimizeAIAgent('engagement-agent', {
+      runAfterResponse(triggerUptimizeAIAgent('engagement-agent', {
         event: 'level-up',
         gym_id: session.gym_id,
         member_id,
         new_level: achievements.newLevel?.level ?? null,
         is_agent_initiated: false,
-      }).catch(err => console.error('[session-complete] level-up agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+      }).catch(err => console.error('[session-complete] level-up agent trigger failed:', err instanceof Error ? err.message : 'Unknown error')));
     }
 
     // Agent: streak-broken â€” only when a real streak (>1) just reset to 1 (fire-and-forget)
     if (previousStreak > 1 && streak === 1) {
-      triggerUptimizeAIAgent('engagement-agent', {
+      runAfterResponse(triggerUptimizeAIAgent('engagement-agent', {
         event: 'streak-broken',
         gym_id: session.gym_id,
         member_id,
         previous_streak: previousStreak,
         is_agent_initiated: false,
-      }).catch(err => console.error('[session-complete] streak-broken agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+      }).catch(err => console.error('[session-complete] streak-broken agent trigger failed:', err instanceof Error ? err.message : 'Unknown error')));
     }
 
     // Generate feed events (fire-and-forget)
-    generateSessionFeedEvents(admin, {
+    runAfterResponse(generateSessionFeedEvents(admin, {
       member_id,
       gym_id: session.gym_id,
       display_name: displayName,
@@ -142,27 +143,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       total_sessions: totalSessions,
       leveled_up: achievements.leveledUp,
       new_level: achievements.newLevel?.level ?? null,
-    });
+    }).catch(err => console.error('[session-complete] feed event generation failed:', err instanceof Error ? err.message : 'Unknown error')));
 
     // Update challenge scores (fire-and-forget)
-    updateChallengeScores(admin, member_id, session.gym_id, {
+    runAfterResponse(updateChallengeScores(admin, member_id, session.gym_id, {
       total_volume_lbs: session.total_volume_lbs || 0,
       is_personal_best: session.is_personal_best ?? false,
       machine_id: null,
       session_id: session.id,
-    });
+    }).catch(err => console.error('[session-complete] challenge scoring failed:', err instanceof Error ? err.message : 'Unknown error')));
 
     // Agent: leaderboard-updated â€” unconditional; 24h/member cooldown in trigger route caps flooding (fire-and-forget)
-    triggerUptimizeAIAgent('engagement-agent', {
+    runAfterResponse(triggerUptimizeAIAgent('engagement-agent', {
       event: 'leaderboard-updated',
       gym_id: session.gym_id,
       member_id,
       session_id: session.id,
       is_agent_initiated: false,
-    }).catch(err => console.error('[session-complete] leaderboard-updated agent trigger failed:', err instanceof Error ? err.message : 'Unknown error'));
+    }).catch(err => console.error('[session-complete] leaderboard-updated agent trigger failed:', err instanceof Error ? err.message : 'Unknown error')));
 
     // Push notification: coalesced session-complete push (at most one push per session — NOTIF-02)
-    sendSessionCompletePush({
+    runAfterResponse(sendSessionCompletePush({
       gym_id: session.gym_id,
       member_id,
       leveledUp: achievements.leveledUp,
@@ -170,11 +171,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       isPersonalBest: session.is_personal_best ?? false,
       streak,
       previousStreak,
-    }).catch(err => console.error('[session-complete] push failed:', err instanceof Error ? err.message : 'Unknown error'));
+    }).catch(err => console.error('[session-complete] push failed:', err instanceof Error ? err.message : 'Unknown error')));
 
     // Invalidate and refresh readiness score + muscle map (fire-and-forget)
-    invalidateAndRefreshReadiness(member_id, session.gym_id, admin).catch(() => {});
-    invalidateAndRefreshMuscleMap(member_id, session.gym_id, admin).catch(() => {});
+    runAfterResponse(invalidateAndRefreshReadiness(member_id, session.gym_id, admin).catch(() => {}));
+    runAfterResponse(invalidateAndRefreshMuscleMap(member_id, session.gym_id, admin).catch(() => {}));
 
     return NextResponse.json({
       success: true,
