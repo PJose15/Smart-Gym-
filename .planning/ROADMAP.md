@@ -108,8 +108,17 @@ Plans:
   3. All 13 automations (3 retention, 3 engagement, 2 revenue, 3 operations, 2 growth) demonstrably fire from their event or cron sources in staging against the demo environment
   4. Starter-tier gyms get no agent fires; Growth/Pro gyms get exactly their tier's agent set
   5. Every fire — success, skip, dedup, or failure — is visible in `smartgym_agent_logs`
-**Dependency notes**: Sequenced before Phase 6 per milestone plan, but most agents output member pushes whose delivery layer lands in Phase 6. Phase 5 planning must resolve this: either build the minimal notification dispatcher (NOTIF-01 core) as Phase 5's first plan, or scope Phase 5 agent outputs to owner email + logged actions and activate member pushes in Phase 6. Loop-safety dedup (AGENT-02) is the first task before wiring any trigger (Pitfall 7).
-**Plans**: TBD
+**Dependency notes**: Sequenced before Phase 6 per milestone plan, but most agents output member pushes whose delivery layer lands in Phase 6. **RESOLVED at planning (2026-07-19): Option B per 05-RESEARCH.md** — no dispatcher in Phase 5; agent outputs scoped to logged actions + echo-receiver verification; member push delivery activates in Phase 6, which consumes the `is_agent_initiated` loop-safety flag Phase 5 puts in the payload schema. UptimizeAI is not yet a real external service (LOCKED): all forwarding goes to configurable `UPTIMIZE_WEBHOOK_URL`; staging target = dev echo receiver; go-live = one env var. Loop-safety dedup (AGENT-02, plan 05-02) lands before any new trigger call site (Pitfall 7). Note: `new-gym-onboarded` + `upgrade-opportunity` bypass gym-tier gating as documented PLATFORM_EVENTS (otherwise dead code — firing gyms never have Pro); human sign-off at the 05-07 gate.
+**Plans:** 7 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Migration 029 (dedup indexes + agent cron schedules) + echo receiver + UPTIMIZE env contract [wave 1, checkpoint: db push]
+- [ ] 05-02-PLAN.md — Trigger route hardening: cooldown dedup, is_agent_initiated, UPTIMIZE forwarding + failure recording (TDD) [wave 1]
+- [ ] 05-03-PLAN.md — Session-complete wiring (level-up, streak-broken, leaderboard-updated) + challenge-ended owner path [wave 2]
+- [ ] 05-04-PLAN.md — upgrade-opportunity (featureGate helpers + machine-limit) + new-gym-onboarded (register) [wave 2]
+- [ ] 05-05-PLAN.md — agent-daily cron: dormant members, checkin SLA, machine underutilization, challenge auto-expiry [wave 2]
+- [ ] 05-06-PLAN.md — at-risk per-member wiring + shared atRiskScan helper + agent-weekly cron (weekly-summary, at-risk early warning) [wave 2]
+- [ ] 05-07-PLAN.md — Full automated gate + 13-automation staging walkthrough checkpoint (tier matrix, cooldown, PLATFORM_EVENTS sign-off) [wave 3]
 
 ### Phase 6: Notification Orchestration Wiring
 **Goal**: Members and owners get timely, relevant, controllable push notifications for everything that matters — and nothing they opted out of
@@ -121,7 +130,7 @@ Plans:
   3. One workout that triggers multiple events (PR + badge + streak) does not produce a barrage — dedup and rate caps hold
   4. Member reviews past notifications in an inbox with unread badge; read state syncs on tap
   5. Uninstalled devices stop receiving sends: stale Expo tokens are auto-deactivated via receipt polling, and delivery rate is visible to admins
-**Dependency notes**: Build order from research: dispatcher first (everything depends on it), then `NotificationType`/`NOTIFICATION_ROUTES` expansion, then trigger wiring by value (session-complete cluster → coaching → social), then preferences UI, inbox, receipt-polling cron. `is_agent_initiated` flag in the payload schema is required for Phase 5 loop safety. No PII in push bodies (lock-screen exposure).
+**Dependency notes**: Build order from research: dispatcher first (everything depends on it), then `NotificationType`/`NOTIFICATION_ROUTES` expansion, then trigger wiring by value (session-complete cluster → coaching → social), then preferences UI, inbox, receipt-polling cron. `is_agent_initiated` flag in the payload schema is required for Phase 5 loop safety — established by Phase 5 plan 05-02; the dispatcher must check `data.is_agent_initiated === true` and skip re-triggering agents. No PII in push bodies (lock-screen exposure).
 **Plans**: TBD
 
 ## Progress
@@ -132,7 +141,7 @@ Plans:
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
 | 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
 | 4. Mobile Program View | 2/3 | In Progress|  |
-| 5. UptimizeAI Agent Connection | 0/? | Not started | - |
+| 5. UptimizeAI Agent Connection | 0/7 | Planned | - |
 | 6. Notification Orchestration Wiring | 0/? | Not started | - |
 
 ---
