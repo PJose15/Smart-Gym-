@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-07-20T13:45:16.203Z"
-last_activity: "2026-07-20 — Executed plan 06-02: migration 031 applied (notification_log 'delivered' CHECK + idx_notification_log_receipt_pending + nexera-receipt-poll pg_cron every 15 min; migrations 001-031 in sync)"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-07-20T13:56:44.959Z"
+last_activity: "2026-07-20 — Executed plan 06-04: receipt-poll cron (Expo getReceipts, delivered/failed/DeviceNotRegistered deactivation), admin health delivery_rate block"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 26
+  completed_plans: 27
   percent: 92
 ---
 
@@ -26,11 +26,11 @@ See: `.planning/PROJECT.md` (updated 2026-06-03)
 ## Current Position
 
 Phase: 6 of 6 — Notification Orchestration Wiring (10 plans)
-Plan: 2 of 10 complete (06-01 + 06-02 executed)
-Status: Active — Wave 1 complete: NotificationType 4→24, NOTIFICATION_ROUTES 24 types, resolveNotificationRoute exported, migration 031 applied (status CHECK + receipt index + pg_cron schedule)
-Progress: [█████████░] 92%
-Last activity: 2026-07-20 — Executed plan 06-02: migration 031 applied (notification_log 'delivered' CHECK + idx_notification_log_receipt_pending + nexera-receipt-poll pg_cron every 15 min; migrations 001-031 in sync)
-Next action: Plan 06-03 — Central dispatcher (TDD RED-first): preference/quiet-hours/dedup/rate-cap guards, identity bridge, loop safety, inbox writes
+Plan: 4 of 10 complete (06-01 + 06-02 + 06-04 executed; 06-03 TDD RED committed)
+Status: Active — Wave 2: receipt-poll cron route live (NOTIF-06), delivery_rate in admin health, dispatcher TDD RED committed
+Progress: [████████░░] 79%
+Last activity: 2026-07-20 — Executed plan 06-04: receipt-poll cron (Expo getReceipts, delivered/failed/DeviceNotRegistered deactivation), admin health delivery_rate block
+Next action: Plan 06-03 — Central dispatcher GREEN phase: implement dispatcher so TDD RED tests pass (preference/quiet-hours/dedup/rate-cap guards, identity bridge, loop safety, inbox writes)
 
 ## Accumulated Context
 
@@ -117,9 +117,11 @@ Next action: Plan 06-03 — Central dispatcher (TDD RED-first): preference/quiet
 - [Phase 06-notification-orchestration]: nexera-receipt-poll cron '*/15 * * * *': fires before route exists (404 harmlessly) — schedule-before-route pattern from migration 029
 - [Phase 06-notification-orchestration]: NOTIFICATION_ROUTES typed as Record<NotificationType,...>: adding new union member without map entry is a compile error — enforces totality
 - [Phase 06-notification-orchestration]: resolveNotificationRoute exported (not private): inbox screen (06-09) reuses it for tap-navigation without duplicating the route map
+- [Phase 06-notification-orchestration]: Dual-key auth for receipt-poll: SMARTGYM_INTERNAL_KEY or service-role Bearer; DeviceNotRegistered deactivates all active tokens for profile (single-device MVP)
+- [Phase 06-notification-orchestration]: delivery_rate in admin health is over resolved receipts only (delivered/(delivered+failed)); null when denominator 0
 
 ## Session Continuity
 
-Last session: 2026-07-20T13:45:16.197Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-07-20T13:56:44.953Z
+Stopped at: Completed 06-04-PLAN.md
 Resume with: Plan 05-07 — Wave 2 remaining automations (coach-tips, member-joined, new-member-batch) to complete AGENT-03/AGENT-04 remaining automations
