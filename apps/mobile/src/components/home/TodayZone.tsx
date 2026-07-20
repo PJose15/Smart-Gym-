@@ -50,6 +50,19 @@ function ExerciseRow({ exercise, position }: { exercise: TodayExercise; position
   );
 }
 
+function ViewProgramLink({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="link"
+      accessibilityLabel="View full program"
+      style={linkStyles.container}
+    >
+      <Text style={linkStyles.text}>View full program →</Text>
+    </TouchableOpacity>
+  );
+}
+
 export function TodayZone({
   todayWorkout,
   todayDone,
@@ -120,6 +133,8 @@ export function TodayZone({
             <Text style={sectionStyles.coachingText}>{coachingMessage}</Text>
           </View>
         )}
+
+        <ViewProgramLink onPress={() => router.push('/program')} />
       </AnimatedCard>
     );
   }
@@ -160,6 +175,8 @@ export function TodayZone({
         >
           <Text style={sectionStyles.ctaText}>Start today's workout →</Text>
         </TouchableOpacity>
+
+        <ViewProgramLink onPress={() => router.push('/program')} />
       </AnimatedCard>
     );
   }
@@ -358,6 +375,19 @@ const sectionStyles = StyleSheet.create({
     fontFamily: typography.fontRegular,
     color: colors.textSecondary,
     lineHeight: 20,
+  },
+});
+
+const linkStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  text: {
+    fontSize: 13,
+    fontFamily: typography.fontMedium,
+    color: colors.textSecondary,
   },
 });
 
