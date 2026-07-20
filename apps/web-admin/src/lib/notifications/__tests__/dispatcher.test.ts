@@ -368,6 +368,18 @@ describe('sendNotification dispatcher', () => {
   it('7. 5-min dedup owner-only: notification_log count > 0 → skipped', async () => {
     setupHappyPath({ logCount: 1 });
 
+    // Override members to return null — pure owner-only, no member row for this profile
+    tableHandlers['members'] = () => {
+      const chain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      chain.eq.mockReturnValue(chain);
+      return chain;
+    };
+
     const result = await sendNotification({
       gym_id: GYM_ID,
       type: 'trial_ending',
