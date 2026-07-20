@@ -321,8 +321,11 @@ export default function SettingsScreen() {
     try {
       const memberId = await getMemberId(userId);
       if (!memberId) return;
+      // Persist the device timezone alongside quiet hours (column added by
+      // migration 032) so the server can evaluate windows in local time.
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const { error: upsertErr } = await supabase.from('notification_preferences').upsert(
-        { member_id: memberId, ...patch, updated_at: new Date().toISOString() },
+        { member_id: memberId, ...patch, timezone, updated_at: new Date().toISOString() },
         { onConflict: 'member_id' },
       );
       if (upsertErr) throw upsertErr;

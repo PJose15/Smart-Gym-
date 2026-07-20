@@ -67,7 +67,9 @@ const frameStyles = StyleSheet.create({
 
 export default function RootLayout() {
   useOfflineSync();
-  const lastResponseHandled = useRef(false);
+  // Cold-start notification dedupe — keyed by the notification identifier so
+  // the same tap is never handled twice, even if the effect re-runs.
+  const handledNotificationIdRef = useRef<string | null>(null);
   const segments = useSegments();
 
   // Brand fonts (DOC_03 §3). Keys must match theme/typography.ts font names.
@@ -100,8 +102,11 @@ export default function RootLayout() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Keyed on the user id (not the session object) — token refreshes produce a
+  // new session object for the same user and must not tear down the listeners.
+  const sessionUserId = session?.user?.id;
   useEffect(() => {
-    if (!session) return;
+    if (!sessionUserId) return;
 
     let cleanup: (() => void) | undefined;
 
@@ -113,19 +118,20 @@ export default function RootLayout() {
 
       cleanup = setupNotificationListeners();
 
-      // Handle cold-start: app opened from a notification tap
-      if (!lastResponseHandled.current) {
-        lastResponseHandled.current = true;
-        const lastResponse =
-          await Notifications.getLastNotificationResponseAsync();
-        if (lastResponse) {
-          handleNotificationResponse(lastResponse);
-        }
+      // Handle cold-start: app opened from a notification tap.
+      // Dedupe by notification identifier — getLastNotificationResponseAsync
+      // keeps returning the same response on subsequent calls.
+      const lastResponse =
+        await Notifications.getLastNotificationResponseAsync();
+      const identifier = lastResponse?.notification.request.identifier;
+      if (lastResponse && identifier && handledNotificationIdRef.current !== identifier) {
+        handledNotificationIdRef.current = identifier;
+        handleNotificationResponse(lastResponse);
       }
     })();
 
     return () => cleanup?.();
-  }, [session]);
+  }, [sessionUserId]);
 
   // Loading state — wait for auth AND fonts (proceed anyway if fonts error)
   if (session === undefined || (!fontsLoaded && !fontError)) {
