@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { sendNotification } from '@/lib/notifications/dispatcher';
 
 function getAdminClient() {
   return createClient(
@@ -111,6 +112,19 @@ export async function POST(request: NextRequest) {
     ];
 
     await admin.from('onboarding_events').insert(events);
+
+    // Fire-and-forget: agent_welcome push to newly onboarded member.
+    // Freshly onboarded members may have no device token yet — 'no_devices' result is expected and harmless.
+    sendNotification({
+      gym_id,
+      member_id,
+      type: 'agent_welcome',
+      title: 'Welcome to your gym',
+      body: 'You are all set. Scan any machine to start your first workout.',
+      is_agent_initiated: true,
+    }).catch(err =>
+      console.error('[onboard] agent_welcome push failed:', err instanceof Error ? err.message : 'Unknown error')
+    );
 
     return NextResponse.json({ success: true });
   } catch {
