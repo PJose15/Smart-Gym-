@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useMember } from '@/lib/contexts/MemberContext';
 import { formatVolume, formatWeight } from '@/lib/weight';
 import { SkeletonGate } from '@/components/skeleton';
@@ -41,19 +42,29 @@ interface ProgressData {
   recent_workouts: RecentWorkout[];
 }
 
+// Period filter — mirrors mobile progress screen's All/30d/60d/90d pills
+type PeriodDays = 0 | 30 | 60 | 90;
+const PERIOD_OPTIONS: Array<{ label: string; value: PeriodDays }> = [
+  { label: 'All', value: 0 },
+  { label: '30d', value: 30 },
+  { label: '60d', value: 60 },
+  { label: '90d', value: 90 },
+];
+
 const cardStyle: React.CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
-  borderRadius: 16,
+  borderRadius: 'var(--radius-lg, 16px)',
   padding: 16,
   border: '1px solid var(--color-border-subtle)',
 };
 
+// Uppercase section kicker — mirrors mobile sectionTitle
 const sectionTitle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 11,
   fontWeight: 600,
   color: 'var(--color-text-secondary)',
   textTransform: 'uppercase' as const,
-  letterSpacing: '0.05em',
+  letterSpacing: '0.1em',
   margin: '0 0 12px',
 };
 
@@ -102,7 +113,7 @@ function VolumeChart({ data }: { data: WeeklyVolume[] }) {
       <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
         {data.map((d) => (
           <div key={d.week} style={{ flex: 1, textAlign: 'center' }}>
-            <span style={{ fontSize: 9, color: 'var(--color-text-muted)' }}>{d.week}</span>
+            <span style={{ fontSize: 9, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{d.week}</span>
           </div>
         ))}
       </div>
@@ -110,7 +121,7 @@ function VolumeChart({ data }: { data: WeeklyVolume[] }) {
   );
 }
 
-/** 30-day dot calendar */
+/** 30-day dot calendar (period-independent, like mobile's 4-week grid) */
 function WorkoutCalendar({ dates }: { dates: string[] }) {
   const dateSet = new Set(dates);
   const days: { date: string; active: boolean; label: string }[] = [];
@@ -146,6 +157,7 @@ function WorkoutCalendar({ dates }: { dates: string[] }) {
               fontFamily: 'var(--font-mono)',
               color: d.active ? 'var(--text-on-accent, #FFFFFF)' : 'var(--color-text-muted)',
               backgroundColor: d.active ? 'var(--accent, #E0142F)' : 'var(--color-bg-elevated)',
+              boxShadow: d.active ? '0 0 6px var(--accent-glow, rgba(224, 20, 47, 0.28))' : 'none',
             }}
           >
             {d.label}
@@ -156,12 +168,16 @@ function WorkoutCalendar({ dates }: { dates: string[] }) {
   );
 }
 
+// Rank medal colors — mirrors mobile PR showcase (gold / silver / bronze)
+const MEDAL_COLORS = ['var(--gold, #E8B339)', '#C0C0C0', '#CD7F32'];
+
 export default function ProgressPage() {
   const { member, weightUnit, loading: memberLoading } = useMember();
   const [data, setData] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [period, setPeriod] = useState<PeriodDays>(0);
 
   useEffect(() => {
     if (!member) return;
@@ -181,6 +197,34 @@ export default function ProgressPage() {
     })();
   }, [member?.id, retryCount]);
 
+  // Client-side period filtering (the API returns all-time data)
+  const cutoff = useMemo(() => {
+    if (period === 0) return null;
+    const d = new Date();
+    d.setDate(d.getDate() - period);
+    return d.toISOString().slice(0, 10);
+  }, [period]);
+
+  const filteredWeeklyVolume = useMemo(() => {
+    if (!data) return [];
+    if (period === 0) return data.weekly_volume;
+    // Weekly buckets don't carry dates — slice the trailing weeks instead
+    const weeks = Math.min(data.weekly_volume.length, Math.ceil(period / 7) + 1);
+    return data.weekly_volume.slice(-weeks);
+  }, [data, period]);
+
+  const filteredPRs = useMemo(() => {
+    if (!data) return [];
+    if (!cutoff) return data.personal_records;
+    return data.personal_records.filter((pr) => pr.date >= cutoff);
+  }, [data, cutoff]);
+
+  const filteredWorkouts = useMemo(() => {
+    if (!data) return [];
+    if (!cutoff) return data.recent_workouts;
+    return data.recent_workouts.filter((w) => w.date >= cutoff);
+  }, [data, cutoff]);
+
   if (memberLoading) return <ProgressSkeleton />;
 
   if (!member) {
@@ -198,8 +242,8 @@ export default function ProgressPage() {
         <button
           onClick={() => setRetryCount((c) => c + 1)}
           style={{
-            backgroundColor: 'var(--color-blue)',
-            color: '#fff',
+            backgroundColor: 'var(--accent, #E0142F)',
+            color: 'var(--text-on-accent, #FFFFFF)',
             border: 'none',
             borderRadius: 8,
             padding: '10px 24px',
@@ -218,64 +262,189 @@ export default function ProgressPage() {
     <SkeletonGate loading={loading} skeleton={<ProgressSkeleton />}>
       {data && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, paddingTop: 24 }}>
-          <h1 style={{ fontSize: 'var(--text-xl, 24px)', fontWeight: 600, margin: 0, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}>
-            Progress
-          </h1>
+          {/* Header — uppercase kicker + serif headline + leaderboard link
+              (mirrors mobile headingRow) */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <div style={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: 'var(--accent-hover, #FF2740)',
+                marginBottom: 4,
+              }}>
+                Performance
+              </div>
+              <h1 style={{
+                fontSize: 28,
+                fontWeight: 600,
+                margin: 0,
+                color: 'var(--color-text-primary)',
+                fontFamily: 'var(--font-serif)',
+                letterSpacing: '0.02em',
+              }}>
+                Your Progress
+              </h1>
+            </div>
+            <Link
+              href="/gym/leaderboard"
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                color: 'var(--accent-hover, #FF2740)',
+                textDecoration: 'none',
+                padding: '6px 0',
+              }}
+            >
+              LEADERBOARD →
+            </Link>
+          </div>
 
-          {/* Stats overview */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {/* Period filter pills — mirrors mobile periodRow */}
+          <div style={{ display: 'flex', gap: 8 }} role="group" aria-label="Filter period">
+            {PERIOD_OPTIONS.map((opt) => {
+              const active = period === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setPeriod(opt.value)}
+                  aria-pressed={active}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 'var(--radius-full, 9999px)',
+                    border: active
+                      ? '1px solid var(--border-accent, rgba(224, 20, 47, 0.28))'
+                      : '1px solid var(--color-border-subtle)',
+                    backgroundColor: active
+                      ? 'var(--accent-subtle, rgba(224, 20, 47, 0.10))'
+                      : 'var(--color-bg-raised)',
+                    color: active ? 'var(--accent-hover, #FF2740)' : 'var(--color-text-secondary)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Stats overview — 4-across mono stat pills (mobile statsRow) */}
+          <div style={{ display: 'flex', gap: 8 }}>
             {[
               { label: 'Workouts', value: String(data.stats.total_workouts) },
               { label: 'Volume', value: formatVolume(data.stats.total_volume_lbs, weightUnit) },
               { label: 'Avg / Week', value: String(data.stats.avg_per_week) },
               { label: 'Streak', value: `${data.stats.current_streak}d` },
             ].map((s) => (
-              <div key={s.label} style={cardStyle}>
-                <p style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>
+              <div
+                key={s.label}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  backgroundColor: 'var(--color-bg-raised)',
+                  border: '1px solid var(--color-border-subtle)',
+                  borderRadius: 12,
+                  padding: '12px 4px',
+                  textAlign: 'center',
+                }}
+              >
+                <p style={{
+                  fontSize: 17,
+                  fontWeight: 700,
+                  margin: 0,
+                  color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-mono)',
+                  letterSpacing: '-0.02em',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}>
                   {s.value}
                 </p>
-                <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '4px 0 0' }}>
+                <p style={{
+                  fontSize: 9,
+                  color: 'var(--color-text-secondary)',
+                  margin: '3px 0 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}>
                   {s.label}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Volume trend */}
-          {data.weekly_volume.length > 0 && <VolumeChart data={data.weekly_volume} />}
+          {/* Trends — volume trend chart card */}
+          {filteredWeeklyVolume.length > 0 && (
+            <div>
+              <p style={sectionTitle}>Trends</p>
+              <VolumeChart data={filteredWeeklyVolume} />
+            </div>
+          )}
 
-          {/* Calendar */}
-          <WorkoutCalendar dates={data.workout_dates} />
-
-          {/* Personal records */}
-          {data.personal_records.length > 0 && (
+          {/* Personal records — showcase with rank medals (mobile Top Performers) */}
+          {filteredPRs.length > 0 && (
             <div>
               <p style={sectionTitle}>Personal Records</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {data.personal_records.map((pr) => (
+              <div style={{ ...cardStyle, padding: '4px 16px' }}>
+                {filteredPRs.map((pr, i) => (
                   <div
                     key={`${pr.machine_name}-${pr.date}`}
                     style={{
-                      ...cardStyle,
                       display: 'flex',
-                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '12px 16px',
+                      gap: 12,
+                      padding: '10px 0',
+                      borderTop: i > 0 ? '1px solid var(--color-border-subtle)' : 'none',
                     }}
                   >
-                    <div>
+                    {/* Rank medal circle */}
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        border: i < 3
+                          ? `1px solid ${MEDAL_COLORS[i]}`
+                          : '1px solid var(--color-border-subtle)',
+                        backgroundColor: 'var(--color-bg-elevated)',
+                      }}
+                    >
+                      <span style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-mono)',
+                        color: i < 3 ? MEDAL_COLORS[i] : 'var(--color-text-secondary)',
+                      }}>
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--color-text-primary)' }}>
                         {pr.machine_name}
                       </p>
-                      <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
+                      <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '2px 0 0', fontFamily: 'var(--font-mono)' }}>
                         {formatWeight(pr.weight_lbs, weightUnit)} x {pr.reps}
                       </p>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <p style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--gold, #E8B339)', fontFamily: 'var(--font-mono)' }}>
                         {pr.est_1rm}
                       </p>
-                      <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: 0 }}>Est. 1RM</p>
+                      <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Est. 1RM
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -283,23 +452,27 @@ export default function ProgressPage() {
             </div>
           )}
 
-          {/* Recent workouts */}
-          {data.recent_workouts.length > 0 && (
+          {/* Consistency calendar */}
+          <WorkoutCalendar dates={data.workout_dates} />
+
+          {/* Recent workouts — session breakdown list (mobile exercise breakdown slot) */}
+          {filteredWorkouts.length > 0 && (
             <div>
               <p style={sectionTitle}>Recent Workouts</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {data.recent_workouts.map((w) => (
+              <div style={{ ...cardStyle, padding: '4px 16px' }}>
+                {filteredWorkouts.map((w, i) => (
                   <div
                     key={w.id}
                     style={{
-                      ...cardStyle,
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '12px 16px',
+                      gap: 12,
+                      padding: '10px 0',
+                      borderTop: i > 0 ? '1px solid var(--color-border-subtle)' : 'none',
                     }}
                   >
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--color-text-primary)' }}>
                         {new Date(w.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
@@ -309,12 +482,12 @@ export default function ProgressPage() {
                         </p>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
                         {w.sets} sets
                       </span>
                       {w.duration_min > 0 && (
-                        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
                           {w.duration_min}m
                         </span>
                       )}

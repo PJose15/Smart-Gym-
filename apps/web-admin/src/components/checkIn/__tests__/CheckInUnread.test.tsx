@@ -150,14 +150,15 @@ test('T3: markRead PATCHes API and optimistically clears hasUnread', async () =>
 
 // ── BottomNav Tests ──────────────────────────────
 
-// T4: Gold dot renders when unreadCheckIn=true
-test('T4: gold dot renders on Program tab when unreadCheckIn=true', () => {
+// T4: Gold dot renders when unreadCheckIn=true (lives on Profile — the
+// Program tab left the bar when the nav aligned with mobile's 5-slot layout)
+test('T4: gold dot renders on Profile tab when unreadCheckIn=true', () => {
   const { container } = render(<BottomNav unreadCheckIn={true} />);
   const goldDot = container.querySelector('[role="presentation"]');
   expect(goldDot).toBeTruthy();
   // Button should have accessible label including unread status
-  const programBtn = container.querySelector('[aria-label="Program (unread check-in)"]');
-  expect(programBtn).toBeTruthy();
+  const profileBtn = container.querySelector('[aria-label="Profile (unread check-in)"]');
+  expect(profileBtn).toBeTruthy();
 });
 
 // T5: Gold dot hidden when unreadCheckIn=false
@@ -166,8 +167,21 @@ test('T5: gold dot hidden when unreadCheckIn=false', () => {
   const goldDot = container.querySelector('[role="presentation"]');
   expect(goldDot).toBeNull();
   // Button should have plain label
-  const programBtn = container.querySelector('[aria-label="Program"]');
-  expect(programBtn).toBeTruthy();
+  const profileBtn = container.querySelector('[aria-label="Profile"]');
+  expect(profileBtn).toBeTruthy();
+});
+
+// T4b: nav exposes the mobile-aligned tab set — Home, Feed, FAB, Progress, Profile
+test('T4b: BottomNav renders Home/Feed/Progress/Profile tabs and the workout FAB', () => {
+  const { container } = render(<BottomNav />);
+  expect(container.querySelector('[aria-label="Home"]')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Feed"]')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Progress"]')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Profile"]')).toBeTruthy();
+  expect(container.querySelector('[aria-label="Today\'s workout"]')).toBeTruthy();
+  // Old Program/Gym labeled tabs are gone from the bar
+  expect(container.querySelector('[aria-label="Program"]')).toBeNull();
+  expect(container.querySelector('[aria-label="Gym"]')).toBeNull();
 });
 
 // ── CheckInMessage Tests ─────────────────────────

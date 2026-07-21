@@ -47,7 +47,7 @@ const mockProfileData = {
   level: {
     current: { level: 5, name: 'Silver', color: '#C0C0C0', minPts: 400, maxPts: 600 },
     next: { level: 6, name: 'Gold', color: '#FFD700', minPts: 600, maxPts: 900 },
-    totalPoints: 500,
+    score: 500,
     progressPct: 50,
     pointsToNext: 100,
   },
@@ -153,7 +153,9 @@ test('T4: renders level badge with correct name and color', async () => {
   });
 
   expect(result!.container.textContent).toContain('Silver');
-  expect(result!.container.textContent).toContain('Lv.5');
+  // Hero identity card renders the "LEVEL 5 · 500 XP" mono line
+  expect(result!.container.textContent).toContain('LEVEL');
+  expect(result!.container.textContent).toContain('500 XP');
   // Level name rendered in the correct color
   const levelName = Array.from(result!.container.querySelectorAll('span')).find(
     (el) => el.textContent === 'Silver'
@@ -174,7 +176,7 @@ test('T5: renders XP progress bar with correct width%', async () => {
 
   const progressBar = result!.container.querySelector('div[style*="width: 50%"]');
   expect(progressBar).toBeTruthy();
-  expect(result!.container.textContent).toContain('100 pts to Gold');
+  expect(result!.container.textContent).toContain('100 XP TO LEVEL 6');
 });
 
 // T6: Renders lifetime stats grid (workouts, volume, sets, time)
@@ -192,13 +194,14 @@ test('T6: renders lifetime stats grid', async () => {
   expect(text).toContain('125.0k lbs');
   expect(text).toContain('310');
   expect(text).toContain('30h 50m');
-  expect(text).toContain('Workouts');
+  // Overview tab tiles mirror mobile OverviewTab labels
+  expect(text).toContain('Sessions');
   expect(text).toContain('Volume');
-  expect(text).toContain('Total Sets');
-  expect(text).toContain('Time');
+  expect(text).toContain('Sets');
+  expect(text).toContain('Time in Gym');
 });
 
-// T7: Renders streak card with current and best
+// T7: Renders streak card with current and best (Achievements tab)
 test('T7: renders streak card with current and best', async () => {
   mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
@@ -206,6 +209,11 @@ test('T7: renders streak card with current and best', async () => {
   let result: ReturnType<typeof render>;
   await act(async () => {
     result = render(<ProfilePage />);
+  });
+
+  // Streak card lives in the ACHIEVEMENTS tab (mobile parity)
+  await act(async () => {
+    fireEvent.click(result!.getByText('Achievements'));
   });
 
   const text = result!.container.textContent!;
@@ -226,16 +234,15 @@ test('T8: renders favorite machines list', async () => {
   });
 
   const text = result!.container.textContent!;
-  expect(text).toContain('Favorite Machines');
+  // Mirrors mobile OverviewTab "Most Used Machines" (rank + Nx count)
+  expect(text).toContain('Most Used Machines');
   expect(text).toContain('Bench Press');
-  expect(text).toContain('18 sessions');
+  expect(text).toContain('18x');
   expect(text).toContain('Squat Rack');
-  expect(text).toContain('14 sessions');
-  expect(text).toContain('#1');
-  expect(text).toContain('#2');
+  expect(text).toContain('14x');
 });
 
-// T9: Renders achievements/badges grid
+// T9: Renders achievements/badges grid (Achievements tab)
 test('T9: renders achievements grid', async () => {
   mockUseMember.mockReturnValue({ member: mockMember, gym: null, weightUnit: 'lbs', loading: false });
   mockFetchSuccess();
@@ -243,6 +250,11 @@ test('T9: renders achievements grid', async () => {
   let result: ReturnType<typeof render>;
   await act(async () => {
     result = render(<ProfilePage />);
+  });
+
+  // Badges grid lives in the ACHIEVEMENTS tab (mobile parity)
+  await act(async () => {
+    fireEvent.click(result!.getByText('Achievements'));
   });
 
   const text = result!.container.textContent!;
@@ -263,7 +275,8 @@ test('T10: shows "Member since" footer with formatted date', async () => {
     result = render(<ProfilePage />);
   });
 
-  expect(result!.container.textContent).toContain('Member since January 2025');
+  // Hero card shows short-month member-since (mobile ProfileHeader parity)
+  expect(result!.container.textContent).toContain('Member since Jan 2025');
 });
 
 // T11: Shows error state and retry button on fetch failure
