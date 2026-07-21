@@ -440,11 +440,16 @@ export interface FeedContext {
   gymName: string | null;
 }
 
-export async function fetchFeedContext(): Promise<FeedContext | null> {
+export async function fetchFeedContext(): Promise<FeedContext | 'signed-out' | null> {
+  // getSession reads locally — getUser() round-trips to the auth server and
+  // returns null on transient/revoked-session failures, which used to render
+  // as a fake "check your connection" error. A missing session is reported
+  // distinctly so the screen can send the user back to sign-in instead.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
+  if (!user) return 'signed-out';
 
   const { data: member } = await supabase
     .from('members')

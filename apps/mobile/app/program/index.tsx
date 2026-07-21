@@ -79,7 +79,7 @@ export default function ProgramScreen() {
       const ctx = await fetchFeedContext();
       if (!mountedRef.current) return;
 
-      if (!ctx) {
+      if (!ctx || ctx === 'signed-out') {
         setScreenState({ kind: 'error' });
         return;
       }

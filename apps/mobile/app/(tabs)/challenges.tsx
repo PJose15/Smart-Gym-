@@ -70,7 +70,7 @@ export default function ChallengesScreen() {
       const [ctx, unit] = await Promise.all([fetchFeedContext(), getWeightUnit()]);
       setWeightUnit(unit);
 
-      if (!ctx) {
+      if (!ctx || ctx === 'signed-out') {
         // No authenticated session — treat as empty / sign-in required
         setError(true);
         setLoading(false);

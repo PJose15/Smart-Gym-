@@ -85,6 +85,13 @@ export default function FeedScreen() {
     try {
       const [ctx, unit] = await Promise.all([fetchFeedContext(), getWeightUnit()]);
       setWeightUnit(unit);
+      if (ctx === 'signed-out') {
+        // Session expired or was revoked — re-auth instead of showing a
+        // fake "check your connection" error.
+        await supabase.auth.signOut().catch(() => {});
+        router.replace('/auth');
+        return;
+      }
       if (!ctx) {
         setError(true);
         return;

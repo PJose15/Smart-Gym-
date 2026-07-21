@@ -191,7 +191,7 @@ function WorkoutShareSection({ workoutId, volumeKg, prsHit, machinesUsed }: Work
       try {
         const feedCtx = await fetchFeedContext();
         if (cancelled) return;
-        if (!feedCtx) {
+        if (!feedCtx || feedCtx === 'signed-out') {
           setPhase('hidden');
           return;
         }
