@@ -14,7 +14,9 @@ export function MemberAuthGate({ children }: MemberAuthGateProps) {
 
   useEffect(() => {
     if (!loading && !member) {
-      router.replace('/m/welcome');
+      // Signed-out (or expired) members go to the sign-in page — /m/welcome
+      // is the scan-flow landing for non-members and has no login path.
+      router.replace('/auth');
     }
   }, [loading, member, router]);
 
