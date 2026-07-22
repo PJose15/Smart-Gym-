@@ -103,6 +103,7 @@ export async function handleStripeWebhook(
 
   try {
   switch (event.type) {
+    case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription;
       const gymId = sub.metadata.gym_id;

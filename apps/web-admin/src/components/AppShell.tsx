@@ -28,6 +28,12 @@ export function AppShell({ children }: AppShellProps) {
     return <>{children}</>;
   }
 
+  // Onboarding routes → public self-serve flow, full-bleed (no sidebar, no admin AuthGate)
+  const onboardPaths = ['/signup', '/verify-email', '/subscribe', '/setup'];
+  if (onboardPaths.some((p) => pathname === p || pathname?.startsWith(p + '/'))) {
+    return <>{children}</>;
+  }
+
   // /auth/* routes → centered card, no sidebar (AuthGate handles bypass)
   // Everything else → sidebar + AuthGate (existing admin behavior)
   return (
