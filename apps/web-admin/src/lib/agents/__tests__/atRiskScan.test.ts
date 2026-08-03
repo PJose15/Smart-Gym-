@@ -81,7 +81,9 @@ function makeFullSessionsChain(data: unknown[]) {
 
 // ─── Test data ───────────────────────────────────────────
 
-const NOW = new Date('2026-07-19T12:00:00Z');
+// Anchored to the real clock: fetchGymAtRiskMembers compares against Date.now(),
+// so fixture dates must stay relative or the healthy member ages into at-risk.
+const NOW = new Date();
 
 // Member who worked out 2 days ago → healthy
 const RECENT_SESSION_DATE = new Date(NOW.getTime() - 2 * 86400000).toISOString();
