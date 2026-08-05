@@ -3,6 +3,13 @@ import { supabase } from '../supabase';
 
 const NOW = new Date('2025-06-15T10:00:00Z').getTime();
 
+/** Mock the deployed schema: .select('flag_key, is_enabled') resolves directly. */
+function mockFlagsQuery(result: { data: unknown; error: unknown }) {
+  (supabase.from as jest.Mock).mockReturnValueOnce({
+    select: jest.fn().mockResolvedValueOnce(result),
+  });
+}
+
 beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(NOW);
@@ -20,16 +27,12 @@ describe('isFeatureEnabled', () => {
   });
 
   test('returns false after clearFlagCache', async () => {
-    // Simulate a populated cache by refreshing with mock data
     (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
       data: { user: { id: 'user-1' } },
     });
-    (supabase.from as jest.Mock).mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockResolvedValueOnce({
-        data: [{ key: 'ai_assist', enabled: true, profile_id: null }],
-        error: null,
-      }),
+    mockFlagsQuery({
+      data: [{ flag_key: 'ai_assist', is_enabled: true }],
+      error: null,
     });
 
     await refreshFeatureFlags();
@@ -49,10 +52,7 @@ describe('needsRefresh', () => {
     (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
       data: { user: { id: 'user-1' } },
     });
-    (supabase.from as jest.Mock).mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockResolvedValueOnce({ data: [], error: null }),
-    });
+    mockFlagsQuery({ data: [], error: null });
 
     await refreshFeatureFlags();
     expect(needsRefresh()).toBe(false);
@@ -62,10 +62,7 @@ describe('needsRefresh', () => {
     (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
       data: { user: { id: 'user-1' } },
     });
-    (supabase.from as jest.Mock).mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockResolvedValueOnce({ data: [], error: null }),
-    });
+    mockFlagsQuery({ data: [], error: null });
 
     await refreshFeatureFlags();
     jest.setSystemTime(NOW + 5 * 60 * 1000 + 1);
@@ -83,19 +80,16 @@ describe('refreshFeatureFlags', () => {
     expect(isFeatureEnabled('anything')).toBe(false);
   });
 
-  test('loads gym-level flags', async () => {
+  test('loads global flags keyed by flag_key', async () => {
     (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
       data: { user: { id: 'user-1' } },
     });
-    (supabase.from as jest.Mock).mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockResolvedValueOnce({
-        data: [
-          { key: 'ai_assist', enabled: true, profile_id: null },
-          { key: 'social_feed', enabled: false, profile_id: null },
-        ],
-        error: null,
-      }),
+    mockFlagsQuery({
+      data: [
+        { flag_key: 'ai_assist', is_enabled: true },
+        { flag_key: 'social_feed', is_enabled: false },
+      ],
+      error: null,
     });
 
     await refreshFeatureFlags();
@@ -103,19 +97,16 @@ describe('refreshFeatureFlags', () => {
     expect(isFeatureEnabled('social_feed')).toBe(false);
   });
 
-  test('user-specific override beats gym-level', async () => {
+  test('last row wins for duplicate flag keys', async () => {
     (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
       data: { user: { id: 'user-1' } },
     });
-    (supabase.from as jest.Mock).mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockResolvedValueOnce({
-        data: [
-          { key: 'ai_assist', enabled: false, profile_id: null },
-          { key: 'ai_assist', enabled: true, profile_id: 'user-1' },
-        ],
-        error: null,
-      }),
+    mockFlagsQuery({
+      data: [
+        { flag_key: 'ai_assist', is_enabled: false },
+        { flag_key: 'ai_assist', is_enabled: true },
+      ],
+      error: null,
     });
 
     await refreshFeatureFlags();
@@ -126,13 +117,7 @@ describe('refreshFeatureFlags', () => {
     (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
       data: { user: { id: 'user-1' } },
     });
-    (supabase.from as jest.Mock).mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(),
-      or: jest.fn().mockResolvedValueOnce({
-        data: null,
-        error: { message: 'network error' },
-      }),
-    });
+    mockFlagsQuery({ data: null, error: { message: 'network error' } });
 
     // Should not throw
     await refreshFeatureFlags();

@@ -113,7 +113,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json({ success: true, rank: initialRank }, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[member/challenges/join] Error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

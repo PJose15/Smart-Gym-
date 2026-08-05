@@ -126,7 +126,8 @@ export default function ProgramScreen() {
   // ─── Start workout handler ─────────────────────────────────────────────────
 
   const handleStartWorkout = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Haptics are unavailable on web and must never block navigation.
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     router.push('/(tabs)/scan');
   }, [router]);
 

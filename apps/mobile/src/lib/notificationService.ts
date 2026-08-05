@@ -17,6 +17,9 @@ import type { NotificationType } from '@nexera/types';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
+    // SDK 52's NotificationBehavior requires shouldShowAlert; banner/list are
+    // the SDK 53+ names kept for forward compatibility.
+    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: true,

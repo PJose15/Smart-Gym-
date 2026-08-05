@@ -3,7 +3,12 @@
  * caches locally, and provides a simple isEnabled check.
  */
 import { supabase } from './supabase';
-import type { FeatureFlag } from '@nexera/types';
+
+/** Row shape of the deployed feature_flags table (global flags, no per-user overrides). */
+interface FeatureFlagRow {
+  flag_key: string;
+  is_enabled: boolean;
+}
 
 // Local in-memory cache
 let flagCache: Map<string, boolean> = new Map();
@@ -21,26 +26,14 @@ export async function refreshFeatureFlags(): Promise<void> {
 
     const { data, error } = await supabase
       .from('feature_flags')
-      .select('*')
-      .or(`profile_id.eq.${user.id},profile_id.is.null`);
+      .select('flag_key, is_enabled');
 
     if (error || !data) return;
 
-    const flags = data as FeatureFlag[];
+    const flags = data as FeatureFlagRow[];
     const resolved = new Map<string, boolean>();
-
-    // First pass: gym-level flags (lower priority)
     for (const flag of flags) {
-      if (flag.profile_id === null) {
-        resolved.set(flag.key, flag.enabled);
-      }
-    }
-
-    // Second pass: user-specific overrides (higher priority)
-    for (const flag of flags) {
-      if (flag.profile_id === user.id) {
-        resolved.set(flag.key, flag.enabled);
-      }
+      resolved.set(flag.flag_key, flag.is_enabled);
     }
 
     flagCache = resolved;
