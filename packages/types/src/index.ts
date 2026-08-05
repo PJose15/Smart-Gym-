@@ -373,14 +373,9 @@ export interface MachineCues {
   cue_source: string;
 }
 
-export interface FeatureFlag {
-  id: string;
-  gym_id: string | null;
-  profile_id: string | null;
-  key: string;
-  enabled: boolean;
-  created_at: string;
-}
+// Feature flags: use PlatformFeatureFlag (re-exported from ./admin) — the
+// deployed feature_flags table is global-only (flag_key/is_enabled), never
+// per-gym or per-profile.
 
 export interface AppEvent {
   id?: string;
