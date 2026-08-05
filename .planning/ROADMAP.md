@@ -18,8 +18,8 @@
 
 - [x] **Phase 1: Gym Owner Self-Serve Onboarding** - 4-step signup → Stripe trial checkout → first-machine wizard → member CSV import (completed 2026-07-19)
 - [x] **Phase 2: Mobile Social Feed** - COMPLETE 2026-07-17 — full mobile feed tab (18 event types, reactions, comments, realtime, follow/unfollow, unread badge, workout share)
-- [ ] **Phase 3: Mobile Challenges** - Browse, join, track progress, and view leaderboards from mobile (existing backend)
-- [ ] **Phase 4: Mobile Program View** - Full week/day program visibility on mobile (existing backend)
+- [x] **Phase 3: Mobile Challenges** - Browse, join, track progress, and view leaderboards from mobile (completed 2026-08-04 — all 6 walkthrough checks verified via live react-native-web session + API-level join evidence; haptic/confetti feel remains device-only, code-verified. Evidence in 03-05-SUMMARY.md)
+- [x] **Phase 4: Mobile Program View** - Full week/day program visibility on mobile (completed 2026-08-04 — checks 1-4 verified via live react-native-web session incl. empty-state toggle; pull-to-refresh gesture device-only, code-verified. Evidence in 04-VERIFICATION.md)
 - [x] **Phase 5: UptimizeAI Agent Connection** - 13 automations wired end-to-end through the existing agent webhook infra (completed 2026-07-20)
 - [x] **Phase 6: Notification Orchestration Wiring** - 24+ push triggers through a preference-enforcing dispatcher, with inbox + deep links (completed 2026-07-20)
 

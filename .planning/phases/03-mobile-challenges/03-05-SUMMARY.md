@@ -98,3 +98,34 @@ None — Task 1 was verification-only (no code changes). All 4 prior plans shipp
 - Migration 028 file confirmed at `supabase/migrations/028_challenge_member_read.sql`.
 - All test counts are exact (not estimated) — copied from jest output above.
 - No files were created or modified by this plan (as expected — gate plan only).
+
+## Walkthrough Evidence (2026-08-04, executed by Claude via react-native-web + live DB)
+
+Device unavailable/unstable (emulator ANR-looped on host); checks driven in a browser against the
+real Metro bundle, live Supabase (RLS as member.demo@nexera.app / Marcus Rodriguez), and the live
+web-admin API. All 6 checks PASS:
+
+1. CHAL-01 browse: 5 active cards w/ type badges (Explorer/Sessions/PR/Volume/Streak), descriptions,
+   "26d left" countdowns; Completed toggle renders (empty is CORRECT per 30-day retention filter,
+   challengeService.ts:56 — Strength Week ended >30d ago).
+2. CHAL-02 join: detail screen (badge, prize, 28 competing) → join via POST
+   /api/member/challenges/.../join with Marcus Bearer JWT → {"success":true,"rank":29} 201; UI
+   flipped to Joined, "29 competing". (Browser CORS blocks the fetch cross-origin — web-only
+   artifact; endpoint + payload identical to challengeService.)
+3. Joined/ended states: Join CTA gone on rejoin-visit; Strength Week shows "Challenge ended" banner,
+   "Ended" chip, no Join CTA.
+4. CHAL-03 progress bar: "You: X · Leader: Y" on sessions/PR/volume cards, kg unit respected
+   ("You: 30,480 kg · Leader: 33,712 kg").
+5. CHAL-04 leaderboard: gold/silver/bronze top ranks; Marcus rank 29 pinned under "Your rank"
+   divider as "Marcus Rodriguez (You)"; in-top-10 variant also verified (Strength Week rank 1 row).
+6. Stale deep link: /challenges/00000000-...-0000 → "This challenge is no longer available" +
+   working "Back to challenges" button, no crash.
+
+Haptic evidence: join/start handlers demonstrably invoke expo-haptics (call threw
+UnavailabilityError on web from the onClick stack). Buzz/confetti *feel* = device-only.
+
+Bugs found & fixed during verification (commit 73b4a86): expo-notifications SDK-53 package threw at
+startup in Expo Go (deps realigned to SDK 52); featureFlags queried non-existent profile_id column
+(400 every launch); join route bare catch swallowed diagnostics; EXPO_PUBLIC_API_URL in
+apps/mobile/.env had regressed to localhost:3005 (fixed to http://192.168.1.58:3000 — local file,
+not committed).

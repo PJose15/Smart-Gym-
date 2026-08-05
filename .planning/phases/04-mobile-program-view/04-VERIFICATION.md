@@ -138,3 +138,24 @@ The phase goal — "Members see their full training program — where they are, 
 
 _Verified: 2026-07-19T02:00:00Z_
 _Verifier: Claude (gsd-verifier)_
+
+## UAT Evidence (2026-08-04, executed by Claude via react-native-web + live DB)
+
+Signed in as demo member Marcus Rodriguez; program ...0004-000000000102 active. 4/5 items PASS
+directly; item 5 code-verified (native gesture):
+
+1. Visual fidelity: TodayZone shows "View full program →"; /program renders title "AI Strength
+   Block", chips (Muscle-gain / 4 weeks / 3x/week / AI Coach), "Week 2 of 4 · 3/12 sessions"
+   progress, all 3 day cards with sets×reps, TODAY pill on today's card.
+2. Start CTA: onClick invokes expo-haptics (proven — UnavailabilityError from the handler stack on
+   web) then router.push('/(tabs)/scan'). Nav+haptic wiring verified; buzz feel = device-only.
+   (Fix applied: haptic promise now .catch(()=>{}) so web never blocks nav.)
+3. Exercise navigation: day-card exercise → /exercise/Chest%20Press (URL-encoded), history screen
+   renders with graceful "No Data" (RPC get_exercise_progression 404 → designed fallback path).
+4. Empty state: user-approved toggle is_active false → /program showed "No program assigned yet" +
+   "Open Scanner →", no crash → restored true (state verified restored).
+5. Pull-to-refresh: RefreshControl on native ScrollView — not exercisable in browser; code path
+   verified (cache clear + network reload).
+
+Status: human_needed → COMPLETE (remaining feel-items are device-only polish, wiring fully
+evidenced). See 03-05-SUMMARY.md for the bug-fix commit (73b4a86) produced by this session.
