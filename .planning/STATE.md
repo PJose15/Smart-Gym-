@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Active — Wave 3: mobile inbox screen + bell badge + push preferences live (NOTIF-04 UI + NOTIF-05)"
-stopped_at: Completed 06-10-PLAN.md (Task 1 gate; Task 2 awaiting human device walkthrough)
-last_updated: "2026-07-20T16:03:48.893Z"
-last_activity: "2026-07-20 — Executed plan 06-09: mobile inbox screen + bell badge (useUnreadNotifications) + 7 push-category toggles + quiet hours in settings, 258 mobile tests green (NOTIF-04 UI + NOTIF-05)"
+status: "Complete — milestone v1.0 closed 2026-08-04, all 6 phases signed off"
+stopped_at: Milestone v1.0 complete (06-10 Task 2 device walkthrough closed via react-native-web)
+last_updated: "2026-08-05T00:00:00.000Z"
+last_activity: "2026-08-04 — Closed Phases 3+4 device walkthroughs using react-native-web + Playwright against the live DB (emulator unusable on this host); fixed 6 defects found in the process (73b4a86, 0eb1805, 2808889); stale @nexera/types FeatureFlag removed (9303994)"
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 34
   completed_plans: 34
-  percent: 94
+  percent: 100
 ---
 
 # State
@@ -21,16 +21,27 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-06-03)
 
 **Core value:** Members get instantly-personalized, AI-progressed workouts at the machine; gyms get the operating system that turns equipment usage into retention.
-**Current focus:** Milestone v1.0 — Tier 1 Launch Blockers, roadmap created, planning Phase 1
+**Current focus:** Milestone v1.0 CLOSED. No active phase — next step is scoping v1.1.
 
 ## Current Position
 
-Phase: 6 of 6 — Notification Orchestration Wiring (10 plans)
-Plan: 9 of 10 complete (06-01 + 06-02 + 06-03 + 06-04 + 06-05 + 06-06 + 06-07 + 06-08 + 06-09 executed)
-Status: Active — Wave 3: mobile inbox screen + bell badge + push preferences live (NOTIF-04 UI + NOTIF-05)
-Progress: [█████████░] 94%
-Last activity: 2026-07-20 — Executed plan 06-09: mobile inbox screen + bell badge (useUnreadNotifications) + 7 push-category toggles + quiet hours in settings, 258 mobile tests green (NOTIF-04 UI + NOTIF-05)
-Next action: Plan 06-10 — E2E verification gate (final plan)
+Phase: — (6 of 6 complete)
+Plan: 34 of 34 complete across all phases
+Status: Complete — milestone v1.0 closed 2026-08-04
+Progress: [██████████] 100%
+Last activity: 2026-08-04 — Closed the Phase 3 + Phase 4 device walkthroughs. The Android
+emulator ANR-looped on this 4-core host, so the mobile app was run as react-native-web and
+driven with Playwright against the live database; all functional checks passed and 6 defects
+surfaced in the process were fixed (`73b4a86`, `0eb1805`, `2808889`, `9303994`).
+Next action: `/gsd:new-milestone` to scope v1.1.
+
+**Carried into v1.1 (not blocking v1.0):**
+- Supabase phone provider still disabled — blocks only the Phase 1 step-8 phone-OTP member
+  claim demo. Test OTP `+17875550003`→`123456` unset.
+- 7 push-delivery checks in Phase 6 are device-only (real APNs/FCM); code-verified, unblocked
+  by the expo-notifications dependency fix, but need a dev build rather than Expo Go.
+- Haptic feel, confetti physics, and pull-to-refresh gesture are physically device-only —
+  verified by code inspection at close.
 
 ## Accumulated Context
 

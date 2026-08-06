@@ -40,14 +40,14 @@
 
 Plans:
 - [x] 01-01-PLAN.md — Migration 027 (idempotency table, 'invited' status, atomic-gym + bulk-import RPCs) + deps install [wave 1, checkpoint: db push] ✅ COMPLETE 2026-07-19
-- [ ] 01-02-PLAN.md — Stripe webhook idempotency + checkout.session.completed/expired + hardened createCheckoutSession [wave 1]
-- [ ] 01-03-PLAN.md — POST /api/machines route + shared MachineForm component [wave 1]
-- [ ] 01-04-PLAN.md — Owner dashboard setup checklist + trial countdown banner [wave 1]
+- [x] 01-02-PLAN.md — Stripe webhook idempotency + checkout.session.completed/expired + hardened createCheckoutSession [wave 1]
+- [x] 01-03-PLAN.md — POST /api/machines route + shared MachineForm component [wave 1]
+- [x] 01-04-PLAN.md — Owner dashboard setup checklist + trial countdown banner [wave 1]
 - [x] 01-05-PLAN.md — (onboard)/ route group, register API with rollback, signup + verify-email pages [wave 2] ✅ COMPLETE 2026-07-19
-- [ ] 01-06-PLAN.md — Subscribe page: session handshake, live-price tier picker, abandonment resume [wave 3]
+- [x] 01-06-PLAN.md — Subscribe page: session handshake, live-price tier picker, abandonment resume [wave 3]
 - [x] 01-07-PLAN.md — First-machine wizard with QR PDF download [wave 3] ✅ COMPLETE 2026-07-19
-- [ ] 01-08-PLAN.md — CSV member import (validate-then-import) + phone-OTP claim link [wave 3]
-- [ ] 01-09-PLAN.md — Full automated gate + end-to-end walkthrough checkpoint [wave 4]
+- [x] 01-08-PLAN.md — CSV member import (validate-then-import) + phone-OTP claim link [wave 3]
+- [x] 01-09-PLAN.md — Full automated gate + end-to-end walkthrough checkpoint [wave 4]
 
 ### Phase 2: Mobile Social Feed ✅ COMPLETE
 **Goal**: Members experience their gym community from their phone — the full feed, reactions, comments, and sharing
@@ -94,9 +94,9 @@ Plans:
 **Plans:** 2/3 plans executed
 
 Plans:
-- [ ] 04-01-PLAN.md — Data layer TDD: programLogic (pure) + programService (direct Supabase) + CacheTTL.programData [wave 1]
-- [ ] 04-02-PLAN.md — Program screen: ProgramHeader/ProgramDayCard/skeleton + app/program/index.tsx route with today highlight, Start CTA, exercise links, empty state [wave 2]
-- [ ] 04-03-PLAN.md — TodayZone "View full program" entry link + full phase gate (mobile + web-admin suites, tsc, hex scan) [wave 3]
+- [x] 04-01-PLAN.md — Data layer TDD: programLogic (pure) + programService (direct Supabase) + CacheTTL.programData [wave 1]
+- [x] 04-02-PLAN.md — Program screen: ProgramHeader/ProgramDayCard/skeleton + app/program/index.tsx route with today highlight, Start CTA, exercise links, empty state [wave 2]
+- [x] 04-03-PLAN.md — TodayZone "View full program" entry link + full phase gate (mobile + web-admin suites, tsc, hex scan) [wave 3]
 
 ### Phase 5: UptimizeAI Agent Connection
 **Goal**: The 13 specified automations run end-to-end — real events fire real agents that take real actions, safely and observably
@@ -113,12 +113,12 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — Migration 029 (dedup indexes + agent cron schedules) + echo receiver + UPTIMIZE env contract [wave 1, checkpoint: db push] ✅ COMPLETE (migration applied to live DB 2026-07-20; migrations 001-030 in sync)
-- [ ] 05-02-PLAN.md — Trigger route hardening: cooldown dedup, is_agent_initiated, UPTIMIZE forwarding + failure recording (TDD) [wave 1]
-- [ ] 05-03-PLAN.md — Session-complete wiring (level-up, streak-broken, leaderboard-updated) + challenge-ended owner path [wave 2]
-- [ ] 05-04-PLAN.md — upgrade-opportunity (featureGate helpers + machine-limit) + new-gym-onboarded (register) [wave 2]
-- [ ] 05-05-PLAN.md — agent-daily cron: dormant members, checkin SLA, machine underutilization, challenge auto-expiry [wave 2]
+- [x] 05-02-PLAN.md — Trigger route hardening: cooldown dedup, is_agent_initiated, UPTIMIZE forwarding + failure recording (TDD) [wave 1]
+- [x] 05-03-PLAN.md — Session-complete wiring (level-up, streak-broken, leaderboard-updated) + challenge-ended owner path [wave 2]
+- [x] 05-04-PLAN.md — upgrade-opportunity (featureGate helpers + machine-limit) + new-gym-onboarded (register) [wave 2]
+- [x] 05-05-PLAN.md — agent-daily cron: dormant members, checkin SLA, machine underutilization, challenge auto-expiry [wave 2]
 - [x] 05-06-PLAN.md — at-risk per-member wiring + shared atRiskScan helper + agent-weekly cron (weekly-summary, at-risk early warning) [wave 2] ✅ COMPLETE 2026-07-20
-- [ ] 05-07-PLAN.md — Full automated gate + 13-automation staging walkthrough checkpoint (tier matrix, cooldown, PLATFORM_EVENTS sign-off) [wave 3]
+- [x] 05-07-PLAN.md — Full automated gate + 13-automation staging walkthrough checkpoint (tier matrix, cooldown, PLATFORM_EVENTS sign-off) [wave 3]
 
 ### Phase 6: Notification Orchestration Wiring
 **Goal**: Members and owners get timely, relevant, controllable push notifications for everything that matters — and nothing they opted out of
@@ -137,13 +137,13 @@ Plans:
 - [x] 06-01-PLAN.md — NotificationType 4→24 + NOTIFICATION_ROUTES expansion + resolveNotificationRoute export [wave 1] ✅ COMPLETE 2026-07-20
 - [x] 06-02-PLAN.md — Migration 031: notification_log 'delivered' CHECK + receipt-poll index + 15-min pg_cron [wave 1, checkpoint: db push] ✅ COMPLETE 2026-07-20 (migration applied, migrations 001-031 in sync)
 - [x] 06-03-PLAN.md — Central dispatcher (TDD RED-first): preference/quiet-hours/dedup/rate-cap guards, identity bridge, loop safety, inbox writes [wave 2] ✅ COMPLETE 2026-07-20
-- [ ] 06-04-PLAN.md — Receipt-poll cron route (DeviceNotRegistered → token deactivation) + admin health delivery-rate block [wave 2]
+- [x] 06-04-PLAN.md — Receipt-poll cron route (DeviceNotRegistered → token deactivation) + admin health delivery-rate block [wave 2]
 - [x] 06-08-PLAN.md — Inbox API: GET /api/member/notifications + POST [notifId]/read [wave 2] ✅ COMPLETE 2026-07-20 (16 tests, NOTIF-05)
-- [ ] 06-05-PLAN.md — Session-complete coalesced push (barrage prevention) + challenge_rank_change + challenge_complete (owner path) [wave 3]
-- [ ] 06-06-PLAN.md — Coaching + social triggers: checkin_generated/reply, coach_note, program_assigned, feed_reaction/comment, new_follower [wave 3]
-- [ ] 06-07-PLAN.md — Operational + agent delivery: billing owner pushes, agent-daily/weekly cron pushes (is_agent_initiated: true), agent_welcome [wave 3]
-- [ ] 06-09-PLAN.md — Mobile inbox screen + unread bell badge + preferences UI (category toggles + quiet hours) [wave 3]
-- [ ] 06-10-PLAN.md — Full automated gate (7 checks) + device walkthrough checkpoint [wave 4]
+- [x] 06-05-PLAN.md — Session-complete coalesced push (barrage prevention) + challenge_rank_change + challenge_complete (owner path) [wave 3]
+- [x] 06-06-PLAN.md — Coaching + social triggers: checkin_generated/reply, coach_note, program_assigned, feed_reaction/comment, new_follower [wave 3]
+- [x] 06-07-PLAN.md — Operational + agent delivery: billing owner pushes, agent-daily/weekly cron pushes (is_agent_initiated: true), agent_welcome [wave 3]
+- [x] 06-09-PLAN.md — Mobile inbox screen + unread bell badge + preferences UI (category toggles + quiet hours) [wave 3]
+- [x] 06-10-PLAN.md — Full automated gate (7 checks) + device walkthrough checkpoint [wave 4]
 
 ## Progress
 
@@ -151,10 +151,16 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Gym Owner Self-Serve Onboarding | 9/9 | Complete   | 2026-07-19 |
 | 2. Mobile Social Feed | — | ✅ Complete (delivered pre-roadmap) | 2026-07-17 |
-| 3. Mobile Challenges | 5/5 | Awaiting device sign-off | 2026-07-19 (automated gate) |
-| 4. Mobile Program View | 2/3 | In Progress|  |
+| 3. Mobile Challenges | 5/5 | Complete   | 2026-08-04 (walkthrough sign-off) |
+| 4. Mobile Program View | 3/3 | Complete   | 2026-08-04 (walkthrough sign-off) |
 | 5. UptimizeAI Agent Connection | 7/7 | Complete    | 2026-07-20 |
 | 6. Notification Orchestration Wiring | 10/10 | Complete   | 2026-07-20 |
 
+**Milestone v1.0: CLOSED 2026-08-04.** All 6 phases complete, 34/34 plans executed.
+Phases 3 and 4 held open for a device walkthrough; closed via react-native-web + Playwright
+against the live database after the Android emulator proved unusable on this host — evidence
+appended to `03-05-SUMMARY.md` and `04-VERIFICATION.md`. Gates at close: mobile 263/263,
+web-admin 551/551, both `tsc` clean.
+
 ---
-*Roadmap created 2026-07-19. Next: `/gsd:plan-phase 1` (user priority: plan Owner Onboarding in full executable detail first).*
+*Roadmap created 2026-07-19. Milestone closed 2026-08-04. Next: `/gsd:new-milestone` for v1.1.*
