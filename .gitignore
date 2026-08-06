@@ -13,6 +13,14 @@ build/
 .env.local
 .env.*.local
 
+# Env backups (e.g. .env.bak-<reason>) — these hold live secrets and are NOT
+# covered by the bare `.env` rule above. Prefer keeping backups outside the
+# repo entirely; these patterns are defence-in-depth against `git add -A`.
+# Deliberately written to not match the tracked `.env.example` files.
+.env.bak*
+.env.*.bak
+*.env.bak*
+
 # IDE
 .vscode/
 .idea/
