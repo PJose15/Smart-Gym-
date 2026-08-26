@@ -47,10 +47,31 @@ jest.mock('@supabase/supabase-js', () => ({
           data: { user: { id: DEV_USER_ID } },
           error: null,
         }),
+        updateUserById: jest.fn().mockResolvedValue({
+          data: { user: { id: DEV_USER_ID } },
+          error: null,
+        }),
       },
     },
     from: (table: string) => mockFrom(table),
   })),
+}));
+
+// Cookie-session client (Stage 2): verify now establishes a session on this
+// client. In dev the route signs in with the deterministic dev password.
+jest.mock('@/lib/supabase/server', () => ({
+  createServerSupabaseClient: jest.fn().mockResolvedValue({
+    auth: {
+      signInWithPassword: jest.fn().mockResolvedValue({
+        data: { user: { id: DEV_USER_ID }, session: {} },
+        error: null,
+      }),
+      verifyOtp: jest.fn().mockResolvedValue({
+        data: { user: { id: DEV_USER_ID }, session: {} },
+        error: null,
+      }),
+    },
+  }),
 }));
 
 function makeRequest(body: unknown) {

@@ -136,10 +136,15 @@ export function SessionComplete() {
     })();
   }, [sessionId, member, machine, scanEventId, programContext]);
 
+  // App-download nudge target — the bridge between the QR-scan entry and the
+  // full mobile experience. Only rendered when configured.
+  const appDownloadUrl = process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL;
+
   const handleScanNext = () => {
-    // Reset flow state so user can scan a new machine QR code
+    // Reset flow state so the member can scan a new machine QR code. Routes to
+    // the member home (not '/', which is the staff dashboard — MW-H1).
     reset();
-    window.location.href = '/';
+    window.location.href = '/home';
   };
 
   const handleDoneForToday = () => {
@@ -326,6 +331,28 @@ export function SessionComplete() {
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
+
+      {/* App-download nudge — funnel members to the full mobile experience */}
+      {appDownloadUrl && (
+        <a
+          href={appDownloadUrl}
+          style={{
+            display: 'block',
+            padding: 'var(--space-3) var(--space-4)',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--color-bg-raised)',
+            border: '1px solid var(--color-border-subtle)',
+            textAlign: 'center',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--weight-medium)',
+            color: 'var(--color-text-secondary)',
+            textDecoration: 'none',
+            marginBottom: 'var(--space-4)',
+          }}
+        >
+          📲 Get the full Nexera experience — download the app
+        </a>
+      )}
 
       {/* CTAs */}
       <button

@@ -38,6 +38,22 @@ export const otpSchema = z.object({
   name: z.string().min(1).max(100).trim().optional(),
 });
 
+// Login-mode phone (returning member requesting a sign-in code, no gym context).
+export const phoneLoginSchema = z.object({
+  phone: z.string().min(10).max(20).transform(normalizePhone),
+});
+
+// Login-mode OTP (returning member signing in with no gym/scan context).
+// The member is already linked to a gym from their first phone verify, so we
+// resolve them by user_id after verifyOtp — no gym_id needed.
+export const otpLoginSchema = z.object({
+  phone: z.string().min(10).max(20).transform(normalizePhone),
+  code: z
+    .string()
+    .length(6, 'Code must be 6 digits')
+    .regex(/^\d{6}$/, 'Code must be 6 digits'),
+});
+
 export const lookupSchema = z.object({
   phone: z.string().min(10).max(20).transform(normalizePhone),
   gym_id: z.string().uuid('Invalid gym'),

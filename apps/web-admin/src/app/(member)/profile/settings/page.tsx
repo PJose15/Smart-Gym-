@@ -73,6 +73,15 @@ export default function MemberSettingsPage() {
     setSettings({ ...settings, [key]: value });
   }
 
+  async function handleSignOut() {
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' });
+    } catch {
+      // Even if the request fails, clear client state and leave the surface.
+    }
+    window.location.href = '/auth';
+  }
+
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     if (!settings) return;
@@ -171,6 +180,28 @@ export default function MemberSettingsPage() {
           {saving ? 'Saving...' : 'Save Settings'}
         </button>
       </form>
+
+      {/* Account */}
+      <div style={{ ...cardStyle, marginTop: 24 }}>
+        <h2 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: 'var(--color-text-secondary)' }}>Account</h2>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          style={{
+            width: '100%',
+            padding: '12px 0',
+            backgroundColor: 'transparent',
+            color: 'var(--color-red)',
+            border: '1px solid var(--color-red-subtle)',
+            borderRadius: 8,
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Sign Out
+        </button>
+      </div>
     </div>
   );
 }

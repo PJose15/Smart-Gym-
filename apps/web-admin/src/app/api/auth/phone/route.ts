@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { phoneSchema } from '@/lib/validation/auth';
+import { phoneSchema, phoneLoginSchema } from '@/lib/validation/auth';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
@@ -19,16 +19,36 @@ function getAdminClient() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const parsed = phoneSchema.safeParse(body);
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0]?.message || 'Invalid input' },
-        { status: 400 }
-      );
+    // Login mode when no gym_id is supplied (returning member requesting a
+    // sign-in code). Scan/onboard mode carries gym_id + name.
+    const isLogin = !body?.gym_id;
+
+    let phone: string;
+    let name: string | undefined;
+    let gym_id: string | undefined;
+
+    if (isLogin) {
+      const parsed = phoneLoginSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: parsed.error.issues[0]?.message || 'Invalid input' },
+          { status: 400 }
+        );
+      }
+      phone = parsed.data.phone;
+    } else {
+      const parsed = phoneSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: parsed.error.issues[0]?.message || 'Invalid input' },
+          { status: 400 }
+        );
+      }
+      phone = parsed.data.phone;
+      name = parsed.data.name;
+      gym_id = parsed.data.gym_id;
     }
-
-    const { phone, name, gym_id } = parsed.data;
 
     const limited = checkRateLimit(`auth-phone:${phone}`, 5, 900_000);
     if (limited) return limited;
@@ -44,17 +64,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Production: send OTP via Supabase Auth
+    // Production: send OTP via Supabase Auth. In login mode, shouldCreateUser
+    // is false so a code only goes to already-registered members (no account
+    // creation, no enumeration of unregistered numbers into new users).
     const admin = getAdminClient();
 
     const { error } = await admin.auth.signInWithOtp({
       phone,
-      options: {
-        data: {
-          display_name: name,
-          gym_id,
-        },
-      },
+      options: isLogin
+        ? { shouldCreateUser: false }
+        : { data: { display_name: name, gym_id } },
     });
 
     if (error) {
