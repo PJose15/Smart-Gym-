@@ -733,6 +733,14 @@ export interface Database {
         Args: Record<string, never>;
         Returns: string[];
       };
+      upsert_own_profile: {
+        Args: { p_full_name?: string; p_avatar_url?: string };
+        Returns: undefined;
+      };
+      set_own_onboarding_status: {
+        Args: { p_gym_id: string; p_status: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       workout_status: 'in_progress' | 'completed' | 'cancelled';

@@ -236,10 +236,9 @@ export default function SettingsScreen() {
     try {
       setSaving(true);
       setError(null);
-      const { error: updateErr } = await supabase
-        .from('profiles')
-        .update({ full_name: nameInput.trim() })
-        .eq('id', userId);
+      const { error: updateErr } = await supabase.rpc('upsert_own_profile', {
+        p_full_name: nameInput.trim(),
+      });
       if (updateErr) throw updateErr;
       setFullName(nameInput.trim());
       setEditingName(false);
@@ -443,10 +442,9 @@ export default function SettingsScreen() {
 
       const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
-      const { error: updateErr } = await supabase
-        .from('profiles')
-        .update({ avatar_url: newUrl })
-        .eq('id', userId);
+      const { error: updateErr } = await supabase.rpc('upsert_own_profile', {
+        p_avatar_url: newUrl,
+      });
 
       if (updateErr) throw updateErr;
 

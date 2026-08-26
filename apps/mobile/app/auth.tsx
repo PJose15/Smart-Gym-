@@ -157,9 +157,10 @@ export default function AuthScreen() {
       if (!isReturningMember && firstName.trim()) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await supabase.from('profiles').upsert({
-            id: user.id,
-            full_name: firstName.trim(),
+          // Self-write via SECURITY DEFINER RPC (migration 035 revoked
+          // direct write on the profiles view to close the RLS-bypass hole).
+          await supabase.rpc('upsert_own_profile', {
+            p_full_name: firstName.trim(),
           });
         }
       }
@@ -211,11 +212,12 @@ export default function AuthScreen() {
           experience: exp,
         });
 
-        // Mark onboarding complete
-        await supabase.from('gym_members')
-          .update({ onboarding_status: 'active' })
-          .eq('profile_id', user.id)
-          .eq('gym_id', memberData.gym_id);
+        // Mark onboarding complete via SECURITY DEFINER RPC (migration 035
+        // revoked direct write on the gym_members view).
+        await supabase.rpc('set_own_onboarding_status', {
+          p_gym_id: memberData.gym_id,
+          p_status: 'active',
+        });
       }
 
       router.replace(params.returnTo ? (params.returnTo as any) : '/(tabs)');
