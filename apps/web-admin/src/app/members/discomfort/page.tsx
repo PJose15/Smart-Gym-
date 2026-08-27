@@ -1,20 +1,18 @@
 'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
 
 // ─── Types ───────────────────────────────────────────────
 
 interface DiscomfortRow {
-  gym_id: string;
   profile_id: string;
   full_name: string;
   discomfort_count_7d: number;
-  unstable_count_7d: number;
   top_body_areas_7d: string[];
-  last_discomfort_at: string | null;
+  updated_at: string | null;
 }
 
 // ─── Styles ─────────────────────────────────────────────
@@ -94,24 +92,24 @@ const statsChipStyle: CSSProperties = {
 // ─── Component ──────────────────────────────────────────
 
 export default function DiscomfortPage() {
+  const { authed } = useStaffAuth();
   const [rows, setRows] = useState<DiscomfortRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     async function fetchData() {
       try {
-        // Query the feedback_discomfort_summary view
-        const { data, error: fetchError } = await supabase
-          .from('feedback_discomfort_summary')
-          .select(
-            'gym_id, profile_id, full_name, discomfort_count_7d, unstable_count_7d, top_body_areas_7d, last_discomfort_at'
-          )
-          .gte('discomfort_count_7d', 2)
-          .order('discomfort_count_7d', { ascending: false });
-
-        if (fetchError) throw fetchError;
-        setRows((data ?? []) as DiscomfortRow[]);
+        // feedback_discomfort_summary is own-rows-only under RLS, so staff read
+        // it through a gym-scoped server route backed by the admin client.
+        const res = await fetch('/api/admin/discomfort');
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? 'Failed to load safety data');
+        }
+        const data = await res.json();
+        setRows((data.rows ?? []) as DiscomfortRow[]);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to load safety data');
       } finally {
@@ -120,7 +118,7 @@ export default function DiscomfortPage() {
     }
 
     fetchData();
-  }, []);
+  }, [authed]);
 
   if (loading) {
     return (
@@ -171,14 +169,12 @@ export default function DiscomfortPage() {
         {/* Stats strip */}
         {rows.length > 0 && (() => {
           const totalDiscomfort = rows.reduce((s, r) => s + r.discomfort_count_7d, 0);
-          const totalUnstable = rows.reduce((s, r) => s + r.unstable_count_7d, 0);
           const allAreas = new Set(rows.flatMap((r) => r.top_body_areas_7d ?? []));
           const highRisk = rows.filter((r) => r.discomfort_count_7d >= 4).length;
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{rows.length} member{rows.length !== 1 ? 's' : ''} flagged</span>
               <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)' }}>{totalDiscomfort} discomfort reports</span>
-              <span style={statsChipStyle}>{totalUnstable} instability reports</span>
               <span style={statsChipStyle}>{allAreas.size} body area{allAreas.size !== 1 ? 's' : ''} affected</span>
               {highRisk > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red-light)' }}>{highRisk} high-risk (4+)</span>}
             </div>
@@ -198,9 +194,8 @@ export default function DiscomfortPage() {
                 <tr>
                   <th style={thStyle}>Member</th>
                   <th style={thStyle}>Discomfort (7d)</th>
-                  <th style={thStyle}>Unstable (7d)</th>
                   <th style={thStyle}>Body Areas</th>
-                  <th style={thStyle}>Last Report</th>
+                  <th style={thStyle}>Last Updated</th>
                 </tr>
               </thead>
               <tbody>
@@ -218,11 +213,6 @@ export default function DiscomfortPage() {
                       </span>
                     </td>
                     <td style={tdStyle}>
-                      <span style={countBadgeStyle(row.unstable_count_7d)}>
-                        {row.unstable_count_7d}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>
                       {(row.top_body_areas_7d ?? []).length > 0 ? (
                         row.top_body_areas_7d.map((area) => (
                           <span key={area} style={bodyAreaBadgeStyle}>
@@ -234,8 +224,8 @@ export default function DiscomfortPage() {
                       )}
                     </td>
                     <td style={tdStyle}>
-                      {row.last_discomfort_at
-                        ? new Date(row.last_discomfort_at).toLocaleDateString(undefined, {
+                      {row.updated_at
+                        ? new Date(row.updated_at).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',

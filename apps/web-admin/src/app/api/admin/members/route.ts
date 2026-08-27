@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     let query = admin
       .from('members')
-      .select('id, display_name, email, gym_id, status, last_session_date, created_at, score')
+      .select('id, display_name, email, gym_id, status, last_session_date, created_at, smartgym_score')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -33,6 +33,11 @@ export async function GET(request: Request) {
       admin.from('gyms').select('id, name'),
     ]);
 
+    if (membersRes.error) {
+      console.error('[/api/admin/members] Query error:', membersRes.error);
+      return NextResponse.json({ error: 'Failed to load members' }, { status: 500 });
+    }
+
     // Build gym name lookup
     const gymNames: Record<string, string> = {};
     for (const g of gymsRes.data ?? []) {
@@ -41,7 +46,7 @@ export async function GET(request: Request) {
 
     const members = (membersRes.data ?? []).map((m: {
       id: string; display_name: string; email: string; gym_id: string;
-      status: string; last_session_date: string | null; created_at: string; score: number | null;
+      status: string; last_session_date: string | null; created_at: string; smartgym_score: number | null;
     }) => ({
       ...m,
       gym_name: gymNames[m.gym_id] ?? 'Unknown',

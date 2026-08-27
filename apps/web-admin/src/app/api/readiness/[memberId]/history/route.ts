@@ -22,10 +22,10 @@ export async function GET(
 
     const { data, error } = await admin
       .from('member_readiness_cache')
-      .select('score_date, readiness_score, zone')
+      .select('cache_date, score, zone')
       .eq('member_id', params.memberId)
-      .gte('score_date', since.toISOString().split('T')[0])
-      .order('score_date', { ascending: false });
+      .gte('cache_date', since.toISOString().split('T')[0])
+      .order('cache_date', { ascending: false });
 
     if (error)
       return NextResponse.json(

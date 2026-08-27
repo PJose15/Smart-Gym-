@@ -2,7 +2,6 @@
 
 import { useEffect, useState, CSSProperties, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
@@ -11,17 +10,14 @@ import { AnimatedPage } from '../components/AnimatedPage';
 
 interface MemberRow {
   id: string;
-  role: string;
-  joined_at: string;
   gym_id: string;
-  profile_id: string;
-  profiles: { id: string; email: string; full_name: string } | null;
-  gyms: { name: string } | null;
-}
-
-interface GymOption {
-  id: string;
-  name: string;
+  user_id: string | null;
+  display_name: string;
+  email: string | null;
+  smartgym_score: number;
+  onboarding_status: string;
+  joined_at: string;
+  gym_name: string;
 }
 
 interface ProgramOption {
@@ -32,9 +28,9 @@ interface ProgramOption {
 
 interface AssignmentRow {
   id: string;
-  profile_id: string;
+  member_id: string;
   program_id: string;
-  programs: { name: string } | null;
+  program_name: string;
 }
 
 // ─── Styles ─────────────────────────────────────────────
@@ -68,8 +64,9 @@ const formTitleStyle: CSSProperties = {
 
 const formGridStyle: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
+  gridTemplateColumns: '1fr',
   gap: 16,
+  maxWidth: 420,
 };
 
 const fieldStyle: CSSProperties = {
@@ -94,10 +91,6 @@ const inputStyle: CSSProperties = {
   outline: 'none',
   backgroundColor: 'var(--color-bg-elevated)',
   color: 'var(--color-text-primary)',
-};
-
-const selectStyle: CSSProperties = {
-  ...inputStyle,
 };
 
 const formActionsStyle: CSSProperties = {
@@ -263,10 +256,14 @@ const statsChipStyle: CSSProperties = {
 
 // ─── Helpers ─────────────────────────────────────────────
 
-function getRoleBadgeStyle(role: string): CSSProperties {
-  if (role === 'owner') return { ...roleBadgeBase, backgroundColor: 'var(--color-purple-subtle)', color: 'var(--color-purple-light)' };
-  if (role === 'trainer') return { ...roleBadgeBase, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' };
-  return { ...roleBadgeBase, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' };
+function getStatusBadgeStyle(status: string): CSSProperties {
+  if (status === 'active' || status === 'program_active') {
+    return { ...roleBadgeBase, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' };
+  }
+  if (status === 'pending') {
+    return { ...roleBadgeBase, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold-light)' };
+  }
+  return { ...roleBadgeBase, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' };
 }
 
 function formatDate(dateStr: string): string {
@@ -283,10 +280,8 @@ export default function MembersPage() {
   const router = useRouter();
   const { authed } = useStaffAuth();
   const [members, setMembers] = useState<MemberRow[]>([]);
-  const [gyms, setGyms] = useState<GymOption[]>([]);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -298,54 +293,23 @@ export default function MembersPage() {
 
   // Add-member form state
   const [formEmail, setFormEmail] = useState('');
-  const [formGymId, setFormGymId] = useState('');
-  const [formRole, setFormRole] = useState('member');
 
   // ── Fetches ──────────────────────────────────────────
 
-  async function fetchMembers() {
+  async function loadMembers() {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('gym_members')
-        .select('id, role, joined_at, gym_id, profile_id, profiles:profile_id(id, email, full_name), gyms(name)')
-        .order('joined_at', { ascending: false })
-        .limit(500);
-      if (fetchError) { setError(fetchError.message); return; }
-      setMembers((data as unknown as MemberRow[]) ?? []);
+      const res = await fetch('/api/admin/members/list');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? 'Failed to load members');
+        return;
+      }
+      const data = await res.json();
+      setMembers((data.members as MemberRow[]) ?? []);
+      setPrograms((data.programs as ProgramOption[]) ?? []);
+      setAssignments((data.assignments as AssignmentRow[]) ?? []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load members');
-    }
-  }
-
-  async function fetchGyms() {
-    try {
-      const { data, error: err } = await supabase.from('gyms').select('id, name').order('name');
-      if (err) { setError(err.message); return; }
-      setGyms((data as GymOption[]) ?? []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load gyms');
-    }
-  }
-
-  async function fetchPrograms() {
-    try {
-      const { data, error: err } = await supabase.from('programs').select('id, name, gym_id').order('name');
-      if (err) { setError(err.message); return; }
-      setPrograms((data as ProgramOption[]) ?? []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load programs');
-    }
-  }
-
-  async function fetchAssignments() {
-    try {
-      const { data, error: err } = await supabase
-        .from('member_program_assignments')
-        .select('id, profile_id, program_id, programs:program_id(name)');
-      if (err) { setError(err.message); return; }
-      setAssignments((data as unknown as AssignmentRow[]) ?? []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load assignments');
     }
   }
 
@@ -353,9 +317,7 @@ export default function MembersPage() {
     if (!authed) return;
     async function init() {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id ?? null);
-      await Promise.all([fetchMembers(), fetchGyms(), fetchPrograms(), fetchAssignments()]);
+      await loadMembers();
       setLoading(false);
     }
     init();
@@ -365,8 +327,6 @@ export default function MembersPage() {
 
   function resetForm() {
     setFormEmail('');
-    setFormGymId('');
-    setFormRole('member');
     setShowForm(false);
     setError(null);
   }
@@ -376,66 +336,64 @@ export default function MembersPage() {
     setError(null);
     setSubmitting(true);
 
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', formEmail)
-      .single();
-
-    if (profileError || !profileData) {
-      setError(profileError?.message ?? `No profile found for "${formEmail}". The user must sign up first.`);
+    try {
+      const res = await fetch('/api/admin/members/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formEmail }),
+      });
       setSubmitting(false);
-      return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? 'Failed to add member');
+        return;
+      }
+      resetForm();
+      await loadMembers();
+    } catch (err: unknown) {
+      setSubmitting(false);
+      setError(err instanceof Error ? err.message : 'Failed to add member');
     }
-
-    const { error: insertError } = await supabase.from('gym_members').insert({
-      profile_id: profileData.id,
-      gym_id: formGymId,
-      role: formRole,
-    });
-
-    setSubmitting(false);
-    if (insertError) { setError(insertError.message); return; }
-    resetForm();
-    await fetchMembers();
   }
 
   // ── Program assignment mutations ──────────────────────
 
   async function handleAssign(member: MemberRow) {
     const programId = pendingAssign[member.id];
-    if (!programId || !currentUserId) return;
+    if (!programId) return;
 
-    const { data, error: err } = await supabase
-      .from('member_program_assignments')
-      .insert({
-        gym_id: member.gym_id,
-        profile_id: member.profile_id,
-        program_id: programId,
-        assigned_by: currentUserId,
-      })
-      .select('id, profile_id, program_id, programs:program_id(name)')
-      .single();
-
-    if (err) { setError(err.message); return; }
-    setAssignments((prev) => [...prev, data as unknown as AssignmentRow]);
+    const res = await fetch('/api/admin/members/program', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ member_id: member.id, program_id: programId }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? 'Failed to assign program');
+      return;
+    }
+    const data = await res.json();
+    setAssignments((prev) => [...prev, data.assignment as AssignmentRow]);
     setPendingAssign((prev) => { const next = { ...prev }; delete next[member.id]; return next; });
   }
 
   async function handleRemoveAssignment(assignmentId: string) {
     if (!window.confirm('Remove this program assignment?')) return;
-    const { error: err } = await supabase
-      .from('member_program_assignments')
-      .delete()
-      .eq('id', assignmentId);
-    if (err) { setError(err.message); return; }
+    const res = await fetch(`/api/admin/members/program?id=${encodeURIComponent(assignmentId)}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? 'Failed to remove assignment');
+      return;
+    }
     setAssignments((prev) => prev.filter((a) => a.id !== assignmentId));
   }
 
   // ── Derived helpers ───────────────────────────────────
 
-  function getAssignment(profileId: string): AssignmentRow | undefined {
-    return assignments.find((a) => a.profile_id === profileId);
+  function getAssignment(memberId: string): AssignmentRow | undefined {
+    return assignments.find((a) => a.member_id === memberId);
   }
 
   function programsForGym(gymId: string): ProgramOption[] {
@@ -470,17 +428,13 @@ export default function MembersPage() {
 
         {/* ── Stats strip ── */}
         {members.length > 0 && (() => {
-          const owners = members.filter(m => m.role === 'owner').length;
-          const trainers = members.filter(m => m.role === 'trainer').length;
-          const regularMembers = members.length - owners - trainers;
-          const assignedCount = new Set(assignments.map(a => a.profile_id)).size;
+          const activeCount = members.filter(m => m.onboarding_status === 'active' || m.onboarding_status === 'program_active').length;
+          const assignedCount = new Set(assignments.map(a => a.member_id)).size;
           const assignmentRate = members.length > 0 ? Math.round((assignedCount / members.length) * 100) : 0;
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{members.length} total</span>
-              {owners > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-purple-subtle)', color: 'var(--color-purple-light)' }}>{owners} owner{owners !== 1 ? 's' : ''}</span>}
-              {trainers > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue-light)' }}>{trainers} trainer{trainers !== 1 ? 's' : ''}</span>}
-              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' }}>{regularMembers} member{regularMembers !== 1 ? 's' : ''}</span>
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green-light)' }}>{activeCount} active</span>
               <span style={{ ...statsChipStyle, backgroundColor: assignmentRate >= 50 ? 'var(--color-green-subtle)' : 'var(--color-gold-subtle)', color: assignmentRate >= 50 ? 'var(--color-green-light)' : 'var(--color-gold-light)' }}>
                 {assignmentRate}% with programs
               </span>
@@ -492,6 +446,9 @@ export default function MembersPage() {
         {showForm && (
           <div style={formContainerStyle} className="form-slide-down">
             <h3 style={formTitleStyle}>Add New Member</h3>
+            <p style={{ fontSize: 'var(--text-sm)' as any, color: 'var(--color-text-muted)', marginTop: 0, marginBottom: 16 }}>
+              Add an existing user to your gym by email. The user must have signed up first.
+            </p>
             <form onSubmit={handleAdd}>
               <div style={formGridStyle}>
                 <div style={fieldStyle}>
@@ -506,35 +463,6 @@ export default function MembersPage() {
                     placeholder="user@example.com"
                     required
                   />
-                </div>
-                <div style={fieldStyle}>
-                  <label style={labelStyle} htmlFor="member-gym">Gym</label>
-                  <select
-                    id="member-gym"
-                    style={selectStyle}
-                    className="input-animate"
-                    value={formGymId}
-                    onChange={(e) => setFormGymId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select a gym...</option>
-                    {gyms.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-                  </select>
-                </div>
-                <div style={fieldStyle}>
-                  <label style={labelStyle} htmlFor="member-role">Role</label>
-                  <select
-                    id="member-role"
-                    style={selectStyle}
-                    className="input-animate"
-                    value={formRole}
-                    onChange={(e) => setFormRole(e.target.value)}
-                    required
-                  >
-                    <option value="member">Member</option>
-                    <option value="trainer">Trainer</option>
-                    <option value="owner">Owner</option>
-                  </select>
                 </div>
               </div>
               <div style={formActionsStyle}>
@@ -558,34 +486,33 @@ export default function MembersPage() {
                   <th style={thStyle}>Name</th>
                   <th style={thStyle}>Email</th>
                   <th style={thStyle}>Gym</th>
-                  <th style={thStyle}>Role</th>
+                  <th style={thStyle}>Status</th>
                   <th style={thStyle}>Joined</th>
                   <th style={thStyle}>Program</th>
                 </tr>
               </thead>
               <tbody>
                 {members.map((m, i) => {
-                  const profileId = m.profiles?.id ?? m.profile_id;
-                  const assignment = getAssignment(profileId);
+                  const assignment = getAssignment(m.id);
                   const gymPrograms = programsForGym(m.gym_id);
                   const selectedProgramId = pendingAssign[m.id] ?? '';
 
                   return (
                     <tr key={m.id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
                       <td
-                        style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-blue-light)', cursor: 'pointer' }}
-                        onClick={() => router.push(`/members/${profileId}`)}
+                        style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-blue-light)', cursor: m.user_id ? 'pointer' : 'default' }}
+                        onClick={() => { if (m.user_id) router.push(`/members/${m.user_id}`); }}
                       >
-                        {m.profiles?.full_name ?? 'Unknown'}
+                        {m.display_name ?? 'Unknown'}
                       </td>
-                      <td style={tdStyle}>{m.profiles?.email ?? '--'}</td>
-                      <td style={tdStyle}>{m.gyms?.name ?? '--'}</td>
-                      <td style={tdStyle}><span style={getRoleBadgeStyle(m.role)}>{m.role}</span></td>
+                      <td style={tdStyle}>{m.email ?? '--'}</td>
+                      <td style={tdStyle}>{m.gym_name ?? '--'}</td>
+                      <td style={tdStyle}><span style={getStatusBadgeStyle(m.onboarding_status)}>{m.onboarding_status}</span></td>
                       <td style={tdStyle}>{formatDate(m.joined_at)}</td>
                       <td style={tdStyle}>
                         {assignment ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={programBadgeStyle}>{assignment.programs?.name ?? 'Program'}</span>
+                            <span style={programBadgeStyle}>{assignment.program_name ?? 'Program'}</span>
                             <button
                               style={removeProgramBtnStyle}
                               className="btn-danger"

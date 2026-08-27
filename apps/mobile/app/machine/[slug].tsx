@@ -148,17 +148,33 @@ export default function MachineDetailScreen() {
     const timeout = setTimeout(() => controller.abort(), 10000);
 
     try {
+      // Direct query against the machines table (no get_machine_by_slug RPC
+      // exists). Gym name comes from an embedded join on gyms. demo_image_url
+      // is the real column — aliased to image_url for the Machine type.
       const { data, error: fetchError } = await supabase
-        .rpc('get_machine_by_slug', { slug })
+        .from('machines')
+        .select(
+          'id, gym_id, name, qr_slug, muscle_groups, image_url:demo_image_url, ' +
+            'target_muscles, setup_steps, safety_cues, common_mistakes, ' +
+            'cue_version, cue_source, movement_pattern, equipment_type, ' +
+            'difficulty, primary_muscles, secondary_muscles, gyms(name)',
+        )
+        .eq('qr_slug', slug)
+        .eq('is_active', true)
         .abortSignal(controller.signal)
-        .single();
+        .maybeSingle();
 
       clearTimeout(timeout);
 
       if (fetchError) throw fetchError;
       if (!data) throw new Error('Machine not found');
 
-      setMachine(data as MachineWithGym);
+      // Flatten the embedded gym relation into gym_name.
+      const { gyms, ...machineRow } = data as unknown as Record<string, unknown> & {
+        gyms?: { name?: string } | { name?: string }[] | null;
+      };
+      const gymName = Array.isArray(gyms) ? gyms[0]?.name : gyms?.name;
+      setMachine({ ...machineRow, gym_name: gymName ?? '' } as unknown as MachineWithGym);
     } catch (err: unknown) {
       clearTimeout(timeout);
       if (err instanceof Error && err.name === 'AbortError') {

@@ -48,12 +48,16 @@ export async function PATCH(
         { status: 500 }
       );
 
-    await admin.from('admin_actions_log').insert({
+    const { error: logError } = await admin.from('admin_actions_log').insert({
       admin_user_id: user_id,
-      action: 'update_subscription',
-      target_gym_id: params.gymId,
+      action_type: 'update_subscription',
+      target_type: 'gym',
+      target_id: params.gymId,
       details: updates,
     });
+    if (logError) {
+      console.error('[admin/gyms/subscription] Failed to log action:', logError);
+    }
 
     return NextResponse.json({ success: true });
   } catch {

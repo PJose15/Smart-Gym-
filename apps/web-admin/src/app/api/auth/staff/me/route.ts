@@ -8,11 +8,11 @@ export async function GET() {
 
     const { admin, user_id, gym_id, role } = result;
 
-    // Fetch profile, gym, and gym settings in parallel.
-    const [profileRes, gymRes, settingsRes] = await Promise.all([
+    // Fetch profile, gym, gym settings, and assigned-member count in parallel.
+    const [profileRes, gymRes, settingsRes, assignedRes] = await Promise.all([
       admin
         .from('users')
-        .select('email, full_name, avatar_url')
+        .select('email, display_name, avatar_url, created_at')
         .eq('id', user_id)
         .single(),
       admin
@@ -25,6 +25,10 @@ export async function GET() {
         .select('weight_unit')
         .eq('gym_id', gym_id)
         .maybeSingle(),
+      admin
+        .from('members')
+        .select('id', { count: 'exact', head: true })
+        .eq('assigned_trainer_id', user_id),
     ]);
 
     const profile = profileRes.data;
@@ -37,10 +41,15 @@ export async function GET() {
       user_id,
       gym_id,
       role,
-      full_name: profile?.full_name ?? '',
+      // `users` has no `full_name` column (that alias lives on the `profiles`
+      // view); alias `display_name` so clients expecting `full_name` still work.
+      full_name: profile?.display_name ?? '',
       email: profile?.email ?? '',
       avatar_url: profile?.avatar_url ?? null,
+      created_at: profile?.created_at ?? null,
       gym: gym ?? null,
+      gym_name: gym?.name ?? null,
+      assigned_members_count: assignedRes.count ?? 0,
       weight_unit,
     });
   } catch (err) {

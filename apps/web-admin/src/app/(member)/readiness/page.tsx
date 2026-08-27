@@ -21,8 +21,8 @@ const ZONE_LABEL: Record<ReadinessZone, string> = {
 };
 
 interface HistoryEntry {
-  score_date: string;
-  readiness_score: number;
+  cache_date: string;
+  score: number;
   zone: ReadinessZone;
 }
 
@@ -217,21 +217,21 @@ function TrendChart({ history }: { history: HistoryEntry[] }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 110 }}>
       {entries.map((e) => {
-        const d = new Date(e.score_date + 'T00:00:00Z');
+        const d = new Date(e.cache_date + 'T00:00:00Z');
         const color = ZONE_TOKEN[e.zone] ?? 'var(--color-text-muted)';
         return (
           <div
-            key={e.score_date}
+            key={e.cache_date}
             style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' }}
           >
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--color-text-secondary)' }}>
-              {e.readiness_score}
+              {e.score}
             </span>
             <div
               style={{
                 width: '100%',
                 maxWidth: 26,
-                height: `${Math.max(6, (e.readiness_score / 100) * 64)}px`,
+                height: `${Math.max(6, (e.score / 100) * 64)}px`,
                 borderRadius: 5,
                 backgroundColor: color,
                 opacity: 0.9,

@@ -23,7 +23,7 @@ interface DraftRow {
   status: string;
   created_at: string;
   updated_at: string;
-  member_profile?: { full_name: string } | null;
+  member_profile?: { display_name: string } | null;
 }
 
 // ─── Styles ─────────────────────────────────────────────
@@ -261,12 +261,10 @@ export default function CopilotInboxPage() {
   async function checkFeatureFlag() {
     const { data } = await supabase
       .from('feature_flags')
-      .select('enabled')
-      .eq('key', 'ai_trainer_copilot')
-      .is('profile_id', null)
-      .limit(1)
-      .single();
-    setFeatureEnabled(data?.enabled ?? false);
+      .select('is_enabled')
+      .eq('flag_key', 'ai_trainer_copilot')
+      .maybeSingle();
+    setFeatureEnabled(data?.is_enabled ?? false);
     setLoading(false);
   }
 
@@ -275,7 +273,7 @@ export default function CopilotInboxPage() {
     try {
       let query = supabase
         .from('coach_note_drafts')
-        .select('*, member_profile:member_profile_id(full_name)')
+        .select('*, member_profile:member_profile_id(display_name)')
         .order('created_at', { ascending: false });
 
       if (filterStatus !== 'all') {
@@ -499,7 +497,7 @@ export default function CopilotInboxPage() {
                 >
                   <div style={cardTitleStyle}>{draft.draft_title}</div>
                   <div style={memberNameStyle}>
-                    {draft.member_profile?.full_name ?? 'Member'}
+                    {draft.member_profile?.display_name ?? 'Member'}
                     {' · '}
                     {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>

@@ -7,8 +7,6 @@ import styles from './sidebar.module.css';
 const navItems = [
   { href: '/', label: 'Dashboard' },
   { href: '/machines', label: 'Machines' },
-  { href: '/maintenance', label: 'Maintenance' },
-  { href: '/occupancy', label: 'Occupancy' },
   { href: '/programs', label: 'Programs' },
   { href: '/members', label: 'Members' },
   { href: '/members/discomfort', label: 'Safety Alerts' },

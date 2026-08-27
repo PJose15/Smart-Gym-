@@ -708,13 +708,18 @@ export default function HomeScreen() {
             .eq('status', 'completed')
             .limit(1000);
 
-          // Get feedback trends
-          const { data: feedbackData } = await supabase
+          // Get feedback trends. The column is `feedback` (values include
+          // 'discomfort'/'pain'/'unstable'/'ok') — NOT `rating`.
+          const { data: feedbackData, error: feedbackErr } = await supabase
             .from('set_feedback')
-            .select('rating')
+            .select('feedback')
             .eq('profile_id', user.id)
             .gte('created_at', thirtyDaysAgo)
             .limit(1000);
+
+          if (feedbackErr) {
+            console.warn('[home] feedback trends load failed:', feedbackErr.message);
+          }
 
           const feedbackTrends = {
             discomfort_count: 0,
@@ -722,8 +727,8 @@ export default function HomeScreen() {
             ok_count: 0,
           };
           for (const f of feedbackData ?? []) {
-            if (f.rating === 'discomfort') feedbackTrends.discomfort_count++;
-            else if (f.rating === 'unstable') feedbackTrends.unstable_count++;
+            if (f.feedback === 'discomfort' || f.feedback === 'pain') feedbackTrends.discomfort_count++;
+            else if (f.feedback === 'unstable') feedbackTrends.unstable_count++;
             else feedbackTrends.ok_count++;
           }
 

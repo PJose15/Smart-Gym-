@@ -10,9 +10,6 @@ import type {
   ProgramDay,
   ProgramExercise,
   Machine,
-  MemberProgramAssignment,
-  Profile,
-  GymMember,
 } from '@nexera/types';
 
 /* ── Joined types ──────────────────────────────────────── */
@@ -25,13 +22,19 @@ type ProgramFull = Program & {
   program_days: ProgramDayWithExercises[];
 };
 
-type AssignmentWithProfile = MemberProgramAssignment & {
-  profiles: Pick<Profile, 'id' | 'email' | 'full_name'>;
-};
+// Program roster rows returned by /api/admin/programs/[id]/members.
+interface AssignedMember {
+  assignment_id: string;
+  member_id: string;
+  name: string;
+  email: string | null;
+}
 
-type GymMemberWithProfile = GymMember & {
-  profiles: Pick<Profile, 'id' | 'email' | 'full_name'>;
-};
+interface UnassignedMember {
+  member_id: string;
+  name: string;
+  email: string | null;
+}
 
 /* ── Component ─────────────────────────────────────────── */
 
@@ -42,9 +45,8 @@ export default function ProgramDetailPage() {
   // Core data
   const [program, setProgram] = useState<ProgramFull | null>(null);
   const [machines, setMachines] = useState<Pick<Machine, 'id' | 'name'>[]>([]);
-  const [members, setMembers] = useState<GymMemberWithProfile[]>([]);
-  const [assignments, setAssignments] = useState<AssignmentWithProfile[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [unassignedMembers, setUnassignedMembers] = useState<UnassignedMember[]>([]);
+  const [assignments, setAssignments] = useState<AssignedMember[]>([]);
 
   // UI state
   const [loading, setLoading] = useState(true);
@@ -104,44 +106,28 @@ export default function ProgramDetailPage() {
     []
   );
 
-  const fetchMembers = useCallback(
-    async (gymId: string) => {
-      const { data } = await supabase
-        .from('gym_members')
-        .select('*, profiles:profile_id(id, email, full_name)')
-        .eq('gym_id', gymId)
-        .eq('role', 'member');
-      setMembers((data as GymMemberWithProfile[]) ?? []);
-    },
-    []
-  );
-
-  const fetchAssignments = useCallback(async () => {
-    const { data } = await supabase
-      .from('member_program_assignments')
-      .select('*, profiles:profile_id(id, email, full_name)')
-      .eq('program_id', programId);
-    setAssignments((data as AssignmentWithProfile[]) ?? []);
+  const fetchRoster = useCallback(async () => {
+    const res = await fetch(`/api/admin/programs/${programId}/members`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setAssignments((data.assigned as AssignedMember[]) ?? []);
+    setUnassignedMembers((data.unassigned as UnassignedMember[]) ?? []);
   }, [programId]);
 
   useEffect(() => {
     async function init() {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id ?? null);
-
       const prog = await fetchProgram();
       if (prog) {
         await Promise.all([
           fetchMachines(prog.gym_id),
-          fetchMembers(prog.gym_id),
-          fetchAssignments(),
+          fetchRoster(),
         ]);
       }
       setLoading(false);
     }
     init();
-  }, [fetchProgram, fetchMachines, fetchMembers, fetchAssignments]);
+  }, [fetchProgram, fetchMachines, fetchRoster]);
 
   /* ── Mutations ─────────────────────────────────────── */
 
@@ -227,35 +213,36 @@ export default function ProgramDetailPage() {
   }
 
   async function assignMember() {
-    if (!program || !assignMemberId || !currentUserId) return;
-    const { data, error: err } = await supabase
-      .from('member_program_assignments')
-      .insert({
-        gym_id: program.gym_id,
-        profile_id: assignMemberId,
-        program_id: program.id,
-        assigned_by: currentUserId,
-      })
-      .select('*, profiles:profile_id(id, email, full_name)')
-      .single();
-    if (err) { setError(err.message); return; }
-    if (data) {
-      setAssignments([...assignments, data as AssignmentWithProfile]);
-      setAssignMemberId('');
+    if (!program || !assignMemberId) return;
+    const res = await fetch(`/api/admin/programs/${program.id}/members`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ member_id: assignMemberId }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? 'Failed to assign member');
+      return;
     }
+    const data = await res.json();
+    setAssignments((prev) => [...prev, data.assignment as AssignedMember]);
+    setUnassignedMembers((prev) => prev.filter((m) => m.member_id !== assignMemberId));
+    setAssignMemberId('');
   }
 
   async function removeAssignment(assignmentId: string) {
     if (!window.confirm('Are you sure you want to remove this member from the program?')) return;
-    const { error: err } = await supabase
-      .from('member_program_assignments')
-      .delete()
-      .eq('id', assignmentId);
-    if (!err) {
-      setAssignments(assignments.filter((a) => a.id !== assignmentId));
-    } else {
-      setError(err.message);
+    const res = await fetch(
+      `/api/admin/programs/${programId}/members?assignmentId=${encodeURIComponent(assignmentId)}`,
+      { method: 'DELETE' },
+    );
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? 'Failed to remove member');
+      return;
     }
+    // Refresh roster so the removed member reappears in the unassigned list.
+    await fetchRoster();
   }
 
   /* ── Helpers ───────────────────────────────────────── */
@@ -284,11 +271,6 @@ export default function ProgramDetailPage() {
     if (!machineId) return null;
     return machines.find((m) => m.id === machineId)?.name ?? null;
   }
-
-  // Members not yet assigned
-  const unassignedMembers = members.filter(
-    (m) => !assignments.some((a) => a.profile_id === m.profiles.id)
-  );
 
   /* ── Render ────────────────────────────────────────── */
 
@@ -561,12 +543,12 @@ export default function ProgramDetailPage() {
               </thead>
               <tbody>
                 {assignments.map((a, i) => (
-                  <tr key={a.id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
-                    <td style={tdStyle}>{a.profiles.full_name}</td>
-                    <td style={tdStyle}>{a.profiles.email}</td>
+                  <tr key={a.assignment_id} className={`row-stagger stagger-${Math.min(i, 19)} table-row-hover`}>
+                    <td style={tdStyle}>{a.name}</td>
+                    <td style={tdStyle}>{a.email ?? '--'}</td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
                       <button
-                        onClick={() => removeAssignment(a.id)}
+                        onClick={() => removeAssignment(a.assignment_id)}
                         style={removeBtnStyle}
                         className="btn-danger"
                       >
@@ -590,8 +572,8 @@ export default function ProgramDetailPage() {
           >
             <option value="">Select a member to assign...</option>
             {unassignedMembers.map((m) => (
-              <option key={m.profiles.id} value={m.profiles.id}>
-                {m.profiles.full_name} ({m.profiles.email})
+              <option key={m.member_id} value={m.member_id}>
+                {m.name}{m.email ? ` (${m.email})` : ''}
               </option>
             ))}
           </select>
@@ -608,7 +590,7 @@ export default function ProgramDetailPage() {
             Assign
           </button>
         </div>
-        {unassignedMembers.length === 0 && members.length > 0 && (
+        {unassignedMembers.length === 0 && assignments.length > 0 && (
           <p style={{ color: 'var(--color-text-muted)', fontSize: 13, marginTop: 8 }}>
             All members are already assigned to this program.
           </p>

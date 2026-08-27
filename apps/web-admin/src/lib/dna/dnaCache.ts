@@ -73,11 +73,13 @@ export async function getDNAResult(
     const newPrestige = ARCHETYPE_PRESTIGE[result.archetype.id] ?? 0;
     const oldPrestige = ARCHETYPE_PRESTIGE[result.previous_archetype.id] ?? 0;
     if (newPrestige > oldPrestige) {
-      await admin.from('feed_events').insert({
+      await admin.from('gym_feed_events').insert({
         gym_id: gymId,
         member_id: memberId,
         event_type: 'archetype_change',
-        description: `became ${result.archetype.name}`,
+        // display_text is rendered after a bold member-name span by the UI,
+        // so producers must NOT prefix the member name here.
+        display_text: `became ${result.archetype.name}`,
         context_data: {
           archetype_id: result.archetype.id,
           archetype_name: result.archetype.name,

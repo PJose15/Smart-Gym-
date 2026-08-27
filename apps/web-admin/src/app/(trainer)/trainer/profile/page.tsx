@@ -68,10 +68,10 @@ export default function TrainerProfilePage() {
       })
       .then((data) => {
         setProfile({
-          name: data.name || data.email?.split('@')[0] || 'Trainer',
+          name: data.full_name || data.email?.split('@')[0] || 'Trainer',
           email: data.email || '',
           role: data.role || 'trainer',
-          gym_name: data.gym_name || 'Unknown Gym',
+          gym_name: data.gym_name || data.gym?.name || 'Unknown Gym',
           gym_id: data.gym_id || '',
           assigned_members_count: data.assigned_members_count ?? 0,
           created_at: data.created_at || '',

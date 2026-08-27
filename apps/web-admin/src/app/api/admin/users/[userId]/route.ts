@@ -33,11 +33,15 @@ export async function DELETE(
       );
 
     // Log action
-    await admin.from('admin_actions_log').insert({
+    const { error: logError } = await admin.from('admin_actions_log').insert({
       admin_user_id: user_id,
-      action: 'suspend_user',
-      target_user_id: params.userId,
+      action_type: 'suspend_user',
+      target_type: 'user',
+      target_id: params.userId,
     });
+    if (logError) {
+      console.error('[admin/users] Failed to log action:', logError);
+    }
 
     return NextResponse.json({ success: true });
   } catch {

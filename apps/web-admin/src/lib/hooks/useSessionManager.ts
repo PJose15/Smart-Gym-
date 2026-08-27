@@ -52,14 +52,18 @@ export function useSessionManager() {
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         const session = data?.sessions?.[0];
-        if (session?.workout_sets?.length) {
+        // The sessions API returns a `sets` JSONB array (entries:
+        // {set_number, weight_lbs, reps, rpe, logged_at} — no id / weight_kg).
+        // (H-4: the hook previously read a non-existent `workout_sets` relation,
+        // so previousSets was always empty and the suggestion lost its history.)
+        if (session?.sets?.length) {
           setPreviousSets(
-            session.workout_sets.map((s: { id: string; set_number: number; reps: number; weight_kg?: number; weight_lbs?: number; rpe?: number | null; logged_at?: string }) => ({
-              id: s.id,
+            session.sets.map((s: { set_number: number; reps: number; weight_lbs?: number; rpe?: number | null; logged_at?: string }) => ({
+              id: `${session.id}-${s.set_number}`,
               workout_exercise_id: '',
               set_number: s.set_number,
               reps: s.reps,
-              weight_kg: s.weight_kg ?? toKg(s.weight_lbs ?? 0, 'lbs'),
+              weight_kg: toKg(s.weight_lbs ?? 0, 'lbs'),
               rpe: s.rpe ?? null,
               logged_at: s.logged_at ?? '',
             }))

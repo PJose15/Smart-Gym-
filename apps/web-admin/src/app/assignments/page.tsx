@@ -15,13 +15,12 @@ interface AssignmentRow {
   member_profile_id: string;
   status: string;
   created_at: string;
-  trainer_profile?: { full_name: string } | null;
-  member_profile?: { full_name: string } | null;
-  gyms?: { name: string } | null;
+  gym_name: string;
+  trainer_name: string;
+  member_name: string;
 }
 
-interface GymOption { id: string; name: string; }
-interface ProfileOption { id: string; full_name: string; role: string; profile_id: string; gym_id: string; }
+interface PersonOption { id: string; name: string; role: 'trainer' | 'owner' | 'member'; }
 
 // ─── Styles ─────────────────────────────────────────────
 
@@ -35,7 +34,7 @@ const formContainerStyle: CSSProperties = {
   border: '1px solid var(--color-border-default)',
 };
 
-const formGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 };
+const formGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 };
 
 const labelStyle: CSSProperties = { display: 'block', fontSize: 'var(--text-sm)' as any, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginBottom: 6 };
 const selectStyle: CSSProperties = {
@@ -94,10 +93,9 @@ export default function AssignmentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [gyms, setGyms] = useState<GymOption[]>([]);
-  const [gymMembers, setGymMembers] = useState<ProfileOption[]>([]);
+  const [trainers, setTrainers] = useState<PersonOption[]>([]);
+  const [gymMemberOptions, setGymMemberOptions] = useState<PersonOption[]>([]);
 
-  const [formGymId, setFormGymId] = useState('');
   const [formTrainerId, setFormTrainerId] = useState('');
   const [formMemberId, setFormMemberId] = useState('');
 
@@ -110,85 +108,86 @@ export default function AssignmentsPage() {
   async function init() {
     const { data } = await supabase
       .from('feature_flags')
-      .select('enabled')
-      .eq('key', 'ai_trainer_copilot')
-      .is('profile_id', null)
-      .limit(1)
-      .single();
-    setFeatureEnabled(data?.enabled ?? false);
+      .select('is_enabled')
+      .eq('flag_key', 'ai_trainer_copilot')
+      .maybeSingle();
+    setFeatureEnabled(data?.is_enabled ?? false);
 
-    await Promise.all([fetchAssignments(), fetchGyms(), fetchGymMembers()]);
+    await fetchAssignments();
     setLoading(false);
   }
 
   async function fetchAssignments() {
-    const { data, error: err } = await supabase
-      .from('trainer_assignments')
-      .select('*, trainer_profile:trainer_profile_id(full_name), member_profile:member_profile_id(full_name), gyms:gym_id(name)')
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (err) { setError(err.message); return; }
-    setAssignments((data as unknown as AssignmentRow[]) ?? []);
+    try {
+      const res = await fetch('/api/admin/assignments');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? 'Failed to load assignments');
+        return;
+      }
+      const data = await res.json();
+      setAssignments((data.assignments as AssignmentRow[]) ?? []);
+      setTrainers((data.trainers as PersonOption[]) ?? []);
+      setGymMemberOptions((data.members as PersonOption[]) ?? []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load assignments');
+    }
   }
-
-  async function fetchGyms() {
-    const { data } = await supabase.from('gyms').select('id, name').order('name');
-    setGyms((data as GymOption[]) ?? []);
-  }
-
-  async function fetchGymMembers() {
-    const { data } = await supabase
-      .from('gym_members')
-      .select('profile_id, role, gym_id, profiles:profile_id(full_name)')
-      .order('role');
-    setGymMembers(
-      (data ?? []).map((d: any) => ({
-        id: d.profile_id,
-        full_name: d.profiles?.full_name ?? 'Unknown',
-        role: d.role,
-        profile_id: d.profile_id,
-        gym_id: d.gym_id,
-      })),
-    );
-  }
-
-  const trainersInGym = gymMembers.filter((m) => m.gym_id === formGymId && (m.role === 'trainer' || m.role === 'owner'));
-  const membersInGym = gymMembers.filter((m) => m.gym_id === formGymId && m.role === 'member');
 
   async function handleAdd(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
 
-    const { error: insertErr } = await supabase.from('trainer_assignments').insert({
-      gym_id: formGymId,
-      trainer_profile_id: formTrainerId,
-      member_profile_id: formMemberId,
-    });
-
-    setSubmitting(false);
-    if (insertErr) { setError(insertErr.message); return; }
-    setShowForm(false);
-    setFormGymId('');
-    setFormTrainerId('');
-    setFormMemberId('');
-    await fetchAssignments();
+    try {
+      const res = await fetch('/api/admin/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trainer_profile_id: formTrainerId,
+          member_profile_id: formMemberId,
+        }),
+      });
+      setSubmitting(false);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? 'Failed to create assignment');
+        return;
+      }
+      setShowForm(false);
+      setFormTrainerId('');
+      setFormMemberId('');
+      await fetchAssignments();
+    } catch (err: unknown) {
+      setSubmitting(false);
+      setError(err instanceof Error ? err.message : 'Failed to create assignment');
+    }
   }
 
   async function handleToggleStatus(assignment: AssignmentRow) {
     const newStatus = assignment.status === 'active' ? 'paused' : 'active';
-    await supabase
-      .from('trainer_assignments')
-      .update({ status: newStatus })
-      .eq('id', assignment.id);
+    const res = await fetch(`/api/admin/assignments/${assignment.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? 'Failed to update assignment');
+      return;
+    }
     await fetchAssignments();
   }
 
   async function handleDelete(id: string) {
     if (!window.confirm('Are you sure you want to remove this assignment?')) return;
     try {
-      const { error: err } = await supabase.from('trainer_assignments').delete().eq('id', id);
-      if (err) { setError(err.message); return; }
+      const res = await fetch(`/api/admin/assignments/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? 'Failed to delete assignment');
+        return;
+      }
       await fetchAssignments();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to delete assignment');
@@ -243,24 +242,17 @@ export default function AssignmentsPage() {
             <form onSubmit={handleAdd}>
               <div style={formGridStyle}>
                 <div>
-                  <label style={labelStyle}>Gym</label>
-                  <select style={selectStyle} value={formGymId} onChange={(e) => { setFormGymId(e.target.value); setFormTrainerId(''); setFormMemberId(''); }} required>
-                    <option value="">Select gym...</option>
-                    {gyms.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-                  </select>
-                </div>
-                <div>
                   <label style={labelStyle}>Trainer</label>
-                  <select style={selectStyle} value={formTrainerId} onChange={(e) => setFormTrainerId(e.target.value)} required disabled={!formGymId}>
+                  <select style={selectStyle} value={formTrainerId} onChange={(e) => setFormTrainerId(e.target.value)} required>
                     <option value="">Select trainer...</option>
-                    {trainersInGym.map((t) => <option key={t.id} value={t.id}>{t.full_name} ({t.role})</option>)}
+                    {trainers.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={labelStyle}>Member</label>
-                  <select style={selectStyle} value={formMemberId} onChange={(e) => setFormMemberId(e.target.value)} required disabled={!formGymId}>
+                  <select style={selectStyle} value={formMemberId} onChange={(e) => setFormMemberId(e.target.value)} required>
                     <option value="">Select member...</option>
-                    {membersInGym.map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
+                    {gymMemberOptions.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
                 </div>
               </div>
@@ -294,9 +286,9 @@ export default function AssignmentsPage() {
               <tbody>
                 {assignments.map((a) => (
                   <tr key={a.id} className="table-row-hover">
-                    <td style={tdStyle}>{a.gyms?.name ?? '--'}</td>
-                    <td style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any }}>{a.trainer_profile?.full_name ?? '--'}</td>
-                    <td style={tdStyle}>{a.member_profile?.full_name ?? '--'}</td>
+                    <td style={tdStyle}>{a.gym_name ?? '--'}</td>
+                    <td style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any }}>{a.trainer_name ?? '--'}</td>
+                    <td style={tdStyle}>{a.member_name ?? '--'}</td>
                     <td style={tdStyle}><span style={statusBadge(a.status)}>{a.status}</span></td>
                     <td style={tdStyle}>{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td style={tdStyle}>
