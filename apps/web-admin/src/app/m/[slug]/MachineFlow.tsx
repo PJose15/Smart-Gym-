@@ -12,9 +12,21 @@ import { WelcomeMoment } from './components/WelcomeMoment';
 import { SetLogger } from './components/SetLogger';
 import { SessionComplete } from './components/SessionComplete';
 import { CelebrationManager } from '@/components/celebrations';
+import { useOfflineSync } from '@/lib/hooks/useOfflineSync';
 
 interface MachineFlowProps {
   machine: MachineData;
+}
+
+/**
+ * Side-effect-only mount for the offline set-sync queue. useSessionManager
+ * enqueues sets to IndexedDB on network failure; this drains that queue on
+ * mount and on the browser 'online' event. No UI — the hook's returned state
+ * is intentionally unused here.
+ */
+function OfflineSyncMount() {
+  useOfflineSync();
+  return null;
 }
 
 export function MachineFlow({ machine }: MachineFlowProps) {
@@ -84,6 +96,9 @@ export function MachineFlow({ machine }: MachineFlowProps) {
           the scan flow lives outside the (member) layout, so the manager
           must be mounted here too. */}
       <CelebrationManager />
+      {/* Drains the IndexedDB offline set queue on mount + reconnect so sets
+          logged while offline actually sync. */}
+      <OfflineSyncMount />
     </>
   );
 }

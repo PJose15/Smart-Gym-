@@ -3,6 +3,7 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { challengeJoinSchema } from '@/lib/validation/challenge';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { checkFeatureAccess } from '@/lib/billing/featureGate';
 
 interface RouteParams {
   params: Promise<{ challengeId: string }>;
@@ -39,6 +40,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!memberRecord || memberRecord.gym_id !== gym_id) {
       return NextResponse.json({ error: 'Member does not belong to this gym' }, { status: 403 });
+    }
+
+    // Tier gate: joining challenges requires the challenges feature.
+    // gym_id derived from the member's own record (verified above).
+    const access = await checkFeatureAccess(memberRecord.gym_id, 'challenges');
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
     }
 
     // Verify challenge exists and is active

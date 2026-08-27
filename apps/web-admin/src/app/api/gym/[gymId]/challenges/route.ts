@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkFeatureAccess } from '@/lib/billing/featureGate';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -29,6 +30,12 @@ export async function POST(
     if (result instanceof NextResponse) return result;
     const { admin, gym_id, user_id } = result;
     if (gym_id !== params.gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    // Tier gate: creating challenges requires the challenges feature.
+    const access = await checkFeatureAccess(gym_id, 'challenges');
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
+    }
 
     const parsed = createChallengeSchema.safeParse(await req.json());
     if (!parsed.success) {

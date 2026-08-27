@@ -3,6 +3,7 @@ import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { trainerNoteSchema } from '@/lib/validation/staff';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { checkFeatureAccess } from '@/lib/billing/featureGate';
 
 export async function GET(
   req: NextRequest,
@@ -51,6 +52,13 @@ export async function POST(
     if (result instanceof NextResponse) return result;
 
     const { admin, user_id, gym_id } = result;
+
+    // Tier gate: creating coach notes requires the coach_notes feature.
+    const access = await checkFeatureAccess(gym_id, 'coach_notes');
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
+    }
+
     const body = await req.json();
 
     const parsed = trainerNoteSchema.safeParse(body);

@@ -4,6 +4,7 @@ import { uuidString } from '@/lib/validation/uuid';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { checkFeatureAccess } from '@/lib/billing/featureGate';
 
 const autoGenerateSchema = z.object({
   member_id: uuidString,
@@ -48,11 +49,18 @@ export async function POST(request: NextRequest) {
     // Verify caller owns this member
     const { data: memberCheck } = await admin
       .from('members')
-      .select('id')
+      .select('id, gym_id')
       .eq('id', member_id)
       .eq('user_id', session.user.id)
       .maybeSingle();
     if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    // Tier gate: AI program generation requires ai_programs. Resolve gym_id from
+    // the member record (server-derived), not client input.
+    const access = await checkFeatureAccess(memberCheck.gym_id, 'ai_programs');
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
+    }
 
     // Check feature flag
     const { data: flag } = await admin

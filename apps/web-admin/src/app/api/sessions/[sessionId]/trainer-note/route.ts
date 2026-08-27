@@ -4,6 +4,7 @@ import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { sendNotification } from '@/lib/notifications/dispatcher';
+import { checkFeatureAccess } from '@/lib/billing/featureGate';
 
 const sessionNoteSchema = z.object({
   note: z.string().trim().min(1).max(2000),
@@ -28,6 +29,12 @@ export async function PATCH(
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
     const { admin, user_id, gym_id } = result;
+
+    // Tier gate: creating coach notes requires the coach_notes feature.
+    const access = await checkFeatureAccess(gym_id, 'coach_notes');
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
+    }
 
     const parsed = sessionNoteSchema.safeParse(await req.json());
     if (!parsed.success) {

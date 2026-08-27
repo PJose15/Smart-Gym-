@@ -34,6 +34,12 @@ jest.mock('@/lib/rateLimit', () => ({
   checkRateLimit: jest.fn().mockReturnValue(null),
 }));
 
+// ── Mock tier gating (Stage 4 IN-H3) ───────────────────────────────────────────
+// coach_notes is now gated; allow it in tests.
+jest.mock('@/lib/billing/featureGate', () => ({
+  checkFeatureAccess: jest.fn().mockResolvedValue({ hasAccess: true, upgradeMessage: null }),
+}));
+
 // ── Mock UUID validation ───────────────────────────────────────────────────────
 
 jest.mock('@/lib/validation/uuid', () => ({

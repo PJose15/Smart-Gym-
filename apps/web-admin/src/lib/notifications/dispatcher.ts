@@ -109,6 +109,108 @@ export function currentTimeInZone(
   return now.toISOString().slice(11, 19);
 }
 
+// ── Web-push (VAPID) sender — ADDITIVE, guarded ────────────────────────────────
+
+/**
+ * Sends the notification to the member's browser (PWA) `push_subscriptions`
+ * rows via the `web-push` npm library (VAPID). This is ADDITIVE to the Expo
+ * `device_tokens` path handled by the send-push-notification Edge Function —
+ * it never replaces it.
+ *
+ * GUARDED NO-OP: returns 0 immediately unless BOTH VAPID env vars are present
+ * AND the `web-push` package resolves at runtime. If `web-push` is not
+ * installed the dynamic import fails and we swallow it, so the Expo path is
+ * never affected.
+ *
+ * TODO(IN-H1): `web-push` is not yet a dependency of apps/web-admin. To fully
+ * activate this branch:
+ *   1. `pnpm -F web-admin add web-push` (+ `@types/web-push` dev dep)
+ *   2. Set env: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY (and NEXT_PUBLIC_VAPID_PUBLIC_KEY
+ *      for the client subscribe() call — must match VAPID_PUBLIC_KEY).
+ *   3. Optionally set VAPID_SUBJECT (mailto: or https URL; defaults below).
+ * Until then this returns 0 and delivery relies solely on the Expo path.
+ */
+async function sendWebPush(
+  admin: SupabaseClient,
+  memberId: string | null,
+  payload: { title: string; body: string; data: Record<string, string> }
+): Promise<number> {
+  if (!memberId) return 0;
+
+  const publicKey = process.env.VAPID_PUBLIC_KEY ?? process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '';
+  const privateKey = process.env.VAPID_PRIVATE_KEY ?? '';
+  if (!publicKey || !privateKey) return 0; // not configured → no-op
+
+  // Dynamic import so a missing `web-push` dependency can't break the build or
+  // the Expo delivery path. If the module isn't installed, bail quietly.
+  // Typed loosely (module has no declarations until installed — see TODO above).
+  let webpush: {
+    setVapidDetails: (subject: string, publicKey: string, privateKey: string) => void;
+    sendNotification: (
+      subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
+      payload: string
+    ) => Promise<unknown>;
+  };
+  try {
+    webpush = (await import('web-push')) as unknown as typeof webpush;
+  } catch {
+    return 0;
+  }
+
+  const subject = process.env.VAPID_SUBJECT ?? 'mailto:notifications@nexera.app';
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+  } catch {
+    return 0;
+  }
+
+  // Enumerate columns (no SELECT *); only active subscriptions.
+  const { data: subs } = await admin
+    .from('push_subscriptions')
+    .select('id, endpoint, p256dh, auth')
+    .eq('member_id', memberId)
+    .eq('is_active', true);
+
+  if (!subs || subs.length === 0) return 0;
+
+  const notification = JSON.stringify({
+    title: payload.title,
+    body: payload.body,
+    data: payload.data,
+  });
+
+  let sent = 0;
+  for (const sub of subs as Array<{ id: string; endpoint: string; p256dh: string; auth: string }>) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        notification
+      );
+      sent += 1;
+      await admin
+        .from('push_subscriptions')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('id', sub.id);
+    } catch (err) {
+      // 404/410 = subscription expired/unsubscribed → deactivate it.
+      const statusCode = (err as { statusCode?: number }).statusCode;
+      if (statusCode === 404 || statusCode === 410) {
+        await admin
+          .from('push_subscriptions')
+          .update({ is_active: false, last_failed_at: new Date().toISOString() })
+          .eq('id', sub.id);
+      } else {
+        await admin
+          .from('push_subscriptions')
+          .update({ last_failed_at: new Date().toISOString() })
+          .eq('id', sub.id);
+      }
+    }
+  }
+
+  return sent;
+}
+
 // ── Admin client factory ──────────────────────────────────────────────────────
 
 function createAdminClient(): SupabaseClient {
@@ -339,8 +441,23 @@ export async function sendNotification(input: {
     });
 
     const result = await response.json() as { sent?: number; message?: string };
+    const expoSent = typeof result.sent === 'number' ? result.sent : 0;
 
-    if (typeof result.sent === 'number' && result.sent > 0) {
+    // ── Step 5b: Web-push (VAPID) — ADDITIVE, guarded no-op when unconfigured ──
+    // Sends to the member's PWA browser subscriptions. Does not affect the Expo
+    // path above. Failures here are swallowed inside sendWebPush.
+    let webSent = 0;
+    try {
+      webSent = await sendWebPush(admin, resolvedMemberId, {
+        title,
+        body,
+        data: { ...data, is_agent_initiated: String(is_agent_initiated) },
+      });
+    } catch (err) {
+      console.error('[dispatcher] web-push send error:', err);
+    }
+
+    if (expoSent + webSent > 0) {
       return 'sent';
     }
     return 'no_devices';

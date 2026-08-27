@@ -3,7 +3,9 @@ import type { LLMProvider } from './llmProvider';
 /**
  * Google Gemini LLM provider.
  * Requires GEMINI_API_KEY environment variable.
- * Uses the Gemini 1.5 Flash model via REST API.
+ * Model is configurable via GEMINI_MODEL (default gemini-2.5-flash); the
+ * previously hardcoded gemini-1.5-flash was retired and 404s, silently
+ * degrading every AI path to its template fallback (AI-C3).
  */
 export class GeminiProvider implements LLMProvider {
     readonly name = 'gemini';
@@ -20,7 +22,7 @@ export class GeminiProvider implements LLMProvider {
             '';
         this.apiKey = key;
         this.enabled = key.length > 0;
-        this.model = options?.model ?? 'gemini-1.5-flash';
+        this.model = options?.model ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
     }
 
     private async complete(prompt: string, maxTokens = 512): Promise<string> {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkFeatureAccess } from '@/lib/billing/featureGate';
 
 const exerciseSchema = z.object({}).passthrough();
 const daySchema = z
@@ -35,7 +36,13 @@ export async function PATCH(
 
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
-    const { admin, user_id } = result;
+    const { admin, user_id, gym_id } = result;
+
+    // Tier gate: editing/approving AI programs requires ai_programs.
+    const access = await checkFeatureAccess(gym_id, 'ai_programs');
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
+    }
 
     const rl = checkRateLimit(`ai-program-edit:${programId}`, 10, 60_000);
     if (rl) return rl;
