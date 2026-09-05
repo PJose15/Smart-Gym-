@@ -48,7 +48,7 @@ export async function gatherCheckInWeekData(
     // Sessions this week (scoped to gym)
     admin
       .from('workout_sessions')
-      .select('id, session_date, total_volume_lbs, sets, completed_at, machine_id, machines(name)')
+      .select('id, session_date, total_volume_lbs, sets, completed_at, machine_id, is_personal_best, best_weight_lbs, pr_improvement_lbs, machines(name)')
       .eq('member_id', memberId)
       .eq('gym_id', gymId)
       .not('completed_at', 'is', null)
@@ -120,26 +120,17 @@ export async function gatherCheckInWeekData(
     // DNA not available yet — leave nulls
   }
 
-  // PR details — find sets with is_personal_best
+  // PR details — PR flags live on the session row, not in the sets JSONB
   const prDetails: PRDetail[] = [];
   for (const session of sessions) {
-    const sets = (session.sets ?? []) as Array<{
-      weight_kg?: number;
-      reps?: number;
-      rpe?: number | null;
-      is_personal_best?: boolean;
-      pr_improvement_lbs?: number;
-    }>;
-    for (const set of sets) {
-      if (set.is_personal_best) {
-        const machineName =
-          (session.machines as unknown as { name: string } | null)?.name ?? 'Unknown';
-        prDetails.push({
-          machine_name: machineName,
-          weight_lbs: Math.round((set.weight_kg ?? 0) * 2.205),
-          improvement_lbs: set.pr_improvement_lbs ?? 0,
-        });
-      }
+    if (session.is_personal_best) {
+      const machineName =
+        (session.machines as unknown as { name: string } | null)?.name ?? 'Unknown';
+      prDetails.push({
+        machine_name: machineName,
+        weight_lbs: Math.round((session.best_weight_lbs as number) ?? 0),
+        improvement_lbs: (session.pr_improvement_lbs as number) ?? 0,
+      });
     }
   }
 

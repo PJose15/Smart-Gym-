@@ -1,8 +1,8 @@
 /**
  * Edge Function: POST /trainer-copilot/generate-workout-draft
- * Body: { workout_id }
+ * Body: { workout_id } — a workout_sessions.id
  *
- * Generates a coach note draft from a completed workout.
+ * Generates a coach note draft from a completed workout session.
  * Caller must be trainer/owner in the gym.
  */
 
@@ -53,22 +53,35 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
       return new Response(JSON.stringify({ error: 'workout_id is required' }), { status: 400, headers });
     }
 
-    // Fetch workout with member info
-    const { data: workout, error: workoutError } = await serviceClient
-      .from('workouts')
-      .select('id, gym_id, profile_id, status, started_at, finished_at')
+    // Fetch workout session
+    const { data: session, error: sessionError } = await serviceClient
+      .from('workout_sessions')
+      .select('id, gym_id, machine_id, member_id, session_date, workout_mode, sets, sets_count, total_volume_lbs, best_weight_lbs, best_reps, completed_at')
       .eq('id', workout_id)
       .single();
 
-    if (workoutError || !workout) {
+    if (sessionError || !session) {
       return new Response(JSON.stringify({ error: 'Workout not found' }), { status: 404, headers });
     }
+
+    // Resolve member identity (workout_sessions.member_id → members → users.id)
+    const { data: member, error: memberError } = await serviceClient
+      .from('members')
+      .select('id, user_id, display_name')
+      .eq('id', session.member_id)
+      .single();
+
+    if (memberError || !member || !member.user_id) {
+      return new Response(JSON.stringify({ error: 'Member not found' }), { status: 404, headers });
+    }
+
+    const memberProfileId = member.user_id;
 
     // Verify caller is trainer/owner in this gym
     const { data: membership } = await serviceClient
       .from('gym_members')
       .select('role')
-      .eq('gym_id', workout.gym_id)
+      .eq('gym_id', session.gym_id)
       .eq('profile_id', user.id)
       .in('role', ['owner', 'trainer'])
       .single();
@@ -81,8 +94,8 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
     const { data: assignment } = await serviceClient
       .from('trainer_assignments')
       .select('trainer_profile_id')
-      .eq('gym_id', workout.gym_id)
-      .eq('member_profile_id', workout.profile_id)
+      .eq('gym_id', session.gym_id)
+      .eq('member_profile_id', memberProfileId)
       .eq('status', 'active')
       .limit(1)
       .maybeSingle();
@@ -93,8 +106,8 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
     const { data: existingDraft } = await serviceClient
       .from('coach_note_drafts')
       .select('id, status')
-      .eq('gym_id', workout.gym_id)
-      .eq('member_profile_id', workout.profile_id)
+      .eq('gym_id', session.gym_id)
+      .eq('member_profile_id', memberProfileId)
       .eq('workout_id', workout_id)
       .limit(1)
       .maybeSingle();
@@ -107,51 +120,38 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
       }), { status: 200, headers });
     }
 
-    // Fetch member profile name
-    const { data: memberProfile } = await serviceClient
-      .from('profiles')
-      .select('full_name')
-      .eq('id', workout.profile_id)
-      .single();
+    const memberName = member.display_name ?? 'Member';
 
-    const memberName = memberProfile?.full_name ?? 'Member';
+    // Fetch machine name (best-effort; used in draft text)
+    let machineName = 'machine';
+    if (session.machine_id) {
+      const { data: machine } = await serviceClient
+        .from('machines')
+        .select('name')
+        .eq('id', session.machine_id)
+        .maybeSingle();
+      if (machine?.name) machineName = machine.name;
+    }
 
-    // Fetch workout exercises and sets
-    const { data: exercises } = await serviceClient
-      .from('workout_exercises')
-      .select('id, exercise_name, machine_id, order_index')
-      .eq('workout_id', workout_id)
-      .order('order_index');
-
-    const exercisesWithSets = [];
+    // Aggregate from the session's JSONB sets array (weights stored in lbs)
+    const sessionSets: Array<{ weight_lbs?: number; reps?: number }> = Array.isArray(session.sets) ? session.sets : [];
+    const totalSets = sessionSets.length;
     let totalVolume = 0;
-    let totalSets = 0;
     let totalReps = 0;
 
-    for (const ex of exercises ?? []) {
-      const { data: sets } = await serviceClient
-        .from('sets')
-        .select('*')
-        .eq('workout_exercise_id', ex.id)
-        .order('set_number');
-
-      const exSets = sets ?? [];
-      totalSets += exSets.length;
-      for (const s of exSets) {
-        const wkg = Number(s.weight_kg) || 0;
-        const reps = Number(s.reps) || 0;
-        totalVolume += wkg * reps;
-        totalReps += reps;
-      }
-      exercisesWithSets.push({ ...ex, sets: exSets });
+    for (const s of sessionSets) {
+      const wlbs = Number(s.weight_lbs) || 0;
+      const reps = Number(s.reps) || 0;
+      totalVolume += wlbs * reps;
+      totalReps += reps;
     }
 
     // Fetch training profile
     const { data: trainingProfile } = await serviceClient
       .from('user_training_profiles')
-      .select('goal, experience, units')
-      .eq('profile_id', workout.profile_id)
-      .eq('gym_id', workout.gym_id)
+      .select('goal, experience')
+      .eq('profile_id', memberProfileId)
+      .eq('gym_id', session.gym_id)
       .limit(1)
       .maybeSingle();
 
@@ -159,7 +159,7 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
     const { data: guardrailRows } = await serviceClient
       .from('ai_guardrail_insights')
       .select('insight_type, severity, message, recommended_action')
-      .eq('profile_id', workout.profile_id)
+      .eq('profile_id', memberProfileId)
       .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
       .limit(5);
@@ -180,12 +180,11 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
       message: g.message,
     }));
 
-    // Simple draft construction (mirrors buildWorkoutDraft logic)
+    // Simple draft construction (mirrors buildWorkoutDraft logic; canonical unit = lbs)
     const sections: string[] = [];
-    const unitLabel = trainingProfile?.units === 'lbs' ? 'lbs' : 'kg';
-    const vol = unitLabel === 'lbs' ? Math.round(totalVolume * 2.205) : Math.round(totalVolume);
+    const vol = Math.round(totalVolume);
 
-    sections.push(`${memberName} completed a session with ${totalSets} sets and ${vol} ${unitLabel} total volume.`);
+    sections.push(`${memberName} completed a ${machineName} session with ${totalSets} sets and ${vol} lbs total volume.`);
 
     if (totalSets > 0) {
       sections.push(
@@ -219,7 +218,7 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
       volume_change_pct: null,
       total_sets: totalSets,
       total_reps: totalReps,
-      total_volume_kg: totalVolume,
+      total_volume_lbs: totalVolume,
       guardrails: guardrailSignals,
       goal: trainingProfile?.goal,
       experience: trainingProfile?.experience,
@@ -229,9 +228,9 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
     const { data: draft, error: draftError } = await serviceClient
       .from('coach_note_drafts')
       .insert({
-        gym_id: workout.gym_id,
+        gym_id: session.gym_id,
         trainer_profile_id: trainerProfileId,
-        member_profile_id: workout.profile_id,
+        member_profile_id: memberProfileId,
         workout_id: workout_id,
         draft_title,
         draft_body: sections.join('\n\n'),
@@ -249,7 +248,7 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
           .from('coach_note_drafts')
           .select('id, status')
           .eq('workout_id', workout_id)
-          .eq('member_profile_id', workout.profile_id)
+          .eq('member_profile_id', memberProfileId)
           .maybeSingle();
         return new Response(JSON.stringify({
           draft_id: existing?.id,
@@ -263,7 +262,7 @@ export async function handleGenerateWorkoutDraft(req: Request): Promise<Response
 
     // Log action
     const { error: actionErr } = await serviceClient.from('coach_note_actions').insert({
-      gym_id: workout.gym_id,
+      gym_id: session.gym_id,
       draft_id: draft.id,
       actor_profile_id: user.id,
       action: 'generated',

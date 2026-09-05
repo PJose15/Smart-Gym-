@@ -29,9 +29,9 @@ export async function getMachineLeaderboard(
   const memberBests: Record<string, { weight: number; at: string; name: string; avatar: string | null }> = {};
 
   for (const session of sessions) {
-    const sets = (session.sets ?? []) as Array<{ weight_kg?: number }>;
+    const sets = (session.sets ?? []) as Array<{ weight_lbs?: number }>;
     for (const set of sets) {
-      const weightLbs = Math.round((set.weight_kg ?? 0) * 2.205);
+      const weightLbs = Math.round(set.weight_lbs ?? 0);
       if (weightLbs <= 0) continue;
 
       const mid = session.member_id as string;

@@ -1,3 +1,12 @@
+/**
+ * Today's workout logger — sessions model.
+ *
+ * Always renders TODAY's workout_sessions for the member, regardless of the
+ * route param (`/workout/today` is the canonical push; any legacy id also
+ * lands here and resolves to today). All set writes go through sessionApi
+ * (lbs canonical); one session row per member+machine+day is upserted
+ * server-side on the first logged set.
+ */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
@@ -10,7 +19,6 @@ import {
   Modal,
   FlatList,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   Vibration,
 } from 'react-native';
@@ -18,12 +26,7 @@ import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import Svg, { Circle } from 'react-native-svg';
 import { supabase } from '../../src/lib/supabase';
-import type {
-  Workout,
-  WorkoutExerciseWithSets,
-  WorkoutSet,
-  Machine,
-} from '@nexera/types';
+import type { Machine } from '@nexera/types';
 import { getNextSetSuggestion, getFormChecklist, getSafetyNudge } from '@nexera/ai-assist';
 import type { SafetyNudge } from '@nexera/ai-assist';
 import type { SessionIntent } from '@nexera/types';
@@ -32,16 +35,49 @@ import { isFeatureEnabled, refreshFeatureFlags } from '../../src/lib/featureFlag
 import { trackEvent } from '../../src/lib/events';
 import { logAiDecision } from '../../src/lib/aiAudit';
 import { getWeightUnit } from '../../src/lib/weightUnit';
-import { retryWithBackoff } from '../../src/lib/retry';
-import { enqueueEvent } from '../../src/lib/offlineQueue';
+import { flushQueue } from '../../src/lib/offlineQueue';
+import {
+  logSet,
+  completeSession,
+  prCheck,
+  replayQueuedSet,
+  localSessionDate,
+  type SessionSetEntry,
+  type WorkoutMode as ApiWorkoutMode,
+  type PrResult,
+  type CompleteSessionResult,
+} from '../../src/lib/sessionApi';
+import {
+  resolveWorkoutIdentity,
+  toApiWorkoutMode,
+  validateSetInput,
+  sessionSetsToKg,
+  stashCompletionResults,
+  stashPrResult,
+  type WorkoutIdentity,
+} from '../../src/lib/activeWorkout';
+import { detectWorkoutMode } from '../../src/lib/workoutMode';
+import { convertFromLbs, convertToLbs, formatWeightLbs, formatVolumeLbs } from '../../src/lib/feedLogic';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 
-// ─── Helpers ────────────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────
 
-function generateTempId(): string {
-  return `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+interface ExerciseEntry {
+  machineId: string;
+  machineName: string;
+  /** Server session id — null until the first set is logged. */
+  sessionId: string | null;
+  /** Server-confirmed sets (lbs). */
+  sets: SessionSetEntry[];
+  /** Locally queued sets awaiting offline replay (lbs). */
+  pendingSets: SessionSetEntry[];
+  totalVolumeLbs: number;
+  bestWeightLbs: number;
+  completedAt: string | null;
 }
+
+// ─── Helpers ────────────────────────────────────────────
 
 function getConfidenceLabel(confidence: number): string {
   if (confidence >= 0.75) return 'High';
@@ -55,30 +91,48 @@ function getConfidenceColor(confidence: number): string {
   return colors.textDisabled;
 }
 
+/** Convert an ai-assist kg suggestion to a display-unit number. */
+function kgToDisplay(kg: number, unit: WeightUnit): number {
+  if (unit === 'kg') return Math.round(kg * 10) / 10;
+  return Math.round(convertToLbs(kg, 'kg')); // kg → lbs
+}
+
+/** Convert stored lbs to a display-unit number for input prefill. */
+function lbsToDisplay(lbs: number, unit: WeightUnit): number {
+  const v = convertFromLbs(lbs, unit);
+  return unit === 'kg' ? Math.round(v * 10) / 10 : Math.round(v);
+}
+
 // ─── Session intent config ─────────────────────────────
 
 const INTENT_CONFIG: Record<string, { label: string; color: string; emoji: string }> = {
-  light: { label: 'Light', color: colors.success, emoji: '\uD83C\uDF3F' },
-  maintain: { label: 'Maintain', color: colors.gold, emoji: '\u2696\uFE0F' },
-  push: { label: 'Push', color: colors.error, emoji: '\uD83D\uDD25' },
+  light: { label: 'Light', color: colors.success, emoji: '🌿' },
+  maintain: { label: 'Maintain', color: colors.gold, emoji: '⚖️' },
+  push: { label: 'Push', color: colors.error, emoji: '🔥' },
 };
 
-// ─── Sub-components ─────────────────────────────────────
+// ─── Set Row ────────────────────────────────────────────
 
 interface SetRowProps {
-  set: WorkoutSet;
+  set: SessionSetEntry;
+  unit: WeightUnit;
+  queued?: boolean;
 }
 
-function SetRow({ set }: SetRowProps) {
+function SetRow({ set, unit, queued }: SetRowProps) {
   return (
     <View style={styles.setRow}>
       <Text style={styles.setNumber}>#{set.set_number}</Text>
-      <Text style={styles.setValue}>{set.weight_kg} kg</Text>
+      <Text style={styles.setValue}>{formatWeightLbs(set.weight_lbs, unit)}</Text>
       <Text style={styles.setValue}>
         {set.reps} rep{set.reps !== 1 ? 's' : ''}
       </Text>
-      {set.rpe != null && (
+      {queued ? (
+        <Text style={styles.setQueued}>queued</Text>
+      ) : set.rpe != null ? (
         <Text style={styles.setRpe}>RPE {set.rpe}</Text>
+      ) : (
+        <Text style={styles.setRpe} />
       )}
     </View>
   );
@@ -88,14 +142,19 @@ function SetRow({ set }: SetRowProps) {
 
 interface SuggestionCardProps {
   suggestion: NextSetSuggestion | null;
+  unit: WeightUnit;
   onApply: () => void;
 }
 
-function SuggestionCard({ suggestion, onApply }: SuggestionCardProps) {
+function SuggestionCard({ suggestion, unit, onApply }: SuggestionCardProps) {
   if (!suggestion) return null;
 
   const confidenceLabel = getConfidenceLabel(suggestion.confidence);
   const confidenceColor = getConfidenceColor(suggestion.confidence);
+  const weightText =
+    suggestion.suggested_weight != null
+      ? `${kgToDisplay(suggestion.suggested_weight, unit)} ${unit}`
+      : 'Bodyweight';
 
   return (
     <View style={styles.suggestionCard}>
@@ -112,7 +171,7 @@ function SuggestionCard({ suggestion, onApply }: SuggestionCardProps) {
       </View>
 
       <Text style={styles.suggestionValues}>
-        {suggestion.suggested_weight} kg x {suggestion.suggested_reps} reps
+        {weightText} x {suggestion.suggested_reps} reps
       </Text>
 
       <Text style={styles.suggestionReason}>
@@ -125,7 +184,12 @@ function SuggestionCard({ suggestion, onApply }: SuggestionCardProps) {
         </Text>
       ) : null}
 
-      <TouchableOpacity style={styles.suggestionApplyButton} onPress={onApply}>
+      <TouchableOpacity
+        style={styles.suggestionApplyButton}
+        onPress={onApply}
+        accessibilityRole="button"
+        accessibilityLabel="Apply suggested weight and reps"
+      >
         <Text style={styles.suggestionApplyButtonText}>Apply</Text>
       </TouchableOpacity>
     </View>
@@ -135,7 +199,8 @@ function SuggestionCard({ suggestion, onApply }: SuggestionCardProps) {
 // ─── Add Set Form ───────────────────────────────────────
 
 interface AddSetFormProps {
-  lastWeight: number;
+  unit: WeightUnit;
+  lastWeightDisplay: number;
   onLogSet: (weight: number, reps: number, rpe: number | undefined) => void;
   isLogging: boolean;
   prefillWeight?: number | null;
@@ -143,20 +208,21 @@ interface AddSetFormProps {
 }
 
 function AddSetForm({
-  lastWeight,
+  unit,
+  lastWeightDisplay,
   onLogSet,
   isLogging,
   prefillWeight,
   prefillReps,
 }: AddSetFormProps) {
-  const [weight, setWeight] = useState(lastWeight.toString());
+  const [weight, setWeight] = useState(lastWeightDisplay.toString());
   const [reps, setReps] = useState('');
   const [rpe, setRpe] = useState('');
 
-  // Keep weight in sync when lastWeight changes (e.g. after a set is logged)
+  // Keep weight in sync when the last logged weight changes
   useEffect(() => {
-    setWeight(lastWeight.toString());
-  }, [lastWeight]);
+    setWeight(lastWeightDisplay.toString());
+  }, [lastWeightDisplay]);
 
   // Apply prefilled values from AI suggestion
   useEffect(() => {
@@ -176,28 +242,6 @@ function AddSetForm({
     const repsNum = parseInt(reps, 10);
     const rpeNum = rpe !== '' ? parseInt(rpe, 10) : undefined;
 
-    // Validation
-    if (isNaN(repsNum) || repsNum <= 0) {
-      Alert.alert('Invalid reps', 'Reps must be a positive number.');
-      return;
-    }
-    if (repsNum > 999) {
-      Alert.alert('Invalid reps', 'Reps cannot exceed 999.');
-      return;
-    }
-    if (isNaN(weightNum) || weightNum < 0) {
-      Alert.alert('Invalid weight', 'Weight must be 0 or greater.');
-      return;
-    }
-    if (weightNum > 9999) {
-      Alert.alert('Invalid weight', 'Weight cannot exceed 9999 kg.');
-      return;
-    }
-    if (rpeNum !== undefined && (rpeNum < 1 || rpeNum > 10 || isNaN(rpeNum))) {
-      Alert.alert('Invalid RPE', 'RPE must be between 1 and 10.');
-      return;
-    }
-
     onLogSet(weightNum, repsNum, rpeNum);
     setReps('');
     setRpe('');
@@ -207,7 +251,7 @@ function AddSetForm({
     <View style={styles.addSetContainer}>
       <View style={styles.addSetRow}>
         <View style={styles.addSetField}>
-          <Text style={styles.addSetFieldLabel}>Weight (kg)</Text>
+          <Text style={styles.addSetFieldLabel}>Weight ({unit})</Text>
           <TextInput
             style={styles.addSetInput}
             placeholder="0"
@@ -215,6 +259,7 @@ function AddSetForm({
             keyboardType="numeric"
             value={weight}
             onChangeText={setWeight}
+            accessibilityLabel={`Weight in ${unit}`}
           />
         </View>
         <View style={styles.addSetField}>
@@ -226,6 +271,7 @@ function AddSetForm({
             keyboardType="numeric"
             value={reps}
             onChangeText={setReps}
+            accessibilityLabel="Reps"
           />
         </View>
         <View style={[styles.addSetField, styles.addSetFieldSmall]}>
@@ -238,6 +284,7 @@ function AddSetForm({
             value={rpe}
             onChangeText={setRpe}
             maxLength={2}
+            accessibilityLabel="RPE, optional, 1 to 10"
           />
         </View>
       </View>
@@ -246,6 +293,8 @@ function AddSetForm({
         onPress={handleLog}
         disabled={isLogging}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Log set"
       >
         {isLogging ? (
           <ActivityIndicator size="small" color={colors.white} />
@@ -279,6 +328,8 @@ function ChecklistCard({ checklist }: ChecklistCardProps) {
             key={tab}
             style={[styles.checklistTab, activeTab === tab && styles.checklistTabActive]}
             onPress={() => setActiveTab(tab)}
+            accessibilityRole="button"
+            accessibilityLabel={`${tab} checklist`}
           >
             <Text style={[styles.checklistTabText, activeTab === tab && styles.checklistTabTextActive]}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -288,7 +339,7 @@ function ChecklistCard({ checklist }: ChecklistCardProps) {
       </View>
       {items.map((item, i) => (
         <View key={i} style={styles.checklistItem}>
-          <Text style={styles.checklistBullet}>{'\u2022'}</Text>
+          <Text style={styles.checklistBullet}>{'•'}</Text>
           <Text style={styles.checklistItemText}>{item}</Text>
         </View>
       ))}
@@ -299,11 +350,11 @@ function ChecklistCard({ checklist }: ChecklistCardProps) {
 // ─── Set Feedback Prompt ────────────────────────────────
 
 interface SetFeedbackPromptProps {
-  setId: string;
-  onSubmit: (setId: string, feedback: SetFeedbackRating, bodyArea?: BodyArea) => void;
+  feedbackKey: string;
+  onSubmit: (feedbackKey: string, feedback: SetFeedbackRating, bodyArea?: BodyArea) => void;
 }
 
-function SetFeedbackPrompt({ setId, onSubmit }: SetFeedbackPromptProps) {
+function SetFeedbackPrompt({ feedbackKey, onSubmit }: SetFeedbackPromptProps) {
   const [showBodyArea, setShowBodyArea] = useState(false);
 
   const BODY_AREAS: { label: string; value: BodyArea }[] = [
@@ -328,9 +379,11 @@ function SetFeedbackPrompt({ setId, onSubmit }: SetFeedbackPromptProps) {
               key={area.value}
               style={styles.feedbackBodyChip}
               onPress={() => {
-                onSubmit(setId, 'discomfort', area.value);
+                onSubmit(feedbackKey, 'discomfort', area.value);
                 setShowBodyArea(false);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`Discomfort in ${area.label}`}
             >
               <Text style={styles.feedbackBodyChipText}>{area.label}</Text>
             </TouchableOpacity>
@@ -346,19 +399,25 @@ function SetFeedbackPrompt({ setId, onSubmit }: SetFeedbackPromptProps) {
       <View style={styles.feedbackChips}>
         <TouchableOpacity
           style={[styles.feedbackChip, styles.feedbackChipOk]}
-          onPress={() => onSubmit(setId, 'ok')}
+          onPress={() => onSubmit(feedbackKey, 'ok')}
+          accessibilityRole="button"
+          accessibilityLabel="Set felt OK"
         >
           <Text style={styles.feedbackChipText}>OK</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.feedbackChip, styles.feedbackChipUnstable]}
-          onPress={() => onSubmit(setId, 'unstable')}
+          onPress={() => onSubmit(feedbackKey, 'unstable')}
+          accessibilityRole="button"
+          accessibilityLabel="Set felt unstable"
         >
           <Text style={styles.feedbackChipText}>Unstable</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.feedbackChip, styles.feedbackChipDiscomfort]}
           onPress={() => setShowBodyArea(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Set caused discomfort"
         >
           <Text style={styles.feedbackChipText}>Discomfort</Text>
         </TouchableOpacity>
@@ -370,66 +429,78 @@ function SetFeedbackPrompt({ setId, onSubmit }: SetFeedbackPromptProps) {
 // ─── Exercise Card ──────────────────────────────────────
 
 interface ExerciseCardProps {
-  exercise: WorkoutExerciseWithSets;
-  onLogSet: (
-    exerciseId: string,
-    weight: number,
-    reps: number,
-    rpe: number | undefined,
-  ) => void;
-  loggingExerciseId: string | null;
+  exercise: ExerciseEntry;
+  unit: WeightUnit;
+  onLogSet: (machineId: string, weight: number, reps: number, rpe: number | undefined) => void;
+  loggingMachineId: string | null;
   suggestion: NextSetSuggestion | null;
-  onApplySuggestion: (exerciseId: string) => void;
   aiEnabled: boolean;
   checklist: FormChecklist | null;
   checklistEnabled: boolean;
   feedbackEnabled: boolean;
-  lastLoggedSetId: string | null;
-  onSubmitFeedback: (setId: string, feedback: SetFeedbackRating, bodyArea?: BodyArea) => void;
+  lastLoggedSetNumber: number | null;
+  onSubmitFeedback: (feedbackKey: string, feedback: SetFeedbackRating, bodyArea?: BodyArea) => void;
   feedbackSubmitted: Set<string>;
   safetyNudge?: SafetyNudge | null;
 }
 
 function ExerciseCard({
   exercise,
+  unit,
   onLogSet,
-  loggingExerciseId,
+  loggingMachineId,
   suggestion,
-  onApplySuggestion,
   aiEnabled,
   checklist,
   checklistEnabled,
   feedbackEnabled,
-  lastLoggedSetId,
+  lastLoggedSetNumber,
   onSubmitFeedback,
   feedbackSubmitted,
   safetyNudge,
 }: ExerciseCardProps) {
-  const sortedSets = [...exercise.sets].sort((a, b) => a.set_number - b.set_number);
-  const lastSet = sortedSets[sortedSets.length - 1];
-  const lastWeight = lastSet ? lastSet.weight_kg : 0;
+  const allSets = [...exercise.sets, ...exercise.pendingSets];
+  const lastSet = allSets[allSets.length - 1];
+  const lastWeightDisplay = lastSet ? lbsToDisplay(lastSet.weight_lbs, unit) : 0;
+  const isDone = exercise.completedAt != null;
 
   const [prefillWeight, setPrefillWeight] = useState<number | null>(null);
   const [prefillReps, setPrefillReps] = useState<number | null>(null);
 
   const handleApply = () => {
     if (suggestion) {
-      setPrefillWeight(suggestion.suggested_weight);
+      setPrefillWeight(
+        suggestion.suggested_weight != null
+          ? kgToDisplay(suggestion.suggested_weight, unit)
+          : 0,
+      );
       setPrefillReps(suggestion.suggested_reps);
     }
-    onApplySuggestion(exercise.id);
+    trackEvent('ai_next_set_applied', { machine_id: exercise.machineId });
   };
+
+  const feedbackKey =
+    lastLoggedSetNumber != null ? `${exercise.machineId}:${lastLoggedSetNumber}` : null;
 
   return (
     <View style={styles.exerciseCard}>
       <View style={styles.exerciseHeader}>
-        <Text style={styles.exerciseName}>{exercise.exercise_name}</Text>
-        {exercise.machine && (
-          <Text style={styles.machineName}>{exercise.machine.name}</Text>
+        <View style={styles.exerciseHeaderRow}>
+          <Text style={styles.exerciseName}>{exercise.machineName}</Text>
+          {isDone && (
+            <View style={styles.doneChip}>
+              <Text style={styles.doneChipText}>{'✓'} Done</Text>
+            </View>
+          )}
+        </View>
+        {allSets.length > 0 && (
+          <Text style={styles.machineName}>
+            {formatVolumeLbs(exercise.totalVolumeLbs, unit)} volume
+          </Text>
         )}
       </View>
 
-      {sortedSets.length > 0 && (
+      {allSets.length > 0 && (
         <View style={styles.setsContainer}>
           <View style={styles.setHeaderRow}>
             <Text style={styles.setHeaderText}>Set</Text>
@@ -437,13 +508,16 @@ function ExerciseCard({
             <Text style={styles.setHeaderText}>Reps</Text>
             <Text style={styles.setHeaderText}>RPE</Text>
           </View>
-          {sortedSets.map((set) => (
-            <SetRow key={set.id} set={set} />
+          {exercise.sets.map((set) => (
+            <SetRow key={`s-${set.set_number}`} set={set} unit={unit} />
+          ))}
+          {exercise.pendingSets.map((set, i) => (
+            <SetRow key={`p-${i}`} set={set} unit={unit} queued />
           ))}
         </View>
       )}
 
-      {sortedSets.length === 0 && (
+      {allSets.length === 0 && (
         <Text style={styles.noSetsText}>No sets logged yet</Text>
       )}
 
@@ -458,230 +532,151 @@ function ExerciseCard({
         </View>
       )}
 
-      {aiEnabled && (!safetyNudge || !safetyNudge.should_suppress_suggestion) && (
-        <SuggestionCard suggestion={suggestion} onApply={handleApply} />
+      {!isDone && aiEnabled && (!safetyNudge || !safetyNudge.should_suppress_suggestion) && (
+        <SuggestionCard suggestion={suggestion} unit={unit} onApply={handleApply} />
       )}
 
-      {/* Form Checklist (collapsible) */}
-      {checklistEnabled && checklist && (
+      {/* Form Checklist */}
+      {!isDone && checklistEnabled && checklist && (
         <ChecklistCard checklist={checklist} />
       )}
 
-      <View style={styles.addSetSection}>
-        <Text style={styles.addSetLabel}>Add Set</Text>
-        <AddSetForm
-          lastWeight={lastWeight}
-          onLogSet={(weight, reps, rpe) => onLogSet(exercise.id, weight, reps, rpe)}
-          isLogging={loggingExerciseId === exercise.id}
-          prefillWeight={prefillWeight}
-          prefillReps={prefillReps}
-        />
-      </View>
-
-      {/* Set Feedback Prompt (shown after logging a set) */}
-      {feedbackEnabled && lastLoggedSetId && !feedbackSubmitted.has(lastLoggedSetId) && (
-        <SetFeedbackPrompt
-          setId={lastLoggedSetId}
-          onSubmit={onSubmitFeedback}
-        />
+      {!isDone && (
+        <View style={styles.addSetSection}>
+          <Text style={styles.addSetLabel}>Add Set</Text>
+          <AddSetForm
+            unit={unit}
+            lastWeightDisplay={lastWeightDisplay}
+            onLogSet={(weight, reps, rpe) => onLogSet(exercise.machineId, weight, reps, rpe)}
+            isLogging={loggingMachineId === exercise.machineId}
+            prefillWeight={prefillWeight}
+            prefillReps={prefillReps}
+          />
+        </View>
       )}
+
+      {/* Set Feedback Prompt (only for server-confirmed sets) */}
+      {!isDone &&
+        feedbackEnabled &&
+        exercise.sessionId != null &&
+        feedbackKey != null &&
+        !feedbackSubmitted.has(feedbackKey) && (
+          <SetFeedbackPrompt feedbackKey={feedbackKey} onSubmit={onSubmitFeedback} />
+        )}
     </View>
   );
 }
 
-// ─── Add Exercise Modal ─────────────────────────────────
+// ─── Add Machine Modal (machine picker only) ────────────
 
-interface AddExerciseModalProps {
+interface AddMachineModalProps {
   visible: boolean;
   onClose: () => void;
-  onAdd: (name: string, machineId: string | undefined) => void;
+  onAdd: (machine: { id: string; name: string }) => void;
   machines: Array<{ id: string; name: string }>;
-  isAdding: boolean;
 }
 
-function AddExerciseModal({
-  visible,
-  onClose,
-  onAdd,
-  machines,
-  isAdding,
-}: AddExerciseModalProps) {
-  const [name, setName] = useState('');
-  const [selectedMachineId, setSelectedMachineId] = useState<string | undefined>(
-    undefined,
+function AddMachineModal({ visible, onClose, onAdd, machines }: AddMachineModalProps) {
+  const content = (
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Add Machine</Text>
+
+      <FlatList
+        data={machines}
+        keyExtractor={(item) => item.id}
+        style={styles.machineList}
+        ListEmptyComponent={
+          <Text style={styles.emptyMachineText}>No machines available</Text>
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.machineItem}
+            onPress={() => onAdd(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ${item.name} to workout`}
+          >
+            <Text style={styles.machineItemText}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      <View style={styles.modalActions}>
+        <TouchableOpacity
+          style={styles.modalCancelButton}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Cancel adding machine"
+        >
+          <Text style={styles.modalCancelText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
-  const handleSubmit = () => {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      Alert.alert('Required', 'Please enter an exercise name.');
-      return;
-    }
-    onAdd(trimmed, selectedMachineId);
-    setName('');
-    setSelectedMachineId(undefined);
-  };
-
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       {Platform.OS === 'ios' ? (
         <BlurView tint="dark" intensity={40} style={styles.modalOverlay}>
-          <KeyboardAvoidingView
-            behavior="padding"
-            style={styles.modalContainer}
-          >
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Add Exercise</Text>
-
-              <Text style={styles.modalLabel}>Exercise Name</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="e.g. Bench Press"
-                placeholderTextColor={colors.textDisabled}
-                value={name}
-                onChangeText={setName}
-                autoFocus
-              />
-
-              <Text style={styles.modalLabel}>Machine (optional)</Text>
-              <FlatList
-                data={machines}
-                keyExtractor={(item) => item.id}
-                style={styles.machineList}
-                ListEmptyComponent={
-                  <Text style={styles.emptyMachineText}>No machines available</Text>
-                }
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.machineItem,
-                      selectedMachineId === item.id && styles.machineItemSelected,
-                    ]}
-                    onPress={() =>
-                      setSelectedMachineId(
-                        selectedMachineId === item.id ? undefined : item.id,
-                      )
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.machineItemText,
-                        selectedMachineId === item.id &&
-                        styles.machineItemTextSelected,
-                      ]}
-                    >
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              />
-
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={styles.modalCancelButton}
-                  onPress={onClose}
-                  disabled={isAdding}
-                >
-                  <Text style={styles.modalCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.modalAddButton,
-                    isAdding && styles.modalAddButtonDisabled,
-                  ]}
-                  onPress={handleSubmit}
-                  disabled={isAdding}
-                >
-                  {isAdding ? (
-                    <ActivityIndicator size="small" color={colors.white} />
-                  ) : (
-                    <Text style={styles.modalAddText}>Add Exercise</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
+          <View style={styles.modalContainer}>{content}</View>
         </BlurView>
       ) : (
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={undefined}
-          style={styles.modalContainer}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Exercise</Text>
-
-            <Text style={styles.modalLabel}>Exercise Name</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="e.g. Bench Press"
-              placeholderTextColor={colors.textDisabled}
-              value={name}
-              onChangeText={setName}
-              autoFocus
-            />
-
-            <Text style={styles.modalLabel}>Machine (optional)</Text>
-            <FlatList
-              data={machines}
-              keyExtractor={(item) => item.id}
-              style={styles.machineList}
-              ListEmptyComponent={
-                <Text style={styles.emptyMachineText}>No machines available</Text>
-              }
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.machineItem,
-                    selectedMachineId === item.id && styles.machineItemSelected,
-                  ]}
-                  onPress={() =>
-                    setSelectedMachineId(
-                      selectedMachineId === item.id ? undefined : item.id,
-                    )
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.machineItemText,
-                      selectedMachineId === item.id &&
-                      styles.machineItemTextSelected,
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={onClose}
-                disabled={isAdding}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalAddButton,
-                  isAdding && styles.modalAddButtonDisabled,
-                ]}
-                onPress={handleSubmit}
-                disabled={isAdding}
-              >
-                {isAdding ? (
-                  <ActivityIndicator size="small" color={colors.white} />
-                ) : (
-                  <Text style={styles.modalAddText}>Add Exercise</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>{content}</View>
+        </View>
       )}
     </Modal>
+  );
+}
+
+// ─── PR Banner ──────────────────────────────────────────
+
+interface PrBannerState {
+  pr: PrResult;
+  machineName: string;
+}
+
+function prBannerText(pr: PrResult, unit: WeightUnit): string {
+  switch (pr.type) {
+    case 'first_session':
+      return 'First session on this machine — baseline set!';
+    case 'weight':
+      return `New best weight: ${formatWeightLbs(pr.value, unit)}${
+        pr.improvementPct != null ? ` (+${pr.improvementPct}%)` : ''
+      }`;
+    case 'volume':
+      return `New best volume: ${formatVolumeLbs(pr.value, unit)}${
+        pr.improvementPct != null ? ` (+${pr.improvementPct}%)` : ''
+      }`;
+    default:
+      return 'New personal record!';
+  }
+}
+
+function PrBanner({ banner, unit, onDismiss }: {
+  banner: PrBannerState;
+  unit: WeightUnit;
+  onDismiss: () => void;
+}) {
+  return (
+    <View
+      style={styles.prBanner}
+      accessibilityRole="alert"
+      accessibilityLabel={`Personal record on ${banner.machineName}. ${prBannerText(banner.pr, unit)}`}
+    >
+      <Text style={styles.prBannerTrophy}>{'🏆'}</Text>
+      <View style={styles.prBannerBody}>
+        <Text style={styles.prBannerTitle}>PR — {banner.machineName}</Text>
+        <Text style={styles.prBannerText}>{prBannerText(banner.pr, unit)}</Text>
+      </View>
+      <TouchableOpacity
+        onPress={onDismiss}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss personal record banner"
+        style={styles.prBannerDismiss}
+      >
+        <Text style={styles.prBannerDismissText}>{'✕'}</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -768,6 +763,8 @@ function RestTimer({
               key={d}
               style={styles.restDurationChip}
               onPress={() => onSetDuration(d)}
+              accessibilityRole="button"
+              accessibilityLabel={`Set rest to ${d} seconds`}
             >
               <Text style={styles.restDurationChipText}>
                 {d >= 60 ? `${d / 60}m` : `${d}s`}
@@ -781,6 +778,8 @@ function RestTimer({
             style={styles.restAdjustButton}
             onPress={() => onAdjust(-15)}
             disabled={isFinished}
+            accessibilityRole="button"
+            accessibilityLabel="Reduce rest by 15 seconds"
           >
             <Text style={styles.restAdjustText}>{'−'}15s</Text>
           </TouchableOpacity>
@@ -788,12 +787,19 @@ function RestTimer({
             style={styles.restAdjustButton}
             onPress={() => onAdjust(15)}
             disabled={isFinished}
+            accessibilityRole="button"
+            accessibilityLabel="Extend rest by 15 seconds"
           >
             <Text style={styles.restAdjustText}>+15s</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.restTimerDismiss} onPress={onDismiss}>
+        <TouchableOpacity
+          style={styles.restTimerDismiss}
+          onPress={onDismiss}
+          accessibilityRole="button"
+          accessibilityLabel={isFinished ? 'Dismiss rest timer' : 'Skip rest'}
+        >
           <Text style={styles.restTimerDismissText}>
             {isFinished ? 'DONE' : 'SKIP REST →'}
           </Text>
@@ -805,40 +811,47 @@ function RestTimer({
 
 // ─── Main Screen ────────────────────────────────────────
 
-export default function ActiveWorkoutScreen() {
-  const { id: workoutId, intent: intentParam } = useLocalSearchParams<{ id: string; intent?: string }>();
+export default function TodayWorkoutScreen() {
+  // The [id] param is a routing token — 'today' is canonical; the screen
+  // always loads today's sessions for the signed-in member.
+  const { intent: intentParam, machineId: machineIdParam } = useLocalSearchParams<{
+    id: string;
+    intent?: string;
+    machineId?: string;
+  }>();
   const router = useRouter();
   const navigation = useNavigation();
   const sessionIntent = (['light', 'maintain', 'push'].includes(intentParam ?? '')
     ? intentParam as SessionIntent
     : 'push') as SessionIntent;
 
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [exercises, setExercises] = useState<WorkoutExerciseWithSets[]>([]);
+  const [identity, setIdentity] = useState<WorkoutIdentity | null>(null);
+  const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [loggingExerciseId, setLoggingExerciseId] = useState<string | null>(null);
+  const [loggingMachineId, setLoggingMachineId] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
 
-  // Add exercise modal
-  const [showAddExercise, setShowAddExercise] = useState(false);
-  const [machines, setMachines] = useState<Array<{ id: string; name: string }>>([]);
-  const [addingExercise, setAddingExercise] = useState(false);
+  // Machine catalog (picker + names + checklists)
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [showAddMachine, setShowAddMachine] = useState(false);
 
   // AI Assist state
   const [suggestions, setSuggestions] = useState<Record<string, NextSetSuggestion>>({});
   const [aiEnabled, setAiEnabled] = useState(false);
-  const [weightUnit, setWeightUnitState] = useState<WeightUnit>('kg');
+  const [weightUnit, setWeightUnitState] = useState<WeightUnit>('lbs');
 
-  // Phase 2.5.2: Checklist + Feedback state
+  // Checklist + feedback state
   const [checklistEnabled, setChecklistEnabled] = useState(false);
   const [feedbackEnabled, setFeedbackEnabled] = useState(false);
-  const [checklists, setChecklists] = useState<Record<string, FormChecklist>>({});
-  const [lastLoggedSetIds, setLastLoggedSetIds] = useState<Record<string, string>>({});
+  const [lastLoggedSetNumbers, setLastLoggedSetNumbers] = useState<Record<string, number>>({});
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
 
-  // Phase 2.5.4: Safety nudge state
+  // Safety nudge state
   const [safetyNudges, setSafetyNudges] = useState<Record<string, SafetyNudge>>({});
+
+  // PR banner
+  const [prBanner, setPrBanner] = useState<PrBannerState | null>(null);
 
   // Rest timer state
   const [restTimerRunning, setRestTimerRunning] = useState(false);
@@ -846,12 +859,126 @@ export default function ActiveWorkoutScreen() {
   const [restDuration, setRestDuration] = useState(90); // default 90s
   const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const abortRef = useRef<AbortController | null>(null);
-
-  // Enrichment: live elapsed time
+  // Live elapsed time (earliest set today, else screen mount)
+  const startTimeRef = useRef<number>(Date.now());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // ─── Initialize feature flags + weight unit ──────────
+  const workoutModeRef = useRef<ApiWorkoutMode>('free');
+  const offlineAlertShownRef = useRef(false);
+  const prevSetsCacheRef = useRef<Record<string, SessionSetEntry[]>>({});
+
+  // ─── Initial load ─────────────────────────────────────
+  const loadToday = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Replay any offline-queued sets first (fire-and-forget on failure)
+      flushQueue(replayQueuedSet).catch(() => {});
+
+      const [ident, unit] = await Promise.all([
+        resolveWorkoutIdentity(),
+        getWeightUnit(),
+      ]);
+      setWeightUnitState(unit);
+
+      if (!ident) {
+        setError('Please sign in to log a workout.');
+        return;
+      }
+      setIdentity(ident);
+
+      // Workout mode context (non-fatal)
+      try {
+        const ctx = await detectWorkoutMode(ident.userId);
+        workoutModeRef.current = toApiWorkoutMode(ctx.mode);
+      } catch {
+        workoutModeRef.current = 'free';
+      }
+
+      // Today's session rows + the gym's machine catalog in parallel
+      const today = localSessionDate();
+      const [sessionsRes, machinesRes] = await Promise.all([
+        supabase
+          .from('workout_sessions')
+          .select('id, machine_id, sets, sets_count, total_volume_lbs, best_weight_lbs, completed_at, workout_mode')
+          .eq('member_id', ident.memberId)
+          .eq('session_date', today),
+        supabase
+          .from('machines')
+          .select(
+            'id, name, gym_id, qr_slug, muscle_groups, setup_steps, safety_cues, ' +
+              'movement_pattern, equipment_type, form_checklist_before, ' +
+              'form_checklist_during, form_checklist_after, checklist_version',
+          )
+          .eq('gym_id', ident.gymId)
+          .eq('is_active', true),
+      ]);
+
+      if (sessionsRes.error) throw sessionsRes.error;
+
+      const machineRows = (machinesRes.data ?? []) as unknown as Machine[];
+      setMachines(machineRows);
+      const nameById = new Map(machineRows.map((m) => [m.id, m.name]));
+
+      const rows = (sessionsRes.data ?? []) as Array<{
+        id: string;
+        machine_id: string;
+        sets: SessionSetEntry[] | null;
+        sets_count: number | null;
+        total_volume_lbs: number | null;
+        best_weight_lbs: number | null;
+        completed_at: string | null;
+        workout_mode: ApiWorkoutMode | null;
+      }>;
+
+      const entries: ExerciseEntry[] = rows.map((row) => ({
+        machineId: row.machine_id,
+        machineName: nameById.get(row.machine_id) ?? 'Machine',
+        sessionId: row.id,
+        sets: row.sets ?? [],
+        pendingSets: [],
+        totalVolumeLbs: row.total_volume_lbs ?? 0,
+        bestWeightLbs: row.best_weight_lbs ?? 0,
+        completedAt: row.completed_at,
+      }));
+
+      // Pre-add the machine from the query param (e.g. from the machine screen)
+      if (machineIdParam && !entries.some((e) => e.machineId === machineIdParam)) {
+        entries.push({
+          machineId: machineIdParam,
+          machineName: nameById.get(machineIdParam) ?? 'Machine',
+          sessionId: null,
+          sets: [],
+          pendingSets: [],
+          totalVolumeLbs: 0,
+          bestWeightLbs: 0,
+          completedAt: null,
+        });
+      }
+
+      // Sort: active first, completed last
+      entries.sort((a, b) => Number(a.completedAt != null) - Number(b.completedAt != null));
+      setExercises(entries);
+
+      // Elapsed clock starts at the earliest set logged today
+      const earliest = rows
+        .flatMap((r) => r.sets ?? [])
+        .map((s) => new Date(s.logged_at).getTime())
+        .filter((t) => !Number.isNaN(t))
+        .sort((a, b) => a - b)[0];
+      startTimeRef.current = earliest ?? Date.now();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load workout');
+    } finally {
+      setLoading(false);
+    }
+  }, [machineIdParam]);
+
+  useEffect(() => {
+    loadToday();
+  }, [loadToday]);
+
+  // ─── Feature flags + weight unit ─────────────────────
   useEffect(() => {
     const initFlags = async () => {
       try {
@@ -859,20 +986,20 @@ export default function ActiveWorkoutScreen() {
         setAiEnabled(isFeatureEnabled('ai_assist_enabled'));
         setChecklistEnabled(isFeatureEnabled('ai_form_checklist'));
         setFeedbackEnabled(isFeatureEnabled('ai_form_checklist')); // tied to same flag
-        const unit = await getWeightUnit();
-        setWeightUnitState(unit);
       } catch {
-        // Feature flags failed to load; AI assist stays disabled
         setAiEnabled(false);
       }
     };
     initFlags();
   }, []);
 
-  // ─── Back nav guard: confirm before leaving active workout ──
+  // ─── Back nav guard: confirm before leaving an active workout ──
+  const hasActiveSessions = exercises.some(
+    (e) => e.completedAt == null && (e.sets.length > 0 || e.pendingSets.length > 0),
+  );
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-      if (!workout || finishing) return; // Allow if no workout loaded or finishing
+      if (!hasActiveSessions || finishing) return;
       e.preventDefault();
       Alert.alert(
         'Leave workout?',
@@ -884,7 +1011,7 @@ export default function ActiveWorkoutScreen() {
       );
     });
     return unsubscribe;
-  }, [navigation, workout, finishing]);
+  }, [navigation, hasActiveSessions, finishing]);
 
   // ─── Rest timer logic ─────────────────────────────────
   useEffect(() => {
@@ -913,15 +1040,14 @@ export default function ActiveWorkoutScreen() {
 
   // ─── Live elapsed time ──────────────────────────────
   useEffect(() => {
-    if (!workout) return;
-    const startTime = new Date(workout.started_at).getTime();
+    if (loading) return;
     const tick = () => {
-      setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
     };
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [workout]);
+  }, [loading]);
 
   const startRestTimer = useCallback(() => {
     setRestSecondsLeft(restDuration);
@@ -942,103 +1068,81 @@ export default function ActiveWorkoutScreen() {
   const adjustRestTimer = useCallback((deltaSeconds: number) => {
     setRestSecondsLeft((prev) => Math.max(0, prev + deltaSeconds));
     if (deltaSeconds > 0) {
-      // Keep the progress ring denominator in sync when extending rest
       setRestDuration((prev) => prev + deltaSeconds);
     }
   }, []);
 
   // ─── Compute AI suggestion ────────────────────────────
   const computeSuggestion = useCallback(
-    async (exerciseId: string) => {
-      if (!aiEnabled || !workout) return;
+    async (machineId: string, machineName: string, currentSets: SessionSetEntry[]) => {
+      if (!aiEnabled || !identity) return;
 
       try {
-        // Get the exercise's current sets from state
-        const exercise = exercises.find((e) => e.id === exerciseId);
-        if (!exercise) return;
-
-        const currentSets = exercise.sets;
-
-        // Fetch previous session sets for the same profile + machine
-        let previousSets: WorkoutSet[] = [];
-        if (exercise.machine_id) {
-          const { data: prevWorkoutExercises } = await supabase
-            .from('workout_exercises')
-            .select('id, workout_id, sets(*), workouts!inner(profile_id, status, finished_at)')
-            .eq('machine_id', exercise.machine_id)
-            .eq('workouts.profile_id', workout.profile_id)
-            .eq('workouts.status', 'completed')
-            .neq('workout_id', workout.id)
-            .order('created_at', { ascending: false })
+        // Previous session sets for this machine (cached per machine)
+        let previousSets = prevSetsCacheRef.current[machineId];
+        if (previousSets == null) {
+          const { data: prevRows } = await supabase
+            .from('workout_sessions')
+            .select('sets')
+            .eq('member_id', identity.memberId)
+            .eq('machine_id', machineId)
+            .lt('session_date', localSessionDate())
+            .order('session_date', { ascending: false })
             .limit(1);
-
-          if (prevWorkoutExercises && prevWorkoutExercises.length > 0) {
-            previousSets = (prevWorkoutExercises[0].sets ?? []) as WorkoutSet[];
-          }
+          previousSets = ((prevRows?.[0]?.sets ?? []) as SessionSetEntry[]);
+          prevSetsCacheRef.current[machineId] = previousSets;
         }
 
-        // Call the AI suggestion engine (pass session intent)
-        const result = await getNextSetSuggestion({
-          currentSets,
-          previousSets,
-          unit: weightUnit,
+        // ai-assist operates in kg — adapt at the boundary
+        const result = getNextSetSuggestion({
+          currentSets: sessionSetsToKg(currentSets),
+          previousSets: sessionSetsToKg(previousSets),
+          unit: 'kg',
           intent: sessionIntent,
         });
 
-        // Update suggestions state
-        setSuggestions((prev) => ({
-          ...prev,
-          [exerciseId]: result,
-        }));
+        setSuggestions((prev) => ({ ...prev, [machineId]: result }));
+        trackEvent('ai_next_set_shown', { machine_id: machineId });
+        logAiDecision('next_set', { machineId, currentSets }, { ...result });
 
-        // Track the event
-        trackEvent('ai_next_set_shown', { exercise_id: exerciseId });
-
-        // Audit log
-        logAiDecision('next_set', { exerciseId, currentSets }, { ...result });
-
-        // ─── Phase 2.5.4: Safety nudge ────────────────
-        if (isFeatureEnabled('ai_safety_loop') && workout) {
+        // ─── Safety nudge (7-day feedback trends) ────
+        if (isFeatureEnabled('ai_safety_loop')) {
           try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-              const { data: feedbackData } = await supabase
-                .from('set_feedback')
-                .select('feedback, body_area')
-                .eq('profile_id', user.id)
-                .gte('created_at', sevenDaysAgo);
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            const { data: feedbackData } = await supabase
+              .from('set_feedback')
+              .select('feedback, body_area')
+              .eq('profile_id', identity.userId)
+              .gte('created_at', sevenDaysAgo);
 
-              if (feedbackData && feedbackData.length > 0) {
-                const discomfortCount = feedbackData.filter(
-                  (f: { feedback: string }) => f.feedback === 'discomfort' || f.feedback === 'pain',
-                ).length;
-                const unstableCount = feedbackData.filter(
-                  (f: { feedback: string }) => f.feedback === 'unstable',
-                ).length;
+            if (feedbackData && feedbackData.length > 0) {
+              const discomfortCount = feedbackData.filter(
+                (f: { feedback: string }) => f.feedback === 'discomfort' || f.feedback === 'pain',
+              ).length;
+              const unstableCount = feedbackData.filter(
+                (f: { feedback: string }) => f.feedback === 'unstable',
+              ).length;
 
-                // Get top body areas from discomfort/pain feedback
-                const bodyAreas = feedbackData
-                  .filter((f: { feedback: string; body_area: string | null }) =>
-                    (f.feedback === 'discomfort' || f.feedback === 'pain') && f.body_area,
-                  )
-                  .map((f: { body_area: string }) => f.body_area);
-                const uniqueAreas = [...new Set(bodyAreas)];
+              const bodyAreas = feedbackData
+                .filter((f: { feedback: string; body_area: string | null }) =>
+                  (f.feedback === 'discomfort' || f.feedback === 'pain') && f.body_area,
+                )
+                .map((f: { body_area: string | null }) => f.body_area as string);
+              const uniqueAreas = [...new Set(bodyAreas)];
 
-                const nudge = getSafetyNudge({
-                  discomfortCount7d: discomfortCount,
-                  unstableCount7d: unstableCount,
-                  topBodyAreas: uniqueAreas,
-                  exerciseName: exercise.exercise_name,
+              const nudge = getSafetyNudge({
+                discomfortCount7d: discomfortCount,
+                unstableCount7d: unstableCount,
+                topBodyAreas: uniqueAreas,
+                exerciseName: machineName,
+              });
+
+              if (nudge) {
+                setSafetyNudges((prev) => ({ ...prev, [machineId]: nudge }));
+                trackEvent('safety_nudge_shown', {
+                  machine_id: machineId,
+                  level: nudge.level,
                 });
-
-                if (nudge) {
-                  setSafetyNudges((prev) => ({ ...prev, [exerciseId]: nudge }));
-                  trackEvent('safety_nudge_shown', {
-                    exercise_id: exerciseId,
-                    level: nudge.level,
-                  });
-                }
               }
             }
           } catch {
@@ -1049,332 +1153,196 @@ export default function ActiveWorkoutScreen() {
         // Don't block UX if AI suggestion fails
       }
     },
-    [aiEnabled, exercises, workout, sessionIntent],
+    [aiEnabled, identity, sessionIntent],
   );
-
-  // ─── Fetch data ─────────────────────────────────────
-  const fetchWorkoutData = useCallback(async () => {
-    if (!workoutId) {
-      setError('No workout ID provided');
-      setLoading(false);
-      return;
-    }
-
-    // Cancel any in-flight request
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Fetch workout
-      const { data: workoutData, error: workoutError } = await supabase
-        .from('workouts')
-        .select('*')
-        .eq('id', workoutId)
-        .abortSignal(controller.signal)
-        .single();
-
-      if (workoutError) throw workoutError;
-      if (!workoutData) throw new Error('Workout not found');
-
-      setWorkout(workoutData as Workout);
-
-      // Fetch exercises with sets
-      const { data: exercisesData, error: exercisesError } = await supabase
-        .from('workout_exercises')
-        .select('*, sets(*)')
-        .eq('workout_id', workoutId)
-        .order('order_index')
-        .abortSignal(controller.signal);
-
-      if (exercisesError) throw exercisesError;
-
-      setExercises((exercisesData ?? []) as WorkoutExerciseWithSets[]);
-    } catch (err: unknown) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        setError('Request timed out. Check your connection and try again.');
-      } else {
-        setError(err instanceof Error ? err.message : 'Failed to load workout');
-      }
-    } finally {
-      clearTimeout(timeout);
-      setLoading(false);
-    }
-  }, [workoutId]);
-
-  useEffect(() => {
-    fetchWorkoutData();
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, [fetchWorkoutData]);
-
-  // ─── Compute form checklists for exercises with machines ──
-  useEffect(() => {
-    if (!checklistEnabled || exercises.length === 0) return;
-
-    const newChecklists: Record<string, FormChecklist> = {};
-    for (const ex of exercises) {
-      if (ex.machine && !checklists[ex.id]) {
-        newChecklists[ex.id] = getFormChecklist({ machine: ex.machine });
-      }
-    }
-    if (Object.keys(newChecklists).length > 0) {
-      setChecklists((prev) => ({ ...prev, ...newChecklists }));
-    }
-  }, [exercises, checklistEnabled]);
-
-  // ─── Fetch machines (when modal opens) ──────────────
-  const fetchMachines = useCallback(async () => {
-    if (!workout) return;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    try {
-      const { data, error: machineError } = await supabase
-        .from('machines')
-        .select('id, name')
-        .eq('gym_id', workout.gym_id)
-        .abortSignal(controller.signal);
-
-      if (machineError) throw machineError;
-      setMachines((data ?? []) as Array<{ id: string; name: string }>);
-    } catch {
-      // Silently fail -- machine picker is optional
-      setMachines([]);
-    } finally {
-      clearTimeout(timeout);
-    }
-  }, [workout]);
-
-  const handleOpenAddExercise = () => {
-    fetchMachines();
-    setShowAddExercise(true);
-  };
 
   // ─── Log a set ──────────────────────────────────────
   const handleLogSet = async (
-    exerciseId: string,
-    weight: number,
+    machineId: string,
+    weightDisplay: number,
     reps: number,
     rpe: number | undefined,
   ) => {
-    setLoggingExerciseId(exerciseId);
-
-    // Determine next set number
-    const exercise = exercises.find((e) => e.id === exerciseId);
-    const currentSets = exercise?.sets ?? [];
-    const nextSetNumber =
-      currentSets.length > 0
-        ? Math.max(...currentSets.map((s) => s.set_number)) + 1
-        : 1;
-
-    const tempId = generateTempId();
-    const now = new Date().toISOString();
-
-    const optimisticSet: WorkoutSet = {
-      id: tempId,
-      workout_exercise_id: exerciseId,
-      set_number: nextSetNumber,
-      reps,
-      weight_kg: weight,
-      rpe: rpe ?? null,
-      logged_at: now,
-    };
-
-    // Optimistic update
-    setExercises((prev) =>
-      prev.map((ex) =>
-        ex.id === exerciseId
-          ? { ...ex, sets: [...ex.sets, optimisticSet] }
-          : ex,
-      ),
-    );
-
-    const insertPayload: Record<string, unknown> = {
-      workout_exercise_id: exerciseId,
-      set_number: nextSetNumber,
-      reps,
-      weight_kg: weight,
-      logged_at: now,
-    };
-    if (rpe !== undefined) {
-      insertPayload.rpe = rpe;
+    const validationError = validateSetInput(weightDisplay, weightUnit, reps, rpe ?? null);
+    if (validationError) {
+      Alert.alert('Invalid set', validationError);
+      return;
     }
+    if (!identity) return;
+
+    const exercise = exercises.find((e) => e.machineId === machineId);
+    if (!exercise) return;
+
+    setLoggingMachineId(machineId);
+    const weightLbs = convertToLbs(weightDisplay, weightUnit);
 
     try {
-      const { data } = await retryWithBackoff(
-        async () => {
-          const res = await supabase
-            .from('sets')
-            .insert(insertPayload)
-            .select()
-            .single();
-          if (res.error) throw res.error;
-          return res;
-        },
-        { maxRetries: 2, baseDelayMs: 300 },
-      );
+      const result = await logSet({
+        gym_id: identity.gymId,
+        machine_id: machineId,
+        member_id: identity.memberId,
+        session_date: localSessionDate(),
+        workout_mode: workoutModeRef.current,
+        set: { weight_lbs: weightLbs, reps, rpe: rpe ?? null },
+      });
 
-      // Reconcile: replace temp set with server response
-      const serverSet = data as WorkoutSet;
+      if (result === 'unavailable') {
+        Alert.alert(
+          'Connection Required',
+          'Set logging needs the app server. Check your connection and try again.',
+        );
+        return;
+      }
+
+      if (result === 'queued') {
+        // Offline: keep a local pending entry; it replays on next launch/load
+        const localSetNumber =
+          exercise.sets.length + exercise.pendingSets.length + 1;
+        const pendingEntry: SessionSetEntry = {
+          set_number: localSetNumber,
+          weight_lbs: weightLbs,
+          reps,
+          rpe: rpe ?? null,
+          notes: null,
+          logged_at: new Date().toISOString(),
+        };
+        setExercises((prev) =>
+          prev.map((e) =>
+            e.machineId === machineId
+              ? { ...e, pendingSets: [...e.pendingSets, pendingEntry] }
+              : e,
+          ),
+        );
+        if (!offlineAlertShownRef.current) {
+          offlineAlertShownRef.current = true;
+          Alert.alert(
+            'Saved Offline',
+            'Set queued and will sync when you\'re back online.',
+          );
+        }
+        startRestTimer();
+        return;
+      }
+
+      // Success — reconcile the card from the server response
       setExercises((prev) =>
-        prev.map((ex) =>
-          ex.id === exerciseId
+        prev.map((e) =>
+          e.machineId === machineId
             ? {
-              ...ex,
-              sets: ex.sets.map((s) => (s.id === tempId ? serverSet : s)),
-            }
-            : ex,
+                ...e,
+                sessionId: result.session_id,
+                sets: result.sets,
+                pendingSets: [],
+                totalVolumeLbs: result.total_volume_lbs,
+                bestWeightLbs: result.best_weight_lbs,
+              }
+            : e,
         ),
       );
 
-      // Track set logged event
       trackEvent('set_logged', {
-        exercise_id: exerciseId,
-        set_number: nextSetNumber,
-        weight_kg: weight,
+        machine_id: machineId,
+        set_number: result.set_number,
+        weight_lbs: weightLbs,
         reps,
         rpe,
       });
 
-      // Track last logged set for feedback prompt
-      setLastLoggedSetIds((prev) => ({ ...prev, [exerciseId]: serverSet.id }));
-
-      // Start rest timer
+      setLastLoggedSetNumbers((prev) => ({ ...prev, [machineId]: result.set_number }));
       startRestTimer();
 
-      // Compute AI suggestion async (don't block the UI)
+      // PR check — non-blocking; celebrate + stash for the complete screen
+      prCheck({
+        session_id: result.session_id,
+        member_id: identity.memberId,
+        machine_id: machineId,
+        weight_lbs: weightLbs,
+        reps,
+      })
+        .then((pr) => {
+          if (pr) {
+            // PR is recorded server-side by pr-check; celebrate locally
+            stashPrResult(pr);
+            setPrBanner({ pr, machineName: exercise.machineName });
+          }
+        })
+        .catch(() => {});
+
+      // AI suggestion (async, non-blocking)
       if (aiEnabled) {
-        computeSuggestion(exerciseId);
+        computeSuggestion(machineId, exercise.machineName, result.sets);
       }
-    } catch (err: unknown) {
-      // Queue for offline replay instead of losing data
-      await enqueueEvent('sets', insertPayload).catch(() => {});
-
-      // Rollback optimistic update
-      setExercises((prev) =>
-        prev.map((ex) =>
-          ex.id === exerciseId
-            ? { ...ex, sets: ex.sets.filter((s) => s.id !== tempId) }
-            : ex,
-        ),
-      );
-      Alert.alert(
-        'Saved Offline',
-        'Set queued and will sync when you\'re back online.',
-      );
     } finally {
-      setLoggingExerciseId(null);
+      setLoggingMachineId(null);
     }
-  };
-
-  // ─── Handle apply suggestion ──────────────────────
-  const handleApplySuggestion = (exerciseId: string) => {
-    trackEvent('ai_next_set_applied', { exercise_id: exerciseId });
   };
 
   // ─── Handle set feedback ───────────────────────────
   const handleSubmitFeedback = async (
-    setId: string,
+    feedbackKey: string,
     feedback: SetFeedbackRating,
     bodyArea?: BodyArea,
   ) => {
     // Optimistic: mark as submitted immediately
-    setFeedbackSubmitted((prev) => new Set([...prev, setId]));
+    setFeedbackSubmitted((prev) => new Set([...prev, feedbackKey]));
 
-    if (!workout) return;
+    if (!identity) return;
+    const [machineId, setNumberRaw] = feedbackKey.split(':');
+    const setNumber = parseInt(setNumberRaw, 10);
+    const exercise = exercises.find((e) => e.machineId === machineId);
+    if (!exercise?.sessionId || Number.isNaN(setNumber)) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Find the exercise that owns this set
-      const exercise = exercises.find((ex) =>
-        ex.sets.some((s) => s.id === setId),
-      );
-      if (!exercise) return;
-
       await supabase.from('set_feedback').insert({
-        gym_id: workout.gym_id,
-        profile_id: user.id,
-        workout_id: workout.id,
-        workout_exercise_id: exercise.id,
-        set_id: setId,
+        gym_id: identity.gymId,
+        profile_id: identity.userId,
+        session_id: exercise.sessionId,
+        set_number: setNumber,
         feedback,
         body_area: bodyArea ?? null,
+        notes: null,
       });
 
-      trackEvent('set_feedback_submitted', { set_id: setId, feedback, body_area: bodyArea });
+      trackEvent('set_feedback_submitted', {
+        session_id: exercise.sessionId,
+        set_number: setNumber,
+        feedback,
+        body_area: bodyArea,
+      });
     } catch {
       // Non-fatal — feedback is best-effort
     }
   };
 
-  // ─── Add exercise ───────────────────────────────────
-  const handleAddExercise = async (
-    name: string,
-    machineId: string | undefined,
-  ) => {
-    if (!workoutId) return;
-
-    setAddingExercise(true);
-
-    const nextOrderIndex =
-      exercises.length > 0
-        ? Math.max(...exercises.map((e) => e.order_index)) + 1
-        : 0;
-
-    try {
-      const insertPayload: Record<string, unknown> = {
-        workout_id: workoutId,
-        exercise_name: name,
-        order_index: nextOrderIndex,
-      };
-      if (machineId) {
-        insertPayload.machine_id = machineId;
-      }
-
-      const { data, error: insertError } = await supabase
-        .from('workout_exercises')
-        .insert(insertPayload)
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      const newExercise: WorkoutExerciseWithSets = {
-        ...(data as WorkoutExerciseWithSets),
-        sets: [],
-      };
-
-      // If a machine was selected, attach its name for display
-      if (machineId) {
-        const selectedMachine = machines.find((m) => m.id === machineId);
-        if (selectedMachine) {
-          newExercise.machine = { name: selectedMachine.name } as Machine;
-        }
-      }
-
-      setExercises((prev) => [...prev, newExercise]);
-      setShowAddExercise(false);
-    } catch (err: unknown) {
-      Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to add exercise.',
-      );
-    } finally {
-      setAddingExercise(false);
-    }
+  // ─── Add machine ────────────────────────────────────
+  const handleAddMachine = (machine: { id: string; name: string }) => {
+    setShowAddMachine(false);
+    setExercises((prev) => {
+      if (prev.some((e) => e.machineId === machine.id)) return prev;
+      return [
+        ...prev.filter((e) => e.completedAt == null),
+        {
+          machineId: machine.id,
+          machineName: machine.name,
+          sessionId: null,
+          sets: [],
+          pendingSets: [],
+          totalVolumeLbs: 0,
+          bestWeightLbs: 0,
+          completedAt: null,
+        },
+        ...prev.filter((e) => e.completedAt != null),
+      ];
+    });
   };
 
   // ─── Finish workout ─────────────────────────────────
   const handleFinishWorkout = () => {
+    const openSessions = exercises.filter((e) => e.sessionId && e.completedAt == null);
+    if (openSessions.length === 0) {
+      Alert.alert('Nothing to finish', 'Log at least one set before finishing.');
+      return;
+    }
     Alert.alert(
       'Finish Workout',
       'Are you sure you want to finish this workout?',
@@ -1386,28 +1354,37 @@ export default function ActiveWorkoutScreen() {
   };
 
   const confirmFinishWorkout = async () => {
-    if (!workoutId) return;
+    if (!identity) return;
     setFinishing(true);
 
     try {
-      const { error: updateError } = await supabase
-        .from('workouts')
-        .update({
-          status: 'completed' as const,
-          finished_at: new Date().toISOString(),
-        })
-        .eq('id', workoutId);
+      const openSessions = exercises.filter((e) => e.sessionId && e.completedAt == null);
+      const results: CompleteSessionResult[] = [];
+      let failures = 0;
 
-      if (updateError) throw updateError;
+      for (const e of openSessions) {
+        const result = await completeSession(e.sessionId as string, identity.memberId);
+        if (result) {
+          results.push(result);
+        } else {
+          failures++;
+        }
+      }
 
-      // Track workout finished event
       trackEvent('workout_finished', {
-        workout_id: workoutId,
-        exercise_count: exercises.length,
-        total_sets: exercises.reduce((sum, ex) => sum + ex.sets.length, 0),
+        session_count: openSessions.length,
+        total_sets: exercises.reduce((sum, e) => sum + e.sets.length, 0),
       });
 
-      router.replace(`/workout/complete/${workoutId}`);
+      if (failures > 0) {
+        Alert.alert(
+          'Partly Completed',
+          `${failures} session${failures > 1 ? 's' : ''} couldn't be completed and will stay active.`,
+        );
+      }
+
+      stashCompletionResults(results);
+      router.replace('/workout/complete/today');
     } catch (err: unknown) {
       Alert.alert(
         'Error',
@@ -1428,18 +1405,26 @@ export default function ActiveWorkoutScreen() {
   }
 
   // ─── Render: Error ──────────────────────────────────
-  if (error || !workout) {
+  if (error) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorIcon}>!</Text>
         <Text style={styles.errorTitle}>Could not load workout</Text>
-        <Text style={styles.errorText}>
-          {error || 'Workout not found.'}
-        </Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchWorkoutData}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={loadToday}
+          accessibilityRole="button"
+          accessibilityLabel="Try again"
+        >
           <Text style={styles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text style={styles.backButtonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -1447,11 +1432,20 @@ export default function ActiveWorkoutScreen() {
   }
 
   // ─── Computed enrichment values ─────────────────────
-  const totalSetsLogged = exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
-  const totalVolumeKg = exercises.reduce((sum, ex) => {
-    return sum + ex.sets.reduce((sSum, s) => sSum + s.weight_kg * s.reps, 0);
-  }, 0);
-  const exercisesWithSets = exercises.filter((ex) => ex.sets.length > 0).length;
+  const totalSetsLogged = exercises.reduce(
+    (sum, e) => sum + e.sets.length + e.pendingSets.length,
+    0,
+  );
+  const totalVolumeLbs = exercises.reduce(
+    (sum, e) =>
+      sum +
+      e.totalVolumeLbs +
+      e.pendingSets.reduce((pSum, s) => pSum + s.weight_lbs * s.reps, 0),
+    0,
+  );
+  const exercisesWithSets = exercises.filter(
+    (e) => e.sets.length > 0 || e.pendingSets.length > 0,
+  ).length;
 
   const elapsedMinutes = Math.floor(elapsedSeconds / 60);
   const elapsedHours = Math.floor(elapsedMinutes / 60);
@@ -1460,6 +1454,10 @@ export default function ActiveWorkoutScreen() {
     : `${elapsedMinutes}m ${elapsedSeconds % 60}s`;
 
   const intentCfg = INTENT_CONFIG[sessionIntent] ?? INTENT_CONFIG.push;
+
+  const pickerMachines = machines
+    .filter((m) => !exercises.some((e) => e.machineId === m.id))
+    .map((m) => ({ id: m.id, name: m.name }));
 
   // ─── Render: Active Workout ─────────────────────────
   return (
@@ -1472,14 +1470,8 @@ export default function ActiveWorkoutScreen() {
         {/* ─── Header with elapsed time ─────────────── */}
         <View style={styles.workoutHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Active Workout</Text>
-            <Text style={styles.subtitle}>
-              Started at{' '}
-              {new Date(workout.started_at).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
+            <Text style={styles.title}>Today&apos;s Workout</Text>
+            <Text style={styles.subtitle}>{localSessionDate()}</Text>
           </View>
           <View style={styles.elapsedContainer}>
             <Text style={styles.elapsedTime}>{elapsedDisplay}</Text>
@@ -1495,6 +1487,15 @@ export default function ActiveWorkoutScreen() {
           </Text>
         </View>
 
+        {/* ─── PR Celebration Banner ────────────────── */}
+        {prBanner && (
+          <PrBanner
+            banner={prBanner}
+            unit={weightUnit}
+            onDismiss={() => setPrBanner(null)}
+          />
+        )}
+
         {/* ─── Live Stats Strip ─────────────────────── */}
         <View style={styles.liveStatsStrip}>
           <View style={styles.liveStatPill}>
@@ -1504,16 +1505,14 @@ export default function ActiveWorkoutScreen() {
           <View style={styles.liveStatDivider} />
           <View style={styles.liveStatPill}>
             <Text style={styles.liveStatValue}>
-              {totalVolumeKg >= 1000
-                ? `${(totalVolumeKg / 1000).toFixed(1)}t`
-                : `${Math.round(totalVolumeKg)}kg`}
+              {formatVolumeLbs(totalVolumeLbs, weightUnit)}
             </Text>
             <Text style={styles.liveStatLabel}>volume</Text>
           </View>
           <View style={styles.liveStatDivider} />
           <View style={styles.liveStatPill}>
             <Text style={styles.liveStatValue}>{exercises.length}</Text>
-            <Text style={styles.liveStatLabel}>exercises</Text>
+            <Text style={styles.liveStatLabel}>machines</Text>
           </View>
         </View>
 
@@ -1522,7 +1521,7 @@ export default function ActiveWorkoutScreen() {
           <View style={styles.progressContainer}>
             <View style={styles.progressRow}>
               <Text style={styles.progressText}>
-                {exercisesWithSets} of {exercises.length} exercises started
+                {exercisesWithSets} of {exercises.length} machines started
               </Text>
             </View>
             <View style={styles.progressBarBg}>
@@ -1539,27 +1538,34 @@ export default function ActiveWorkoutScreen() {
         {exercises.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
-              No exercises yet. Tap the + button to add one.
+              No machines yet. Tap the + button to add one.
             </Text>
           </View>
         )}
 
         {exercises.map((exercise) => (
           <ExerciseCard
-            key={exercise.id}
+            key={exercise.machineId}
             exercise={exercise}
+            unit={weightUnit}
             onLogSet={handleLogSet}
-            loggingExerciseId={loggingExerciseId}
-            suggestion={suggestions[exercise.id] ?? null}
-            onApplySuggestion={handleApplySuggestion}
+            loggingMachineId={loggingMachineId}
+            suggestion={suggestions[exercise.machineId] ?? null}
             aiEnabled={aiEnabled}
-            checklist={checklists[exercise.id] ?? null}
+            checklist={
+              checklistEnabled
+                ? (() => {
+                    const machine = machines.find((m) => m.id === exercise.machineId);
+                    return machine ? getFormChecklist({ machine }) : null;
+                  })()
+                : null
+            }
             checklistEnabled={checklistEnabled}
             feedbackEnabled={feedbackEnabled}
-            lastLoggedSetId={lastLoggedSetIds[exercise.id] ?? null}
+            lastLoggedSetNumber={lastLoggedSetNumbers[exercise.machineId] ?? null}
             onSubmitFeedback={handleSubmitFeedback}
             feedbackSubmitted={feedbackSubmitted}
-            safetyNudge={safetyNudges[exercise.id] ?? null}
+            safetyNudge={safetyNudges[exercise.machineId] ?? null}
           />
         ))}
 
@@ -1567,6 +1573,8 @@ export default function ActiveWorkoutScreen() {
           style={[styles.finishButton, finishing && styles.finishButtonDisabled]}
           onPress={handleFinishWorkout}
           disabled={finishing}
+          accessibilityRole="button"
+          accessibilityLabel="Finish workout"
         >
           {finishing ? (
             <ActivityIndicator size="small" color={colors.white} />
@@ -1586,18 +1594,22 @@ export default function ActiveWorkoutScreen() {
         onAdjust={adjustRestTimer}
       />
 
-      {/* Floating Add Exercise Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleOpenAddExercise}>
+      {/* Floating Add Machine Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setShowAddMachine(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Add machine to workout"
+      >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
-      {/* Add Exercise Modal */}
-      <AddExerciseModal
-        visible={showAddExercise}
-        onClose={() => setShowAddExercise(false)}
-        onAdd={handleAddExercise}
-        machines={machines}
-        isAdding={addingExercise}
+      {/* Add Machine Modal */}
+      <AddMachineModal
+        visible={showAddMachine}
+        onClose={() => setShowAddMachine(false)}
+        onAdd={handleAddMachine}
+        machines={pickerMachines}
       />
     </View>
   );
@@ -1686,6 +1698,49 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontSemiBold,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
+  },
+  // PR banner — crimson base with gold accent (celebration moment)
+  prBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primarySubtle,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.gold + '59',
+    padding: 14,
+    marginBottom: 12,
+    gap: 10,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 5,
+  },
+  prBannerTrophy: {
+    fontSize: 24,
+  },
+  prBannerBody: {
+    flex: 1,
+  },
+  prBannerTitle: {
+    fontSize: 12,
+    fontFamily: typography.fontSemiBold,
+    color: colors.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  prBannerText: {
+    fontSize: 14,
+    fontFamily: typography.fontMedium,
+    color: colors.text,
+  },
+  prBannerDismiss: {
+    padding: 6,
+  },
+  prBannerDismissText: {
+    fontSize: 14,
+    color: colors.textSecondary,
   },
   // Live stats strip
   liveStatsStrip: {
@@ -1829,11 +1884,33 @@ const styles = StyleSheet.create({
   exerciseHeader: {
     marginBottom: 12,
   },
+  exerciseHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   exerciseName: {
+    flex: 1,
     fontSize: 20,
     fontFamily: typography.fontBold,
     color: colors.text,
     letterSpacing: -0.2,
+  },
+  doneChip: {
+    backgroundColor: colors.successSubtle,
+    borderWidth: 1,
+    borderColor: colors.success,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  doneChipText: {
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    color: colors.success,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   machineName: {
     fontSize: 13,
@@ -1887,6 +1964,15 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontMono,
     color: colors.textSecondary,
     fontVariant: ['tabular-nums'],
+  },
+  setQueued: {
+    flex: 1,
+    fontSize: 11,
+    fontFamily: typography.fontSemiBold,
+    color: colors.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    alignSelf: 'center',
   },
   noSetsText: {
     fontSize: 14,
@@ -2216,28 +2302,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     letterSpacing: -0.2,
   },
-  modalLabel: {
-    fontSize: 11,
-    fontFamily: typography.fontSemiBold,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  modalInput: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    fontFamily: typography.fontRegular,
-    color: colors.text,
-    backgroundColor: colors.bgInput,
-    marginBottom: 16,
-  },
   machineList: {
-    maxHeight: 180,
+    maxHeight: 320,
     marginBottom: 20,
   },
   machineItem: {
@@ -2248,18 +2314,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 8,
   },
-  machineItemSelected: {
-    backgroundColor: colors.primarySubtle,
-    borderColor: colors.borderAccent,
-  },
   machineItemText: {
     fontSize: 15,
     fontFamily: typography.fontRegular,
     color: colors.text,
-  },
-  machineItemTextSelected: {
-    color: colors.primaryLight,
-    fontFamily: typography.fontSemiBold,
   },
   emptyMachineText: {
     fontSize: 14,
@@ -2284,21 +2342,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: typography.fontSemiBold,
     color: colors.textSecondary,
-  },
-  modalAddButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-  },
-  modalAddButtonDisabled: {
-    backgroundColor: colors.primaryDark,
-  },
-  modalAddText: {
-    fontSize: 16,
-    fontFamily: typography.fontSemiBold,
-    color: colors.textOnAccent,
   },
 
   // ─── Form Checklist Styles ─────────────────────────

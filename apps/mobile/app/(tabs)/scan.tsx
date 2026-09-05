@@ -18,6 +18,7 @@ import { Button, Text } from '../../src/components';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { supabase } from '../../src/lib/supabase';
+import { getMemberId } from '../../src/lib/memberData';
 import { trackEvent } from '../../src/lib/events';
 import { deduper } from '../../src/lib/requestDeduper';
 import { colors } from '../../src/theme/colors';
@@ -32,11 +33,10 @@ const LASER_TRAVEL = RETICLE_SIZE - RETICLE_INSET * 2 - 2;
 // ─── Types ─────────────────────────────────────────────
 interface RecentMachine {
   machine_id: string;
-  exercise_name: string;
   qr_slug: string;
   machine_name: string;
   muscle_groups: string[];
-  last_used: string;
+  last_used: string; // session_date (YYYY-MM-DD)
 }
 
 interface TodayProgramMachine {
@@ -138,24 +138,25 @@ export default function ScanScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !mountedRef.current) return;
 
+      // workout_sessions is keyed by members.id, not the auth user id
+      const memberId = await getMemberId(user.id);
+      if (!mountedRef.current) return;
+
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
       const [recentResult, scanCountResult, uniqueResult, programResult] = await Promise.all([
         // 1. Recently used machines (last 5 unique)
-        supabase
-          .from('workout_exercises')
-          .select(`
-            machine_id,
-            exercise_name,
-            workouts!inner(profile_id, started_at, status),
-            machines!inner(qr_slug, name, muscle_groups)
-          `)
-          .eq('workouts.profile_id', user.id)
-          .eq('workouts.status', 'completed')
-          .not('machine_id', 'is', null)
-          .order('workouts(started_at)', { ascending: false })
-          .limit(20),
+        memberId
+          ? supabase
+              .from('workout_sessions')
+              .select('machine_id, session_date, machines!inner(qr_slug, name, muscle_groups)')
+              .eq('member_id', memberId)
+              .not('machine_id', 'is', null)
+              .not('completed_at', 'is', null)
+              .order('session_date', { ascending: false })
+              .limit(20)
+          : Promise.resolve({ data: null }),
 
         // 2. Scan count today
         supabase
@@ -166,15 +167,17 @@ export default function ScanScreen() {
           .gte('created_at', todayStart.toISOString()),
 
         // 3. Total unique machines ever used
-        supabase
-          .from('workout_exercises')
-          .select('machine_id, workouts!inner(profile_id)')
-          .eq('workouts.profile_id', user.id)
-          .not('machine_id', 'is', null)
-          .limit(200),
+        memberId
+          ? supabase
+              .from('workout_sessions')
+              .select('machine_id')
+              .eq('member_id', memberId)
+              .not('machine_id', 'is', null)
+              .limit(1000)
+          : Promise.resolve({ data: null }),
 
         // 4. Today's program machine (if assigned)
-        loadProgramMachine(user.id),
+        loadProgramMachine(memberId),
       ]);
 
       if (!mountedRef.current) return;
@@ -189,11 +192,10 @@ export default function ScanScreen() {
           seen.add(mid);
           deduped.push({
             machine_id: mid,
-            exercise_name: row.exercise_name,
             qr_slug: row.machines?.qr_slug ?? mid,
-            machine_name: row.machines?.name ?? row.exercise_name,
+            machine_name: row.machines?.name ?? 'Machine',
             muscle_groups: row.machines?.muscle_groups ?? [],
-            last_used: row.workouts?.started_at ?? '',
+            last_used: row.session_date ?? '',
           });
           if (deduped.length >= 5) break;
         }
@@ -217,23 +219,15 @@ export default function ScanScreen() {
     }
   }
 
-  async function loadProgramMachine(profileId: string): Promise<TodayProgramMachine | null> {
+  async function loadProgramMachine(memberId: string | null): Promise<TodayProgramMachine | null> {
     try {
-      // Get member record for this user
-      const { data: memberRecord } = await supabase
-        .from('members')
-        .select('id')
-        .eq('user_id', profileId)
-        .limit(1)
-        .maybeSingle();
-
-      if (!memberRecord) return null;
+      if (!memberId) return null;
 
       // Get active AI program
       const { data: activeProgram } = await supabase
         .from('ai_programs')
         .select('program_data, created_at, sessions_per_week')
-        .eq('member_id', memberRecord.id)
+        .eq('member_id', memberId)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)

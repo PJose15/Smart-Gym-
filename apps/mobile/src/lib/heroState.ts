@@ -2,6 +2,8 @@
  * Hero State — computes the dynamic hero zone variant for the home screen.
  * Based on DOC_07: Priority-ordered variant selection.
  */
+import type { WeightUnit } from '@nexera/types';
+import { formatVolumeLbs } from './feedLogic';
 
 export type HeroVariant =
   | 'today-fresh'
@@ -46,7 +48,10 @@ export interface HeroInput {
   lastSessionPRMachine?: string;
   lastSessionPRWeight?: number;
   lastSessionPRImprovement?: number;
+  /** Weekly volume in canonical lbs (converted for display via weightUnit). */
   weeklyVolume: number;
+  /** Member's preferred display unit — defaults to 'lbs'. */
+  weightUnit?: WeightUnit;
   weeklyWorkouts: number;
   score: number;
   level: number;
@@ -147,7 +152,7 @@ export function computeHeroState(input: HeroInput): HeroState {
     return makeHero('program-complete', greeting,
       `${input.programTitle ?? 'Program'} complete.`,
       `${input.programSessionsCompleted ?? 0} sessions. You showed up.`,
-      { value: `${input.weeklyVolume.toLocaleString()} lbs`, label: 'total volume' }
+      { value: formatVolumeLbs(input.weeklyVolume, input.weightUnit ?? 'lbs'), label: 'total volume' }
     );
   }
 
@@ -201,7 +206,7 @@ export function computeHeroState(input: HeroInput): HeroState {
       input.todaySessionCount === 1
         ? `Session done. Day ${input.streak} in the books.`
         : `${input.todaySessionCount} sessions today.`,
-      `Streak: ${input.streak} days · Volume today: ${input.weeklyVolume.toLocaleString()} lbs`,
+      `Streak: ${input.streak} days · Volume today: ${formatVolumeLbs(input.weeklyVolume, input.weightUnit ?? 'lbs')}`,
       { value: `${input.streak}`, label: 'day streak' }
     );
   }

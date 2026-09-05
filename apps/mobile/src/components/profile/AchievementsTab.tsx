@@ -11,34 +11,40 @@ import { Card } from '../Card';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
-import { RARITY_LABELS } from '../../lib/badgeService';
 import {
+  getBadgeEmoji,
   getBadgeProgress,
-  RARITY_DIFFICULTY,
-  RARITY_XP,
+  getPointsTier,
+  POINTS_TIER_COLORS,
+  POINTS_TIER_GLOW_COLORS,
+  POINTS_TIER_LABELS,
+  POINTS_TIER_SUBTLE_COLORS,
 } from '../../lib/achievementDisplay';
+import type { PointsTier } from '../../lib/achievementDisplay';
 import { StreakFlame } from '../gamification/StreakFlame';
-import type { BadgeWithStatus } from '@nexera/types';
+import type { AchievementCategory, BadgeWithStatus } from '../../lib/badgeService';
 import type { StreakResult } from '../../lib/streakService';
 
-type RarityFilter = 'all' | 'legendary' | 'epic' | 'rare' | 'common';
+type CategoryFilter = 'all' | AchievementCategory;
 
-const FILTER_CHIPS: { key: RarityFilter; label: string }[] = [
+const FILTER_CHIPS: { key: CategoryFilter; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'legendary', label: 'Legendary' },
-  { key: 'epic', label: 'Epic' },
-  { key: 'rare', label: 'Rare' },
-  { key: 'common', label: 'Common' },
+  { key: 'milestone', label: 'Milestone' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'consistency', label: 'Consistency' },
+  { key: 'explorer', label: 'Explorer' },
+  { key: 'community', label: 'Community' },
 ];
 
-// Metallic tier treatment per design.md "Achievement badge" — tier-colored border
-// + glow: legendary = gold shimmer, epic = crimson accent, rare = silver, common = bronze.
-const TIER_STYLE: Record<string, { color: string; subtle: string; glow: string }> = {
-  legendary: { color: colors.gold,    subtle: colors.goldSubtle,               glow: colors.goldGlow },
-  epic:      { color: colors.primary, subtle: colors.primarySubtle,            glow: colors.accentGlow },
-  rare:      { color: colors.silver,  subtle: 'rgba(192, 192, 192, 0.08)',     glow: 'rgba(192, 192, 192, 0.22)' },
-  common:    { color: colors.bronze,  subtle: 'rgba(205, 127, 50, 0.08)',      glow: 'rgba(205, 127, 50, 0.22)' },
-};
+// Metallic tier treatment per design.md "Achievement badge" — points-tier
+// colored border + glow: gold ≥500 pts, silver 200–499, bronze <200.
+function tierStyle(tier: PointsTier): { color: string; subtle: string; glow: string } {
+  return {
+    color: POINTS_TIER_COLORS[tier],
+    subtle: POINTS_TIER_SUBTLE_COLORS[tier],
+    glow: POINTS_TIER_GLOW_COLORS[tier],
+  };
+}
 
 const DEFAULT_TIER = { color: colors.textSecondary, subtle: colors.surfaceHighest, glow: colors.transparent };
 
@@ -46,34 +52,35 @@ interface AchievementsTabProps {
   badges: BadgeWithStatus[];
   streak: StreakResult | null;
   totalPoints: number;
-  /** Optional — enables progress bars on workout-count badges */
+  /** Optional — enables progress bars on session-count badges */
   completedWorkouts?: number;
-  /** Optional — enables progress bars on volume badges */
-  totalVolumeKg?: number;
+  /** Optional — enables progress bars on volume badges (stored unit: lbs) */
+  totalVolumeLbs?: number;
+  /** Optional — enables progress bars on day-streak badges */
+  streakDays?: number;
 }
 
-export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts, totalVolumeKg }: AchievementsTabProps) {
-  const [filter, setFilter] = useState<RarityFilter>('all');
+export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts, totalVolumeLbs, streakDays }: AchievementsTabProps) {
+  const [filter, setFilter] = useState<CategoryFilter>('all');
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithStatus | null>(null);
 
   const filtered = filter === 'all'
     ? badges
-    : badges.filter((b) => b.rarity === filter);
+    : badges.filter((b) => b.category === filter);
 
   const unlockedCount = badges.filter((b) => b.unlocked).length;
 
   // Progress toward the selected locked badge (null = not derivable → hidden)
   const selectedProgress = selectedBadge && !selectedBadge.unlocked
-    ? getBadgeProgress(selectedBadge.criteria_type, selectedBadge.criteria_value, {
-        completedWorkouts,
-        longestStreak: streak?.longestStreak,
-        totalVolumeKg,
-        totalPoints,
+    ? getBadgeProgress(selectedBadge, {
+        sessions: completedWorkouts,
+        lbs: totalVolumeLbs,
+        days: streakDays,
       })
     : null;
 
   const selectedTier = selectedBadge
-    ? (TIER_STYLE[selectedBadge.rarity] ?? DEFAULT_TIER)
+    ? tierStyle(getPointsTier(selectedBadge.points))
     : DEFAULT_TIER;
 
   return (
@@ -140,7 +147,7 @@ export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts
 
           <View style={styles.badgeGrid}>
             {filtered.map((badge) => {
-              const tier = TIER_STYLE[badge.rarity] ?? DEFAULT_TIER;
+              const tier = tierStyle(getPointsTier(badge.points));
               return (
                 <TouchableOpacity
                   key={badge.id}
@@ -159,13 +166,13 @@ export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts
                   accessibilityRole="button"
                   accessibilityLabel={
                     badge.unlocked
-                      ? `${badge.name} badge, unlocked`
-                      : `${badge.name} badge, locked`
+                      ? `${badge.title} badge, unlocked`
+                      : `${badge.title} badge, locked`
                   }
                   accessibilityHint="Shows badge details"
                 >
                   <Text style={[styles.badgeEmoji, !badge.unlocked && styles.badgeEmojiLocked]}>
-                    {badge.unlocked ? badge.icon_emoji : '🔒'}
+                    {badge.unlocked ? getBadgeEmoji(badge) : '🔒'}
                   </Text>
                   <Text
                     style={[
@@ -174,7 +181,7 @@ export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts
                     ]}
                     numberOfLines={1}
                   >
-                    {badge.name}
+                    {badge.title}
                   </Text>
                 </TouchableOpacity>
               );
@@ -210,40 +217,42 @@ export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts
               ]}
             >
               <Text style={styles.modalEmoji}>
-                {selectedBadge?.unlocked ? selectedBadge.icon_emoji : '🔒'}
+                {selectedBadge
+                  ? selectedBadge.unlocked ? getBadgeEmoji(selectedBadge) : '🔒'
+                  : '🔒'}
               </Text>
             </View>
-            <Text style={styles.modalName}>{selectedBadge?.name}</Text>
+            <Text style={styles.modalName}>{selectedBadge?.title}</Text>
             {selectedBadge && (
               <View style={[
-                styles.rarityTag,
+                styles.tierTag,
                 {
                   backgroundColor: selectedTier.subtle,
                   borderColor: selectedTier.color,
                 },
               ]}>
-                <Text style={[styles.rarityText, { color: selectedTier.color }]}>
-                  {RARITY_LABELS[selectedBadge.rarity] ?? selectedBadge.rarity}
+                <Text style={[styles.tierText, { color: selectedTier.color }]}>
+                  {POINTS_TIER_LABELS[getPointsTier(selectedBadge.points)]}
                 </Text>
               </View>
             )}
             <Text style={styles.modalDesc}>{selectedBadge?.description}</Text>
 
-            {/* Earned: date + XP awarded */}
+            {/* Earned: date + points awarded */}
             {selectedBadge?.unlocked && (
               <>
-                {selectedBadge.unlocked_at && (
+                {selectedBadge.earned_at && (
                   <Text style={styles.modalDate}>
-                    Unlocked {new Date(selectedBadge.unlocked_at).toLocaleDateString()}
+                    Unlocked {new Date(selectedBadge.earned_at).toLocaleDateString()}
                   </Text>
                 )}
                 <View style={styles.xpRow}>
-                  <Text style={styles.xpValue}>+{RARITY_XP[selectedBadge.rarity] ?? 0} XP</Text>
+                  <Text style={styles.xpValue}>+{selectedBadge.points} PTS</Text>
                 </View>
               </>
             )}
 
-            {/* Locked: progress (when derivable) + difficulty */}
+            {/* Locked: progress (when derivable) + points on offer */}
             {selectedBadge && !selectedBadge.unlocked && (
               <>
                 {selectedProgress && (
@@ -260,7 +269,7 @@ export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts
                   </View>
                 )}
                 <Text style={styles.modalLocked}>
-                  Difficulty: {RARITY_DIFFICULTY[selectedBadge.rarity] ?? 'Unknown'}
+                  Worth +{selectedBadge.points} PTS
                 </Text>
               </>
             )}
@@ -467,14 +476,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
-  rarityTag: {
+  tierTag: {
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
     borderRadius: 9999,
     borderWidth: 1,
     marginBottom: spacing.md,
   },
-  rarityText: {
+  tierText: {
     fontSize: 11,
     fontFamily: typography.fontSemiBold,
     letterSpacing: 1,

@@ -1,17 +1,9 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { type SupabaseClient } from '@supabase/supabase-js';
+import { verifyMember } from '@/lib/auth/verifyMember';
 import { z } from 'zod';
 import { uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 const prCheckSchema = z.object({
   session_id: uuidString,
@@ -28,10 +20,6 @@ const prCheckSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await request.json();
     const parsed = prCheckSchema.safeParse(body);
 
@@ -44,19 +32,13 @@ export async function POST(request: NextRequest) {
 
     const { session_id, member_id, machine_id, weight_lbs, reps } = parsed.data;
 
+    // Verify the authenticated user owns this member_id (cookie or Bearer JWT)
+    const authResult = await verifyMember(member_id, request);
+    if (authResult instanceof NextResponse) return authResult;
+    const { admin } = authResult;
+
     const rl = checkRateLimit(`pr-check:${member_id}`, 120, 60_000);
     if (rl) return rl;
-
-    const admin = getAdminClient();
-
-    // Verify caller owns this member
-    const { data: memberCheck } = await admin
-      .from('members')
-      .select('id')
-      .eq('id', member_id)
-      .eq('user_id', session.user.id)
-      .maybeSingle();
-    if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // Get all previous sessions for this member on this machine (excluding current)
     const { data: history } = await admin

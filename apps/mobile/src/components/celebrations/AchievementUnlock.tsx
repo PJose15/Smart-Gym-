@@ -31,27 +31,25 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import {
-  RARITY_BORDER_COLORS,
-  RARITY_GLOW_COLORS,
-  RARITY_GLOW_RADIUS,
-  RARITY_XP,
+  getPointsTier,
+  POINTS_TIER_COLORS,
+  POINTS_TIER_GLOW_COLORS,
+  POINTS_TIER_GLOW_RADIUS,
 } from '../../lib/achievementDisplay';
 import { ConfettiEffect } from '../effects/ConfettiEffect';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import type { BadgeRarity } from '@nexera/types';
 
 const ND = Platform.OS !== 'web';
 const AUTO_DISMISS_MS = 2500;
 
 export interface UnlockedAchievement {
   id: string;
-  name: string;
+  title: string;
   description: string;
   /** Emoji icon */
   icon: string;
-  /** XP display value — defaults to rarity-based amount */
-  points?: number;
-  rarity: BadgeRarity;
+  /** Real stored points value (drives tier styling + the points row) */
+  points: number;
 }
 
 interface AchievementUnlockProps {
@@ -71,10 +69,10 @@ export function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockP
   const descOpacity = useRef(new Animated.Value(0)).current;
   const xpScale = useRef(new Animated.Value(0)).current;
 
-  const rarityColor = RARITY_BORDER_COLORS[achievement.rarity] ?? RARITY_BORDER_COLORS.common;
-  const glowColor = RARITY_GLOW_COLORS[achievement.rarity] ?? RARITY_GLOW_COLORS.common;
-  const glowRadius = RARITY_GLOW_RADIUS[achievement.rarity] ?? RARITY_GLOW_RADIUS.common;
-  const xp = achievement.points ?? RARITY_XP[achievement.rarity] ?? RARITY_XP.common;
+  const tier = getPointsTier(achievement.points);
+  const tierColor = POINTS_TIER_COLORS[tier];
+  const glowColor = POINTS_TIER_GLOW_COLORS[tier];
+  const glowRadius = POINTS_TIER_GLOW_RADIUS[tier];
 
   const handleDismiss = useCallback(() => {
     if (dismissedRef.current) return;
@@ -183,7 +181,7 @@ export function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockP
         style={styles.root}
         onPress={handleDismiss}
         accessibilityRole="button"
-        accessibilityLabel={`Achievement unlocked: ${achievement.name}. ${achievement.description}. Plus ${xp} XP. Tap to dismiss.`}
+        accessibilityLabel={`Achievement unlocked: ${achievement.title}. ${achievement.description}. Plus ${achievement.points} points. Tap to dismiss.`}
       >
         <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} />
 
@@ -191,12 +189,12 @@ export function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockP
           style={[
             styles.badge,
             {
-              borderColor: rarityColor,
+              borderColor: tierColor,
               shadowColor: glowColor,
               shadowRadius: glowRadius,
               transform: [{ scale: badgeScale }],
             },
-            achievement.rarity === 'legendary' && styles.badgeLegendary,
+            tier === 'gold' && styles.badgeGold,
           ]}
         >
           <Text style={styles.badgeIcon}>{achievement.icon}</Text>
@@ -206,7 +204,7 @@ export function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockP
           style={{ opacity: nameOpacity, transform: [{ translateY: nameTranslate }] }}
         >
           <Text style={styles.unlockedLabel}>ACHIEVEMENT UNLOCKED</Text>
-          <Text style={styles.name}>{achievement.name}</Text>
+          <Text style={styles.name}>{achievement.title}</Text>
         </Animated.View>
 
         <Animated.View style={{ opacity: descOpacity }}>
@@ -216,10 +214,10 @@ export function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockP
         <Animated.View
           style={[
             styles.xpBadge,
-            { borderColor: rarityColor, transform: [{ scale: xpScale }] },
+            { borderColor: tierColor, transform: [{ scale: xpScale }] },
           ]}
         >
-          <Text style={styles.xpText}>+{xp} XP</Text>
+          <Text style={styles.xpText}>+{achievement.points} PTS</Text>
         </Animated.View>
 
         {showConfetti && (
@@ -254,7 +252,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     elevation: 12,
   },
-  badgeLegendary: {
+  badgeGold: {
     backgroundColor: colors.surfaceHighest,
   },
   badgeIcon: {

@@ -139,17 +139,39 @@ export default function AtRiskPage() {
 
       const memberIds = assignments.map((a) => a.member_profile_id);
 
-      // Fetch profiles, workouts, and discomfort in parallel
-      const [profilesRes, workoutsRes, discomfortRes] = await Promise.all([
+      // trainer_assignments.member_profile_id is a users.id; workout_sessions
+      // keys on members.id — map through the members table.
+      const { data: memberRows, error: memberErr } = await supabase
+        .from('members')
+        .select('id, user_id')
+        .in('user_id', memberIds);
+
+      if (memberErr) throw memberErr;
+
+      const memberRowIds = (memberRows ?? []).map((m) => m.id);
+      const userIdByMemberId = new Map<string, string | null>(
+        (memberRows ?? []).map((m) => [m.id, m.user_id]),
+      );
+
+      // Fetch profiles, completed sessions, and discomfort in parallel
+      const [profilesRes, sessionsRes, discomfortRes] = await Promise.all([
         supabase.from('profiles').select('id, full_name').in('id', memberIds),
-        supabase.from('workouts').select('profile_id, finished_at').in('profile_id', memberIds).eq('status', 'completed').order('finished_at', { ascending: false }),
+        supabase.from('workout_sessions').select('member_id, completed_at, session_date').in('member_id', memberRowIds).not('completed_at', 'is', null).order('completed_at', { ascending: false }),
         supabase.from('feedback_discomfort_summary').select('profile_id, discomfort_count_7d, top_body_areas_7d').in('profile_id', memberIds),
       ]);
 
       if (profilesRes.error) throw profilesRes.error;
+      if (sessionsRes.error) throw sessionsRes.error;
       const profiles = profilesRes.data;
-      const workouts = workoutsRes.data;
       const discomfortData = discomfortRes.data;
+
+      // Most recent completed session per user id (rows are sorted desc)
+      const lastCompletedByUser = new Map<string, string>();
+      for (const s of sessionsRes.data ?? []) {
+        const uid = userIdByMemberId.get(s.member_id);
+        if (!uid || lastCompletedByUser.has(uid)) continue;
+        lastCompletedByUser.set(uid, s.completed_at);
+      }
 
       // Build MemberData array
       interface DiscomfortSummary {
@@ -160,13 +182,12 @@ export default function AtRiskPage() {
 
       const memberDataList: MemberData[] = memberIds.map((pid) => {
         const profile = profiles?.find((p) => p.id === pid);
-        const lastWorkout = workouts?.find((w) => w.profile_id === pid);
         const discomfort = discomfortData?.find((d) => d.profile_id === pid) as DiscomfortSummary | undefined;
 
         return {
           profileId: pid,
           memberName: profile?.full_name ?? 'Unknown',
-          lastWorkoutAt: lastWorkout?.finished_at ?? null,
+          lastWorkoutAt: lastCompletedByUser.get(pid) ?? null,
           discomfortCount7d: discomfort?.discomfort_count_7d ?? 0,
           discomfortBodyAreas: discomfort?.top_body_areas_7d ?? [],
           plateauExercises: [], // Plateau detection requires additional query logic

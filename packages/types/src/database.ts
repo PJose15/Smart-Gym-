@@ -234,78 +234,6 @@ export interface Database {
           assigned_by?: string;
         };
       };
-      workouts: {
-        Row: {
-          id: string;
-          gym_id: string;
-          profile_id: string;
-          status: 'in_progress' | 'completed' | 'cancelled';
-          started_at: string;
-          finished_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          gym_id: string;
-          profile_id: string;
-          status?: 'in_progress' | 'completed' | 'cancelled';
-          started_at?: string;
-          finished_at?: string | null;
-        };
-        Update: {
-          status?: 'in_progress' | 'completed' | 'cancelled';
-          finished_at?: string | null;
-        };
-      };
-      workout_exercises: {
-        Row: {
-          id: string;
-          workout_id: string;
-          machine_id: string | null;
-          exercise_name: string;
-          order_index: number;
-        };
-        Insert: {
-          id?: string;
-          workout_id: string;
-          machine_id?: string | null;
-          exercise_name: string;
-          order_index: number;
-        };
-        Update: {
-          machine_id?: string | null;
-          exercise_name?: string;
-          order_index?: number;
-        };
-      };
-      workout_sets: {
-        Row: {
-          id: string;
-          workout_exercise_id: string;
-          set_number: number;
-          reps: number;
-          weight_kg: number;
-          rpe: number | null;
-          notes: string | null;
-          logged_at: string;
-        };
-        Insert: {
-          id?: string;
-          workout_exercise_id: string;
-          set_number: number;
-          reps: number;
-          weight_kg: number;
-          rpe?: number | null;
-          notes?: string | null;
-          logged_at?: string;
-        };
-        Update: {
-          set_number?: number;
-          reps?: number;
-          weight_kg?: number;
-          rpe?: number | null;
-          notes?: string | null;
-        };
-      };
       points_ledger: {
         Row: {
           id: string;
@@ -405,9 +333,8 @@ export interface Database {
           id: string;
           gym_id: string;
           profile_id: string;
-          workout_id: string;
-          workout_exercise_id: string;
-          set_id: string;
+          session_id: string | null;
+          set_number: number | null;
           feedback: 'ok' | 'unstable' | 'discomfort';
           body_area: string | null;
           notes: string | null;
@@ -417,9 +344,8 @@ export interface Database {
           id?: string;
           gym_id: string;
           profile_id: string;
-          workout_id: string;
-          workout_exercise_id: string;
-          set_id: string;
+          session_id?: string | null;
+          set_number?: number | null;
           feedback: 'ok' | 'unstable' | 'discomfort';
           body_area?: string | null;
           notes?: string | null;

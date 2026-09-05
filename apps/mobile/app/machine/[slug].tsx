@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../src/lib/supabase';
-import type { Machine, WorkoutStatus, AlternativeResult } from '@nexera/types';
+import type { Machine, AlternativeResult, WeightUnit } from '@nexera/types';
 import { getMachineAlternatives } from '@nexera/ai-assist';
 import { Button, Text, Card } from '../../src/components';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
@@ -30,6 +30,10 @@ import { generateMachineMistakes, localCache } from '@nexera/ai-assist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { detectWorkoutMode } from '../../src/lib/workoutMode';
 import type { ModeContext } from '../../src/lib/workoutMode';
+import { resolveWorkoutIdentity } from '../../src/lib/activeWorkout';
+import type { SessionSetEntry } from '../../src/lib/sessionApi';
+import { getWeightUnit } from '../../src/lib/weightUnit';
+import { formatWeightLbs, formatVolumeLbs } from '../../src/lib/feedLogic';
 
 interface MachineWithGym extends Machine {
   gym_name: string;
@@ -40,14 +44,15 @@ interface MachineWithGym extends Machine {
 }
 
 // ─── Enrichment Types ─────────────────────────────────
+// All weights in lbs (canonical storage unit); converted at display time.
 interface MachineHistory {
   totalSessions: number;
   lastUsed: string | null;
-  bestWeightKg: number;
+  bestWeightLbs: number;
   bestReps: number;
-  bestEst1RM: number;
-  totalVolumeKg: number;
-  recentSets: Array<{ weight_kg: number; reps: number; logged_at: string }>;
+  bestEst1RMLbs: number;
+  totalVolumeLbs: number;
+  recentSets: Array<{ weight_lbs: number; reps: number; logged_at: string }>;
 }
 
 // ─── Difficulty labels ────────────────────────────────
@@ -97,6 +102,7 @@ export default function MachineDetailScreen() {
 
   // Enrichment state
   const [history, setHistory] = useState<MachineHistory | null>(null);
+  const [weightUnit, setWeightUnit] = useState<WeightUnit>('lbs');
 
   // Workout mode context
   const [modeContext, setModeContext] = useState<ModeContext | null>(null);
@@ -108,25 +114,11 @@ export default function MachineDetailScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         Alert.alert('Sign In Required', 'Please sign in to start a workout.');
-        setStartingWorkout(false);
         return;
       }
-      const status: WorkoutStatus = 'in_progress';
-      const { data: workout, error: wErr } = await supabase
-        .from('workouts')
-        .insert({ gym_id: machine.gym_id, profile_id: user.id, status })
-        .select()
-        .single();
-      if (wErr || !workout) throw wErr || new Error('Failed to create workout');
-
-      await supabase.from('workout_exercises').insert({
-        workout_id: workout.id,
-        machine_id: machine.id,
-        exercise_name: machine.name,
-        order_index: 0,
-      });
-
-      router.push(`/workout/${workout.id}`);
+      // Session rows are created server-side on the first logged set —
+      // the logger screen just needs to know which machine to pre-add.
+      router.push(`/workout/today?machineId=${machine.id}`);
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not start workout');
     } finally {
@@ -240,63 +232,70 @@ export default function MachineDetailScreen() {
 
   async function loadMachineHistory(machineId: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const unit = await getWeightUnit();
+      setWeightUnit(unit);
 
-      // Get all workout exercises for this machine by this user
-      const { data: exercises } = await supabase
-        .from('workout_exercises')
-        .select(`
-          id,
-          workouts!inner(profile_id, started_at, status),
-          sets(weight_kg, reps, logged_at)
-        `)
+      const identity = await resolveWorkoutIdentity();
+      if (!identity) return;
+
+      // Completed sessions for this member + machine (lbs, sets in JSONB)
+      const { data: sessions } = await supabase
+        .from('workout_sessions')
+        .select('session_date, best_weight_lbs, total_volume_lbs, sets, completed_at')
+        .eq('member_id', identity.memberId)
         .eq('machine_id', machineId)
-        .eq('workouts.profile_id', user.id)
-        .eq('workouts.status', 'completed')
-        .order('workouts(started_at)', { ascending: false })
-        .limit(50);
+        .not('completed_at', 'is', null)
+        .order('session_date', { ascending: false })
+        .limit(20);
 
-      if (!exercises || exercises.length === 0) {
+      if (!sessions || sessions.length === 0) {
         setHistory(null);
         return;
       }
 
-      const rows = exercises as any[];
-      let bestWeightKg = 0;
-      let bestReps = 0;
-      let bestEst1RM = 0;
-      let totalVolumeKg = 0;
-      const recentSets: MachineHistory['recentSets'] = [];
+      const rows = sessions as Array<{
+        session_date: string;
+        best_weight_lbs: number | null;
+        total_volume_lbs: number | null;
+        sets: SessionSetEntry[] | null;
+        completed_at: string | null;
+      }>;
 
-      for (const ex of rows) {
-        for (const s of (ex.sets ?? [])) {
-          const w = s.weight_kg ?? 0;
+      let bestWeightLbs = 0;
+      let bestReps = 0;
+      let bestEst1RMLbs = 0;
+      let totalVolumeLbs = 0;
+
+      for (const row of rows) {
+        totalVolumeLbs += row.total_volume_lbs ?? 0;
+        if ((row.best_weight_lbs ?? 0) > bestWeightLbs) {
+          bestWeightLbs = row.best_weight_lbs ?? 0;
+        }
+        for (const s of row.sets ?? []) {
+          const w = s.weight_lbs ?? 0;
           const r = s.reps ?? 0;
-          totalVolumeKg += w * r;
-          if (w > bestWeightKg) bestWeightKg = w;
           if (r > bestReps) bestReps = r;
-          // Brzycki 1RM estimate
+          // Brzycki 1RM estimate (computed in lbs, converted at display)
           if (r > 0 && r <= 12 && w > 0) {
             const est = w * (36 / (37 - r));
-            if (est > bestEst1RM) bestEst1RM = est;
-          }
-          if (recentSets.length < 5) {
-            recentSets.push({ weight_kg: w, reps: r, logged_at: s.logged_at });
+            if (est > bestEst1RMLbs) bestEst1RMLbs = est;
           }
         }
       }
 
-      // Unique sessions = unique workout dates
-      const sessionDates = new Set(rows.map((e: any) => e.workouts?.started_at?.split('T')[0]).filter(Boolean));
+      // Recent sets = last 5 entries from the most recent session
+      const latestSets = rows[0]?.sets ?? [];
+      const recentSets: MachineHistory['recentSets'] = latestSets
+        .slice(-5)
+        .map((s) => ({ weight_lbs: s.weight_lbs, reps: s.reps, logged_at: s.logged_at }));
 
       setHistory({
-        totalSessions: sessionDates.size,
-        lastUsed: rows[0]?.workouts?.started_at ?? null,
-        bestWeightKg,
+        totalSessions: rows.length,
+        lastUsed: rows[0]?.completed_at ?? rows[0]?.session_date ?? null,
+        bestWeightLbs,
         bestReps,
-        bestEst1RM: Math.round(bestEst1RM * 10) / 10,
-        totalVolumeKg: Math.round(totalVolumeKg),
+        bestEst1RMLbs,
+        totalVolumeLbs,
         recentSets,
       });
     } catch (err) {
@@ -620,16 +619,16 @@ export default function MachineDetailScreen() {
               <Text variant="caption" color="textSecondary">sessions</Text>
             </View>
             <View style={styles.historyPill}>
-              <Text style={styles.historyValue}>{history.bestWeightKg}kg</Text>
+              <Text style={styles.historyValue}>{formatWeightLbs(history.bestWeightLbs, weightUnit)}</Text>
               <Text variant="caption" color="textSecondary">best weight</Text>
             </View>
             <View style={styles.historyPill}>
               <Text style={styles.historyValue}>{history.bestReps}</Text>
               <Text variant="caption" color="textSecondary">best reps</Text>
             </View>
-            {history.bestEst1RM > 0 && (
+            {history.bestEst1RMLbs > 0 && (
               <View style={styles.historyPill}>
-                <Text style={styles.historyValue}>{history.bestEst1RM}kg</Text>
+                <Text style={styles.historyValue}>{formatWeightLbs(history.bestEst1RMLbs, weightUnit)}</Text>
                 <Text variant="caption" color="textSecondary">est. 1RM</Text>
               </View>
             )}
@@ -637,7 +636,7 @@ export default function MachineDetailScreen() {
           {history.lastUsed && (
             <Text variant="caption" color="textSecondary" style={styles.historyLastUsed}>
               Last used {formatTimeSince(history.lastUsed)}
-              {'  '}|{'  '}{history.totalVolumeKg.toLocaleString()}kg total volume
+              {'  '}|{'  '}{formatVolumeLbs(history.totalVolumeLbs, weightUnit)} total volume
             </Text>
           )}
           {history.recentSets.length > 0 && (
@@ -649,7 +648,7 @@ export default function MachineDetailScreen() {
                 {history.recentSets.map((s, i) => (
                   <View key={i} style={styles.recentSetChip}>
                     <Text style={styles.recentSetText}>
-                      {s.weight_kg}kg x {s.reps}
+                      {formatWeightLbs(s.weight_lbs, weightUnit)} x {s.reps}
                     </Text>
                   </View>
                 ))}
@@ -683,6 +682,8 @@ export default function MachineDetailScreen() {
         style={[styles.startWorkoutButton, startingWorkout && { opacity: 0.6 }]}
         onPress={handleStartWorkout}
         disabled={startingWorkout}
+        accessibilityRole="button"
+        accessibilityLabel="Start workout with this machine"
       >
         <Text style={styles.startWorkoutText}>
           {startingWorkout ? 'Starting...' : 'Start Workout with This Machine'}

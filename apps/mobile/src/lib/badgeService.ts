@@ -1,212 +1,134 @@
-﻿import { supabase } from './supabase';
-import { checkBadgeUnlocks, computeStreak } from '@nexera/ai-assist';
-import type { Badge, BadgeWithStatus } from '@nexera/types';
+/**
+ * Badge service — read-only view over the real achievement schema
+ * (`achievement_definitions` + `member_achievements`).
+ *
+ * Awarding is server-side (the workout complete API inserts
+ * member_achievements rows); mobile only reads and displays.
+ */
+import { supabase } from './supabase';
 
-// â”€â”€â”€ Rarity Display Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ──────────────────────────────────────────────────
 
-export const RARITY_COLORS: Record<string, string> = {
-  common: '#A0A0B0',
-  rare: '#3B82F6',
-  epic: '#E0142F',
-  legendary: '#FFD700',
-};
+export type AchievementCategory =
+  | 'milestone'
+  | 'performance'
+  | 'consistency'
+  | 'explorer'
+  | 'community';
 
-export const RARITY_LABELS: Record<string, string> = {
-  common: 'Common',
-  rare: 'Rare',
-  epic: 'Epic',
-  legendary: 'Legendary',
-};
+export interface BadgeWithStatus {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  category: AchievementCategory;
+  points: number;
+  required_value: number | null;
+  required_unit: string | null;
+  icon_name: string | null;
+  sort_order: number;
+  unlocked: boolean;
+  earned_at: string | null;
+}
 
-// â”€â”€â”€ Service Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+interface DefinitionRow {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  category: AchievementCategory;
+  points: number;
+  required_value: number | null;
+  required_unit: string | null;
+  icon_name: string | null;
+  sort_order: number;
+}
+
+const DEFINITION_COLUMNS =
+  'id, code, title, description, category, points, required_value, required_unit, icon_name, sort_order';
+
+// ─── Service Functions ──────────────────────────────────────
 
 /**
- * Fetches all badge definitions and merges with user's unlock status.
+ * Fetches all active achievement definitions merged with the member's
+ * unlock status.
+ *
+ * `memberId` is `members.id` (NOT the auth user id — resolve via
+ * `getMemberId` from memberData first). `gymId` is part of the agreed
+ * cross-agent contract but unused in the query: achievements are
+ * member-global per `UNIQUE(member_id, achievement_code)`.
  */
 export async function getBadges(
-  profileId: string,
+  memberId: string,
   gymId: string,
 ): Promise<BadgeWithStatus[]> {
-  const [{ data: badges, error: badgesErr }, { data: unlocks, error: unlocksErr }] = await Promise.all([
+  void gymId; // member-global — see doc comment
+
+  const [
+    { data: definitions, error: defsErr },
+    { data: unlocks, error: unlocksErr },
+  ] = await Promise.all([
     supabase
-      .from('badges')
-      .select('*')
-      .or(`gym_id.is.null,gym_id.eq.${gymId}`)
+      .from('achievement_definitions')
+      .select(DEFINITION_COLUMNS)
+      .eq('is_active', true)
       .order('sort_order'),
     supabase
-      .from('member_badges')
-      .select('badge_id, unlocked_at')
-      .eq('profile_id', profileId)
+      .from('member_achievements')
+      .select('achievement_code, earned_at')
+      .eq('member_id', memberId)
       .limit(500),
   ]);
 
-  if (badgesErr) throw badgesErr;
+  if (defsErr) throw defsErr;
   if (unlocksErr) throw unlocksErr;
 
   const unlockMap = new Map<string, string>();
-  for (const u of unlocks ?? []) {
-    unlockMap.set(u.badge_id, u.unlocked_at);
+  for (const u of (unlocks ?? []) as { achievement_code: string; earned_at: string }[]) {
+    unlockMap.set(u.achievement_code, u.earned_at);
   }
 
-  return (badges ?? []).map((badge) => ({
-    ...badge,
-    unlocked: unlockMap.has(badge.id),
-    unlocked_at: unlockMap.get(badge.id) ?? null,
-  })) as BadgeWithStatus[];
-}
-
-/**
- * Checks current stats and unlocks any newly earned badges.
- * Returns array of newly unlocked badge slugs.
- */
-export async function checkAndUnlockBadges(
-  profileId: string,
-  gymId: string,
-): Promise<string[]> {
-  // Gather stats in parallel
-  const [
-    workoutCountResult,
-    volumeResult,
-    pointsResult,
-    workoutDatesResult,
-    prCountResult,
-    existingBadgesResult,
-  ] = await Promise.all([
-    // Completed workout count
-    supabase
-      .from('workouts')
-      .select('id', { count: 'exact', head: true })
-      .eq('profile_id', profileId)
-      .eq('gym_id', gymId)
-      .eq('status', 'completed'),
-    // Total volume via RPC
-    supabase.rpc('get_total_volume', { p_profile_id: profileId, p_gym_id: gymId }),
-    // Total points
-    supabase
-      .from('points_ledger')
-      .select('points')
-      .eq('profile_id', profileId)
-      .eq('gym_id', gymId),
-    // Workout dates for streak
-    supabase
-      .from('workouts')
-      .select('started_at')
-      .eq('profile_id', profileId)
-      .eq('gym_id', gymId)
-      .eq('status', 'completed')
-      .order('started_at', { ascending: false }),
-    // PR count
-    supabase
-      .from('points_ledger')
-      .select('id', { count: 'exact', head: true })
-      .eq('profile_id', profileId)
-      .eq('gym_id', gymId)
-      .eq('reason', 'pr_achieved'),
-    // Already unlocked badge slugs
-    supabase
-      .from('member_badges')
-      .select('badges(slug)')
-      .eq('profile_id', profileId),
-  ]);
-
-  // Bail out if any critical query failed
-  const queryError = workoutCountResult.error ?? volumeResult.error ?? pointsResult.error
-    ?? workoutDatesResult.error ?? prCountResult.error ?? existingBadgesResult.error;
-  if (queryError) {
-    if (__DEV__) console.warn('[badges] stat query failed:', queryError.message);
-    return [];
-  }
-
-  const completedWorkouts = workoutCountResult.count ?? 0;
-  const totalVolumeKg = Number(volumeResult.data ?? 0);
-  const totalPoints = (pointsResult.data ?? []).reduce(
-    (sum: number, e: { points: number }) => sum + e.points, 0,
-  );
-  const dates = (workoutDatesResult.data ?? []).map(
-    (w: { started_at: string }) => w.started_at,
-  );
-  const streakResult = computeStreak({ completedWorkoutDates: dates });
-  const totalPRs = prCountResult.count ?? 0;
-
-  const alreadyUnlockedSlugs = (existingBadgesResult.data ?? [])
-    .map((mb: any) => mb.badges?.slug as string | undefined)
-    .filter((s): s is string => Boolean(s));
-
-  // Run the pure badge engine
-  const newSlugs = checkBadgeUnlocks({
-    completedWorkouts,
-    currentStreak: streakResult.currentStreak,
-    longestStreak: streakResult.longestStreak,
-    totalVolumeKg,
-    totalPRs,
-    totalPoints,
-    alreadyUnlockedSlugs,
-  });
-
-  if (newSlugs.length === 0) return [];
-
-  // Look up badge IDs for the new slugs
-  const { data: badgeDefs } = await supabase
-    .from('badges')
-    .select('id, slug')
-    .in('slug', newSlugs);
-
-  if (!badgeDefs || badgeDefs.length === 0) return [];
-
-  // Insert member_badges (UNIQUE constraint handles duplicates)
-  const inserts = badgeDefs.map((b) => ({
-    gym_id: gymId,
-    profile_id: profileId,
-    badge_id: b.id,
+  return ((definitions ?? []) as unknown as DefinitionRow[]).map((def) => ({
+    ...def,
+    unlocked: unlockMap.has(def.code),
+    earned_at: unlockMap.get(def.code) ?? null,
   }));
-
-  await supabase.from('member_badges').upsert(inserts, {
-    onConflict: 'profile_id,badge_id',
-    ignoreDuplicates: true,
-  });
-
-  return newSlugs;
 }
 
 /**
- * Fetches full badge definitions for a set of slugs.
- * Used to feed the AchievementUnlock celebration after new unlocks.
- */
-export async function getBadgesBySlugs(slugs: string[]): Promise<Badge[]> {
-  if (slugs.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from('badges')
-    .select('*')
-    .in('slug', slugs)
-    .order('sort_order');
-
-  if (error) throw error;
-  return (data ?? []) as Badge[];
-}
-
-/**
- * Returns badges unlocked within the last 24 hours (for home screen card).
+ * Returns achievements earned within the last `sinceDays` days (default 1,
+ * i.e. the old 24-hour home-card behavior), newest first.
+ *
+ * `memberId` is `members.id`; `gymId` is contract-only (see getBadges).
  */
 export async function getRecentUnlocks(
-  profileId: string,
+  memberId: string,
   gymId: string,
+  sinceDays = 1,
 ): Promise<BadgeWithStatus[]> {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  void gymId; // member-global — see getBadges doc comment
+
+  const since = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
-    .from('member_badges')
-    .select('badge_id, unlocked_at, badges(*)')
-    .eq('profile_id', profileId)
-    .eq('gym_id', gymId)
-    .gte('unlocked_at', since)
-    .order('unlocked_at', { ascending: false });
+    .from('member_achievements')
+    .select(`earned_at, achievement_definitions(${DEFINITION_COLUMNS})`)
+    .eq('member_id', memberId)
+    .gte('earned_at', since)
+    .order('earned_at', { ascending: false });
 
   if (error) throw error;
 
-  return (data ?? []).map((mb: any) => ({
-    ...(mb.badges as Record<string, unknown>),
-    unlocked: true,
-    unlocked_at: mb.unlocked_at,
-  })) as BadgeWithStatus[];
+  const rows = (data ?? []) as unknown as {
+    earned_at: string;
+    achievement_definitions: DefinitionRow | null;
+  }[];
+
+  return rows
+    .filter((row) => row.achievement_definitions != null)
+    .map((row) => ({
+      ...(row.achievement_definitions as DefinitionRow),
+      unlocked: true,
+      earned_at: row.earned_at,
+    }));
 }

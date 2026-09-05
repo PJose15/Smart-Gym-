@@ -103,22 +103,26 @@ export default function MemberDetailPage() {
 
       setProfile(profileData);
 
-      // Total completed workouts
-      const { count } = await supabase
-        .from('workouts')
-        .select('id', { count: 'exact', head: true })
-        .eq('profile_id', memberId)
-        .eq('status', 'completed');
+      // [id] is a users.id (members list links via m.user_id); workout_sessions
+      // keys on members.id — map through the members table first.
+      const { data: memberRows } = await supabase
+        .from('members')
+        .select('id')
+        .eq('user_id', memberId);
 
-      // Last workout
-      const { data: lastWk } = await supabase
-        .from('workouts')
-        .select('started_at')
-        .eq('profile_id', memberId)
-        .eq('status', 'completed')
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const memberRowIds = (memberRows ?? []).map((m) => m.id);
+
+      // Completed sessions: one row per (machine, day) — a "workout" is a
+      // distinct session_date; the last workout is the max completed day.
+      const { data: sessionRows } = await supabase
+        .from('workout_sessions')
+        .select('session_date')
+        .in('member_id', memberRowIds)
+        .not('completed_at', 'is', null)
+        .order('session_date', { ascending: false });
+
+      const workoutDays = new Set((sessionRows ?? []).map((s) => s.session_date));
+      const lastWorkoutDate = sessionRows && sessionRows.length > 0 ? sessionRows[0].session_date : null;
 
       // Current program
       const { data: assignment } = await supabase
@@ -130,8 +134,8 @@ export default function MemberDetailPage() {
 
       const programData = assignment?.programs as unknown as { name: string } | null;
       setStats({
-        totalWorkouts: count ?? 0,
-        lastWorkout: lastWk?.started_at ?? null,
+        totalWorkouts: workoutDays.size,
+        lastWorkout: lastWorkoutDate,
         currentProgram: programData?.name ?? null,
       });
     } catch (err: unknown) {

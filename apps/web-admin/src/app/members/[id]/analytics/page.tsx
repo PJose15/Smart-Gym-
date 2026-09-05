@@ -25,6 +25,25 @@ interface ExerciseProgression {
   data: Array<{ date: string; value: number }>;
 }
 
+/** One element of workout_sessions.sets JSONB (weights stored in lbs). */
+interface SessionSet {
+  set_number: number;
+  weight_lbs: number;
+  reps: number;
+  rpe?: number | null;
+  notes?: string | null;
+  logged_at?: string;
+}
+
+interface SessionRow {
+  id: string;
+  session_date: string;
+  sets: SessionSet[];
+  created_at: string;
+  completed_at: string;
+  machines: { name: string } | null;
+}
+
 type PeriodDays = 30 | 60 | 90;
 
 // ─── Styles ─────────────────────────────────────────────
@@ -162,27 +181,54 @@ export default function MemberAnalyticsPage() {
         .maybeSingle();
       setMemberName(profile?.full_name ?? 'Unknown');
 
-      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      // [id] is a users.id; workout_sessions keys on members.id — map
+      // through the members table first.
+      const { data: memberRows } = await supabase
+        .from('members')
+        .select('id')
+        .eq('user_id', memberId);
 
-      // Workouts in period
-      const { data: workouts } = await supabase
-        .from('workouts')
-        .select('id, started_at, finished_at')
-        .eq('profile_id', memberId)
-        .eq('status', 'completed')
-        .gte('started_at', since)
-        .order('started_at', { ascending: true });
+      const memberRowIds = (memberRows ?? []).map((m) => m.id);
 
-      const wks = workouts ?? [];
-      setTotalWorkouts(wks.length);
+      const sinceDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-      // Average duration
-      const durations = wks
-        .filter((w) => w.finished_at)
-        .map((w) => (new Date(w.finished_at!).getTime() - new Date(w.started_at).getTime()) / 60000);
+      // Completed sessions in period — one row per (machine, day); sets is
+      // a JSONB array of { set_number, weight_lbs, reps, ... } (weights in lbs).
+      const { data: sessionData, error: sessErr } = await supabase
+        .from('workout_sessions')
+        .select('id, session_date, sets, created_at, completed_at, machines(name)')
+        .in('member_id', memberRowIds)
+        .not('completed_at', 'is', null)
+        .gte('session_date', sinceDate)
+        .order('session_date', { ascending: true });
+
+      if (sessErr) throw sessErr;
+
+      const rows = (sessionData ?? []) as unknown as SessionRow[];
+
+      // A "workout" = a distinct training day
+      const dayList = Array.from(new Set(rows.map((r) => r.session_date))).sort();
+      setTotalWorkouts(dayList.length);
+
+      // Average workout duration: per day, first machine-session start to
+      // last machine-session completion.
+      const dayBounds = new Map<string, { start: number; end: number }>();
+      for (const r of rows) {
+        const start = new Date(r.created_at).getTime();
+        const end = new Date(r.completed_at).getTime();
+        const b = dayBounds.get(r.session_date);
+        if (!b) dayBounds.set(r.session_date, { start, end });
+        else {
+          b.start = Math.min(b.start, start);
+          b.end = Math.max(b.end, end);
+        }
+      }
+      const durations = Array.from(dayBounds.values())
+        .map((b) => (b.end - b.start) / 60000)
+        .filter((m) => Number.isFinite(m) && m > 0);
       setAvgDuration(durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0);
 
-      if (wks.length === 0) {
+      if (rows.length === 0) {
         setWeeklyVolume([]);
         setWeeklyFreq([]);
         setExerciseProgressions([]);
@@ -191,22 +237,12 @@ export default function MemberAnalyticsPage() {
         return;
       }
 
-      const workoutIds = wks.map((w) => w.id);
-
-      // Exercises + sets
-      const { data: exData } = await supabase
-        .from('workout_exercises')
-        .select('workout_id, exercise_name, sets(*)')
-        .in('workout_id', workoutIds);
-
-      const exercises = exData ?? [];
-
-      // Build sessions for trend utils
-      const sessions: SessionForTrend[] = wks.map((w) => ({
-        startedAt: w.started_at,
-        sets: exercises
-          .filter((e: { workout_id: string }) => e.workout_id === w.id)
-          .flatMap((e: { sets: Array<{ weight_kg: number; reps: number }> }) => e.sets ?? []),
+      // Build sessions for trend utils. SessionForTrend's set field is
+      // named weight_kg for legacy reasons but the math is unit-agnostic —
+      // we feed lbs and label the charts accordingly.
+      const sessions: SessionForTrend[] = rows.map((r) => ({
+        startedAt: r.session_date,
+        sets: (r.sets ?? []).map((s) => ({ weight_kg: s.weight_lbs, reps: s.reps })),
       }));
 
       // Weekly volume
@@ -214,22 +250,19 @@ export default function MemberAnalyticsPage() {
       setWeeklyVolume(wv);
       setVolumeTrend(computeTrendDirection(wv));
 
-      // Weekly frequency
-      const wf = computeWeeklyFrequency(wks.map((w) => w.started_at));
+      // Weekly frequency (one entry per training day)
+      const wf = computeWeeklyFrequency(dayList);
       setWeeklyFreq(wf);
 
-      // Exercise progressions (top 5 by session count)
-      const exerciseMap = new Map<string, Map<string, { weight_kg: number; reps: number }[]>>();
-      for (const ex of exercises) {
-        const wk = wks.find((w) => w.id === (ex as { workout_id: string }).workout_id);
-        if (!wk) continue;
-        const date = wk.started_at.slice(0, 10);
-        const eName = (ex as { exercise_name: string }).exercise_name;
+      // Exercise progressions (top 5 by session count), named by machine
+      const exerciseMap = new Map<string, Map<string, Array<{ weight_lbs: number; reps: number }>>>();
+      for (const r of rows) {
+        const eName = r.machines?.name ?? 'Unknown machine';
         if (!exerciseMap.has(eName)) exerciseMap.set(eName, new Map());
         const dateMap = exerciseMap.get(eName)!;
-        if (!dateMap.has(date)) dateMap.set(date, []);
-        for (const s of ((ex as { sets: Array<{ weight_kg: number; reps: number }> }).sets ?? [])) {
-          dateMap.get(date)!.push(s);
+        if (!dateMap.has(r.session_date)) dateMap.set(r.session_date, []);
+        for (const s of r.sets ?? []) {
+          dateMap.get(r.session_date)!.push({ weight_lbs: s.weight_lbs, reps: s.reps });
         }
       }
 
@@ -240,7 +273,7 @@ export default function MemberAnalyticsPage() {
         for (const [date, sets] of dateMap) {
           let best1RM = 0;
           for (const s of sets) {
-            const e = estimate1RM(s.weight_kg, s.reps);
+            const e = estimate1RM(s.weight_lbs, s.reps);
             if (e > best1RM) best1RM = e;
           }
           if (best1RM > 0) data.push({ date, value: Math.round(best1RM * 10) / 10 });
@@ -341,7 +374,7 @@ export default function MemberAnalyticsPage() {
         {/* Weekly Volume Chart */}
         <div style={chartCardStyle} className="section-glow">
           <h3 style={{ fontSize: 16, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginBottom: 16, marginTop: 0 }}>
-            Weekly Volume (kg)
+            Weekly Volume (lbs)
           </h3>
           {weeklyVolume.length >= 2 ? (
             <ResponsiveContainer width="100%" height={250}>

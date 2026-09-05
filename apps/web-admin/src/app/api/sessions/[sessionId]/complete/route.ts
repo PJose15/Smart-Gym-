@@ -39,8 +39,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { member_id } = parsed.data;
 
-    // Verify the authenticated user owns this member_id
-    const authResult = await verifyMember(member_id);
+    // Verify the authenticated user owns this member_id (cookie or Bearer JWT)
+    const authResult = await verifyMember(member_id, request);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
 

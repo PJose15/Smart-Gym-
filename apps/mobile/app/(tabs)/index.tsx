@@ -10,15 +10,20 @@ import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
 import { getTodaysProgramDay } from '@nexera/utils';
 import { getTodayExplanation, computeGuardrails, getCoachingInsight, buildMemberContext, computeLevelProgress } from '@nexera/ai-assist';
-import type { WorkoutRecord, CoachingInsight, LevelProgress } from '@nexera/ai-assist';
+import type { CoachingInsight, LevelProgress } from '@nexera/ai-assist';
 import { fetchCoachingInsight } from '../../src/lib/aiService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { trackEvent } from '../../src/lib/events';
 import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
-import { getRecentUnlocks } from '../../src/lib/badgeService';
+import { getBadges } from '../../src/lib/badgeService';
+import type { BadgeWithStatus } from '../../src/lib/badgeService';
+import { getBadgeEmoji } from '../../src/lib/achievementDisplay';
 import { getUserRank } from '../../src/lib/leaderboardService';
-import type { BadgeWithStatus } from '@nexera/types';
+import { localSessionDate } from '../../src/lib/sessionApi';
+import { getWeightUnit } from '../../src/lib/weightUnit';
+import { toWorkoutRecords, computeMuscleGaps } from '../../src/lib/sessionAdapters';
+import type { SessionRow, SessionMachineRow } from '../../src/lib/sessionAdapters';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PRDetection } from '@nexera/types';
 import { deduper } from '../../src/lib/requestDeduper';
@@ -30,7 +35,7 @@ import { SkeletonGate, HomeScreenSkeleton } from '../../src/components/skeleton'
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import { typography } from '../../src/theme/typography';
-import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, WorkoutSet, SessionIntent } from '@nexera/types';
+import type { TodayExplanation, UserGoal, GuardrailInsight, ExperienceLevel, SessionIntent, WeightUnit } from '@nexera/types';
 import { extractAiProgramDays } from '../../src/lib/workoutMode';
 import { computeHeroState } from '../../src/lib/heroState';
 import type { HeroInput } from '../../src/lib/heroState';
@@ -52,7 +57,6 @@ interface TodayWorkout {
 
 interface ActiveWorkout {
   id: string;
-  started_at: string;
 }
 
 const RECOVERY_TIPS = [
@@ -134,7 +138,8 @@ export default function HomeScreen() {
   // Weekly Progress Summary
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
   const [weeklyGoal, setWeeklyGoal] = useState(0);
-  const [weeklyVolume, setWeeklyVolume] = useState(0);
+  const [weeklyVolume, setWeeklyVolume] = useState(0); // canonical lbs
+  const [weightUnit, setWeightUnit] = useState<WeightUnit>('lbs');
 
   const mountedRef = useRef(true);
 
@@ -184,18 +189,6 @@ export default function HomeScreen() {
         await AsyncStorage.removeItem('@nexera/unseen_prs');
       }
 
-      // Check for active workout
-      const { data: activeData } = await supabase
-        .from('workouts')
-        .select('id, started_at')
-        .eq('profile_id', user.id)
-        .eq('status', 'in_progress')
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (mountedRef.current) setActiveWorkout(activeData || null);
-
       // Load gym membership
       const { data: memberData } = await supabase
         .from('gym_members')
@@ -216,6 +209,47 @@ export default function HomeScreen() {
       if (controller.signal.aborted) return;
       if (mountedRef.current) setGymId(gymId);
 
+      // Resolve the canonical members.id EARLY — every workout_sessions
+      // query keys on member_id (members.id), NOT profile_id.
+      const { data: memberRecord } = await supabase
+        .from('members')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('gym_id', gymId)
+        .maybeSingle();
+
+      if (!memberRecord) {
+        if (mountedRef.current) {
+          setError('You are not a member of any gym yet. Please ask your gym to add you.');
+          setLoading(false);
+        }
+        return;
+      }
+      const memberId: string = memberRecord.id;
+
+      // Member's preferred display unit (weights are stored in lbs)
+      try {
+        const unit = await getWeightUnit();
+        if (mountedRef.current) setWeightUnit(unit);
+      } catch {
+        // keep default 'lbs'
+      }
+
+      const todayDate = localSessionDate();
+
+      // Check for an active (started, not yet completed) session today
+      const { data: activeData } = await supabase
+        .from('workout_sessions')
+        .select('id, created_at')
+        .eq('member_id', memberId)
+        .eq('session_date', todayDate)
+        .is('completed_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (mountedRef.current) setActiveWorkout(activeData ? { id: activeData.id } : null);
+
       // Load member score and level
       try {
         const { data: scoreData } = await supabase
@@ -235,27 +269,27 @@ export default function HomeScreen() {
       // Load last completed session date
       try {
         const { data: lastSession } = await supabase
-          .from('workouts')
-          .select('started_at')
-          .eq('profile_id', user.id)
-          .eq('status', 'completed')
-          .order('started_at', { ascending: false })
+          .from('workout_sessions')
+          .select('completed_at')
+          .eq('member_id', memberId)
+          .not('completed_at', 'is', null)
+          .order('completed_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (lastSession?.started_at && mountedRef.current) {
-          setLastSessionDate(lastSession.started_at);
+        if (lastSession?.completed_at && mountedRef.current) {
+          setLastSessionDate(lastSession.completed_at);
         }
       } catch (err) {
         console.warn('[home] last session load failed:', err instanceof Error ? err.message : err);
       }
 
-      // Load total workout count (always-visible quick stat)
+      // Load total completed session count (always-visible quick stat)
       try {
         const { count: totalCount } = await supabase
-          .from('workouts')
+          .from('workout_sessions')
           .select('id', { count: 'exact', head: true })
-          .eq('profile_id', user.id)
-          .eq('status', 'completed');
+          .eq('member_id', memberId)
+          .not('completed_at', 'is', null);
         if (mountedRef.current) setTotalWorkoutCount(totalCount ?? 0);
       } catch (err) {
         console.warn('[home] total workout count failed:', err instanceof Error ? err.message : err);
@@ -294,10 +328,16 @@ export default function HomeScreen() {
         }
       }
 
-      // Load recent badge unlocks
+      // Load recent badge unlocks (earned within the last 24h, newest first)
       if (isFeatureEnabled('badges_enabled')) {
         try {
-          const recent = await getRecentUnlocks(user.id, gymId);
+          const allBadges = await getBadges(memberId, gymId);
+          const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+          const recent = allBadges
+            .filter((b) => b.unlocked && b.earned_at && new Date(b.earned_at).getTime() >= dayAgo)
+            .sort((a, b) =>
+              new Date(b.earned_at as string).getTime() - new Date(a.earned_at as string).getTime(),
+            );
           if (mountedRef.current) setRecentBadges(recent);
         } catch (err) {
           console.warn('[home] badges load failed:', err instanceof Error ? err.message : err);
@@ -310,22 +350,10 @@ export default function HomeScreen() {
       // program_exercises) OR an AI program (ai_program_id → ai_programs
       // with program_data JSON). Fall back to the latest active ai_programs
       // row for members without an assignment row.
-      const { data: memberRecord } = await supabase
-        .from('members')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('gym_id', gymId)
-        .maybeSingle();
-
-      if (!memberRecord) {
-        if (mountedRef.current) setLoading(false);
-        return;
-      }
-
       const { data: assignmentRow } = await supabase
         .from('member_program_assignments')
         .select('program_id, ai_program_id, assigned_at')
-        .eq('member_id', memberRecord.id)
+        .eq('member_id', memberId)
         .eq('status', 'active')
         .order('assigned_at', { ascending: false })
         .limit(1)
@@ -384,7 +412,7 @@ export default function HomeScreen() {
           const { data } = await supabase
             .from('ai_programs')
             .select('id, program_data, created_at')
-            .eq('member_id', memberRecord.id)
+            .eq('member_id', memberId)
             .eq('is_active', true)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -423,37 +451,30 @@ export default function HomeScreen() {
         const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         const monday = new Date(now);
         monday.setDate(now.getDate() - diffToMonday);
-        monday.setHours(0, 0, 0, 0);
-        const mondayISO = monday.toISOString();
+        const mondayDate = localSessionDate(monday); // local Monday, YYYY-MM-DD
 
-        const { data: weekWorkouts } = await supabase
-          .from('workouts')
-          .select('id, started_at')
-          .eq('profile_id', user.id)
-          .eq('status', 'completed')
-          .gte('started_at', mondayISO)
-          .limit(50);
+        const { data: weekSessions } = await supabase
+          .from('workout_sessions')
+          .select('id, session_date, total_volume_lbs')
+          .eq('member_id', memberId)
+          .not('completed_at', 'is', null)
+          .gte('session_date', mondayDate)
+          .limit(100);
 
-        const wkList = weekWorkouts ?? [];
-        if (mountedRef.current) setWeeklyWorkouts(wkList.length);
+        const wkList = weekSessions ?? [];
+        // Sessions are per-machine rows — a "workout" for the weekly goal is
+        // one distinct training day (weeklyGoal counts program days).
+        const distinctDays = new Set(
+          wkList.map((s: { session_date: string }) => s.session_date),
+        ).size;
+        if (mountedRef.current) setWeeklyWorkouts(distinctDays);
 
-        if (wkList.length > 0) {
-          const wkIds = wkList.map((w) => w.id);
-          const { data: wkExercises } = await supabase
-            .from('workout_exercises')
-            .select('workout_id, sets(*)')
-            .in('workout_id', wkIds);
-
-          let totalVol = 0;
-          for (const ex of wkExercises ?? []) {
-            for (const s of (ex.sets ?? []) as Array<{ weight_kg: number; reps: number }>) {
-              totalVol += (Number(s.weight_kg) || 0) * (Number(s.reps) || 0);
-            }
-          }
-          if (mountedRef.current) setWeeklyVolume(Math.round(totalVol));
-        } else {
-          if (mountedRef.current) setWeeklyVolume(0);
-        }
+        const totalVolLbs = wkList.reduce(
+          (sum: number, s: { total_volume_lbs: number | null }) =>
+            sum + (Number(s.total_volume_lbs) || 0),
+          0,
+        );
+        if (mountedRef.current) setWeeklyVolume(Math.round(totalVolLbs));
       } catch (err) {
         console.warn('[home] weekly progress load failed:', err instanceof Error ? err.message : err);
       }
@@ -482,14 +503,12 @@ export default function HomeScreen() {
 
       // ─── Smart Rest Day: check if today's workout is done ──
       try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
         const { count: completedToday } = await supabase
-          .from('workouts')
+          .from('workout_sessions')
           .select('id', { count: 'exact', head: true })
-          .eq('profile_id', user.id)
-          .eq('status', 'completed')
-          .gte('started_at', todayStart.toISOString());
+          .eq('member_id', memberId)
+          .eq('session_date', todayDate)
+          .not('completed_at', 'is', null);
 
         const done = (completedToday ?? 0) > 0;
         if (mountedRef.current) setTodayDone(done);
@@ -523,9 +542,10 @@ export default function HomeScreen() {
           .eq('gym_id', gymId)
           .maybeSingle();
 
-        // Build muscle gap map: for each exercise's target muscles,
-        // find when that muscle was last worked
-        const muscleGaps: Record<string, number> = {};
+        // Build muscle gap map: for each exercise's target muscles, find how
+        // many days since a completed session trained that muscle. One query
+        // over recent sessions (+ joined machine muscles), computed locally.
+        let muscleGaps: Record<string, number> = {};
         const machineIds = todayExercises
           .map((e: any) => e.machine_id)
           .filter((id: any): id is string => id !== null);
@@ -544,26 +564,21 @@ export default function HomeScreen() {
               }
             }
 
-            // For each muscle, find the most recent workout that used it
-            for (const muscle of allMuscles) {
-              const { data: lastWorkout } = await supabase
-                .from('workout_exercises')
-                .select('workout_id, workouts!inner(started_at)')
-                .eq('workouts.profile_id', user.id)
-                .eq('workouts.status', 'completed')
-                .order('workouts(started_at)', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+            if (allMuscles.size > 0) {
+              const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+              const { data: muscleSessions } = await supabase
+                .from('workout_sessions')
+                .select('session_date, completed_at, machines(muscle_groups)')
+                .eq('member_id', memberId)
+                .not('completed_at', 'is', null)
+                .gte('session_date', localSessionDate(ninetyDaysAgo))
+                .order('session_date', { ascending: false })
+                .limit(200);
 
-              if (lastWorkout) {
-                const workoutRow = lastWorkout.workouts as unknown as { started_at: string };
-                const daysAgo = Math.floor(
-                  (Date.now() - new Date(workoutRow.started_at).getTime()) / (1000 * 60 * 60 * 24),
-                );
-                if (daysAgo > 0) {
-                  muscleGaps[muscle] = daysAgo;
-                }
-              }
+              muscleGaps = computeMuscleGaps(
+                (muscleSessions ?? []) as SessionMachineRow[],
+                allMuscles,
+              );
             }
           }
         }
@@ -592,55 +607,19 @@ export default function HomeScreen() {
       // ─── Phase 2.5.2: Guardrails ─────────────────────
       if (isFeatureEnabled('ai_guardrails')) {
         try {
-          // Fetch recent 14 days of workouts
+          // Fetch recent 14 days of completed sessions (+ machine metadata),
+          // grouped into one WorkoutRecord per training day by the adapter.
           const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-          const { data: recentWorkouts } = await supabase
-            .from('workouts')
-            .select('id, started_at, finished_at, status')
-            .eq('profile_id', user.id)
-            .eq('status', 'completed')
-            .gte('started_at', twoWeeksAgo)
-            .order('started_at', { ascending: false });
+          const { data: recentSessions } = await supabase
+            .from('workout_sessions')
+            .select('id, machine_id, session_date, created_at, completed_at, sets, machines(name, muscle_groups)')
+            .eq('member_id', memberId)
+            .not('completed_at', 'is', null)
+            .gte('completed_at', twoWeeksAgo)
+            .order('completed_at', { ascending: false });
 
-          if (recentWorkouts && recentWorkouts.length > 0) {
-            // Fetch exercises + sets for each workout
-            const workoutIds = recentWorkouts.map((w: { id: string }) => w.id);
-            const { data: recentExercises } = await supabase
-              .from('workout_exercises')
-              .select('id, workout_id, exercise_name, machine_id, sets(*)')
-              .in('workout_id', workoutIds);
-
-            // Get machine muscle data
-            const machineIds = [...new Set((recentExercises ?? [])
-              .map((e: { machine_id: string | null }) => e.machine_id)
-              .filter(Boolean))];
-
-            const machineMap = new Map<string, string[]>();
-            if (machineIds.length > 0) {
-              const { data: machineData } = await supabase
-                .from('machines')
-                .select('id, muscle_groups')
-                .in('id', machineIds);
-              if (machineData) {
-                for (const m of machineData) {
-                  machineMap.set(m.id, m.muscle_groups ?? []);
-                }
-              }
-            }
-
-            const workoutRecords: WorkoutRecord[] = recentWorkouts.map((w: { id: string; started_at: string; finished_at: string | null }) => ({
-              id: w.id,
-              started_at: w.started_at,
-              finished_at: w.finished_at,
-              exercises: (recentExercises ?? [])
-                .filter((e: { workout_id: string }) => e.workout_id === w.id)
-                .map((e: { exercise_name: string; machine_id: string | null; sets: WorkoutSet[] }) => ({
-                  exercise_name: e.exercise_name,
-                  machine_id: e.machine_id,
-                  muscle_groups: e.machine_id ? machineMap.get(e.machine_id) : undefined,
-                  sets: (e.sets ?? []) as WorkoutSet[],
-                })),
-            }));
+          if (recentSessions && recentSessions.length > 0) {
+            const workoutRecords = toWorkoutRecords(recentSessions as SessionRow[]);
 
             // Get training profile for experience
             const { data: tp } = await supabase
@@ -667,46 +646,29 @@ export default function HomeScreen() {
       if (isFeatureEnabled('ai_coaching')) {
         try {
           const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-          const { data: recentWk } = await supabase
-            .from('workouts')
-            .select('id, started_at, finished_at')
-            .eq('profile_id', user.id)
-            .eq('status', 'completed')
-            .gte('started_at', thirtyDaysAgo)
-            .order('started_at', { ascending: false });
+          const { data: recentSessions30 } = await supabase
+            .from('workout_sessions')
+            .select('id, machine_id, session_date, created_at, completed_at, sets, machines(name, muscle_groups)')
+            .eq('member_id', memberId)
+            .not('completed_at', 'is', null)
+            .gte('completed_at', thirtyDaysAgo)
+            .order('completed_at', { ascending: false });
 
-          const workoutIds30d = (recentWk ?? []).map((w: { id: string }) => w.id);
-          let coachingWorkouts: Array<{
-            id: string; started_at: string; finished_at: string | null;
-            exercises: Array<{ exercise_name: string; sets: Array<{ weight_kg: number; reps: number }> }>;
-          }> = [];
+          // One WorkoutRecord per training day, kg-shaped for ai-assist
+          const coachingWorkouts = toWorkoutRecords((recentSessions30 ?? []) as SessionRow[]);
 
-          if (workoutIds30d.length > 0) {
-            const { data: wxData } = await supabase
-              .from('workout_exercises')
-              .select('workout_id, exercise_name, sets(*)')
-              .in('workout_id', workoutIds30d);
-
-            coachingWorkouts = (recentWk ?? []).map((w: { id: string; started_at: string; finished_at: string | null }) => ({
-              id: w.id,
-              started_at: w.started_at,
-              finished_at: w.finished_at,
-              exercises: (wxData ?? [])
-                .filter((e: { workout_id: string }) => e.workout_id === w.id)
-                .map((e: { exercise_name: string; sets: Array<{ weight_kg: number; reps: number }> }) => ({
-                  exercise_name: e.exercise_name,
-                  sets: (e.sets ?? []) as Array<{ weight_kg: number; reps: number }>,
-                })),
-            }));
-          }
-
-          // Get all completed workout dates for streak calc
+          // Get all completed training dates for streak calc (one per
+          // distinct session_date — sessions are per-machine rows)
           const { data: allDates } = await supabase
-            .from('workouts')
-            .select('started_at')
-            .eq('profile_id', user.id)
-            .eq('status', 'completed')
+            .from('workout_sessions')
+            .select('session_date')
+            .eq('member_id', memberId)
+            .not('completed_at', 'is', null)
             .limit(1000);
+
+          const completedWorkoutDates = [
+            ...new Set((allDates ?? []).map((d: { session_date: string }) => d.session_date)),
+          ];
 
           // Get feedback trends. The column is `feedback` (values include
           // 'discomfort'/'pain'/'unstable'/'ok') — NOT `rating`.
@@ -737,7 +699,7 @@ export default function HomeScreen() {
             workouts: coachingWorkouts,
             prs: [],
             feedbackTrends,
-            completedWorkoutDates: (allDates ?? []).map((d: { started_at: string }) => d.started_at),
+            completedWorkoutDates,
           };
 
           // Try AI via edge function, fall back to deterministic rules
@@ -871,11 +833,12 @@ export default function HomeScreen() {
     lastSessionPRMachine: unseenPRs[0]?.exercise_name,
     lastSessionPRWeight: unseenPRs[0]?.value,
     weeklyVolume,
+    weightUnit,
     weeklyWorkouts,
     score: memberScore,
     level: levelData?.current.level ?? 1,
     levelName: levelData?.current.name,
-  }), [userName, streak, todayDone, todayWorkout, programDayContext, lastSessionDate, unseenPRs, weeklyVolume, weeklyWorkouts, memberScore, levelData]);
+  }), [userName, streak, todayDone, todayWorkout, programDayContext, lastSessionDate, unseenPRs, weeklyVolume, weightUnit, weeklyWorkouts, memberScore, levelData]);
 
   const heroState = computeHeroState(heroInput);
 
@@ -950,7 +913,10 @@ export default function HomeScreen() {
         <TodayZone
           todayWorkout={todayWorkout}
           todayDone={todayDone}
-          activeWorkoutId={activeWorkout?.id}
+          // TodayZone pushes `/workout/${activeWorkoutId}` — '/workout/today'
+          // renders today's active sessions (core-flow contract), so the
+          // continue CTA routes there rather than to a single session id.
+          activeWorkoutId={activeWorkout ? 'today' : undefined}
           nextDayPreview={nextDayPreview}
           sessionIntent={sessionIntent}
           restDayTip={getTodayTip()}
@@ -964,6 +930,7 @@ export default function HomeScreen() {
           weeklyWorkouts={weeklyWorkouts}
           weeklyGoal={weeklyGoal || 3}
           weeklyVolume={weeklyVolume}
+          weightUnit={weightUnit}
           level={levelData?.current.level ?? 1}
           score={memberScore}
         />
@@ -1003,8 +970,8 @@ export default function HomeScreen() {
         {/* COMMUNITY PULSE — Activity & achievements */}
         <CommunityPulse
           rank={userRank}
-          recentBadgeIcon={recentBadges[0]?.icon_emoji}
-          recentBadgeName={recentBadges[0]?.name}
+          recentBadgeIcon={recentBadges.length > 0 ? getBadgeEmoji(recentBadges[0]) : undefined}
+          recentBadgeName={recentBadges[0]?.title}
           coachNotesCount={unreadNotes}
           leaderboardEnabled={isFeatureEnabled('leaderboard_enabled')}
         />

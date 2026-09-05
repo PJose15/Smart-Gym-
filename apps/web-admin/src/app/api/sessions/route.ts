@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
 
     const { gym_id, machine_id, member_id, session_date, workout_mode, set } = parsed.data;
 
-    // Verify the authenticated user owns this member_id
-    const authResult = await verifyMember(member_id);
+    // Verify the authenticated user owns this member_id (cookie or Bearer JWT)
+    const authResult = await verifyMember(member_id, request);
     if (authResult instanceof NextResponse) return authResult;
 
     const { admin } = authResult;

@@ -3,13 +3,13 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { validateUUIDs } from '@/lib/validation/uuid';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { memberId: string } }
 ) {
   try {
     const uuidError = validateUUIDs({ memberId: params.memberId });
     if (uuidError) return uuidError;
-    const auth = await verifyMember(params.memberId);
+    const auth = await verifyMember(params.memberId, req);
     if (auth instanceof NextResponse) return auth;
     const { admin } = auth;
 

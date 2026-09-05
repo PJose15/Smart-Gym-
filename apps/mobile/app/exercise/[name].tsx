@@ -11,18 +11,25 @@ import {
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/lib/supabase';
-import {
-  estimate1RM,
-  calculateVolume,
-  formatWeight,
-  computeVolumeTrend,
-  compute1RMTrend,
-  computeWeightTrend,
-  computeStrengthCurve,
-} from '@nexera/utils';
-import type { TrendDataPoint, SessionForTrend, StrengthCurvePoint } from '@nexera/utils';
+import { estimate1RM, formatWeight } from '@nexera/utils';
+import type { TrendDataPoint } from '@nexera/utils';
+import type { WeightUnit } from '@nexera/types';
 import { MiniChart } from '../../src/components/MiniChart';
-import type { WorkoutSet } from '@nexera/types';
+import { getMemberId } from '../../src/lib/memberData';
+import { getWeightUnit } from '../../src/lib/weightUnit';
+import {
+  parseSessionSets,
+  setsVolume,
+  volumeTrendPts,
+  e1rmTrendPts,
+  weightTrendPts,
+  strengthCurvePts,
+} from '../../src/lib/sessionStats';
+import type {
+  ParsedSet,
+  SessionForStats,
+  StrengthCurveBucket,
+} from '../../src/lib/sessionStats';
 import { colors } from '../../src/theme/colors';
 
 // ─── Types ──────────────────────────────────────────────
@@ -37,31 +44,43 @@ const PERIOD_OPTIONS: Array<{ label: string; value: PeriodDays }> = [
 ];
 
 interface SessionEntry {
-  workoutId: string;
-  startedAt: string;
-  sets: WorkoutSet[];
+  sessionId: string;
+  date: string; // YYYY-MM-DD
+  sets: ParsedSet[];
 }
 
 interface ExerciseData {
-  bestWeightKg: number;
+  bestWeight: number; // display unit
   bestRepsAtWeight: number;
   estimated1RM: number;
   totalVolume: number;
   sessionCount: number;
-  sessions: SessionEntry[];
-  strengthCurve: StrengthCurvePoint[];
+  sessions: SessionEntry[]; // newest first
+  strengthCurve: StrengthCurveBucket[];
+}
+
+/** Device-local calendar date as YYYY-MM-DD (matches session_date semantics). */
+function toLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Anchor a YYYY-MM-DD string to local noon to avoid UTC-midnight drift. */
+function localNoon(dateStr: string): Date {
+  return new Date(`${dateStr.slice(0, 10)}T12:00:00`);
 }
 
 // ─── Component ──────────────────────────────────────────
 
 export default function ExerciseDetailScreen() {
   const { name } = useLocalSearchParams<{ name: string }>();
+  // Route param is the MACHINE name (exercise identity = machine)
   const exerciseName = decodeURIComponent(name || '');
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodDays>(90);
+  const [unit, setUnit] = useState<WeightUnit>('lbs');
   const [data, setData] = useState<ExerciseData | null>(null);
 
   const loadData = useCallback(async () => {
@@ -79,142 +98,89 @@ export default function ExerciseDetailScreen() {
         return;
       }
 
-      // Try RPC first, fall back to direct queries
-      let sets: Array<{ workout_id: string; started_at: string; set_number: number; reps: number; weight_kg: number; rpe: number | null }> = [];
-      let usedRpc = false;
+      const [memberId, resolvedUnit] = await Promise.all([
+        getMemberId(user.id),
+        getWeightUnit(),
+      ]);
+      setUnit(resolvedUnit);
 
-      const sinceDate = period > 0
-        ? new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString()
-        : null;
-
-      try {
-        const { data: rpcData, error: rpcErr } = await supabase.rpc('get_exercise_progression', {
-          p_profile_id: user.id,
-          p_exercise_name: exerciseName,
-          ...(sinceDate ? { p_since: sinceDate } : {}),
-        });
-
-        if (!rpcErr && rpcData) {
-          sets = rpcData;
-          usedRpc = true;
-        }
-      } catch {
-        // RPC not available, fall back
-      }
-
-      if (!usedRpc) {
-        // Fallback: direct queries
-        let workoutQuery = supabase
-          .from('workouts')
-          .select('id, started_at')
-          .eq('profile_id', user.id)
-          .eq('status', 'completed')
-          .order('started_at', { ascending: true });
-
-        if (sinceDate) {
-          workoutQuery = workoutQuery.gte('started_at', sinceDate);
-        }
-
-        const { data: workouts, error: wErr } = await workoutQuery;
-        if (wErr) throw wErr;
-        if (!workouts || workouts.length === 0) {
-          setData(null);
-          setLoading(false);
-          return;
-        }
-
-        const workoutIds = workouts.map((w) => w.id);
-        const workoutDateMap = new Map(workouts.map((w) => [w.id, w.started_at]));
-
-        const { data: exerciseData, error: eErr } = await supabase
-          .from('workout_exercises')
-          .select('id, workout_id, exercise_name, sets(*)')
-          .in('workout_id', workoutIds)
-          .eq('exercise_name', exerciseName);
-
-        if (eErr) throw eErr;
-
-        for (const we of exerciseData || []) {
-          const startedAt = workoutDateMap.get(we.workout_id) || '';
-          const weSets = (we.sets ?? []) as Array<{ set_number: number; reps: number; weight_kg: number; rpe: number | null }>;
-          for (const s of weSets) {
-            sets.push({
-              workout_id: we.workout_id,
-              started_at: startedAt,
-              set_number: s.set_number,
-              reps: s.reps,
-              weight_kg: s.weight_kg,
-              rpe: s.rpe ?? null,
-            });
-          }
-        }
-      }
-
-      if (sets.length === 0) {
+      if (!memberId) {
         setData(null);
         setLoading(false);
         return;
       }
 
-      // Compute stats
-      let bestWeightKg = 0;
+      // Single query on canonical workout_sessions, joined to the machine by
+      // name. member_id scoping makes gym scoping implicit (members belong to
+      // one gym), so same-named machines in other gyms can't leak in.
+      let query = supabase
+        .from('workout_sessions')
+        .select('id, session_date, sets, machines!inner(name)')
+        .eq('member_id', memberId)
+        .eq('machines.name', exerciseName)
+        .not('completed_at', 'is', null)
+        .order('session_date', { ascending: true });
+
+      if (period > 0) {
+        const since = new Date();
+        since.setDate(since.getDate() - period);
+        query = query.gte('session_date', toLocalDateStr(since));
+      }
+
+      const { data: sessionRows, error: sessionsErr } = await query.limit(500);
+      if (sessionsErr) throw sessionsErr;
+
+      const rows = (sessionRows ?? []) as unknown as Array<{
+        id: string;
+        session_date: string;
+        sets: unknown;
+      }>;
+
+      if (rows.length === 0) {
+        setData(null);
+        setLoading(false);
+        return;
+      }
+
+      // One entry per session row, sets parsed into the display unit
+      const sessions: SessionEntry[] = rows
+        .map((row) => ({
+          sessionId: row.id,
+          date: row.session_date,
+          sets: parseSessionSets(row.sets, resolvedUnit),
+        }))
+        .sort((a, b) => b.date.localeCompare(a.date)); // newest first
+
+      const allSets: ParsedSet[] = sessions.flatMap((s) => s.sets);
+
+      if (allSets.length === 0) {
+        setData(null);
+        setLoading(false);
+        return;
+      }
+
+      // Compute stats (display unit)
+      let bestWeight = 0;
       let bestRepsAtWeight = 0;
       let best1RM = 0;
-      let totalVolume = 0;
-      const allSetsForCurve: Array<{ weight_kg: number; reps: number }> = [];
 
-      for (const s of sets) {
-        const w = Number(s.weight_kg);
-        const r = Number(s.reps);
-        totalVolume += w * r;
-        allSetsForCurve.push({ weight_kg: w, reps: r });
-
-        if (w > bestWeightKg || (w === bestWeightKg && r > bestRepsAtWeight)) {
-          bestWeightKg = w;
-          bestRepsAtWeight = r;
+      for (const s of allSets) {
+        if (s.weight > bestWeight || (s.weight === bestWeight && s.reps > bestRepsAtWeight)) {
+          bestWeight = s.weight;
+          bestRepsAtWeight = s.reps;
         }
-
-        const e = estimate1RM(w, r);
+        const e = estimate1RM(s.weight, s.reps);
         if (e > best1RM) best1RM = e;
       }
 
-      // Group sets into sessions
-      const sessionMap = new Map<string, SessionEntry>();
-      for (const s of sets) {
-        if (!sessionMap.has(s.workout_id)) {
-          sessionMap.set(s.workout_id, {
-            workoutId: s.workout_id,
-            startedAt: s.started_at,
-            sets: [],
-          });
-        }
-        sessionMap.get(s.workout_id)!.sets.push({
-          id: `${s.workout_id}-${s.set_number}`,
-          workout_exercise_id: s.workout_id,
-          set_number: s.set_number,
-          reps: s.reps,
-          weight_kg: Number(s.weight_kg),
-          rpe: s.rpe ? Number(s.rpe) : undefined,
-        } as WorkoutSet);
-      }
-
-      const sessions = Array.from(sessionMap.values())
-        .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
-
-      for (const session of sessions) {
-        session.sets.sort((a, b) => a.set_number - b.set_number);
-      }
-
-      const strengthCurve = computeStrengthCurve(allSetsForCurve);
-
       setData({
-        bestWeightKg,
+        bestWeight,
         bestRepsAtWeight,
         estimated1RM: best1RM,
-        totalVolume: Math.round(totalVolume),
+        totalVolume: Math.round(setsVolume(allSets)),
         sessionCount: sessions.length,
         sessions,
-        strengthCurve,
+        strengthCurve: strengthCurvePts(allSets),
       });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load exercise data');
@@ -270,15 +236,15 @@ export default function ExerciseDetailScreen() {
     );
   }
 
-  // Build trend data
-  const sessionsForTrend: SessionForTrend[] = data.sessions.map((s) => ({
-    startedAt: s.startedAt,
+  // Build trend data (display unit)
+  const sessionsForTrend: SessionForStats[] = data.sessions.map((s) => ({
+    date: s.date,
     sets: s.sets,
   }));
 
-  const e1rmTrend = compute1RMTrend(sessionsForTrend);
-  const volumeTrend = computeVolumeTrend(sessionsForTrend);
-  const weightTrend = computeWeightTrend(sessionsForTrend);
+  const e1rmTrend: TrendDataPoint[] = e1rmTrendPts(sessionsForTrend);
+  const volumeTrend: TrendDataPoint[] = volumeTrendPts(sessionsForTrend);
+  const weightTrend: TrendDataPoint[] = weightTrendPts(sessionsForTrend);
 
   // Strength curve max for bar scaling
   const curveMax = data.strengthCurve.reduce((m, p) => Math.max(m, p.best1RM), 0);
@@ -289,10 +255,10 @@ export default function ExerciseDetailScreen() {
     : 0;
 
   const firstSessionTime = data.sessions.length > 0
-    ? new Date(data.sessions[data.sessions.length - 1].startedAt).getTime()
+    ? localNoon(data.sessions[data.sessions.length - 1].date).getTime()
     : 0;
   const lastSessionTime = data.sessions.length > 0
-    ? new Date(data.sessions[0].startedAt).getTime()
+    ? localNoon(data.sessions[0].date).getTime()
     : 0;
   const spanDays = Math.max(1, (lastSessionTime - firstSessionTime) / (1000 * 60 * 60 * 24));
 
@@ -305,21 +271,19 @@ export default function ExerciseDetailScreen() {
   const firstSession = data.sessions[data.sessions.length - 1];
   const latestSession = data.sessions[0];
   const firstBestWeight = firstSession
-    ? Math.max(...firstSession.sets.map(s => s.weight_kg), 0)
+    ? Math.max(...firstSession.sets.map(s => s.weight), 0)
     : 0;
   const latestBestWeight = latestSession
-    ? Math.max(...latestSession.sets.map(s => s.weight_kg), 0)
+    ? Math.max(...latestSession.sets.map(s => s.weight), 0)
     : 0;
   const progressPercent = firstBestWeight > 0 && data.sessionCount > 1
     ? ((latestBestWeight - firstBestWeight) / firstBestWeight) * 100
     : null;
 
-  const latestSessionVolume = latestSession
-    ? latestSession.sets.reduce((sum, s) => sum + s.weight_kg * s.reps, 0)
-    : 0;
+  const latestSessionVolume = latestSession ? setsVolume(latestSession.sets) : 0;
   const latestSessionSets = latestSession ? latestSession.sets.length : 0;
   const latestSessionDateStr = latestSession
-    ? new Date(latestSession.startedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    ? localNoon(latestSession.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     : '';
 
   return (
@@ -354,16 +318,16 @@ export default function ExerciseDetailScreen() {
             <View style={styles.prItem}>
               <Text style={styles.prLabel}>Best</Text>
               <Text style={styles.prValue}>
-                {formatWeight(data.bestWeightKg)} x {data.bestRepsAtWeight}
+                {formatWeight(data.bestWeight, unit)} x {data.bestRepsAtWeight}
               </Text>
             </View>
             <View style={styles.prItem}>
               <Text style={styles.prLabel}>Est. 1RM</Text>
-              <Text style={styles.prValue}>{formatWeight(data.estimated1RM)}</Text>
+              <Text style={styles.prValue}>{formatWeight(data.estimated1RM, unit)}</Text>
             </View>
             <View style={styles.prItem}>
               <Text style={styles.prLabel}>Total Vol.</Text>
-              <Text style={styles.prValue}>{formatWeight(data.totalVolume)}</Text>
+              <Text style={styles.prValue}>{formatWeight(data.totalVolume, unit)}</Text>
             </View>
           </View>
           <Text style={styles.sessionCountText}>
@@ -378,7 +342,7 @@ export default function ExerciseDetailScreen() {
             <Text style={styles.quickStatLabel}>Frequency</Text>
           </View>
           <View style={styles.quickStatChip}>
-            <Text style={styles.quickStatValue}>{formatWeight(avgVolumePerSession)}</Text>
+            <Text style={styles.quickStatValue}>{formatWeight(avgVolumePerSession, unit)}</Text>
             <Text style={styles.quickStatLabel}>Avg Vol / Session</Text>
           </View>
         </View>
@@ -404,7 +368,7 @@ export default function ExerciseDetailScreen() {
           <MiniChart
             data={e1rmTrend}
             label="Estimated 1RM"
-            unit="kg"
+            unit={unit}
             color={colors.primary}
             height={200}
             maxPoints={30}
@@ -412,7 +376,7 @@ export default function ExerciseDetailScreen() {
           <MiniChart
             data={volumeTrend}
             label="Session Volume"
-            unit="kg"
+            unit={unit}
             color={colors.success}
             height={200}
             maxPoints={30}
@@ -420,7 +384,7 @@ export default function ExerciseDetailScreen() {
           <MiniChart
             data={weightTrend}
             label="Best Weight"
-            unit="kg"
+            unit={unit}
             color={colors.primaryDark}
             height={200}
             maxPoints={30}
@@ -443,7 +407,7 @@ export default function ExerciseDetailScreen() {
                     ]}
                   />
                 </View>
-                <Text style={styles.curveValue}>{formatWeight(point.best1RM)}</Text>
+                <Text style={styles.curveValue}>{formatWeight(point.best1RM, unit)}</Text>
               </View>
             ))}
           </View>
@@ -463,11 +427,11 @@ export default function ExerciseDetailScreen() {
                 <Text style={styles.lastSessionLabel}>Sets</Text>
               </View>
               <View style={styles.lastSessionStat}>
-                <Text style={styles.lastSessionValue}>{formatWeight(latestBestWeight)}</Text>
+                <Text style={styles.lastSessionValue}>{formatWeight(latestBestWeight, unit)}</Text>
                 <Text style={styles.lastSessionLabel}>Best Weight</Text>
               </View>
               <View style={styles.lastSessionStat}>
-                <Text style={styles.lastSessionValue}>{formatWeight(Math.round(latestSessionVolume))}</Text>
+                <Text style={styles.lastSessionValue}>{formatWeight(Math.round(latestSessionVolume), unit)}</Text>
                 <Text style={styles.lastSessionLabel}>Volume</Text>
               </View>
             </View>
@@ -478,9 +442,9 @@ export default function ExerciseDetailScreen() {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Session History</Text>
           {data.sessions.map((session) => (
-            <View key={session.workoutId} style={styles.sessionEntry}>
+            <View key={session.sessionId} style={styles.sessionEntry}>
               <Text style={styles.sessionDate}>
-                {new Date(session.startedAt).toLocaleDateString(undefined, {
+                {localNoon(session.date).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',
                   year: 'numeric',
@@ -496,9 +460,9 @@ export default function ExerciseDetailScreen() {
                     <Text style={styles.setsHeaderText}>Reps</Text>
                   </View>
                   {session.sets.map((set) => (
-                    <View key={set.id} style={styles.setRow}>
+                    <View key={set.set_number} style={styles.setRow}>
                       <Text style={styles.setNumber}>{set.set_number}</Text>
-                      <Text style={styles.setDetail}>{formatWeight(set.weight_kg)}</Text>
+                      <Text style={styles.setDetail}>{formatWeight(set.weight, unit)}</Text>
                       <Text style={styles.setDetail}>{set.reps}</Text>
                     </View>
                   ))}

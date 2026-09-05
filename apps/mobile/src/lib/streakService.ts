@@ -1,28 +1,40 @@
 import { supabase } from './supabase';
 import { computeStreak } from '@nexera/ai-assist';
 import { awardPoints } from './pointsService';
+import { getMemberId } from './memberData';
 import type { StreakResult } from '@nexera/ai-assist';
 
 export type { StreakResult };
 
 /**
- * Fetches the user's completed workout dates and computes streak info.
+ * Fetches the member's completed session dates and computes streak info.
+ *
+ * `profileId` is the AUTH USER id (all callers pass `user.id`); the
+ * members.id FK used by `workout_sessions` is resolved internally.
  */
 export async function getStreak(
   profileId: string,
   gymId: string,
 ): Promise<StreakResult> {
+  const memberId = await getMemberId(profileId);
+  if (!memberId) {
+    return computeStreak({ completedWorkoutDates: [] });
+  }
+
   const { data, error } = await supabase
-    .from('workouts')
-    .select('started_at')
-    .eq('profile_id', profileId)
+    .from('workout_sessions')
+    .select('session_date')
+    .eq('member_id', memberId)
     .eq('gym_id', gymId)
-    .eq('status', 'completed')
-    .order('started_at', { ascending: false });
+    .not('completed_at', 'is', null)
+    .order('session_date', { ascending: false });
 
   if (error) throw error;
 
-  const dates = (data ?? []).map((w: { started_at: string }) => w.started_at);
+  // Rows are per machine-per-day; dedupe to distinct training days.
+  const dates = [
+    ...new Set((data ?? []).map((s: { session_date: string }) => s.session_date)),
+  ];
   return computeStreak({ completedWorkoutDates: dates });
 }
 

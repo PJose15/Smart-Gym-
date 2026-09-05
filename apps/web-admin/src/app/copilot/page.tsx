@@ -431,7 +431,8 @@ export default function CopilotInboxPage() {
     if (!signals) return null;
     const items: string[] = [];
     if (signals.total_sets) items.push(`${signals.total_sets} sets`);
-    if (signals.total_volume_kg) items.push(`${Math.round(signals.total_volume_kg as number)} kg vol`);
+    if (signals.total_volume_lbs) items.push(`${Math.round(signals.total_volume_lbs as number)} lbs vol`);
+    else if (signals.total_volume_kg) items.push(`${Math.round(signals.total_volume_kg as number)} kg vol`); // legacy drafts
     if (signals.workouts_in_period) items.push(`${signals.workouts_in_period} workouts`);
     if (Array.isArray(signals.prs) && signals.prs.length > 0) items.push(`${signals.prs.length} PR${signals.prs.length > 1 ? 's' : ''}`);
     if (Array.isArray(signals.guardrails) && signals.guardrails.length > 0) items.push(`${signals.guardrails.length} guardrail${signals.guardrails.length > 1 ? 's' : ''}`);

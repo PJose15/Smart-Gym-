@@ -29,6 +29,11 @@ export function convertFromLbs(lbs: number, unit: WeightUnit): number {
   return unit === 'kg' ? lbs * KG_PER_LB : lbs;
 }
 
+/** Convert a value entered in `unit` → canonical lbs for storage. */
+export function convertToLbs(value: number, unit: WeightUnit): number {
+  return unit === 'kg' ? value / KG_PER_LB : value;
+}
+
 /**
  * Format a stored-lbs weight for display in the viewer's unit.
  * lbs: integer. kg: 1 decimal when < 10, integer when ≥ 10.

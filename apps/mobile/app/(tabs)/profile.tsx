@@ -17,6 +17,7 @@ import { getPointsSummary } from '../../src/lib/pointsService';
 import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
 import { getBadges } from '../../src/lib/badgeService';
+import type { BadgeWithStatus } from '../../src/lib/badgeService';
 import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../../src/lib/featureFlags';
 import { fetchMemberLevel, fetchDNAResult, fetchMuscleMap, getMemberId } from '../../src/lib/memberData';
 import type { DNACacheResult, MuscleMapCacheResult } from '../../src/lib/memberData';
@@ -34,7 +35,7 @@ import { BodyMapTab } from '../../src/components/profile/BodyMapTab';
 import { colors } from '../../src/theme/colors';
 import { spacing } from '../../src/theme/spacing';
 import { typography } from '../../src/theme/typography';
-import type { UserGoal, WeightUnit, BadgeWithStatus } from '@nexera/types';
+import type { UserGoal, WeightUnit } from '@nexera/types';
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ interface Profile {
 interface LifetimeStats {
   totalWorkouts: number;
   totalVolumeKg: number;
+  totalVolumeLbs: number;
   totalSets: number;
   totalTimeMinutes: number;
 }
@@ -123,6 +125,7 @@ export default function ProfileScreen() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [gymId, setGymId] = useState<string | null>(null);
   const [streak, setStreak] = useState<StreakResult | null>(null);
+  const [streakDays, setStreakDays] = useState<number | undefined>(undefined);
   const [badges, setBadges] = useState<BadgeWithStatus[]>([]);
   const [activeTab, setActiveTab] = useState<ProfileTabKey>('overview');
 
@@ -204,10 +207,28 @@ export default function ProfileScreen() {
           }
         }
 
-        // Load badges
-        if (isFeatureEnabled('badges_enabled')) {
+        // Resolve members.id — achievements are keyed by member id, not
+        // the auth user id. Also grab the day-streak for badge progress.
+        let memberId: string | null = null;
+        try {
+          const { data: memberRow } = await supabase
+            .from('members')
+            .select('id, best_streak')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+          memberId = memberRow?.id ?? null;
+          setStreakDays(
+            typeof memberRow?.best_streak === 'number' ? memberRow.best_streak : undefined,
+          );
+        } catch {
+          // Non-critical
+        }
+
+        // Load badges (read-only view over member_achievements)
+        if (memberId && isFeatureEnabled('badges_enabled')) {
           try {
-            const badgeData = await getBadges(user.id, memberData.gym_id);
+            const badgeData = await getBadges(memberId, memberData.gym_id);
             setBadges(badgeData);
           } catch {
             // Non-critical
@@ -326,6 +347,7 @@ export default function ProfileScreen() {
       setLifetimeStats({
         totalWorkouts: sessions.length,
         totalVolumeKg: Math.round(totalVolumeLbs * LBS_TO_KG),
+        totalVolumeLbs: Math.round(totalVolumeLbs),
         totalSets,
         totalTimeMinutes: Math.round(totalTimeMinutes),
       });
@@ -430,7 +452,8 @@ export default function ProfileScreen() {
             streak={streak}
             totalPoints={totalPoints}
             completedWorkouts={lifetimeStats?.totalWorkouts}
-            totalVolumeKg={lifetimeStats?.totalVolumeKg}
+            totalVolumeLbs={lifetimeStats?.totalVolumeLbs}
+            streakDays={streakDays}
           />
         )}
 

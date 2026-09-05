@@ -9,7 +9,7 @@ export async function GET(
   try {
     const uuidError = validateUUIDs({ memberId: params.memberId });
     if (uuidError) return uuidError;
-    const auth = await verifyMember(params.memberId);
+    const auth = await verifyMember(params.memberId, req);
     if (auth instanceof NextResponse) return auth;
     const { admin } = auth;
 

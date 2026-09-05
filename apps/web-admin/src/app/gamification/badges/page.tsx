@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, CSSProperties } from 'react';
+import { Fragment, useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
@@ -9,21 +9,22 @@ import { AnimatedPage } from '../../components/AnimatedPage';
 
 interface BadgeRow {
   id: string;
-  slug: string;
-  name: string;
+  code: string;
+  title: string;
   description: string;
-  icon_emoji: string;
-  criteria_type: string;
-  criteria_value: number;
-  rarity: string;
+  category: string;
+  points: number;
+  required_value: number | null;
+  required_unit: string | null;
   sort_order: number;
+  is_active: boolean;
   member_count: number;
 }
 
 interface MemberUnlock {
-  profile_id: string;
-  full_name: string;
-  unlocked_at: string;
+  member_id: string;
+  display_name: string;
+  earned_at: string;
 }
 
 // ─── Styles ─────────────────────────────────────────────
@@ -53,23 +54,37 @@ const tdStyle: CSSProperties = {
   color: 'var(--color-text-primary)',
 };
 
-const RARITY_COLORS: Record<string, string> = {
-  common: '#6c757d',
-  rare: '#4361ee',
-  epic: '#7b2ff7',
-  legendary: '#ff6b35',
+const CATEGORY_EMOJI: Record<string, string> = {
+  milestone: '🏆',
+  performance: '💪',
+  consistency: '🔥',
+  explorer: '🧭',
+  community: '🤝',
 };
 
-const rarityBadgeStyle = (rarity: string): CSSProperties => ({
-  display: 'inline-block',
-  padding: '2px 8px',
-  borderRadius: 12,
-  fontSize: 12,
-  fontWeight: 700,
-  color: RARITY_COLORS[rarity] ?? '#666',
-  backgroundColor: (RARITY_COLORS[rarity] ?? '#666') + '18',
-  textTransform: 'capitalize',
-});
+const CATEGORY_COLORS: Record<string, { bg: string; fg: string }> = {
+  milestone: { bg: 'var(--color-gold-subtle)', fg: 'var(--color-gold)' },
+  performance: { bg: 'var(--color-red-subtle)', fg: 'var(--color-red-light)' },
+  consistency: { bg: 'var(--color-green-subtle)', fg: 'var(--color-green-light)' },
+  explorer: { bg: 'var(--color-blue-subtle)', fg: 'var(--color-blue-light)' },
+  community: { bg: 'var(--accent-subtle)', fg: 'var(--color-purple)' },
+};
+
+const FALLBACK_CATEGORY_COLOR = { bg: 'var(--color-bg-elevated)', fg: 'var(--color-text-muted)' };
+
+const categoryBadgeStyle = (category: string): CSSProperties => {
+  const c = CATEGORY_COLORS[category] ?? FALLBACK_CATEGORY_COLOR;
+  return {
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: 12,
+    fontSize: 12,
+    fontWeight: 700,
+    color: c.fg,
+    backgroundColor: c.bg,
+    textTransform: 'capitalize',
+  };
+};
 
 const expandedRowStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-elevated)',
@@ -93,13 +108,21 @@ const statsChipStyle: CSSProperties = {
   color: 'var(--color-text-muted)',
 };
 
+// ─── Helpers ────────────────────────────────────────────
+
+function criteriaLabel(badge: BadgeRow): string {
+  if (badge.required_value == null) return '—';
+  const unit = badge.required_unit ? ` ${badge.required_unit.replace(/_/g, ' ')}` : '';
+  return `${badge.required_value.toLocaleString()}${unit}`;
+}
+
 // ─── Component ──────────────────────────────────────────
 
 export default function BadgesPage() {
   const [badges, setBadges] = useState<BadgeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedCode, setExpandedCode] = useState<string | null>(null);
   const [members, setMembers] = useState<MemberUnlock[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersError, setMembersError] = useState<string | null>(null);
@@ -112,28 +135,28 @@ export default function BadgesPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data: badgeData, error: badgeErr } = await supabase
-        .from('badges')
-        .select('id, slug, name, description, icon_emoji, criteria_type, criteria_value, rarity, sort_order')
+      const { data: defData, error: defErr } = await supabase
+        .from('achievement_definitions')
+        .select('id, code, title, description, category, points, required_value, required_unit, sort_order, is_active')
         .order('sort_order');
 
-      if (badgeErr) throw badgeErr;
+      if (defErr) throw defErr;
 
-      // Get member counts per badge
+      // Unlock counts grouped by achievement_code
       const { data: countData, error: countErr } = await supabase
-        .from('member_badges')
-        .select('badge_id');
+        .from('member_achievements')
+        .select('achievement_code');
 
       if (countErr) throw countErr;
 
       const countMap = new Map<string, number>();
-      for (const mb of countData ?? []) {
-        countMap.set(mb.badge_id, (countMap.get(mb.badge_id) ?? 0) + 1);
+      for (const ma of countData ?? []) {
+        countMap.set(ma.achievement_code, (countMap.get(ma.achievement_code) ?? 0) + 1);
       }
 
-      const rows: BadgeRow[] = (badgeData ?? []).map((b) => ({
+      const rows: BadgeRow[] = (defData ?? []).map((b) => ({
         ...b,
-        member_count: countMap.get(b.id) ?? 0,
+        member_count: countMap.get(b.code) ?? 0,
       }));
 
       setBadges(rows);
@@ -144,32 +167,32 @@ export default function BadgesPage() {
     }
   }
 
-  async function handleExpand(badgeId: string) {
-    if (expandedId === badgeId) {
-      setExpandedId(null);
+  async function handleExpand(code: string) {
+    if (expandedCode === code) {
+      setExpandedCode(null);
       setMembers([]);
       setMembersError(null);
       return;
     }
 
-    setExpandedId(badgeId);
+    setExpandedCode(code);
     setMembersLoading(true);
     setMembersError(null);
 
     try {
       const { data, error: err } = await supabase
-        .from('member_badges')
-        .select('profile_id, unlocked_at, profiles(full_name)')
-        .eq('badge_id', badgeId)
-        .order('unlocked_at', { ascending: false });
+        .from('member_achievements')
+        .select('member_id, earned_at, members(display_name)')
+        .eq('achievement_code', code)
+        .order('earned_at', { ascending: false });
 
       if (err) throw err;
 
       setMembers(
-        (data ?? []).map((mb) => ({
-          profile_id: mb.profile_id,
-          full_name: (mb.profiles as unknown as { full_name: string })?.full_name || 'Unknown',
-          unlocked_at: mb.unlocked_at,
+        (data ?? []).map((ma) => ({
+          member_id: ma.member_id,
+          display_name: (ma.members as unknown as { display_name: string })?.display_name || 'Unknown',
+          earned_at: ma.earned_at,
         })),
       );
     } catch (err) {
@@ -204,19 +227,22 @@ export default function BadgesPage() {
         {/* Stats strip */}
         {!loading && badges.length > 0 && (() => {
           const totalUnlocks = badges.reduce((s, b) => s + b.member_count, 0);
-          const rarities = badges.reduce<Record<string, number>>((acc, b) => {
-            acc[b.rarity] = (acc[b.rarity] ?? 0) + 1;
+          const categories = badges.reduce<Record<string, number>>((acc, b) => {
+            acc[b.category] = (acc[b.category] ?? 0) + 1;
             return acc;
           }, {});
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{badges.length} badge{badges.length !== 1 ? 's' : ''}</span>
               <span style={statsChipStyle}>{totalUnlocks} total unlock{totalUnlocks !== 1 ? 's' : ''}</span>
-              {Object.entries(rarities).map(([rarity, count]) => (
-                <span key={rarity} style={{ ...statsChipStyle, backgroundColor: (RARITY_COLORS[rarity] ?? '#666') + '18', color: RARITY_COLORS[rarity] ?? '#666' }}>
-                  {count} {rarity}
-                </span>
-              ))}
+              {Object.entries(categories).map(([category, count]) => {
+                const c = CATEGORY_COLORS[category] ?? FALLBACK_CATEGORY_COLOR;
+                return (
+                  <span key={category} style={{ ...statsChipStyle, backgroundColor: c.bg, color: c.fg }}>
+                    {count} {category}
+                  </span>
+                );
+              })}
             </div>
           );
         })()}
@@ -232,44 +258,61 @@ export default function BadgesPage() {
                 <tr>
                   <th style={{ ...thStyle, width: 50 }}>Icon</th>
                   <th style={thStyle}>Name</th>
-                  <th style={{ ...thStyle, width: 100 }}>Rarity</th>
+                  <th style={{ ...thStyle, width: 110 }}>Category</th>
                   <th style={thStyle}>Criteria</th>
+                  <th style={{ ...thStyle, textAlign: 'right', width: 80 }}>Points</th>
                   <th style={{ ...thStyle, textAlign: 'right', width: 120 }}>Members Earned</th>
                 </tr>
               </thead>
               <tbody>
                 {badges.map((badge, i) => (
-                  <>
+                  <Fragment key={badge.id}>
                     <tr
-                      key={badge.id}
                       className={`row-stagger stagger-${Math.min(i, 19)}`}
-                      onClick={() => handleExpand(badge.id)}
+                      onClick={() => handleExpand(badge.code)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <td style={{ ...tdStyle, fontSize: 24, textAlign: 'center' }}>
-                        {badge.icon_emoji}
+                      <td style={{ ...tdStyle, fontSize: 24, textAlign: 'center' }} aria-hidden="true">
+                        {CATEGORY_EMOJI[badge.category] ?? '🎖️'}
                       </td>
                       <td style={{ ...tdStyle, fontWeight: 600 }}>
-                        {badge.name}
+                        {badge.title}
+                        {!badge.is_active && (
+                          <span style={{
+                            marginLeft: 8,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: 'var(--color-text-muted)',
+                            backgroundColor: 'var(--color-bg-highest)',
+                            padding: '1px 6px',
+                            borderRadius: 8,
+                            textTransform: 'uppercase',
+                          }}>
+                            Inactive
+                          </span>
+                        )}
                         <div style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 400, marginTop: 2 }}>
                           {badge.description}
                         </div>
                       </td>
                       <td style={tdStyle}>
-                        <span style={rarityBadgeStyle(badge.rarity)}>
-                          {badge.rarity}
+                        <span style={categoryBadgeStyle(badge.category)}>
+                          {badge.category}
                         </span>
                       </td>
                       <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>
-                        {badge.criteria_type.replace(/_/g, ' ')} ({badge.criteria_value.toLocaleString()})
+                        {criteriaLabel(badge)}
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'right', color: 'var(--color-text-secondary)' }}>
+                        {badge.points.toLocaleString()}
                       </td>
                       <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: 'var(--color-blue)' }}>
                         {badge.member_count}
                       </td>
                     </tr>
-                    {expandedId === badge.id && (
-                      <tr key={`${badge.id}-expanded`}>
-                        <td colSpan={5} style={expandedRowStyle}>
+                    {expandedCode === badge.code && (
+                      <tr>
+                        <td colSpan={6} style={expandedRowStyle}>
                           {membersLoading ? (
                             <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-muted)' }}>
                               Loading...
@@ -287,15 +330,15 @@ export default function BadgesPage() {
                               <thead>
                                 <tr>
                                   <th style={{ ...thStyle, backgroundColor: 'var(--color-bg-highest)' }}>Member</th>
-                                  <th style={{ ...thStyle, backgroundColor: 'var(--color-bg-highest)', textAlign: 'right' }}>Unlocked</th>
+                                  <th style={{ ...thStyle, backgroundColor: 'var(--color-bg-highest)', textAlign: 'right' }}>Earned</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {members.map((m) => (
-                                  <tr key={m.profile_id}>
-                                    <td style={{ ...tdStyle, fontWeight: 500 }}>{m.full_name}</td>
+                                  <tr key={m.member_id}>
+                                    <td style={{ ...tdStyle, fontWeight: 500 }}>{m.display_name}</td>
                                     <td style={{ ...tdStyle, textAlign: 'right', color: 'var(--color-text-muted)' }}>
-                                      {new Date(m.unlocked_at).toLocaleDateString()}
+                                      {new Date(m.earned_at).toLocaleDateString()}
                                     </td>
                                   </tr>
                                 ))}
@@ -305,11 +348,11 @@ export default function BadgesPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
                 {badges.length === 0 && (
                   <tr>
-                    <td style={tdStyle} colSpan={5}>
+                    <td style={tdStyle} colSpan={6}>
                       <div style={{ textAlign: 'center', padding: 32, color: 'var(--color-text-muted)' }}>
                         No badges configured yet.
                       </div>

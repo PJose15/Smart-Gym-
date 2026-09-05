@@ -16,53 +16,55 @@ import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import {
   estimate1RM,
-  calculateVolume,
   formatWeight,
-  computeVolumeTrend,
-  compute1RMTrend,
-  computeWeightTrend,
-  computeWeeklyVolume,
   computeWeeklyFrequency,
   computeTrendDirection,
 } from '@nexera/utils';
-import type { TrendDataPoint, SessionForTrend } from '@nexera/utils';
+import type { TrendDataPoint } from '@nexera/utils';
+import type { WeightUnit } from '@nexera/types';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
 import { SkeletonGate, ProgressScreenSkeleton } from '../../src/components/skeleton';
 import { MiniChart } from '../../src/components/MiniChart';
-import type { WorkoutSet } from '@nexera/types';
+import { getMemberId } from '../../src/lib/memberData';
+import { getWeightUnit } from '../../src/lib/weightUnit';
+import {
+  parseSessionSets,
+  setsVolume,
+  volumeTrendPts,
+  e1rmTrendPts,
+  weightTrendPts,
+  weeklyVolumePts,
+} from '../../src/lib/sessionStats';
+import type { ParsedSet, SessionForStats } from '../../src/lib/sessionStats';
 import { getStreak } from '../../src/lib/streakService';
 import type { StreakResult } from '../../src/lib/streakService';
 import { isFeatureEnabled } from '../../src/lib/featureFlags';
 
 // ─── Local Types ────────────────────────────────────────
 
-interface CompletedWorkout {
+/** One canonical workout_sessions row (per member, machine, day). */
+interface SessionRow {
   id: string;
-  started_at: string;
-}
-
-interface FetchedWorkoutExercise {
-  id: string;
-  workout_id: string;
-  machine_id?: string;
-  exercise_name: string;
-  order_index: number;
-  sets: WorkoutSet[];
+  machine_id: string | null;
+  session_date: string; // YYYY-MM-DD
+  sets: unknown; // JSONB — parsed via parseSessionSets
+  machines: { name: string | null; muscle_groups: string[] | null } | null;
 }
 
 interface SessionEntry {
-  workoutId: string;
-  startedAt: string;
-  sets: WorkoutSet[];
+  sessionId: string;
+  date: string; // YYYY-MM-DD
+  sets: ParsedSet[];
 }
 
 interface ExerciseSummary {
-  exerciseName: string;
+  machineId: string;
+  exerciseName: string; // machine name (exercise identity = machine)
   sessionCount: number;
-  bestWeightKg: number;
+  bestWeight: number; // display unit
   bestRepsAtWeight: number;
   bestVolumeSet: number;
   estimated1RM: number;
@@ -76,8 +78,24 @@ type PeriodDays = 0 | 30 | 60 | 90;
 interface MuscleGroupData { muscle: string; sessionCount: number }
 interface CalendarDay { date: string; hasWorkout: boolean; dayOfWeek: number; weekIndex: number }
 
-function formatVolumeShort(kg: number): string {
-  return kg >= 1000 ? `${(kg / 1000).toFixed(1)}t` : `${Math.round(kg)}kg`;
+function formatVolumeShort(value: number, unit: WeightUnit): string {
+  return value >= 1000
+    ? `${(value / 1000).toFixed(1)}k ${unit}`
+    : `${Math.round(value)} ${unit}`;
+}
+
+/** Device-local calendar date as YYYY-MM-DD (matches session_date semantics). */
+function toLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Format a YYYY-MM-DD date without UTC-midnight timezone drift. */
+function formatSessionDate(dateStr: string): string {
+  return new Date(`${dateStr.slice(0, 10)}T12:00:00`).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -101,7 +119,9 @@ export default function ProgressScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodDays>(0);
-  const [completedWorkouts, setCompletedWorkouts] = useState<CompletedWorkout[]>([]);
+  const [workoutDates, setWorkoutDates] = useState<string[]>([]);
+  const [allSessions, setAllSessions] = useState<SessionForStats[]>([]);
+  const [unit, setUnit] = useState<WeightUnit>('lbs');
   const [gymId, setGymId] = useState<string | null>(null);
   const [streak, setStreak] = useState<StreakResult | null>(null);
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroupData[]>([]);
@@ -126,43 +146,66 @@ export default function ProgressScreen() {
 
       setUserId(user.id);
 
+      // Resolve members.id (workout_sessions FK) + display unit up front
+      const [memberId, resolvedUnit] = await Promise.all([
+        getMemberId(user.id),
+        getWeightUnit(),
+      ]);
+      setUnit(resolvedUnit);
+
       // Fetch gym membership (for streak)
       const { data: memberData } = await supabase
         .from('gym_members').select('gym_id').eq('profile_id', user.id).limit(1).maybeSingle();
       const resolvedGymId = memberData?.gym_id ?? null;
       setGymId(resolvedGymId);
 
+      if (!memberId) {
+        setExercises([]);
+        setWorkoutDates([]);
+        setAllSessions([]);
+        setCalendarDates([]);
+        setMuscleGroups([]);
+        setLoading(false);
+        return;
+      }
+
       // Fetch calendar dates (always, last 28 days, independent of period filter)
       const fourWeeksAgo = new Date();
       fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
       const { data: calDates } = await supabase
-        .from('workouts').select('started_at')
-        .eq('profile_id', user.id).eq('status', 'completed')
-        .gte('started_at', fourWeeksAgo.toISOString());
-      setCalendarDates((calDates ?? []).map(d => d.started_at));
+        .from('workout_sessions').select('session_date')
+        .eq('member_id', memberId)
+        .not('completed_at', 'is', null)
+        .gte('session_date', toLocalDateStr(fourWeeksAgo));
+      setCalendarDates((calDates ?? []).map(d => d.session_date as string));
 
-      // Step 1: Fetch completed workout IDs, optionally filtered by period
+      // Fetch completed session rows (one per member/machine/day), with the
+      // joined machine for name + muscle groups, optionally period-filtered
       let query = supabase
-        .from('workouts')
-        .select('id, started_at')
-        .eq('profile_id', user.id)
-        .eq('status', 'completed')
-        .order('started_at', { ascending: false });
+        .from('workout_sessions')
+        .select('id, machine_id, session_date, sets, machines(name, muscle_groups)')
+        .eq('member_id', memberId)
+        .not('completed_at', 'is', null)
+        .order('session_date', { ascending: false });
 
       if (period > 0) {
         const since = new Date();
         since.setDate(since.getDate() - period);
-        query = query.gte('started_at', since.toISOString());
+        query = query.gte('session_date', toLocalDateStr(since));
       }
 
-      const { data: workouts, error: workoutsErr } = await query.limit(500);
+      const { data: sessionRows, error: sessionsErr } = await query.limit(500);
 
-      if (workoutsErr) throw workoutsErr;
+      if (sessionsErr) throw sessionsErr;
 
-      if (!workouts || workouts.length === 0) {
+      const rows = (sessionRows ?? []) as unknown as SessionRow[];
+
+      if (rows.length === 0) {
         setExercises([]);
-        setCompletedWorkouts([]);
-        // Still run streak in background even with no period-filtered workouts
+        setWorkoutDates([]);
+        setAllSessions([]);
+        setMuscleGroups([]);
+        // Still run streak in background even with no period-filtered sessions
         if (resolvedGymId && isFeatureEnabled('streaks_enabled')) {
           getStreak(user.id, resolvedGymId).then(s => setStreak(s)).catch(() => {});
         }
@@ -170,63 +213,51 @@ export default function ProgressScreen() {
         return;
       }
 
-      const completedWorkouts = workouts as CompletedWorkout[];
-      setCompletedWorkouts(completedWorkouts);
-      const workoutIds = completedWorkouts.map((w) => w.id);
+      // Distinct training days ≈ "workouts" (rows are per machine per day)
+      setWorkoutDates([...new Set(rows.map((r) => r.session_date))]);
 
-      // Build a lookup from workout ID to started_at
-      const workoutDateMap = new Map<string, string>();
-      for (const w of completedWorkouts) {
-        workoutDateMap.set(w.id, w.started_at);
-      }
+      // Parse each row's sets JSONB once, into display-unit sets
+      const parsedRows = rows.map((row) => ({
+        row,
+        parsedSets: parseSessionSets(row.sets, resolvedUnit),
+      }));
 
-      // Step 2: Fetch workout_exercises + sets for those workouts
-      const { data: exerciseData, error: exercisesErr } = await supabase
-        .from('workout_exercises')
-        .select('id, workout_id, machine_id, exercise_name, order_index, sets(*)')
-        .in('workout_id', workoutIds.slice(0, 100));
+      setAllSessions(
+        parsedRows.map((p) => ({ date: p.row.session_date, sets: p.parsedSets })),
+      );
 
-      if (exercisesErr) throw exercisesErr;
-
-      const fetched = (exerciseData || []) as unknown as FetchedWorkoutExercise[];
-
-      // Step 3: Group by exercise_name
-      const grouped = new Map<string, FetchedWorkoutExercise[]>();
-      for (const item of fetched) {
-        const key = item.exercise_name;
+      // Group by machine (exercise identity = machine)
+      const grouped = new Map<string, typeof parsedRows>();
+      for (const p of parsedRows) {
+        const key = p.row.machine_id ?? 'unknown';
         if (!grouped.has(key)) {
           grouped.set(key, []);
         }
-        grouped.get(key)!.push(item);
+        grouped.get(key)!.push(p);
       }
 
-      // Step 4: Build summaries and compute PRs
+      // Build summaries and compute PRs (all values in display unit)
       const summaries: ExerciseSummary[] = [];
 
-      for (const [exerciseName, items] of grouped) {
-        // Unique workout IDs for session count
-        const uniqueWorkoutIds = new Set(items.map((i) => i.workout_id));
+      for (const [machineId, items] of grouped) {
+        const exerciseName =
+          items.find((i) => i.row.machines?.name)?.row.machines?.name ?? 'Unknown machine';
 
-        // Collect all sets across all sessions
-        const allSets: WorkoutSet[] = items.flatMap((i) => i.sets || []);
+        const allSets: ParsedSet[] = items.flatMap((i) => i.parsedSets);
 
-        // Calculate total volume using utility
-        const totalVolume = calculateVolume(allSets);
-
-        // Find PRs
-        let bestWeightKg = 0;
+        let bestWeight = 0;
         let bestRepsAtWeight = 0;
         let bestVolumeSet = 0;
         let best1RM = 0;
 
         for (const set of allSets) {
-          const setVolume = set.weight_kg * set.reps;
+          const setVolume = set.weight * set.reps;
 
           if (
-            set.weight_kg > bestWeightKg ||
-            (set.weight_kg === bestWeightKg && set.reps > bestRepsAtWeight)
+            set.weight > bestWeight ||
+            (set.weight === bestWeight && set.reps > bestRepsAtWeight)
           ) {
-            bestWeightKg = set.weight_kg;
+            bestWeight = set.weight;
             bestRepsAtWeight = set.reps;
           }
 
@@ -234,46 +265,31 @@ export default function ProgressScreen() {
             bestVolumeSet = setVolume;
           }
 
-          const e1rm = estimate1RM(set.weight_kg, set.reps);
+          const e1rm = estimate1RM(set.weight, set.reps);
           if (e1rm > best1RM) {
             best1RM = e1rm;
           }
         }
 
-        // Build session entries (last 10, sorted newest first)
-        const sessionMap = new Map<string, SessionEntry>();
-        for (const item of items) {
-          if (!sessionMap.has(item.workout_id)) {
-            sessionMap.set(item.workout_id, {
-              workoutId: item.workout_id,
-              startedAt: workoutDateMap.get(item.workout_id) || '',
-              sets: [],
-            });
-          }
-          sessionMap.get(item.workout_id)!.sets.push(...(item.sets || []));
-        }
-
-        const sessions = Array.from(sessionMap.values())
-          .sort(
-            (a, b) =>
-              new Date(b.startedAt).getTime() -
-              new Date(a.startedAt).getTime(),
-          )
+        // Session entries (last 10, newest first — rows are already one per session)
+        const sessions: SessionEntry[] = items
+          .map((i) => ({
+            sessionId: i.row.id,
+            date: i.row.session_date,
+            sets: i.parsedSets,
+          }))
+          .sort((a, b) => b.date.localeCompare(a.date))
           .slice(0, 10);
 
-        // Sort sets within each session by set_number
-        for (const session of sessions) {
-          session.sets.sort((a, b) => a.set_number - b.set_number);
-        }
-
         summaries.push({
+          machineId,
           exerciseName,
-          sessionCount: uniqueWorkoutIds.size,
-          bestWeightKg,
+          sessionCount: items.length,
+          bestWeight,
           bestRepsAtWeight,
           bestVolumeSet,
           estimated1RM: best1RM,
-          totalVolume,
+          totalVolume: setsVolume(allSets),
           sessions,
         });
       }
@@ -283,48 +299,25 @@ export default function ProgressScreen() {
 
       setExercises(summaries);
 
-      // --- Background: Streak + Muscle Groups ---
-      const backgroundTasks: Promise<unknown>[] = [];
+      // Muscle groups — computed inline from the joined machines rows;
+      // count distinct session rows per muscle
+      const muscleCountMap = new Map<string, Set<string>>();
+      for (const p of parsedRows) {
+        const muscles = p.row.machines?.muscle_groups ?? [];
+        for (const muscle of muscles) {
+          if (!muscleCountMap.has(muscle)) muscleCountMap.set(muscle, new Set());
+          muscleCountMap.get(muscle)!.add(p.row.id);
+        }
+      }
+      const groups: MuscleGroupData[] = Array.from(muscleCountMap.entries())
+        .map(([muscle, sessionIds]) => ({ muscle, sessionCount: sessionIds.size }))
+        .sort((a, b) => b.sessionCount - a.sessionCount);
+      setMuscleGroups(groups);
 
-      // Streak
+      // Background: streak
       if (resolvedGymId && isFeatureEnabled('streaks_enabled')) {
-        backgroundTasks.push(
-          getStreak(user.id, resolvedGymId).then(s => setStreak(s))
-        );
+        getStreak(user.id, resolvedGymId).then(s => setStreak(s)).catch(() => {});
       }
-
-      // Muscle groups from machine muscle_groups
-      const uniqueMachineIds = [...new Set(
-        fetched.filter(e => e.machine_id).map(e => e.machine_id!)
-      )];
-      if (uniqueMachineIds.length > 0) {
-        backgroundTasks.push(
-          Promise.resolve(supabase.from('machines').select('id, muscle_groups')
-            .in('id', uniqueMachineIds))
-            .then(({ data: machineData }) => {
-              if (!machineData) return;
-              const machineMap = new Map<string, string[]>();
-              for (const m of machineData as Array<{ id: string; muscle_groups: string[] }>) {
-                machineMap.set(m.id, m.muscle_groups || []);
-              }
-              const muscleCountMap = new Map<string, Set<string>>();
-              for (const ex of fetched) {
-                if (!ex.machine_id) continue;
-                const muscles = machineMap.get(ex.machine_id) || [];
-                for (const muscle of muscles) {
-                  if (!muscleCountMap.has(muscle)) muscleCountMap.set(muscle, new Set());
-                  muscleCountMap.get(muscle)!.add(ex.workout_id);
-                }
-              }
-              const groups: MuscleGroupData[] = Array.from(muscleCountMap.entries())
-                .map(([muscle, wkIds]) => ({ muscle, sessionCount: wkIds.size }))
-                .sort((a, b) => b.sessionCount - a.sessionCount);
-              setMuscleGroups(groups);
-            })
-        );
-      }
-
-      await Promise.allSettled(backgroundTasks);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load progress data');
     } finally {
@@ -344,33 +337,26 @@ export default function ProgressScreen() {
     setRefreshing(false);
   }, [loadData]);
 
-  const toggleExpand = (exerciseName: string) => {
-    setExpandedExercise((prev) =>
-      prev === exerciseName ? null : exerciseName,
-    );
+  const toggleExpand = (machineId: string) => {
+    setExpandedExercise((prev) => (prev === machineId ? null : machineId));
   };
 
   // ─── Computed Data ───────────────────────────────────
 
   const overallStats = useMemo(() => {
-    const totalWorkouts = completedWorkouts.length;
+    const totalWorkouts = workoutDates.length; // distinct training days
     const totalVolume = exercises.reduce((sum, e) => sum + e.totalVolume, 0);
     const avgVolume = totalWorkouts > 0 ? totalVolume / totalWorkouts : 0;
     const exerciseCount = exercises.length;
     return { totalWorkouts, totalVolume, avgVolume, exerciseCount };
-  }, [exercises, completedWorkouts]);
+  }, [exercises, workoutDates]);
 
-  const weeklyVolumeTrend = useMemo(() => {
-    const allSessions: SessionForTrend[] = exercises.flatMap(e =>
-      e.sessions.map(s => ({ startedAt: s.startedAt, sets: s.sets }))
-    );
-    return computeWeeklyVolume(allSessions);
-  }, [exercises]);
+  const weeklyVolumeTrend = useMemo(() => weeklyVolumePts(allSessions), [allSessions]);
 
-  const weeklyFrequencyTrend = useMemo(() => {
-    const dates = completedWorkouts.map(w => w.started_at);
-    return computeWeeklyFrequency(dates);
-  }, [completedWorkouts]);
+  const weeklyFrequencyTrend = useMemo(
+    () => computeWeeklyFrequency(workoutDates),
+    [workoutDates],
+  );
 
   const volumeDirection = useMemo(() => computeTrendDirection(weeklyVolumeTrend), [weeklyVolumeTrend]);
   const freqDirection = useMemo(() => computeTrendDirection(weeklyFrequencyTrend), [weeklyFrequencyTrend]);
@@ -385,12 +371,8 @@ export default function ProgressScreen() {
   const calendarGrid = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const workoutDateSet = new Set(
-      calendarDates.map(d => {
-        const dt = new Date(d);
-        return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-      })
-    );
+    // session_date is already a plain YYYY-MM-DD string
+    const workoutDateSet = new Set(calendarDates.map(d => d.slice(0, 10)));
 
     const weeks: CalendarDay[][] = [[], [], [], []];
     for (let i = 27; i >= 0; i--) {
@@ -426,11 +408,11 @@ export default function ProgressScreen() {
           <Text style={styles.statPillLabel}>Workouts</Text>
         </View>
         <View style={styles.statPill}>
-          <Text style={styles.statPillValue}>{formatVolumeShort(overallStats.totalVolume)}</Text>
+          <Text style={styles.statPillValue}>{formatVolumeShort(overallStats.totalVolume, unit)}</Text>
           <Text style={styles.statPillLabel}>Total Vol</Text>
         </View>
         <View style={styles.statPill}>
-          <Text style={styles.statPillValue}>{formatVolumeShort(overallStats.avgVolume)}</Text>
+          <Text style={styles.statPillValue}>{formatVolumeShort(overallStats.avgVolume, unit)}</Text>
           <Text style={styles.statPillLabel}>Avg/Session</Text>
         </View>
         <View style={styles.statPill}>
@@ -467,7 +449,7 @@ export default function ProgressScreen() {
                 </Text>
               </View>
             </View>
-            <MiniChart data={weeklyVolumeTrend} label="Weekly Volume" unit="kg" color={colors.primary} />
+            <MiniChart data={weeklyVolumeTrend} label="Weekly Volume" unit={unit} color={colors.primary} />
           </View>
           <View style={styles.trendCard}>
             <View style={styles.trendHeader}>
@@ -543,7 +525,7 @@ export default function ProgressScreen() {
           {topPerformers.map((ex, i) => {
             const medal = i === 0 ? colors.gold : i === 1 ? colors.silver : i === 2 ? colors.bronze : null;
             return (
-            <View key={ex.exerciseName} style={styles.prShowcaseRow}>
+            <View key={ex.machineId} style={styles.prShowcaseRow}>
               <View
                 style={[
                   styles.prShowcaseRank,
@@ -558,7 +540,7 @@ export default function ProgressScreen() {
                 <Text style={styles.prShowcaseName} numberOfLines={1}>{ex.exerciseName}</Text>
                 <Text style={styles.prShowcaseDetail}>Est. 1RM</Text>
               </View>
-              <Text style={styles.prShowcaseValue}>{formatWeight(ex.estimated1RM)}</Text>
+              <Text style={styles.prShowcaseValue}>{formatWeight(ex.estimated1RM, unit)}</Text>
             </View>
             );
           })}
@@ -590,7 +572,7 @@ export default function ProgressScreen() {
         <Text style={styles.breakdownLabel}>Exercise Breakdown</Text>
       )}
     </View>
-  ), [overallStats, trendsExpanded, weeklyVolumeTrend, weeklyFrequencyTrend, volumeDirection, freqDirection, streak, muscleGroups, topPerformers, calendarGrid, exercises.length]);
+  ), [overallStats, trendsExpanded, weeklyVolumeTrend, weeklyFrequencyTrend, volumeDirection, freqDirection, streak, muscleGroups, topPerformers, calendarGrid, exercises.length, unit]);
 
   // ─── Render: Not Signed In ────────────────────────────
 
@@ -623,14 +605,14 @@ export default function ProgressScreen() {
   // ─── Render: Exercise List ────────────────────────────
 
   const renderExerciseCard = ({ item, index }: { item: ExerciseSummary; index: number }) => {
-    const isExpanded = expandedExercise === item.exerciseName;
-    const hasPR = item.bestWeightKg > 0;
+    const isExpanded = expandedExercise === item.machineId;
+    const hasPR = item.bestWeight > 0;
 
     return (
       <StaggeredCard index={index}>
         <TouchableOpacity
           style={styles.card}
-          onPress={() => toggleExpand(item.exerciseName)}
+          onPress={() => toggleExpand(item.machineId)}
           activeOpacity={0.7}
         >
         {/* Header Row */}
@@ -655,19 +637,19 @@ export default function ProgressScreen() {
             <View style={styles.prItem}>
               <Text style={styles.prLabel}>Best</Text>
               <Text style={styles.prValue}>
-                {formatWeight(item.bestWeightKg)} x {item.bestRepsAtWeight}
+                {formatWeight(item.bestWeight, unit)} x {item.bestRepsAtWeight}
               </Text>
             </View>
             <View style={styles.prItem}>
               <Text style={styles.prLabel}>Volume</Text>
               <Text style={styles.prValue}>
-                {formatWeight(item.bestVolumeSet)}
+                {formatWeight(item.bestVolumeSet, unit)}
               </Text>
             </View>
             <View style={styles.prItem}>
               <Text style={styles.prLabel}>Est. 1RM</Text>
               <Text style={styles.prValue}>
-                {formatWeight(item.estimated1RM)}
+                {formatWeight(item.estimated1RM, unit)}
               </Text>
             </View>
           </View>
@@ -706,16 +688,16 @@ export default function ProgressScreen() {
 
             {/* Mini Chart */}
             {(() => {
-              const sessionsForTrend: SessionForTrend[] = item.sessions.map((s) => ({
-                startedAt: s.startedAt,
+              const sessionsForTrend: SessionForStats[] = item.sessions.map((s) => ({
+                date: s.date,
                 sets: s.sets,
               }));
               const trendData: TrendDataPoint[] =
                 chartMetric === '1rm'
-                  ? compute1RMTrend(sessionsForTrend)
+                  ? e1rmTrendPts(sessionsForTrend)
                   : chartMetric === 'volume'
-                    ? computeVolumeTrend(sessionsForTrend)
-                    : computeWeightTrend(sessionsForTrend);
+                    ? volumeTrendPts(sessionsForTrend)
+                    : weightTrendPts(sessionsForTrend);
               const chartLabel =
                 chartMetric === '1rm' ? 'Est. 1RM' : chartMetric === 'volume' ? 'Session Volume' : 'Best Weight';
               const chartColor =
@@ -724,7 +706,7 @@ export default function ProgressScreen() {
                 <MiniChart
                   data={trendData}
                   label={chartLabel}
-                  unit="kg"
+                  unit={unit}
                   color={chartColor}
                 />
               );
@@ -732,13 +714,9 @@ export default function ProgressScreen() {
 
             {/* Session History */}
             {item.sessions.map((session) => (
-              <View key={session.workoutId} style={styles.sessionEntry}>
+              <View key={session.sessionId} style={styles.sessionEntry}>
                 <Text style={styles.sessionDate}>
-                  {new Date(session.startedAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {formatSessionDate(session.date)}
                 </Text>
                 {session.sets.length === 0 ? (
                   <Text style={styles.noSetsText}>No sets recorded</Text>
@@ -750,12 +728,12 @@ export default function ProgressScreen() {
                       <Text style={styles.setsTableHeaderText}>Reps</Text>
                     </View>
                     {session.sets.map((set) => (
-                      <View key={set.id} style={styles.setRow}>
+                      <View key={set.set_number} style={styles.setRow}>
                         <Text style={styles.setNumber}>
                           {set.set_number}
                         </Text>
                         <Text style={styles.setDetail}>
-                          {formatWeight(set.weight_kg)}
+                          {formatWeight(set.weight, unit)}
                         </Text>
                         <Text style={styles.setDetail}>{set.reps}</Text>
                       </View>
@@ -799,7 +777,7 @@ export default function ProgressScreen() {
       </View>
       <FlatList
         data={exercises}
-        keyExtractor={(item) => item.exerciseName}
+        keyExtractor={(item) => item.machineId}
         renderItem={renderExerciseCard}
         maxToRenderPerBatch={10}
         windowSize={5}

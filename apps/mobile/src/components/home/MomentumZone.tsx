@@ -5,6 +5,8 @@
  */
 import type { ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
+import type { WeightUnit } from '@nexera/types';
+import { formatVolumeLbs } from '../../lib/feedLogic';
 import { Text } from '../Text';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -15,7 +17,10 @@ interface MomentumZoneProps {
   streak: number;
   weeklyWorkouts: number;
   weeklyGoal: number;
+  /** Weekly volume in canonical lbs (converted for display via weightUnit). */
   weeklyVolume: number;
+  /** Member's preferred display unit — defaults to 'lbs'. */
+  weightUnit?: WeightUnit;
   level: number;
   score: number;
 }
@@ -62,12 +67,11 @@ export function MomentumZone({
   weeklyWorkouts,
   weeklyGoal,
   weeklyVolume,
+  weightUnit = 'lbs',
   level,
   score,
 }: MomentumZoneProps) {
-  const volumeStr = weeklyVolume >= 1000
-    ? `${(weeklyVolume / 1000).toFixed(1)}t`
-    : `${weeklyVolume.toLocaleString()} lbs`;
+  const volumeStr = formatVolumeLbs(weeklyVolume, weightUnit);
 
   const weekProgress = weeklyGoal > 0
     ? Math.min((weeklyWorkouts / weeklyGoal) * 100, 100)

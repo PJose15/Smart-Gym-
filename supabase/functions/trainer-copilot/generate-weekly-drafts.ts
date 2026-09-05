@@ -89,43 +89,44 @@ export async function handleGenerateWeeklyDrafts(req: Request): Promise<Response
 
       if (existingDraft) continue;
 
-      // Fetch member profile
-      const { data: memberProfile } = await serviceClient
-        .from('profiles')
-        .select('full_name')
-        .eq('id', assignment.member_profile_id)
-        .single();
-
-      const memberName = memberProfile?.full_name ?? 'Member';
-
-      // Count workouts in period
-      const { data: workouts } = await serviceClient
-        .from('workouts')
-        .select('id, started_at, status')
-        .eq('profile_id', assignment.member_profile_id)
+      // Resolve member row (assignment keys on users.id; workout_sessions keys on members.id)
+      const { data: member } = await serviceClient
+        .from('members')
+        .select('id, display_name')
+        .eq('user_id', assignment.member_profile_id)
         .eq('gym_id', gym_id)
-        .eq('status', 'completed')
-        .gte('started_at', period_start)
-        .lte('started_at', period_end + 'T23:59:59Z');
+        .maybeSingle();
 
-      const workoutCount = workouts?.length ?? 0;
+      const memberName = member?.display_name ?? 'Member';
 
-      // Count unique active days
-      const activeDays = new Set(
-        (workouts ?? []).map((w: any) => new Date(w.started_at).toISOString().slice(0, 10)),
-      ).size;
+      // Count completed sessions in period (session_date is a DATE)
+      let sessionDates: string[] = [];
+      if (member) {
+        const { data: sessions } = await serviceClient
+          .from('workout_sessions')
+          .select('session_date')
+          .eq('member_id', member.id)
+          .eq('gym_id', gym_id)
+          .not('completed_at', 'is', null)
+          .gte('session_date', period_start)
+          .lte('session_date', period_end);
+        sessionDates = (sessions ?? []).map((s: any) => s.session_date);
+      }
+
+      // A workout day = distinct session_date (multiple machines same day = one workout)
+      const activeDays = new Set(sessionDates).size;
+      const workoutCount = activeDays;
 
       // Fetch training profile
       const { data: trainingProfile } = await serviceClient
         .from('user_training_profiles')
-        .select('goal, experience, units')
+        .select('goal, experience')
         .eq('profile_id', assignment.member_profile_id)
         .eq('gym_id', gym_id)
         .limit(1)
         .maybeSingle();
 
       // Build simple weekly draft
-      const unitLabel = trainingProfile?.units === 'lbs' ? 'lbs' : 'kg';
       const sections: string[] = [];
 
       const startDate = new Date(period_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
