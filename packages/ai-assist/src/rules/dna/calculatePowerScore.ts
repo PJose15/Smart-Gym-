@@ -5,6 +5,8 @@ interface PowerInput {
     machine_id: string | null;
     best_weight_lbs: number;
     total_volume_lbs: number;
+    /** True only when the session actually set a personal best */
+    is_personal_best?: boolean;
   }>;
   olderSessions: Array<{
     machine_id: string | null;
@@ -27,8 +29,10 @@ export function calculatePowerScore(input: PowerInput): DNADimensionScore {
   }
 
   // Signal 1: PR frequency (30 pts max)
-  // Sessions with a best_weight_lbs > 0 are considered PR-relevant
-  const prCount = recentSessions.filter(s => s.best_weight_lbs > 0).length;
+  // Only sessions that actually set a personal best count as PRs.
+  // (Previously every session with best_weight_lbs > 0 counted — i.e. every
+  // weighted session was scored as a "PR".)
+  const prCount = recentSessions.filter(s => s.is_personal_best === true).length;
   const prRate = prCount / recentSessions.length;
   // 50% PR rate = 30 points (max)
   const prScore = Math.min(30, Math.round(prRate * 60));

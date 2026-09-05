@@ -18,9 +18,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../src/lib/supabase';
 import { getMemberId } from '../src/lib/memberData';
 import { getWeightUnit, saveWeightUnit } from '../src/lib/weightUnit';
-import { isFeatureEnabled, needsRefresh, refreshFeatureFlags, clearFlagCache } from '../src/lib/featureFlags';
+import { isFeatureEnabled, needsRefresh, refreshFeatureFlags } from '../src/lib/featureFlags';
 import { unregisterPushToken } from '../src/lib/notificationService';
-import { clearAllCaches } from '../src/lib/cacheManager';
+import { clearUserScopedStorage, TRAINING_PROFILE_CACHE_KEY } from '../src/lib/signOutCleanup';
 import { Button, Text, Card } from '../src/components';
 import { AnimatedScreen } from '../src/components/AnimatedScreen';
 import { colors } from '../src/theme/colors';
@@ -28,8 +28,6 @@ import { spacing } from '../src/theme/spacing';
 import type { UserGoal, ExperienceLevel, WeightUnit } from '@nexera/types';
 
 // ─── Constants ──────────────────────────────────────────
-
-const TRAINING_PROFILE_CACHE_KEY = '@nexera:training_profile';
 
 const GOAL_OPTIONS: { value: UserGoal; label: string }[] = [
   { value: 'strength', label: 'Strength' },
@@ -463,9 +461,9 @@ export default function SettingsScreen() {
         text: 'Sign Out',
         style: 'destructive',
         onPress: async () => {
-          await clearAllCaches();
-          await AsyncStorage.removeItem(TRAINING_PROFILE_CACHE_KEY);
-          clearFlagCache();
+          // Clears caches, offline queue, weight-unit cache, feed baseline,
+          // unseen PRs, training profile + in-memory flag cache.
+          await clearUserScopedStorage();
           await unregisterPushToken();
           await supabase.auth.signOut();
           router.replace('/auth');
@@ -494,7 +492,12 @@ export default function SettingsScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Back button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text variant="body" color="primary" style={styles.backText}>{'< Back'}</Text>
         </TouchableOpacity>
 
@@ -508,7 +511,14 @@ export default function SettingsScreen() {
 
         {/* Avatar */}
         <View style={styles.avatarSection}>
-          <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar} style={styles.avatarTouchable}>
+          <TouchableOpacity
+            onPress={handleAvatarUpload}
+            disabled={uploadingAvatar}
+            style={styles.avatarTouchable}
+            accessibilityRole="button"
+            accessibilityLabel="Change profile photo"
+            accessibilityState={{ disabled: uploadingAvatar }}
+          >
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatar} />
             ) : (
@@ -559,6 +569,8 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 style={styles.fieldRow}
                 onPress={() => { setNameInput(fullName); setEditingName(true); }}
+                accessibilityRole="button"
+                accessibilityLabel={fullName ? `Edit name, currently ${fullName}` : 'Set your name'}
               >
                 <Text variant="body" style={styles.fieldValue}>
                   {fullName || 'Tap to set name'}
@@ -579,12 +591,18 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={[styles.toggleOption, weightUnit === 'kg' && styles.toggleOptionActive]}
                   onPress={() => handleToggleWeightUnit('kg')}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: weightUnit === 'kg' }}
+                  accessibilityLabel="Weight unit kilograms"
                 >
                   <Text style={[styles.toggleOptionText, weightUnit === 'kg' && styles.toggleOptionTextActive]}>kg</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toggleOption, weightUnit === 'lbs' && styles.toggleOptionActive]}
                   onPress={() => handleToggleWeightUnit('lbs')}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: weightUnit === 'lbs' }}
+                  accessibilityLabel="Weight unit pounds"
                 >
                   <Text style={[styles.toggleOptionText, weightUnit === 'lbs' && styles.toggleOptionTextActive]}>lbs</Text>
                 </TouchableOpacity>
@@ -805,6 +823,9 @@ export default function SettingsScreen() {
                     key={opt.value}
                     style={[styles.chip, trainingProfile.goal === opt.value && styles.chipActive]}
                     onPress={() => setTrainingProfile((p) => ({ ...p, goal: opt.value }))}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: trainingProfile.goal === opt.value }}
+                    accessibilityLabel={`Goal: ${opt.label}`}
                   >
                     <Text style={[styles.chipText, trainingProfile.goal === opt.value && styles.chipTextActive]}>
                       {opt.label}
@@ -821,6 +842,9 @@ export default function SettingsScreen() {
                     key={opt.value}
                     style={[styles.chip, trainingProfile.experience === opt.value && styles.chipActive]}
                     onPress={() => setTrainingProfile((p) => ({ ...p, experience: opt.value }))}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: trainingProfile.experience === opt.value }}
+                    accessibilityLabel={`Experience: ${opt.label}`}
                   >
                     <Text style={[styles.chipText, trainingProfile.experience === opt.value && styles.chipTextActive]}>
                       {opt.label}
@@ -837,6 +861,9 @@ export default function SettingsScreen() {
                     key={u}
                     style={[styles.chip, trainingProfile.units === u && styles.chipActive]}
                     onPress={() => setTrainingProfile((p) => ({ ...p, units: u }))}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: trainingProfile.units === u }}
+                    accessibilityLabel={`Training units ${u === 'kg' ? 'kilograms' : 'pounds'}`}
                   >
                     <Text style={[styles.chipText, trainingProfile.units === u && styles.chipTextActive]}>{u}</Text>
                   </TouchableOpacity>

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, CSSProperties, FormEvent } from 'reac
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { AnimatedPage } from '../../components/AnimatedPage';
 import type {
   Program,
@@ -39,6 +40,7 @@ interface UnassignedMember {
 /* ── Component ─────────────────────────────────────────── */
 
 export default function ProgramDetailPage() {
+  const { authed } = useStaffAuth();
   const params = useParams<{ id: string }>();
   const programId = params.id;
 
@@ -115,6 +117,7 @@ export default function ProgramDetailPage() {
   }, [programId]);
 
   useEffect(() => {
+    if (!authed) return;
     async function init() {
       setLoading(true);
       const prog = await fetchProgram();
@@ -127,7 +130,7 @@ export default function ProgramDetailPage() {
       setLoading(false);
     }
     init();
-  }, [fetchProgram, fetchMachines, fetchRoster]);
+  }, [authed, fetchProgram, fetchMachines, fetchRoster]);
 
   /* ── Mutations ─────────────────────────────────────── */
 

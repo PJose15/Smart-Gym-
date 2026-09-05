@@ -36,7 +36,7 @@ export async function gatherDNAInputs(
     // Power: recent sessions (last 30 days)
     admin
       .from('workout_sessions')
-      .select('machine_id, best_weight_lbs, total_volume_lbs')
+      .select('machine_id, best_weight_lbs, total_volume_lbs, is_personal_best')
       .eq('member_id', memberId)
       .eq('gym_id', gymId)
       .gte('session_date', thirtyDaysAgo)
@@ -175,6 +175,7 @@ export async function gatherDNAInputs(
       machine_id: s.machine_id,
       best_weight_lbs: s.best_weight_lbs ?? 0,
       total_volume_lbs: s.total_volume_lbs ?? 0,
+      is_personal_best: s.is_personal_best === true,
     })),
     olderSessions: (olderSessionsResult.data ?? []).map(s => ({
       machine_id: s.machine_id,

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, FormEvent, CSSProperties } from 'react';
+import { useMember } from '@/lib/contexts/MemberContext';
+import { BackButton } from '@/components/nav/BackButton';
 import type { MemberSettingsData } from '@nexera/types';
 
 const cardStyle: CSSProperties = {
@@ -40,6 +42,7 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 }
 
 export default function MemberSettingsPage() {
+  const { updateWeightUnit } = useMember();
   const [settings, setSettings] = useState<MemberSettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -97,6 +100,11 @@ export default function MemberSettingsPage() {
 
       if (res.ok) {
         setMsg('Settings saved!');
+        // Propagate the (possibly changed) weight unit to the whole member
+        // surface immediately — the context otherwise only reads it on mount.
+        if (settings.weight_unit === 'kg' || settings.weight_unit === 'lbs') {
+          updateWeightUnit(settings.weight_unit);
+        }
       } else {
         setMsg('Failed to save.');
       }
@@ -122,6 +130,7 @@ export default function MemberSettingsPage() {
 
   return (
     <div style={{ padding: '20px 16px' }}>
+      <BackButton fallbackHref="/profile" style={{ marginBottom: 8 }} />
       <h1 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>Settings</h1>
 
       <form onSubmit={handleSave}>

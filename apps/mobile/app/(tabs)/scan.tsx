@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { parseQrCode } from '@nexera/utils';
+import { parseQrCode, extractAiProgramDays } from '@nexera/utils';
 import { Button, Text } from '../../src/components';
 import { AnimatedCard } from '../../src/components/AnimatedCard';
 import { AnimatedScreen } from '../../src/components/AnimatedScreen';
@@ -58,6 +58,9 @@ const SCAN_TIPS = [
 
 export default function ScanScreen() {
   const router = useRouter();
+  // Tab screens stay mounted when blurred — without this gate the camera
+  // keeps running (battery/privacy) while the user is on another tab.
+  const isFocused = useIsFocused();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -235,7 +238,8 @@ export default function ScanScreen() {
 
       if (!activeProgram?.program_data) return null;
 
-      const days = (activeProgram.program_data as any)?.days ?? [];
+      // Handles both { days } and { weeks: [{ days }] } shaped rows
+      const days = extractAiProgramDays(activeProgram.program_data);
       if (days.length === 0) return null;
 
       // Determine today's day in the cycle
@@ -345,6 +349,8 @@ export default function ScanScreen() {
                   key={m.machine_id}
                   style={styles.recentRow}
                   onPress={() => router.push(`/machine/${m.qr_slug}` as any)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${m.machine_name}, last used ${timeSince(m.last_used) || 'recently'}`}
                 >
                   <View style={styles.recentInfo}>
                     <Text variant="body" style={styles.recentName}>{m.machine_name}</Text>
@@ -373,8 +379,9 @@ export default function ScanScreen() {
   // ─── Camera active ──────────────────────────────────
   return (
     <View style={styles.cameraContainer}>
-      {/* Camera: upper portion */}
+      {/* Camera: upper portion (only mounted while the tab is focused) */}
       <View style={styles.cameraSection}>
+        {isFocused ? (
         <CameraView
           style={styles.camera}
           barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
@@ -412,6 +419,9 @@ export default function ScanScreen() {
             </Text>
           </View>
         </CameraView>
+        ) : (
+          <View style={[styles.camera, styles.cameraPaused]} />
+        )}
       </View>
 
       {/* Bottom context panel */}
@@ -457,6 +467,8 @@ export default function ScanScreen() {
                   router.push(`/machine/${programMachine.qr_slug}` as any);
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`Up next in your program: ${programMachine.machine_name}`}
             >
               <Text variant="caption" color="primary" style={styles.programLabel}>
                 Up next in your program
@@ -486,6 +498,8 @@ export default function ScanScreen() {
                     key={m.machine_id}
                     style={styles.recentChip}
                     onPress={() => router.push(`/machine/${m.qr_slug}` as any)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${m.machine_name}`}
                   >
                     <Text variant="caption" style={styles.recentChipName} numberOfLines={1}>
                       {m.machine_name}
@@ -552,6 +566,8 @@ export default function ScanScreen() {
                     router.push(`/machine/${programMachine.qr_slug}` as any);
                   }
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={`Up next in your program: ${programMachine.machine_name}`}
               >
                 <Text variant="caption" color="primary" style={styles.programLabel}>
                   Up next in your program
@@ -581,6 +597,8 @@ export default function ScanScreen() {
                       key={m.machine_id}
                       style={styles.recentChip}
                       onPress={() => router.push(`/machine/${m.qr_slug}` as any)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open ${m.machine_name}`}
                     >
                       <Text variant="caption" style={styles.recentChipName} numberOfLines={1}>
                         {m.machine_name}
@@ -672,6 +690,9 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  cameraPaused: {
+    backgroundColor: colors.background,
   },
   overlay: {
     flex: 1,

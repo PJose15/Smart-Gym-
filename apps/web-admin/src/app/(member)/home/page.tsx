@@ -51,19 +51,22 @@ export default function HomePage() {
 
     setLoading(true);
     setError(null);
+    let cancelled = false;
 
     (async () => {
       try {
         const res = await fetch(`/api/member/home?member_id=${member.id}&gym_id=${gym.id}`);
         if (!res.ok) throw new Error('Failed to load');
         const json = await res.json();
-        setData(json);
+        if (!cancelled) setData(json);
       } catch {
-        setError('Something went wrong. Please try again.');
+        if (!cancelled) setError('Something went wrong. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member, gym, retryCount]);
 
   if (error) {
@@ -120,12 +123,13 @@ export default function HomePage() {
           {/* 4. Quick stats */}
           <QuickStatsRow stats={data.stats} />
 
-          {/* Quick links — Readiness + Check-Ins (web-only, kept in the
-              activity rhythm between stats and the community pulse) */}
+          {/* Quick links — Readiness + Check-Ins + My Gym (web-only, kept in
+              the activity rhythm between stats and the community pulse) */}
           <div style={{ display: 'flex', gap: 8 }}>
             {[
               { href: '/readiness', label: 'Readiness', dot: 'var(--readiness-peak, #00C896)' },
               { href: '/check-ins', label: 'Check-Ins', dot: 'var(--gold, #E8B339)' },
+              { href: '/gym', label: 'My Gym', dot: 'var(--accent, #E0142F)' },
             ].map((l) => (
               <Link
                 key={l.href}

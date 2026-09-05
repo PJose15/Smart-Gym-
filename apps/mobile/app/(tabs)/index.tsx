@@ -23,6 +23,8 @@ import { getUserRank } from '../../src/lib/leaderboardService';
 import { localSessionDate } from '../../src/lib/sessionApi';
 import { getWeightUnit } from '../../src/lib/weightUnit';
 import { toWorkoutRecords, computeMuscleGaps } from '../../src/lib/sessionAdapters';
+import { convertToLbs, formatWeightLbs } from '../../src/lib/feedLogic';
+import { UNSEEN_PRS_KEY } from '../../src/lib/signOutCleanup';
 import type { SessionRow, SessionMachineRow } from '../../src/lib/sessionAdapters';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PRDetection } from '@nexera/types';
@@ -178,7 +180,7 @@ export default function HomeScreen() {
 
       // Load unseen PRs from local storage
       try {
-        const prData = await AsyncStorage.getItem('@nexera/unseen_prs');
+        const prData = await AsyncStorage.getItem(UNSEEN_PRS_KEY);
         if (prData && mountedRef.current) {
           const parsed = JSON.parse(prData) as PRDetection[];
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -186,7 +188,7 @@ export default function HomeScreen() {
           }
         }
       } catch {
-        await AsyncStorage.removeItem('@nexera/unseen_prs');
+        await AsyncStorage.removeItem(UNSEEN_PRS_KEY);
       }
 
       // Load gym membership
@@ -808,7 +810,7 @@ export default function HomeScreen() {
   const dismissPRs = useCallback(async () => {
     setUnseenPRs([]);
     try {
-      await AsyncStorage.removeItem('@nexera/unseen_prs');
+      await AsyncStorage.removeItem(UNSEEN_PRS_KEY);
     } catch (err) {
       console.warn('[home] PR dismiss failed:', err);
     }
@@ -902,7 +904,11 @@ export default function HomeScreen() {
                   {pr.exercise_name}
                 </Text>
                 <Text style={styles.prBannerValue}>
-                  {pr.type === 'PR_REPS' ? `${pr.value} reps` : `${pr.value}kg`}
+                  {pr.type === 'PR_REPS'
+                    ? `${pr.value} reps`
+                    // PRDetection values are kg-canonical — display in the
+                    // member's preferred unit (weights convention).
+                    : formatWeightLbs(convertToLbs(pr.value, 'kg'), weightUnit)}
                 </Text>
               </View>
             ))}

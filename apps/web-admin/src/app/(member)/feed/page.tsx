@@ -248,6 +248,7 @@ function FeedBody({ memberId, gymId }: { memberId: string; gymId: string }) {
   // mirroring mobile's realtime prepend behavior).
   useRealtimeFeed({
     gymId,
+    memberId,
     onNewEvent: (event) => {
       const isAtTop = window.scrollY < 80;
       if (isAtTop) {

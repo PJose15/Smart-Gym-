@@ -213,6 +213,41 @@ describe('POST /api/cron/agent-daily — dormant member scan', () => {
       is_agent_initiated: false,
     });
   });
+
+  test('dormant push is sent only when the trigger fired (not skipped by cooldown)', async () => {
+    mockMembersData = [
+      { id: 'member-1', gym_id: 'gym-a' },
+      { id: 'member-2', gym_id: 'gym-b' },
+    ];
+    // member-1: fresh trigger → push allowed; member-2: cooldown skip → NO push
+    mockTriggerAgent
+      .mockResolvedValueOnce({ success: true, skipped: false })
+      .mockResolvedValueOnce({ success: true, skipped: true });
+
+    const req = makeRequest('test-cron-key');
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const dormantPushes = mockSendNotification.mock.calls.filter(
+      (c) => (c[0] as { type: string }).type === 'agent_dormant_alert'
+    );
+    expect(dormantPushes).toHaveLength(1);
+    expect((dormantPushes[0][0] as { member_id: string }).member_id).toBe('member-1');
+  });
+
+  test('dormant push is NOT sent when the trigger failed (tier gate / error)', async () => {
+    mockMembersData = [{ id: 'member-1', gym_id: 'gym-a' }];
+    mockTriggerAgent.mockResolvedValue({ success: false, error: 'Feature not available for tier' });
+
+    const req = makeRequest('test-cron-key');
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const dormantPushes = mockSendNotification.mock.calls.filter(
+      (c) => (c[0] as { type: string }).type === 'agent_dormant_alert'
+    );
+    expect(dormantPushes).toHaveLength(0);
+  });
 });
 
 // ─── Scan 2: checkin SLA ──────────────────────────────────

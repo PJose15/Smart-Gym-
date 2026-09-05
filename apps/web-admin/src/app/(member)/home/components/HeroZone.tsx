@@ -115,7 +115,7 @@ export function HeroZone({ hero, level, avatarUrl, muscleMap, dna, name, streak 
               padding: '5px 12px',
               flexShrink: 0,
             }}>
-              <StreakFlame streakDays={streak * 7} size={14} />
+              <StreakFlame streakDays={streak} size={14} />
               <span style={{
                 fontSize: 14,
                 fontWeight: 700,

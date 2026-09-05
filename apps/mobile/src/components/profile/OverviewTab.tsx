@@ -129,6 +129,8 @@ export function OverviewTab({
               key={m.slug}
               style={[styles.favoriteRow, i === favoriteMachines.length - 1 && styles.favoriteRowLast]}
               onPress={() => router.push(`/machine/${m.slug}` as any)}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${m.name}, used ${m.count} times`}
             >
               <Text style={styles.favoriteRank}>{i + 1}</Text>
               <Text variant="body" style={styles.favoriteName}>{m.name}</Text>

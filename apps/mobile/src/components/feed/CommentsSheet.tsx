@@ -199,7 +199,12 @@ export function CommentsSheet({
             ) : error && comments.length === 0 ? (
               <View style={styles.emptyWrap}>
                 <Text style={styles.emptyText}>Couldn&apos;t load comments.</Text>
-                <TouchableOpacity onPress={load} style={styles.retryButton}>
+                <TouchableOpacity
+                  onPress={load}
+                  style={styles.retryButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Retry loading comments"
+                >
                   <Text style={styles.retryText}>Try Again</Text>
                 </TouchableOpacity>
               </View>
@@ -226,6 +231,9 @@ export function CommentsSheet({
                       onPress={handleLoadMore}
                       style={styles.loadMore}
                       disabled={loadingMore}
+                      accessibilityRole="button"
+                      accessibilityLabel="Load more comments"
+                      accessibilityState={{ disabled: loadingMore }}
                     >
                       {loadingMore ? (
                         <ActivityIndicator size="small" color={colors.primary} />

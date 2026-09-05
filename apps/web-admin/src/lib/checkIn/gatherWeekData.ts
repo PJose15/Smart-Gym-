@@ -35,6 +35,7 @@ export async function gatherCheckInWeekData(
     activeProgram,
     readinessData,
     muscleMap,
+    gymSettingsResult,
   ] = await Promise.all([
     // Member profile
     admin
@@ -84,11 +85,27 @@ export async function gatherCheckInWeekData(
 
     // Muscle map (current state)
     buildMemberMuscleMap(memberId, gymId, admin),
+
+    // Gym check-in language (column added in migration 043; select errors
+    // resolve to { data: null, error } and fall back to 'en' below)
+    admin
+      .from('gym_settings')
+      .select('checkin_language')
+      .eq('gym_id', gymId)
+      .maybeSingle(),
   ]);
 
   const member = memberResult.data;
   const sessions = thisWeekSessions.data ?? [];
   const lastSessions = lastWeekSessions.data ?? [];
+
+  // Gym language: from gym_settings.checkin_language when present; 'en' when
+  // the row/column is missing or the query errored (pre-043 databases).
+  const rawLanguage = gymSettingsResult.error
+    ? null
+    : (gymSettingsResult.data as { checkin_language?: string | null } | null)
+        ?.checkin_language;
+  const gymLanguage: 'en' | 'es' = rawLanguage === 'es' ? 'es' : 'en';
 
   // Trainer name lookup if assigned
   let trainerName: string | null = null;
@@ -259,7 +276,7 @@ export async function gatherCheckInWeekData(
     dna_balance: balanceScore,
     dna_trend: dnaTrend,
     injuries_or_limitations: member?.injuries_or_limitations ?? null,
-    gym_language: 'en',
+    gym_language: gymLanguage,
     trainer_name: trainerName,
     trainer_id: member?.assigned_trainer_id ?? null,
   };

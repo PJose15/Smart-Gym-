@@ -2,6 +2,7 @@
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { useMember } from '@/lib/contexts/MemberContext';
+import { BackButton } from '@/components/nav/BackButton';
 import type { ReadinessResult, ReadinessZone } from '@nexera/types';
 
 // ─── Zone tokens (Stitch Red-Luxury) ────────────────────────────
@@ -274,6 +275,7 @@ export default function ReadinessPage() {
     if (!member) return;
     setLoading(true);
     setError(null);
+    let cancelled = false;
     (async () => {
       try {
         const [scoreRes, historyRes] = await Promise.all([
@@ -282,25 +284,29 @@ export default function ReadinessPage() {
         ]);
         if (!scoreRes.ok) throw new Error('Failed to load');
         const scoreJson = await scoreRes.json();
-        setReadiness(scoreJson.readiness ?? null);
+        if (!cancelled) setReadiness(scoreJson.readiness ?? null);
 
         if (historyRes.ok) {
           const historyJson = await historyRes.json();
-          setHistory(historyJson.history ?? []);
+          if (!cancelled) setHistory(historyJson.history ?? []);
         }
       } catch {
-        setError('Failed to load your readiness. Please try again.');
+        if (!cancelled) setError('Failed to load your readiness. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member?.id, retryCount]);
 
   if (memberLoading || loading) return <ReadinessSkeleton />;
 
   if (error || !readiness) {
     return (
-      <div style={{ padding: 16, textAlign: 'center', paddingTop: 60 }}>
+      <div style={{ padding: 16, paddingTop: 24 }}>
+        <BackButton />
+        <div style={{ textAlign: 'center', paddingTop: 36 }}>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, marginBottom: 16 }}>
           {error ?? 'Readiness data is not available yet.'}
         </p>
@@ -319,6 +325,7 @@ export default function ReadinessPage() {
         >
           Retry
         </button>
+        </div>
       </div>
     );
   }
@@ -327,6 +334,7 @@ export default function ReadinessPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, paddingTop: 24 }}>
+      <BackButton style={{ alignSelf: 'flex-start', marginBottom: -8 }} />
       {/* Hero header — serif */}
       <div>
         <h1

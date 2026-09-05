@@ -3,8 +3,21 @@ import type { MuscleMapResult } from '@nexera/types';
 import { buildMemberMuscleMap } from './buildMemberMuscleMap';
 
 /**
+ * Max cache age. Recovery states advance hour-by-hour, so a map computed at
+ * 00:05 UTC must not be served all day just because the date key matches.
+ */
+const MAX_CACHE_AGE_MS = 6 * 60 * 60 * 1000;
+
+/** True when the cached row is younger than MAX_CACHE_AGE_MS. */
+function isCacheFresh(computedAt: string | null | undefined): boolean {
+  if (!computedAt) return false;
+  const ts = new Date(computedAt).getTime();
+  return !isNaN(ts) && Date.now() - ts < MAX_CACHE_AGE_MS;
+}
+
+/**
  * Get muscle map, using cache when valid.
- * Computes fresh if cache is stale or missing.
+ * Computes fresh if cache is stale (missing, or older than 6h).
  */
 export async function getMuscleMap(
   memberId: string,
@@ -22,7 +35,7 @@ export async function getMuscleMap(
     .eq('cache_date', today)
     .single();
 
-  if (cached) {
+  if (cached && isCacheFresh(cached.computed_at)) {
     // Reconstruct MuscleMapResult from cached JSON
     const { _balanceScore, ...cleanStates } = cached.muscle_states ?? {};
     return {

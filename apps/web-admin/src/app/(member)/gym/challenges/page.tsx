@@ -3,6 +3,7 @@
 import { CSSProperties, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useMember } from '@/lib/contexts/MemberContext';
+import { BackButton } from '@/components/nav/BackButton';
 import type { ChallengeListItem } from '@nexera/types';
 
 type Tab = 'active' | 'completed';
@@ -53,21 +54,25 @@ export default function ChallengesListPage() {
     if (!member || !gym) return;
     setLoading(true);
     setLoadError(null);
+    let cancelled = false;
     (async () => {
       try {
         const res = await fetch(`/api/member/challenges?member_id=${member.id}&gym_id=${gym.id}`);
+        if (cancelled) return;
         if (!res.ok) {
           setLoadError('Failed to load challenges. Please try again.');
         } else {
           const data = await res.json();
-          setChallenges(data.challenges || []);
+          if (!cancelled) setChallenges(data.challenges || []);
         }
       } catch {
-        setLoadError('Network error. Check your connection and try again.');
+        if (!cancelled) setLoadError('Network error. Check your connection and try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member, gym]);
 
   async function handleJoin(challengeId: string) {
@@ -102,6 +107,7 @@ export default function ChallengesListPage() {
 
   return (
     <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)', paddingBottom: 100 }}>
+      <BackButton style={{ marginBottom: 8 }} />
       <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, marginBottom: 16 }}>
         Challenges
       </h1>

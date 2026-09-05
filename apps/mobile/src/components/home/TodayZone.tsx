@@ -87,6 +87,8 @@ export function TodayZone({
           style={[sectionStyles.cta, sectionStyles.ctaSuccess]}
           onPress={() => router.push(`/workout/${activeWorkoutId}?intent=${sessionIntent}`)}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Continue workout"
         >
           <Text style={sectionStyles.ctaText}>Continue Workout →</Text>
         </TouchableOpacity>
@@ -172,6 +174,8 @@ export function TodayZone({
           style={sectionStyles.cta}
           onPress={() => router.push('/(tabs)/scan')}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Start today's workout"
         >
           <Text style={sectionStyles.ctaText}>Start today's workout →</Text>
         </TouchableOpacity>
@@ -197,6 +201,8 @@ export function TodayZone({
         style={sectionStyles.cta}
         onPress={() => router.push('/(tabs)/scan')}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Open scanner"
       >
         <Text style={sectionStyles.ctaText}>Open Scanner →</Text>
       </TouchableOpacity>

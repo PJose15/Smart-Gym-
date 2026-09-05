@@ -129,7 +129,7 @@ function WorkoutCalendar({ dates }: { dates: string[] }) {
   for (let i = 29; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const str = d.toISOString().slice(0, 10);
+    const str = d.toLocaleDateString('en-CA'); // device-local YYYY-MM-DD
     days.push({
       date: str,
       active: dateSet.has(str),
@@ -183,18 +183,22 @@ export default function ProgressPage() {
     if (!member) return;
     setLoading(true);
     setError(null);
+    let cancelled = false;
 
     (async () => {
       try {
         const res = await fetch(`/api/member/${member.id}/progress`);
         if (!res.ok) throw new Error('Failed to load');
-        setData(await res.json());
+        const json = await res.json();
+        if (!cancelled) setData(json);
       } catch {
-        setError('Something went wrong. Please try again.');
+        if (!cancelled) setError('Something went wrong. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member?.id, retryCount]);
 
   // Client-side period filtering (the API returns all-time data)
@@ -202,7 +206,7 @@ export default function ProgressPage() {
     if (period === 0) return null;
     const d = new Date();
     d.setDate(d.getDate() - period);
-    return d.toISOString().slice(0, 10);
+    return d.toLocaleDateString('en-CA'); // device-local YYYY-MM-DD
   }, [period]);
 
   const filteredWeeklyVolume = useMemo(() => {
@@ -440,7 +444,7 @@ export default function ProgressPage() {
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <p style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--gold, #E8B339)', fontFamily: 'var(--font-mono)' }}>
-                        {pr.est_1rm}
+                        {formatWeight(pr.est_1rm, weightUnit)}
                       </p>
                       <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Est. 1RM

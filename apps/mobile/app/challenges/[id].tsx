@@ -216,8 +216,10 @@ export default function ChallengeDetailScreen() {
             };
           });
 
-          // Haptic feedback
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          // Haptic feedback — unavailable on web/unsupported devices; a throw
+          // here would fall into the outer catch and show a false
+          // "Couldn't join" error after a successful join.
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
           // Confetti (gated by reduced motion)
           if (!reducedMotion) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { extractAiProgramDays } from '@nexera/utils';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 function getAdminClient() {
@@ -66,7 +67,8 @@ export async function GET(request: NextRequest) {
 
   // Determine today's target day in the program rotation
   const todayDayIndex = ((program.day_number - 1) % program.sessions_per_week);
-  const days: ProgramDay[] = program.program_data?.days ?? [];
+  // Handles both { days } and { weeks: [{ days }] } shaped program_data.
+  const days = extractAiProgramDays<ProgramDay>(program.program_data);
   const todayPlan = days[todayDayIndex] ?? null;
 
   // Check if the scanned machine is in today's plan

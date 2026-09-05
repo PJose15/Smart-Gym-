@@ -2,6 +2,7 @@
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { useMember } from '@/lib/contexts/MemberContext';
+import { BackButton } from '@/components/nav/BackButton';
 import { useUnreadCheckIn } from '@/hooks/useUnreadCheckIn';
 import { formatWeekLabel } from '@/lib/checkIn/formatWeekLabel';
 import { formatVolume } from '@/lib/weight';
@@ -388,19 +389,24 @@ export default function CheckInsPage() {
     if (!member) return;
     setLoading(true);
     setError(null);
+    let cancelled = false;
     (async () => {
       try {
         const res = await fetch(`/api/member/${member.id}/check-ins`);
         if (!res.ok) throw new Error('Failed to load');
         const data = await res.json();
-        setLatest(data.latest ?? null);
-        setHistory(data.history ?? []);
+        if (!cancelled) {
+          setLatest(data.latest ?? null);
+          setHistory(data.history ?? []);
+        }
       } catch {
-        setError('Failed to load your check-ins. Please try again.');
+        if (!cancelled) setError('Failed to load your check-ins. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member?.id, retryCount]);
 
   if (memberLoading || loading) return <CheckInsSkeleton />;
@@ -433,6 +439,7 @@ export default function CheckInsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, paddingTop: 24 }}>
+      <BackButton style={{ alignSelf: 'flex-start', marginBottom: -8 }} />
       {/* Hero header — serif */}
       <div>
         <h1

@@ -2,11 +2,13 @@
 
 import type { MuscleRecoveryStateLabel } from '@nexera/types';
 
+// Colors come from the DOC_18 muscle-recovery tokens (styles/tokens.css) —
+// crimson "primed", not the retired purple palette.
 const LEGEND_CONFIG: Record<MuscleRecoveryStateLabel, { color: string; label: string; description: string }> = {
-  fresh:      { color: '#00C896', label: 'Fresh',      description: 'Fully recovered' },
-  primed:     { color: '#7C5CFF', label: 'Primed',     description: 'Optimal window' },
-  recovering: { color: '#FF4D6A', label: 'Recovering', description: 'Still recovering' },
-  fatigued:   { color: '#FFB020', label: 'Fatigued',   description: 'Needs rest' },
+  fresh:      { color: 'var(--muscle-fresh, #00C896)',      label: 'Fresh',      description: 'Fully recovered' },
+  primed:     { color: 'var(--muscle-primed, #E0142F)',     label: 'Primed',     description: 'Optimal window' },
+  recovering: { color: 'var(--muscle-recovering, #FF7A90)', label: 'Recovering', description: 'Still recovering' },
+  fatigued:   { color: 'var(--muscle-fatigued, #FFB020)',   label: 'Fatigued',   description: 'Needs rest' },
 };
 
 interface LegendItemProps {

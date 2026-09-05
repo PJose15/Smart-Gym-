@@ -56,28 +56,40 @@ const sendBtnStyle: CSSProperties = {
 export function CommentSection({ eventId, memberId }: CommentSectionProps) {
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(false);
     (async () => {
       try {
         const res = await fetch(`/api/member/feed/comments?event_id=${eventId}&member_id=${memberId}`);
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
-          setComments(data.comments || []);
+          if (!cancelled) setComments(data.comments || []);
+        } else {
+          setLoadError(true);
         }
       } catch {
-        // silent fail
+        if (!cancelled) setLoadError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [eventId, memberId]);
+
+    return () => { cancelled = true; };
+  }, [eventId, memberId, retryCount]);
 
   async function handlePost() {
     if (!text.trim() || posting) return;
     setPosting(true);
+    setPostError(null);
     try {
       const res = await fetch('/api/member/feed/comments', {
         method: 'POST',
@@ -96,9 +108,11 @@ export function CommentSection({ eventId, memberId }: CommentSectionProps) {
           created_at: data.created_at || new Date().toISOString(),
         }]);
         setText('');
+      } else {
+        setPostError("Couldn't post your comment. Please try again.");
       }
     } catch {
-      // silent fail
+      setPostError('Network error. Please try again.');
     } finally {
       setPosting(false);
     }
@@ -123,6 +137,17 @@ export function CommentSection({ eventId, memberId }: CommentSectionProps) {
     <div style={containerStyle}>
       {loading ? (
         <div style={{ fontSize: 12, color: 'var(--color-text-muted)', padding: 4 }}>Loading comments...</div>
+      ) : loadError ? (
+        <div style={{ fontSize: 12, color: 'var(--color-text-muted)', padding: 4 }}>
+          Couldn&apos;t load comments.{' '}
+          <button
+            type="button"
+            onClick={() => setRetryCount((c) => c + 1)}
+            style={{ background: 'none', border: 'none', color: 'var(--accent-hover, #FF2740)', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: 0 }}
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <>
           {comments.length === 0 && (
@@ -166,6 +191,10 @@ export function CommentSection({ eventId, memberId }: CommentSectionProps) {
             </div>
           ))}
         </>
+      )}
+
+      {postError && (
+        <div style={{ fontSize: 12, color: 'var(--color-red)', padding: 4, marginTop: 4 }}>{postError}</div>
       )}
 
       <div style={inputRowStyle}>

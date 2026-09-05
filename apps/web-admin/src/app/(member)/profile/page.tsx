@@ -146,6 +146,7 @@ export default function ProfilePage() {
     if (!member) return;
     setLoading(true);
     setError(null);
+    let cancelled = false;
 
     (async () => {
       try {
@@ -156,36 +157,41 @@ export default function ProfilePage() {
 
         if (!profileRes.ok) throw new Error('Failed to load profile');
         const profileJson = await profileRes.json();
-        setProfile(profileJson);
+        if (!cancelled) setProfile(profileJson);
 
         if (dnaRes.ok) {
           const dnaJson = await dnaRes.json();
-          if (dnaJson?.dna) setDna(dnaJson.dna);
+          if (dnaJson?.dna && !cancelled) setDna(dnaJson.dna);
         }
       } catch {
-        setError('Something went wrong. Please try again.');
+        if (!cancelled) setError('Something went wrong. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member?.id, retryCount]);
 
   // Lazy-load recovery telemetry for the Body Map tab
   useEffect(() => {
     if (activeTab !== 'bodymap' || muscleMapLoaded || !member) return;
+    let cancelled = false;
     (async () => {
       try {
         const res = await fetch(`/api/member/${member.id}/muscle-map`);
         if (res.ok) {
           const json = await res.json();
-          if (json?.muscleMap) setMuscleMap(json.muscleMap);
+          if (json?.muscleMap && !cancelled) setMuscleMap(json.muscleMap);
         }
       } catch {
         // Non-critical — tab shows its empty state
       } finally {
-        setMuscleMapLoaded(true);
+        if (!cancelled) setMuscleMapLoaded(true);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [activeTab, muscleMapLoaded, member?.id]);
 
   if (memberLoading) {
@@ -227,7 +233,7 @@ export default function ProfilePage() {
     <SkeletonGate loading={loading} skeleton={<ProfileSkeleton />}>
       {profile && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, paddingTop: 16 }}>
-          {/* Top bar — serif NEXTERA wordmark + settings gear
+          {/* Top bar — serif NEXERA wordmark + settings gear
               (mirrors mobile ProfileHeader topRow) */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{
@@ -237,7 +243,7 @@ export default function ProfilePage() {
               textTransform: 'uppercase',
               color: 'var(--color-text-primary)',
             }}>
-              NEXTERA
+              NEXERA
             </span>
             <Link
               href="/profile/settings"

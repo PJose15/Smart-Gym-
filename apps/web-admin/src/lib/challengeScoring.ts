@@ -9,6 +9,53 @@ interface SessionScoreInput {
 }
 
 /**
+ * Upper bound for a single session's volume contribution to a challenge.
+ * Session volume is member-writable via the sets append path, so an inflated
+ * row must not translate into an unbounded score jump. 100,000 lbs is far
+ * beyond any real single session.
+ */
+const MAX_SESSION_VOLUME_LBS = 100_000;
+
+/**
+ * Atomically increments a participant's score.
+ * Prefers the `increment_challenge_score` RPC (single UPDATE with expression —
+ * migration 043 draft); falls back to read-modify-write when the function is
+ * not deployed yet. Returns the new score, or null on failure.
+ */
+async function incrementScore(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: SupabaseClient<any, 'public', any>,
+  participationId: string,
+  increment: number,
+  fallbackCurrentScore: number
+): Promise<number | null> {
+  const { data: rpcScore, error: rpcError } = await admin.rpc('increment_challenge_score', {
+    p_participation_id: participationId,
+    p_increment: increment,
+  });
+
+  if (!rpcError && typeof rpcScore === 'number') {
+    return rpcScore;
+  }
+
+  // RPC missing (pre-043) or failed — legacy non-atomic path
+  const newScore = fallbackCurrentScore + increment;
+  const { error: updateError } = await admin
+    .from('challenge_participants')
+    .update({
+      current_score: newScore,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', participationId);
+
+  if (updateError) {
+    console.error('[challengeScoring] score update failed:', updateError.message);
+    return null;
+  }
+  return newScore;
+}
+
+/**
  * Updates challenge scores for a member after session completion.
  * Fire-and-forget — errors are logged but don't block the response.
  */
@@ -46,7 +93,12 @@ export async function updateChallengeScores(admin: SupabaseClient<any, 'public',
 
       switch (challenge.challenge_type) {
         case 'volume':
-          scoreIncrement = sessionData.total_volume_lbs;
+          // Clamp to sane bounds — session volume is influenced by
+          // member-writable sets, so cap the per-session contribution.
+          scoreIncrement = Math.min(
+            Math.max(sessionData.total_volume_lbs, 0),
+            MAX_SESSION_VOLUME_LBS
+          );
           break;
         case 'sessions':
           scoreIncrement = 1;
@@ -105,15 +157,14 @@ export async function updateChallengeScores(admin: SupabaseClient<any, 'public',
         newScore = directScore;
       } else {
         if (scoreIncrement <= 0) continue;
-        newScore = Number(participation.current_score) + scoreIncrement;
-
-        await admin
-          .from('challenge_participants')
-          .update({
-            current_score: newScore,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', participation.id);
+        const incremented = await incrementScore(
+          admin,
+          participation.id,
+          scoreIncrement,
+          Number(participation.current_score)
+        );
+        if (incremented === null) continue;
+        newScore = incremented;
       }
 
       // Update top_score if new high

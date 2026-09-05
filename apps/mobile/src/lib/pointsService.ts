@@ -14,7 +14,9 @@ export interface PointsSummary {
 
 /**
  * Fetches the points ledger for the current user in a given gym.
- * Returns total points and the last 10 entries.
+ * Returns total points (aggregated over ALL ledger rows, paged in chunks —
+ * summing only the last 10 undercounts any active member) and the last 10
+ * entries for display.
  */
 export async function getPointsSummary(
     profileId: string,
@@ -31,7 +33,25 @@ export async function getPointsSummary(
     if (error) throw error;
 
     const entries = (data ?? []) as PointsEntry[];
-    const total = entries.reduce((sum, e) => sum + e.points, 0);
+
+    // Aggregate the full ledger in pages (PostgREST caps a single response
+    // at max-rows, so one un-limited select can silently truncate).
+    const PAGE_SIZE = 1000;
+    const MAX_PAGES = 50; // safety cap: 50k rows
+    let total = 0;
+    for (let page = 0; page < MAX_PAGES; page++) {
+        const { data: pageRows, error: pageErr } = await supabase
+            .from('points_ledger')
+            .select('points')
+            .eq('profile_id', profileId)
+            .eq('gym_id', gymId)
+            .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+
+        if (pageErr) throw pageErr;
+        const rows = (pageRows ?? []) as Array<{ points: number | null }>;
+        total += rows.reduce((sum, r) => sum + (r.points ?? 0), 0);
+        if (rows.length < PAGE_SIZE) break;
+    }
 
     return { total, entries };
 }

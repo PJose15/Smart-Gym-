@@ -66,6 +66,42 @@ describe('formatFeedEvent', () => {
       });
       expect(formatFeedEvent(event, 'lbs')).toBe('hit a new personal best — 225 lbs!');
     });
+
+    it('includes machine_name when present (pr-check enriched context)', () => {
+      const event = baseEvent({
+        event_type: 'pr_weight',
+        context_data: { best_weight_lbs: 225, machine_name: 'Chest Press', pr_type: 'weight' },
+      });
+      expect(formatFeedEvent(event, 'lbs')).toBe('hit a new personal best on Chest Press — 225 lbs!');
+    });
+  });
+
+  describe('pr_volume', () => {
+    it('rebuilds volume in kg with machine_name', () => {
+      const event = baseEvent({
+        event_type: 'pr_volume',
+        context_data: { volume_lbs: 12500, machine_name: 'Leg Press', pr_type: 'volume' },
+      });
+      // 12500 × 0.45359237 = 5669.9 → 5.7k kg
+      expect(formatFeedEvent(event, 'kg')).toBe('hit a volume PR on Leg Press — 5.7k kg!');
+    });
+
+    it('rebuilds volume in lbs without machine_name', () => {
+      const event = baseEvent({
+        event_type: 'pr_volume',
+        context_data: { volume_lbs: 12500 },
+      });
+      expect(formatFeedEvent(event, 'lbs')).toBe('hit a volume PR — 12.5k lbs!');
+    });
+
+    it('falls back to description when volume_lbs missing', () => {
+      const event = baseEvent({
+        event_type: 'pr_volume',
+        description: 'New volume PR!',
+        context_data: { pr_type: 'volume' },
+      });
+      expect(formatFeedEvent(event, 'kg')).toBe('New volume PR!');
+    });
   });
 
   describe('goal_reached', () => {

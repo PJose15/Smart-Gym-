@@ -107,6 +107,38 @@ describe('computeHeroState variant selection', () => {
     expect(result.headline).toContain('Bench Press');
   });
 
+  test('pr-recent formats kg-canonical PR weight in lbs for lbs members', () => {
+    const today = new Date(NOW - 2 * 60 * 60 * 1000).toISOString();
+    const result = computeHeroState(withInput({
+      lastSessionIsPR: true,
+      lastSessionDate: today,
+      lastSessionPRMachine: 'Bench Press',
+      lastSessionPRWeight: 100, // kg (PRDetection is kg-canonical)
+      lastSessionPRImprovement: 5,
+      weightUnit: 'lbs',
+    }));
+    expect(result.variant).toBe('pr-recent');
+    expect(result.subline).toContain('220 lbs'); // 100 kg → 220 lbs
+    expect(result.subline).toContain('+11 lbs'); // 5 kg → 11 lbs
+    expect(result.metric).toEqual({ value: '+11', label: 'lbs improvement' });
+  });
+
+  test('pr-recent keeps kg values for kg members', () => {
+    const today = new Date(NOW - 2 * 60 * 60 * 1000).toISOString();
+    const result = computeHeroState(withInput({
+      lastSessionIsPR: true,
+      lastSessionDate: today,
+      lastSessionPRMachine: 'Bench Press',
+      lastSessionPRWeight: 100,
+      lastSessionPRImprovement: 2.5,
+      weightUnit: 'kg',
+    }));
+    expect(result.variant).toBe('pr-recent');
+    expect(result.subline).toContain('100 kg');
+    expect(result.subline).toContain('+2.5 kg');
+    expect(result.metric).toEqual({ value: '+2.5', label: 'kg improvement' });
+  });
+
   test('streak-milestone at 7 days with session today', () => {
     const result = computeHeroState(withInput({ streak: 7, todaySessionCount: 1 }));
     expect(result.variant).toBe('streak-milestone');

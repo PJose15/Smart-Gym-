@@ -16,6 +16,7 @@ export interface UseLeaderboardReturn {
   setPeriod: (p: LeaderboardPeriod) => void;
   rankChange: RankChange | null;
   clearRankChange: () => void;
+  refresh: () => void;
 }
 
 export function useLeaderboard(memberId: string, gymId: string): UseLeaderboardReturn {
@@ -24,6 +25,7 @@ export function useLeaderboard(memberId: string, gymId: string): UseLeaderboardR
   const [period, setPeriodRaw] = useState<LeaderboardPeriod>('weekly');
   const [rankChange, setRankChange] = useState<RankChange | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Track previous rank per period (survives re-renders, resets on remount)
   const prevRankRef = useRef<Record<LeaderboardPeriod, number | null>>({
@@ -40,12 +42,17 @@ export function useLeaderboard(memberId: string, gymId: string): UseLeaderboardR
     setRankChange(null);
   }, []);
 
+  const refresh = useCallback(() => {
+    setRetryCount((c) => c + 1);
+  }, []);
+
   useEffect(() => {
     if (!memberId || !gymId) {
       setLoading(false);
       return;
     }
     setLoading(true);
+    setError(null);
 
     let cancelled = false;
 
@@ -54,7 +61,12 @@ export function useLeaderboard(memberId: string, gymId: string): UseLeaderboardR
         const res = await fetch(
           `/api/member/leaderboard?member_id=${memberId}&gym_id=${gymId}&period=${period}&limit=50`
         );
-        if (!res.ok || cancelled) return;
+        if (cancelled) return;
+        if (!res.ok) {
+          // HTTP errors used to bail silently, masquerading as an empty board
+          setError('Failed to load leaderboard');
+          return;
+        }
         const json: LeaderboardResponse = await res.json();
         if (cancelled) return;
 
@@ -88,7 +100,7 @@ export function useLeaderboard(memberId: string, gymId: string): UseLeaderboardR
     })();
 
     return () => { cancelled = true; };
-  }, [memberId, gymId, period]);
+  }, [memberId, gymId, period, retryCount]);
 
-  return { data, loading, error, period, setPeriod, rankChange, clearRankChange };
+  return { data, loading, error, period, setPeriod, rankChange, clearRankChange, refresh };
 }

@@ -502,6 +502,15 @@ export default function MembersPage() {
                       <td
                         style={{ ...tdStyle, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-blue-light)', cursor: m.user_id ? 'pointer' : 'default' }}
                         onClick={() => { if (m.user_id) router.push(`/members/${m.user_id}`); }}
+                        onKeyDown={(e) => {
+                          if (m.user_id && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            router.push(`/members/${m.user_id}`);
+                          }
+                        }}
+                        tabIndex={m.user_id ? 0 : undefined}
+                        role={m.user_id ? 'link' : undefined}
+                        aria-label={m.user_id ? `View ${m.display_name ?? 'member'} details` : undefined}
                       >
                         {m.display_name ?? 'Unknown'}
                       </td>

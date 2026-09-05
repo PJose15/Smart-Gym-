@@ -7,7 +7,7 @@
  * All weights cross this boundary in POUNDS (canonical storage unit).
  */
 import { apiFetch } from './api';
-import { enqueueEvent } from './offlineQueue';
+import { enqueueEvent, type ReplayResult } from './offlineQueue';
 
 /** Queue table name used for offline set replays (not a real DB table). */
 export const OFFLINE_SET_QUEUE_TABLE = 'api:log-set';
@@ -104,16 +104,24 @@ export async function logSet(
 export async function replayQueuedSet(
   table: string,
   payload: Record<string, unknown>,
-): Promise<boolean> {
+): Promise<ReplayResult> {
   if (table !== OFFLINE_SET_QUEUE_TABLE) return false;
   try {
     const res = await apiFetch('/api/sessions', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    return !!res?.ok;
-  } catch {
+    if (!res) return false; // no API base / no auth session — retry later
+    if (res.ok) return true;
+    // 4xx (bad payload, auth, gone resource) will never succeed on retry —
+    // drop it so one poison item can't clog the queue forever. 408/429 are
+    // transient despite being 4xx. 5xx stays queued.
+    if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) {
+      return 'drop';
+    }
     return false;
+  } catch {
+    return false; // network failure — keep queued
   }
 }
 

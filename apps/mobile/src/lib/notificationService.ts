@@ -62,10 +62,19 @@ export async function registerForPushNotifications(): Promise<string | null> {
       });
     }
 
+    // getExpoPushTokenAsync throws on device builds without an EAS projectId
+    // (set by `eas init` under expo.extra.eas.projectId). Degrade gracefully:
+    // skip push registration instead of relying on the outer catch.
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: projectId ?? undefined,
-    });
+    if (!projectId) {
+      if (__DEV__) {
+        console.warn(
+          '[pushToken] No EAS projectId in app config — push registration skipped. Run `eas init` to enable push notifications.',
+        );
+      }
+      return null;
+    }
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
     const token = tokenData.data;
 
     // Save token to Supabase (upsert â€” idempotent)
@@ -99,9 +108,8 @@ export async function registerForPushNotifications(): Promise<string | null> {
 export async function unregisterPushToken(): Promise<void> {
   try {
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: projectId ?? undefined,
-    });
+    if (!projectId) return; // never registered without a projectId — nothing to deactivate
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
     const {
       data: { user },
     } = await supabase.auth.getUser();

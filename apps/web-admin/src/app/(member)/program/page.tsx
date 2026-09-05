@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { extractAiProgramDays } from '@nexera/utils';
 import { useMember } from '@/lib/contexts/MemberContext';
 import { SkeletonGate } from '@/components/skeleton';
 import { ProgramPageSkeleton } from './components/ProgramPageSkeleton';
@@ -33,7 +34,8 @@ interface ProgramData {
   sessions_completed: number;
   sessions_total: number;
   on_track: boolean;
-  program_data: { days: ProgramDay[] };
+  /** Raw ai_programs.program_data JSON — `{ days }` or `{ weeks: [{ days }] }`. */
+  program_data: unknown;
   generated_by: string;
   trainer_approved: boolean;
   trainer_name: string | null;
@@ -52,19 +54,22 @@ export default function ProgramPage() {
 
     setLoading(true);
     setError(null);
+    let cancelled = false;
 
     (async () => {
       try {
         const res = await fetch(`/api/member/${member.id}/program`);
         if (!res.ok) throw new Error('Failed to load');
         const json = await res.json();
-        setProgram(json.program);
+        if (!cancelled) setProgram(json.program);
       } catch {
-        setError('Something went wrong. Please try again.');
+        if (!cancelled) setError('Something went wrong. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member, retryCount]);
 
   if (error) {
@@ -112,7 +117,8 @@ export default function ProgramPage() {
           />
 
           {(() => {
-            const days = program.program_data?.days ?? [];
+            // Handles both { days } and { weeks: [{ days }] } shaped rows.
+            const days = extractAiProgramDays<ProgramDay>(program.program_data);
             const todayIdx = program.sessions_per_week > 0
               ? ((program.day_number - 1) % program.sessions_per_week + program.sessions_per_week) % program.sessions_per_week
               : -1;

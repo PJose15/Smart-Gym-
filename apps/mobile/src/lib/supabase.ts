@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 // expo-secure-store has a 2048-byte value limit on iOS.
 // Supabase auth tokens can exceed this. We chunk large values.
@@ -109,3 +109,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+// React Native has no browser visibility events, so supabase-js can't tell
+// when the app is backgrounded — its refresh timer is suspended by the OS and
+// tokens silently expire. Tie the auto-refresh loop to AppState instead
+// (standard Supabase RN pattern): refresh while active, pause in background.
+// A refresh is triggered immediately on foregrounding if the token is stale.
+if (Platform.OS !== 'web') {
+  supabase.auth.startAutoRefresh();
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') {
+      supabase.auth.startAutoRefresh();
+    } else {
+      supabase.auth.stopAutoRefresh();
+    }
+  });
+}

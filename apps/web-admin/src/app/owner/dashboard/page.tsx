@@ -57,7 +57,10 @@ export default function OwnerDashboardPage() {
 
     async function fetchDashboard() {
       try {
-        const res = await fetch('/api/owner/dashboard', { signal: controller.signal });
+        const [res, activityRes] = await Promise.all([
+          fetch('/api/owner/dashboard', { signal: controller.signal }),
+          fetch('/api/owner/activity', { signal: controller.signal }),
+        ]);
         if (!mountedRef.current) return;
         if (!res.ok) {
           setRefreshError(`Failed to refresh (HTTP ${res.status})`);
@@ -65,8 +68,15 @@ export default function OwnerDashboardPage() {
           return;
         }
         const dashboard = await res.json();
+        // Activity feed is best-effort — keep the previous list if it fails.
+        const activity: ActivityFeedItem[] | null = activityRes.ok
+          ? await activityRes.json()
+          : null;
         if (mountedRef.current) {
-          setData((prev) => ({ ...dashboard, activity: prev?.activity ?? [] }));
+          setData((prev) => ({
+            ...dashboard,
+            activity: activity ?? prev?.activity ?? [],
+          }));
           setRefreshError(null);
           setLoading(false);
         }
@@ -109,13 +119,13 @@ export default function OwnerDashboardPage() {
 
       {refreshError && (
         <div style={{
-          backgroundColor: 'var(--color-gold)22',
+          backgroundColor: 'color-mix(in srgb, var(--color-gold) 13%, transparent)',
           color: 'var(--color-gold)',
           padding: '10px 14px',
           borderRadius: 8,
           fontSize: 13,
           marginBottom: 16,
-          border: '1px solid var(--color-gold)44',
+          border: '1px solid color-mix(in srgb, var(--color-gold) 27%, transparent)',
         }}>
           {refreshError} — showing last loaded data.
         </div>

@@ -5,30 +5,8 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { resolveMemberGym } from '@/lib/auth/tenant';
 import { getReadinessScore } from '@/lib/readiness/readinessCache';
 import { getMuscleMap } from '@/lib/muscleMap/muscleMapCache';
+import { extractAiProgramDays } from '@nexera/utils';
 import type { HomeScreenData, ProgramContextData } from '@nexera/types';
-
-interface AiProgramDayJson {
-  day_number?: number;
-  name?: string;
-  exercises?: Array<{ exercise_name?: string; default_sets?: number; default_reps?: number }>;
-}
-
-/**
- * Extracts the day list from ai_programs.program_data JSON.
- * Handles both { days: [...] } and { weeks: [{ days: [...] }] } shapes
- * (mirrors apps/mobile/src/lib/workoutMode.ts).
- */
-function extractAiProgramDays(programData: unknown): AiProgramDayJson[] {
-  const pd = programData as {
-    days?: AiProgramDayJson[];
-    weeks?: Array<{ days?: AiProgramDayJson[] }>;
-  } | null;
-  if (Array.isArray(pd?.days) && pd.days.length > 0) return pd.days;
-  const firstWeek = Array.isArray(pd?.weeks)
-    ? pd.weeks.find((w) => Array.isArray(w?.days) && w.days.length > 0)
-    : undefined;
-  return firstWeek?.days ?? [];
-}
 
 /** Whole days elapsed since the assignment started (never negative). */
 function daysSince(dateStr: string): number {
@@ -133,7 +111,7 @@ export async function GET(request: NextRequest) {
       // 6. Recent gym feed events (join member for display_name)
       admin
         .from('gym_feed_events')
-        .select('id, event_type, display_text, context_data, created_at, comment_count, member_id, members(display_name)')
+        .select('id, event_type, display_text, context_data, created_at, member_id, members(display_name)')
         .eq('gym_id', gym_id)
         .order('created_at', { ascending: false })
         .limit(3),
@@ -403,14 +381,28 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build feed
-    const feed = (feedResult.data || []).map((e: Record<string, unknown>) => ({
+    // Build feed — reaction_count comes from feed_reactions (comment_count
+    // is a different metric and used to be passed off as reactions here).
+    const feedRows = (feedResult.data || []) as Array<Record<string, unknown>>;
+    const feedEventIds = feedRows.map((e) => e.id as string);
+    const reactionCountByEvent = new Map<string, number>();
+    if (feedEventIds.length > 0) {
+      const { data: feedReactions } = await admin
+        .from('feed_reactions')
+        .select('event_id')
+        .in('event_id', feedEventIds);
+      for (const r of (feedReactions ?? []) as Array<{ event_id: string }>) {
+        reactionCountByEvent.set(r.event_id, (reactionCountByEvent.get(r.event_id) ?? 0) + 1);
+      }
+    }
+
+    const feed = feedRows.map((e: Record<string, unknown>) => ({
       id: e.id as string,
       event_type: e.event_type as string,
       member_name: ((e.members as { display_name: string } | null)?.display_name) || 'Member',
       description: e.display_text as string,
       created_at: e.created_at as string,
-      reaction_count: (e.comment_count as number) || 0,
+      reaction_count: reactionCountByEvent.get(e.id as string) ?? 0,
       context_data: (e.context_data as Record<string, unknown>) || {},
     }));
 

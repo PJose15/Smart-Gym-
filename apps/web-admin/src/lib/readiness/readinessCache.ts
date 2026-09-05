@@ -76,9 +76,15 @@ export async function invalidateAndRefreshReadiness(
   await getReadinessScore(memberId, gymId, admin);
 }
 
+/**
+ * Max cache age within the same cache_date. Explicit invalidation via
+ * invalidateAndRefreshReadiness handles session completions; the max-age
+ * bounds staleness for everything else (the date key alone would otherwise
+ * serve an entry computed just after UTC midnight for a full 24h).
+ */
+const MAX_CACHE_AGE_MS = 6 * 60 * 60 * 1000;
+
 function isCacheValid(cached: { computed_at: string }): boolean {
-  // Date-based validity only — explicit invalidation via
-  // invalidateAndRefreshReadiness handles session completions.
   const computedAt = new Date(cached.computed_at).getTime();
-  return !isNaN(computedAt) && computedAt > 0;
+  return !isNaN(computedAt) && Date.now() - computedAt < MAX_CACHE_AGE_MS;
 }

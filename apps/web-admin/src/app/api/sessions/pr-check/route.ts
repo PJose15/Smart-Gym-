@@ -4,6 +4,7 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { z } from 'zod';
 import { uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { formatVolume, formatWeight } from '@/lib/weight';
 
 const prCheckSchema = z.object({
   session_id: uuidString,
@@ -71,7 +72,12 @@ export async function POST(request: NextRequest) {
     // First session on this machine = always a PR
     if (!history || history.length === 0) {
       await markPR(admin, session_id, member_id, 'first_session', effectiveWeight, null);
-      await insertFeedEvent(admin, session_id, member_id, machine_id, 'first_session');
+      await insertFeedEvent(admin, session_id, member_id, machine_id, {
+        prType: 'first_session',
+        value: effectiveWeight,
+        previousValue: null,
+        improvementPct: null,
+      });
 
       return NextResponse.json({
         pr: {
@@ -93,7 +99,12 @@ export async function POST(request: NextRequest) {
         Math.round(((effectiveWeight - historicalBestWeight) / historicalBestWeight) * 1000) / 10;
 
       await markPR(admin, session_id, member_id, 'weight', effectiveWeight, historicalBestWeight);
-      await insertFeedEvent(admin, session_id, member_id, machine_id, 'weight');
+      await insertFeedEvent(admin, session_id, member_id, machine_id, {
+        prType: 'weight',
+        value: effectiveWeight,
+        previousValue: historicalBestWeight,
+        improvementPct,
+      });
 
       return NextResponse.json({
         pr: {
@@ -118,7 +129,12 @@ export async function POST(request: NextRequest) {
         Math.round(((currentTotalVolume - historicalBestVolume) / historicalBestVolume) * 1000) / 10;
 
       await markPR(admin, session_id, member_id, 'volume', currentTotalVolume, historicalBestVolume);
-      await insertFeedEvent(admin, session_id, member_id, machine_id, 'volume');
+      await insertFeedEvent(admin, session_id, member_id, machine_id, {
+        prType: 'volume',
+        value: currentTotalVolume,
+        previousValue: historicalBestVolume,
+        improvementPct,
+      });
 
       return NextResponse.json({
         pr: {
@@ -156,7 +172,44 @@ async function markPR(admin: SupabaseClient, sessionId: string, memberId: string
     .eq('member_id', memberId);
 }
 
-async function insertFeedEvent(admin: SupabaseClient, sessionId: string, memberId: string, machineId: string, prType: string) {
+interface PRFeedInfo {
+  prType: 'first_session' | 'weight' | 'volume';
+  /** Best weight (lbs) for weight/first_session PRs; session volume (lbs) for volume PRs. */
+  value: number;
+  previousValue: number | null;
+  improvementPct: number | null;
+}
+
+/** Coerce an unknown context value into a finite number, or null. */
+function ctxNumber(ctx: Record<string, unknown>, key: string): number | null {
+  const v = ctx[key];
+  return typeof v === 'number' && Number.isFinite(v) ? v : null;
+}
+
+/**
+ * PR feed events (pr_weight / pr_volume) are OWNED by this route — it is the
+ * single producer. `lib/feedGenerator.ts` intentionally does not create PR
+ * events (it used to, and its daily dedupe was shadowed by the rows written
+ * here).
+ *
+ * `context_data` carries everything `formatFeedEvent` (web) /
+ * `formatFeedEventText` (mobile) need to rebuild the description in the
+ * viewer's weight unit: best_weight_lbs / volume_lbs, machine_name, pr_type,
+ * previous_best_lbs, improvement_pct. `display_text` is the lbs-baked
+ * fallback and never includes the member name (the UI renders the bold
+ * name span separately).
+ *
+ * Dedupe: max ONE PR feed event per member per UTC day. A better PR later
+ * the same day upgrades the existing event in place; a weight PR replaces a
+ * same-day volume PR (weight outranks volume, mirroring detection order).
+ */
+async function insertFeedEvent(
+  admin: SupabaseClient,
+  sessionId: string,
+  memberId: string,
+  machineId: string,
+  info: PRFeedInfo
+) {
   // Get gym_id from session
   const { data: session } = await admin
     .from('workout_sessions')
@@ -166,17 +219,91 @@ async function insertFeedEvent(admin: SupabaseClient, sessionId: string, memberI
 
   if (!session) return;
 
-  const eventType = prType === 'volume' ? 'pr_volume' : 'pr_weight';
-  const displayText = prType === 'first_session'
-    ? 'First time on this machine!'
-    : `New ${prType} PR!`;
+  const { data: machine } = await admin
+    .from('machines')
+    .select('name')
+    .eq('id', machineId)
+    .maybeSingle();
+  const machineName: string | null = machine?.name ?? null;
+  const onPart = machineName ? ` on ${machineName}` : '';
+
+  const eventType = info.prType === 'volume' ? 'pr_volume' : 'pr_weight';
+  const contextData: Record<string, unknown> = {
+    session_id: sessionId,
+    machine_id: machineId,
+    machine_name: machineName,
+    pr_type: info.prType,
+    previous_best_lbs: info.previousValue,
+    improvement_pct: info.improvementPct,
+  };
+
+  let displayText: string;
+  if (info.prType === 'volume') {
+    contextData.volume_lbs = info.value;
+    displayText = `hit a volume PR${onPart} — ${formatVolume(info.value, 'lbs')}!`;
+  } else if (info.prType === 'weight') {
+    contextData.best_weight_lbs = info.value;
+    displayText = `hit a new personal best${onPart} — ${formatWeight(info.value, 'lbs')}!`;
+  } else {
+    // first_session carries no unit-bearing number in the text, so clients
+    // pass display_text through unchanged (no context weight to rebuild).
+    displayText = machineName
+      ? `logged a first session on ${machineName}!`
+      : 'logged a first session on a new machine!';
+  }
+
+  const priority = info.prType === 'weight' ? 'high' : 'medium';
+
+  // Daily dedupe / in-place upgrade
+  const today = new Date().toISOString().split('T')[0];
+  const { data: existingRows } = await admin
+    .from('gym_feed_events')
+    .select('id, event_type, context_data')
+    .eq('member_id', memberId)
+    .in('event_type', ['pr_weight', 'pr_volume'])
+    .gte('created_at', `${today}T00:00:00Z`)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  const existing = existingRows?.[0] as
+    | { id: string; event_type: string; context_data: Record<string, unknown> | null }
+    | undefined;
+
+  if (existing) {
+    // first_session never upgrades an existing PR event.
+    if (info.prType === 'first_session') return;
+
+    const existingCtx = existing.context_data ?? {};
+    const existingValue =
+      eventType === 'pr_weight'
+        ? ctxNumber(existingCtx, 'best_weight_lbs')
+        : ctxNumber(existingCtx, 'volume_lbs');
+
+    const weightOverVolume =
+      eventType === 'pr_weight' && existing.event_type === 'pr_volume';
+    const sameTypeImproved =
+      existing.event_type === eventType &&
+      (existingValue == null || info.value > existingValue);
+
+    if (!weightOverVolume && !sameTypeImproved) return;
+
+    await admin
+      .from('gym_feed_events')
+      .update({
+        event_type: eventType,
+        display_text: displayText,
+        context_data: contextData,
+        priority,
+      })
+      .eq('id', existing.id);
+    return;
+  }
 
   await admin.from('gym_feed_events').insert({
     gym_id: session.gym_id,
     member_id: memberId,
     event_type: eventType,
     display_text: displayText,
-    context_data: { session_id: sessionId, machine_id: machineId, pr_type: prType },
-    priority: prType === 'weight' ? 'high' : 'medium',
+    context_data: contextData,
+    priority,
   });
 }

@@ -90,6 +90,44 @@ export function getTodaysProgramDay(
   return (daysDiff % totalDays) + 1;
 }
 
+// ─── AI Program day extraction ──────────────────────────
+
+export interface AiProgramExerciseJson {
+  exercise_name?: string;
+  machine_id?: string | null;
+  default_sets?: number;
+  default_reps?: number;
+}
+
+export interface AiProgramDayJson {
+  day_number?: number;
+  name?: string;
+  exercises?: AiProgramExerciseJson[];
+}
+
+/**
+ * Extracts the day rotation from an `ai_programs.program_data` JSON blob.
+ * Canonical shape is `{ days: [...] }`; some rows nest days under
+ * `{ weeks: [{ days: [...] }] }` — falls back to the first week that has
+ * a non-empty day list. Returns `[]` for null/malformed data.
+ *
+ * The generic lets callers keep their stricter local day type; the data is
+ * untrusted JSON either way, so shape-validate fields before relying on them.
+ */
+export function extractAiProgramDays<TDay = AiProgramDayJson>(
+  programData: unknown,
+): TDay[] {
+  const pd = programData as {
+    days?: TDay[];
+    weeks?: Array<{ days?: TDay[] }>;
+  } | null;
+  if (Array.isArray(pd?.days) && pd.days.length > 0) return pd.days;
+  const firstWeek = Array.isArray(pd?.weeks)
+    ? pd.weeks.find((w) => Array.isArray(w?.days) && w.days.length > 0)
+    : undefined;
+  return firstWeek?.days ?? [];
+}
+
 /**
  * Formats a weight value to a human-readable string.
  */

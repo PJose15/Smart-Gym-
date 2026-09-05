@@ -96,7 +96,7 @@ function makeAdmin(
 
   const CHAIN_METHODS = [
     'select', 'insert', 'update', 'delete', 'upsert',
-    'eq', 'neq', 'is', 'in', 'lt', 'gt', 'not',
+    'eq', 'neq', 'is', 'in', 'lt', 'gt', 'gte', 'not',
     'order', 'limit', 'range', 'single', 'maybeSingle',
   ];
 

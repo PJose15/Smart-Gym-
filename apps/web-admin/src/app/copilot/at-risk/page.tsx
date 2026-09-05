@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
-import { computeAtRiskMembers } from '@nexera/ai-assist';
-import type { MemberData, AtRiskMember } from '@nexera/ai-assist';
+import type { AtRiskMember } from '@nexera/ai-assist';
 
 // ─── Styles ─────────────────────────────────────────────
 
@@ -50,7 +49,7 @@ const reasonBadge = (type: string): CSSProperties => ({
   ...badgeStyle,
   backgroundColor:
     type === 'no_workouts_7d' ? 'var(--color-gold-subtle)' :
-    type === 'repeated_discomfort' ? 'var(--color-red-light)' :
+    type === 'repeated_discomfort' ? 'var(--color-red-subtle)' :
     'var(--accent-subtle)',
   color:
     type === 'no_workouts_7d' ? 'var(--color-gold)' :
@@ -66,7 +65,7 @@ const emptyStateStyle: CSSProperties = {
 };
 
 const errorStyle: CSSProperties = {
-  backgroundColor: 'var(--color-red-light)',
+  backgroundColor: 'var(--color-red-subtle)',
   color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
@@ -109,99 +108,36 @@ const statsChipStyle: CSSProperties = {
 // ─── Component ──────────────────────────────────────────
 
 export default function AtRiskPage() {
+  const { authed } = useStaffAuth();
   const [members, setMembers] = useState<AtRiskMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchAtRiskMembers();
-  }, []);
+    if (!authed) return;
+    let cancelled = false;
 
-  async function fetchAtRiskMembers() {
-    try {
-      // Fetch members assigned to current trainer
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-
-      const { data: assignments, error: assignErr } = await supabase
-        .from('trainer_assignments')
-        .select('member_profile_id')
-        .eq('trainer_profile_id', user.id)
-        .eq('status', 'active');
-
-      if (assignErr) throw assignErr;
-
-      if (!assignments || assignments.length === 0) {
-        setMembers([]);
-        setLoading(false);
-        return;
+    // ST-H3: trainer reads of workout_sessions / feedback_discomfort_summary
+    // are RLS-blocked from the client (silently zero) — go through the
+    // gym-scoped server route instead.
+    (async () => {
+      try {
+        const res = await fetch('/api/trainer/at-risk');
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? 'Failed to load at-risk members');
+        }
+        const data = await res.json();
+        if (!cancelled) setMembers((data.members as AtRiskMember[]) ?? []);
+      } catch (err: unknown) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load at-risk members');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
+    })();
 
-      const memberIds = assignments.map((a) => a.member_profile_id);
-
-      // trainer_assignments.member_profile_id is a users.id; workout_sessions
-      // keys on members.id — map through the members table.
-      const { data: memberRows, error: memberErr } = await supabase
-        .from('members')
-        .select('id, user_id')
-        .in('user_id', memberIds);
-
-      if (memberErr) throw memberErr;
-
-      const memberRowIds = (memberRows ?? []).map((m) => m.id);
-      const userIdByMemberId = new Map<string, string | null>(
-        (memberRows ?? []).map((m) => [m.id, m.user_id]),
-      );
-
-      // Fetch profiles, completed sessions, and discomfort in parallel
-      const [profilesRes, sessionsRes, discomfortRes] = await Promise.all([
-        supabase.from('profiles').select('id, full_name').in('id', memberIds),
-        supabase.from('workout_sessions').select('member_id, completed_at, session_date').in('member_id', memberRowIds).not('completed_at', 'is', null).order('completed_at', { ascending: false }),
-        supabase.from('feedback_discomfort_summary').select('profile_id, discomfort_count_7d, top_body_areas_7d').in('profile_id', memberIds),
-      ]);
-
-      if (profilesRes.error) throw profilesRes.error;
-      if (sessionsRes.error) throw sessionsRes.error;
-      const profiles = profilesRes.data;
-      const discomfortData = discomfortRes.data;
-
-      // Most recent completed session per user id (rows are sorted desc)
-      const lastCompletedByUser = new Map<string, string>();
-      for (const s of sessionsRes.data ?? []) {
-        const uid = userIdByMemberId.get(s.member_id);
-        if (!uid || lastCompletedByUser.has(uid)) continue;
-        lastCompletedByUser.set(uid, s.completed_at);
-      }
-
-      // Build MemberData array
-      interface DiscomfortSummary {
-        profile_id: string;
-        discomfort_count_7d?: number;
-        top_body_areas_7d?: string[];
-      }
-
-      const memberDataList: MemberData[] = memberIds.map((pid) => {
-        const profile = profiles?.find((p) => p.id === pid);
-        const discomfort = discomfortData?.find((d) => d.profile_id === pid) as DiscomfortSummary | undefined;
-
-        return {
-          profileId: pid,
-          memberName: profile?.full_name ?? 'Unknown',
-          lastWorkoutAt: lastCompletedByUser.get(pid) ?? null,
-          discomfortCount7d: discomfort?.discomfort_count_7d ?? 0,
-          discomfortBodyAreas: discomfort?.top_body_areas_7d ?? [],
-          plateauExercises: [], // Plateau detection requires additional query logic
-        };
-      });
-
-      const atRisk = computeAtRiskMembers(memberDataList);
-      setMembers(atRisk);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load at-risk members');
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => { cancelled = true; };
+  }, [authed]);
 
   if (loading) {
     return (
@@ -232,9 +168,9 @@ export default function AtRiskPage() {
           const plateauCount = allReasons.filter((r) => r.type === 'plateauing').length;
           return (
             <div style={statsStripStyle}>
-              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{members.length} at-risk member{members.length !== 1 ? 's' : ''}</span>
+              <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red)' }}>{members.length} at-risk member{members.length !== 1 ? 's' : ''}</span>
               {inactiveCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold)' }}>{inactiveCount} inactive</span>}
-              {discomfortCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{discomfortCount} discomfort</span>}
+              {discomfortCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red)' }}>{discomfortCount} discomfort</span>}
               {plateauCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--accent-subtle)', color: 'var(--color-purple)' }}>{plateauCount} plateauing</span>}
               <span style={statsChipStyle}>{allReasons.length} total flag{allReasons.length !== 1 ? 's' : ''}</span>
             </div>

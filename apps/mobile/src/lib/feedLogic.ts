@@ -5,8 +5,8 @@
  * feed events are stored with `display_text` baked in lbs and historically
  * with a `${member_name} ` prefix. The UI renders a bold member-name span
  * separately, so descriptions returned here NEVER include the name prefix.
- * Numeric event types (pr_weight, goal_reached, workout_share) are rebuilt
- * from `context_data` in the viewer's preferred weight unit.
+ * Numeric event types (pr_weight, pr_volume, goal_reached, workout_share)
+ * are rebuilt from `context_data` in the viewer's preferred weight unit.
  *
  * All functions are pure (no React, no Supabase) so they run under the
  * node ts-jest test environment.
@@ -154,19 +154,28 @@ export function formatFeedEventText(event: FeedEventLike, unit: WeightUnit): str
   const ctx = (event.context_data ?? {}) as Record<string, unknown>;
   const fallback = () => stripNamePrefix(event.description, event.member_name);
 
+  const machinePart = () => {
+    const machineName = typeof ctx.machine_name === 'string' ? ctx.machine_name : null;
+    return machineName ? ` on ${machineName}` : '';
+  };
+
   switch (event.event_type) {
     case 'pr_weight': {
       const lbs = numberOrNull(ctx.best_weight_lbs);
       if (lbs == null) return fallback();
-      return `hit a new personal best — ${formatWeightLbs(lbs, unit)}!`;
+      return `hit a new personal best${machinePart()} — ${formatWeightLbs(lbs, unit)}!`;
+    }
+
+    case 'pr_volume': {
+      const lbs = numberOrNull(ctx.volume_lbs);
+      if (lbs == null) return fallback();
+      return `hit a volume PR${machinePart()} — ${formatVolumeLbs(lbs, unit)}!`;
     }
 
     case 'goal_reached': {
       const target = numberOrNull(ctx.target_weight);
       if (target == null) return fallback();
-      const machineName = typeof ctx.machine_name === 'string' ? ctx.machine_name : null;
-      const machinePart = machineName ? ` on ${machineName}` : '';
-      return `hit their goal${machinePart} — ${formatWeightLbs(target, unit)}!`;
+      return `hit their goal${machinePart()} — ${formatWeightLbs(target, unit)}!`;
     }
 
     case 'workout_share': {

@@ -3,7 +3,10 @@
  * trainer program, or freestyle mode, and loads today's program context.
  */
 import { supabase } from './supabase';
-import { getTodaysProgramDay } from '@nexera/utils';
+import {
+  getTodaysProgramDay,
+  extractAiProgramDays as extractAiProgramDaysShared,
+} from '@nexera/utils';
 import { getMemberId } from './memberData';
 
 export type WorkoutMode = 'ai-program' | 'trainer-program' | 'freestyle';
@@ -45,19 +48,12 @@ interface AiProgramDayJson {
 
 /**
  * Extracts the day rotation from an ai_programs.program_data JSON blob.
- * Canonical shape is `{ days: [...] }`; some rows nest days under
- * `{ weeks: [{ days: [...] }] }` — fall back to the first week with days.
+ * Delegates to the shared @nexera/utils implementation (canonical
+ * `{ days: [...] }` with a `{ weeks: [{ days: [...] }] }` fallback);
+ * re-exported here so existing mobile imports keep working.
  */
 export function extractAiProgramDays(programData: unknown): AiProgramDayJson[] {
-  const pd = programData as {
-    days?: AiProgramDayJson[];
-    weeks?: Array<{ days?: AiProgramDayJson[] }>;
-  } | null;
-  if (Array.isArray(pd?.days) && pd.days.length > 0) return pd.days;
-  const firstWeek = Array.isArray(pd?.weeks)
-    ? pd.weeks.find((w) => Array.isArray(w?.days) && w.days.length > 0)
-    : undefined;
-  return firstWeek?.days ?? [];
+  return extractAiProgramDaysShared<AiProgramDayJson>(programData);
 }
 
 /** Loads mode context for an assignment that only carries an ai_program_id. */

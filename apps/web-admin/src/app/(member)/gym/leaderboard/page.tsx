@@ -5,6 +5,7 @@ import { useMember } from '@/lib/contexts/MemberContext';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { AnimatedLeaderboard } from '@/components/leaderboard/AnimatedLeaderboard';
 import { LeaderboardSkeleton } from '@/components/skeletons';
+import { BackButton } from '@/components/nav/BackButton';
 
 const RANK_MEDALS: Record<number, string> = {
   1: '\uD83E\uDD47',
@@ -64,7 +65,7 @@ function podiumCardStyle(rank: number, isCurrent: boolean): CSSProperties {
 
 export default function LeaderboardFullPage() {
   const { member, gym } = useMember();
-  const { data, loading, period, setPeriod, rankChange, clearRankChange } = useLeaderboard(
+  const { data, loading, error, period, setPeriod, rankChange, clearRankChange, refresh } = useLeaderboard(
     member?.id || '',
     gym?.id || ''
   );
@@ -79,10 +80,15 @@ export default function LeaderboardFullPage() {
 
   const entries = data?.entries || [];
   const topThree = entries.slice(0, 3);
-  const rest = entries.slice(3);
+  // Podium needs at least two entries to make visual sense; with a single
+  // entry (small gyms / quiet weeks) fall through to the plain ranked list
+  // so the lone leader still renders.
+  const showPodium = topThree.length >= 2;
+  const rest = showPodium ? entries.slice(3) : entries;
 
   return (
     <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)', paddingBottom: 100 }}>
+      <BackButton style={{ marginBottom: 8 }} />
       <h1 style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', margin: 0, marginBottom: 16 }}>
         Leaderboard
       </h1>
@@ -98,6 +104,28 @@ export default function LeaderboardFullPage() {
 
       {loading ? (
         <LeaderboardSkeleton />
+      ) : error ? (
+        <div style={{ textAlign: 'center', padding: 48 }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, margin: '0 0 16px' }}>
+            Couldn&apos;t load the leaderboard. Please try again.
+          </p>
+          <button
+            type="button"
+            onClick={refresh}
+            style={{
+              backgroundColor: 'var(--accent, #E0142F)',
+              color: 'var(--text-on-accent, #FFFFFF)',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 24px',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
       ) : entries.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 48, color: 'var(--color-text-muted)', fontSize: 14 }}>
           No activity for this period yet.
@@ -105,7 +133,7 @@ export default function LeaderboardFullPage() {
       ) : (
         <>
           {/* Podium */}
-          {topThree.length >= 2 && (
+          {showPodium && (
             <div style={podiumStyle}>
               {topThree.map(entry => (
                 <div key={entry.profile_id} style={podiumCardStyle(entry.rank, entry.is_current_user)}>

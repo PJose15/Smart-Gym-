@@ -421,7 +421,9 @@ Rules:
 const ACTION_FLAG_MAP: Record<string, string> = {
   coaching_insight: 'ai_coaching',
   coaching_tip: 'ai_coaching',
-  generate_program: 'ai_program_gen',
+  // Canonical seeded key (013) — 'ai_program_gen' was key drift that never
+  // existed in feature_flags.
+  generate_program: 'ai_program_generation',
   machine_mistakes: 'ai_coaching',
   rewrite_insight: 'ai_coaching',
 };
@@ -538,7 +540,9 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      if (flag && flag.is_enabled === false) {
+      // Fail-CLOSED: a missing flag row means disabled, matching every other
+      // flag check in the codebase (previously this failed open).
+      if (!flag || flag.is_enabled === false) {
         return new Response(JSON.stringify({ error: 'Feature disabled', code: 'FEATURE_DISABLED' }), {
           status: 403,
           headers,
@@ -608,6 +612,19 @@ Deno.serve(async (req: Request) => {
     // Audit log (fire-and-forget — Issue 11: log errors instead of swallowing)
     // profile_id is nullable (019_missing_tables.sql, ON DELETE SET NULL) —
     // internal service-role calls have no user, so log null.
+    // Health-PII minimization: injuries/limitations free-text is needed by the
+    // prompt but must NOT be persisted in the audit trail — store counts only.
+    const auditInputs: Record<string, unknown> = { ...payload };
+    if ('limitations' in auditInputs) {
+      auditInputs.limitations_count = Array.isArray(payload.limitations)
+        ? payload.limitations.length
+        : payload.limitations ? 1 : 0;
+      delete auditInputs.limitations;
+    }
+    if ('injuries' in auditInputs) {
+      auditInputs.injuries_redacted = true;
+      delete auditInputs.injuries;
+    }
     serviceClient
       .from('ai_audit_logs')
       .insert({
@@ -615,7 +632,7 @@ Deno.serve(async (req: Request) => {
         context: action === 'coaching_insight' ? 'coaching'
           : action === 'generate_program' ? 'program_gen'
           : action,
-        inputs: payload,
+        inputs: auditInputs,
         outputs: result,
       })
       .then(() => {})

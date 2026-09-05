@@ -16,6 +16,13 @@ const REACTION_EMOJI: Record<ReactionType, string> = {
   letsgo: '\uD83D\uDE80',
 };
 
+const REACTION_LABEL: Record<ReactionType, string> = {
+  strength: 'Strength',
+  fire: 'Fire',
+  champion: 'Champion',
+  letsgo: "Let's go",
+};
+
 const barStyle: CSSProperties = {
   display: 'flex',
   gap: 6,
@@ -43,19 +50,22 @@ export function ReactionBar({ reactions, myReactions, onToggle }: ReactionBarPro
   const types: ReactionType[] = ['strength', 'fire', 'champion', 'letsgo'];
 
   return (
-    <div style={barStyle}>
+    <div style={barStyle} role="group" aria-label="Reactions">
       {types.map(type => {
         const count = reactions[type];
         const isActive = myReactions.includes(type);
+        const label = `${REACTION_LABEL[type]} reaction${count > 0 ? ` (${count})` : ''}`;
         return (
           <button
             key={type}
             type="button"
             style={btnStyle(isActive)}
             onClick={() => onToggle(type)}
-            title={type}
+            title={REACTION_LABEL[type]}
+            aria-pressed={isActive}
+            aria-label={label}
           >
-            <span>{REACTION_EMOJI[type]}</span>
+            <span aria-hidden="true">{REACTION_EMOJI[type]}</span>
             {count > 0 && <span>{count}</span>}
           </button>
         );

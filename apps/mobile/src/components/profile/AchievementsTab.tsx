@@ -134,6 +134,9 @@ export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts
                   key={chip.key}
                   style={[styles.filterChip, filter === chip.key && styles.filterChipActive]}
                   onPress={() => setFilter(chip.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filter achievements: ${chip.label}`}
+                  accessibilityState={{ selected: filter === chip.key }}
                 >
                   <Text
                     style={[styles.filterText, filter === chip.key && styles.filterTextActive]}
@@ -201,6 +204,8 @@ export function AchievementsTab({ badges, streak, totalPoints, completedWorkouts
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setSelectedBadge(null)}
+          accessibilityRole="button"
+          accessibilityLabel="Close badge details"
         >
           <View style={styles.modalContent}>
             <View

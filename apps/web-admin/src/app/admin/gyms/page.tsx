@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, CSSProperties } from 'react';
+import { useEffect, useState, useCallback, useRef, CSSProperties } from 'react';
 import { MetricCard } from '@/components/owner/MetricCard';
 
 const spinnerStyle: CSSProperties = {
@@ -89,9 +89,9 @@ const tierColors: Record<string, { color: string; bg: string }> = {
 };
 
 const statusColors: Record<string, { color: string; bg: string }> = {
-  active: { color: 'var(--color-green)', bg: 'var(--color-green-light)' },
+  active: { color: 'var(--color-green)', bg: 'var(--color-green-subtle)' },
   trialing: { color: 'var(--color-blue)', bg: 'var(--color-blue-subtle)' },
-  past_due: { color: 'var(--color-red)', bg: 'var(--color-red-light)' },
+  past_due: { color: 'var(--color-red)', bg: 'var(--color-red-subtle)' },
   cancelled: { color: 'var(--color-text-muted)', bg: 'var(--color-bg-elevated)' },
 };
 
@@ -109,21 +109,31 @@ export default function AdminGymsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  // Guards against slow responses for stale filters overwriting newer results.
+  const fetchSeqRef = useRef(0);
+
+  // Debounce keystrokes — fetch 300 ms after the user stops typing.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchData = useCallback(() => {
+    const seq = ++fetchSeqRef.current;
     const params = new URLSearchParams({
       status: statusFilter,
       tier: tierFilter,
-      ...(search ? { search } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
     });
     fetch(`/api/admin/gyms?${params}`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load');
         return res.json();
       })
-      .then(setData)
-      .catch(() => setError('Failed to load gyms data.'));
-  }, [statusFilter, tierFilter, search]);
+      .then((d) => { if (seq === fetchSeqRef.current) setData(d); })
+      .catch(() => { if (seq === fetchSeqRef.current) setError('Failed to load gyms data.'); });
+  }, [statusFilter, tierFilter, debouncedSearch]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

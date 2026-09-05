@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState, CSSProperties } from 'react';
+import { useEffect, useRef, useState, CSSProperties } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -8,6 +8,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../../../components/PageHeader';
 import { AnimatedPage } from '../../../components/AnimatedPage';
 import {
@@ -18,7 +19,7 @@ import {
 } from '@nexera/utils';
 import type { SessionForTrend, TrendDataPoint } from '@nexera/utils';
 
-// ─── Types ──────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface ExerciseProgression {
   name: string;
@@ -46,7 +47,7 @@ interface SessionRow {
 
 type PeriodDays = 30 | 60 | 90;
 
-// ─── Styles ─────────────────────────────────────────────
+// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const cardStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
@@ -144,9 +145,10 @@ const statsChipStyle: CSSProperties = {
   color: 'var(--color-text-secondary)',
 };
 
-// ─── Component ──────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function MemberAnalyticsPage() {
+  const { authed } = useStaffAuth();
   const params = useParams();
   const memberId = params.id as string;
 
@@ -154,6 +156,8 @@ export default function MemberAnalyticsPage() {
   const [period, setPeriod] = useState<PeriodDays>(30);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Guards against a slow response for a previous period overwriting a newer one.
+  const fetchSeqRef = useRef(0);
 
   // Stats
   const [totalWorkouts, setTotalWorkouts] = useState(0);
@@ -166,10 +170,12 @@ export default function MemberAnalyticsPage() {
   const [exerciseProgressions, setExerciseProgressions] = useState<ExerciseProgression[]>([]);
 
   useEffect(() => {
+    if (!authed) return;
     fetchData(period);
-  }, [memberId, period]);
+  }, [authed, memberId, period]);
 
   async function fetchData(days: PeriodDays) {
+    const seq = ++fetchSeqRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -181,7 +187,7 @@ export default function MemberAnalyticsPage() {
         .maybeSingle();
       setMemberName(profile?.full_name ?? 'Unknown');
 
-      // [id] is a users.id; workout_sessions keys on members.id — map
+      // [id] is a users.id; workout_sessions keys on members.id â€” map
       // through the members table first.
       const { data: memberRows } = await supabase
         .from('members')
@@ -192,7 +198,7 @@ export default function MemberAnalyticsPage() {
 
       const sinceDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-      // Completed sessions in period — one row per (machine, day); sets is
+      // Completed sessions in period â€” one row per (machine, day); sets is
       // a JSONB array of { set_number, weight_lbs, reps, ... } (weights in lbs).
       const { data: sessionData, error: sessErr } = await supabase
         .from('workout_sessions')
@@ -203,6 +209,7 @@ export default function MemberAnalyticsPage() {
         .order('session_date', { ascending: true });
 
       if (sessErr) throw sessErr;
+      if (seq !== fetchSeqRef.current) return; // stale â€” a newer period fetch started
 
       const rows = (sessionData ?? []) as unknown as SessionRow[];
 
@@ -238,7 +245,7 @@ export default function MemberAnalyticsPage() {
       }
 
       // Build sessions for trend utils. SessionForTrend's set field is
-      // named weight_kg for legacy reasons but the math is unit-agnostic —
+      // named weight_kg for legacy reasons but the math is unit-agnostic â€”
       // we feed lbs and label the charts accordingly.
       const sessions: SessionForTrend[] = rows.map((r) => ({
         startedAt: r.session_date,
@@ -285,9 +292,10 @@ export default function MemberAnalyticsPage() {
       progressions.sort((a, b) => b.data.length - a.data.length);
       setExerciseProgressions(progressions.slice(0, 5));
     } catch (err: unknown) {
+      if (seq !== fetchSeqRef.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load analytics');
     } finally {
-      setLoading(false);
+      if (seq === fetchSeqRef.current) setLoading(false);
     }
   }
 
@@ -308,7 +316,7 @@ export default function MemberAnalyticsPage() {
         </Link>
 
         <PageHeader
-          title={`${memberName} — Analytics`}
+          title={`${memberName} â€” Analytics`}
           description={`Training data for the last ${period} days`}
         />
 
@@ -419,7 +427,7 @@ export default function MemberAnalyticsPage() {
         {exerciseProgressions.length > 0 && (
           <div style={chartCardStyle} className="section-glow">
             <h3 style={{ fontSize: 16, fontWeight: 'var(--weight-medium)' as any, color: 'var(--color-text-primary)', marginBottom: 16, marginTop: 0 }}>
-              1RM Progression by Exercise
+              1RM Progression by Exercise (lbs)
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart>

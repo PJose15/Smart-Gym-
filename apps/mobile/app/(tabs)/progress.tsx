@@ -426,6 +426,9 @@ export default function ProgressScreen() {
         style={styles.trendsSectionHeader}
         onPress={() => setTrendsExpanded(prev => !prev)}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={trendsExpanded ? 'Collapse trends' : 'Expand trends'}
+        accessibilityState={{ expanded: trendsExpanded }}
       >
         <Text style={styles.sectionTitle}>Trends</Text>
         <Text style={styles.trendsToggle}>{trendsExpanded ? '▼' : '▶'}</Text>
@@ -595,7 +598,12 @@ export default function ProgressScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={loadData}
+          accessibilityRole="button"
+          accessibilityLabel="Retry loading progress"
+        >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -614,6 +622,9 @@ export default function ProgressScreen() {
           style={styles.card}
           onPress={() => toggleExpand(item.machineId)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.exerciseName}, ${isExpanded ? 'hide details' : 'show details'}`}
+          accessibilityState={{ expanded: isExpanded }}
         >
         {/* Header Row */}
         <View style={styles.cardHeader}>
@@ -659,6 +670,8 @@ export default function ProgressScreen() {
         <TouchableOpacity
           style={styles.drillDownLink}
           onPress={() => router.push(`/exercise/${encodeURIComponent(item.exerciseName)}` as any)}
+          accessibilityRole="button"
+          accessibilityLabel={`View full history for ${item.exerciseName}`}
         >
           <Text style={styles.drillDownText}>View full history ›</Text>
         </TouchableOpacity>
@@ -678,6 +691,9 @@ export default function ProgressScreen() {
                   key={m}
                   style={[styles.chartToggleBtn, chartMetric === m && styles.chartToggleBtnActive]}
                   onPress={() => setChartMetric(m)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Show ${m === '1rm' ? 'estimated 1 rep max' : m} chart`}
+                  accessibilityState={{ selected: chartMetric === m }}
                 >
                   <Text style={[styles.chartToggleText, chartMetric === m && styles.chartToggleTextActive]}>
                     {m === '1rm' ? 'Est. 1RM' : m === 'volume' ? 'Volume' : 'Weight'}
@@ -758,7 +774,12 @@ export default function ProgressScreen() {
           <Text style={styles.headingKicker}>PERFORMANCE</Text>
           <Text style={styles.heading}>Your Progress</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/leaderboard')} style={styles.leaderboardLink}>
+        <TouchableOpacity
+          onPress={() => router.push('/leaderboard')}
+          style={styles.leaderboardLink}
+          accessibilityRole="button"
+          accessibilityLabel="Open leaderboard"
+        >
           <Text style={styles.leaderboardLinkText}>LEADERBOARD →</Text>
         </TouchableOpacity>
       </View>
@@ -768,6 +789,9 @@ export default function ProgressScreen() {
             key={opt.value}
             style={[styles.periodBtn, period === opt.value && styles.periodBtnActive]}
             onPress={() => setPeriod(opt.value)}
+            accessibilityRole="button"
+            accessibilityLabel={`Show ${opt.label} period`}
+            accessibilityState={{ selected: period === opt.value }}
           >
             <Text style={[styles.periodBtnText, period === opt.value && styles.periodBtnTextActive]}>
               {opt.label}

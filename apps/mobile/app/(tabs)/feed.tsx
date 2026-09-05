@@ -48,6 +48,7 @@ import {
   type FeedContext,
 } from '../../src/lib/feedService';
 import { getWeightUnit } from '../../src/lib/weightUnit';
+import { clearUserScopedStorage } from '../../src/lib/signOutCleanup';
 import { markFeedViewed } from '../../src/hooks/useUnreadFeedCount';
 
 export default function FeedScreen() {
@@ -87,7 +88,10 @@ export default function FeedScreen() {
       setWeightUnit(unit);
       if (ctx === 'signed-out') {
         // Session expired or was revoked — re-auth instead of showing a
-        // fake "check your connection" error.
+        // fake "check your connection" error. Clear user-scoped storage so
+        // a different account signing in next doesn't inherit this user's
+        // caches/queue.
+        await clearUserScopedStorage().catch(() => {});
         await supabase.auth.signOut().catch(() => {});
         router.replace('/auth');
         return;

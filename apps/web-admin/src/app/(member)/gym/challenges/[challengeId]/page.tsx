@@ -1,7 +1,8 @@
 'use client';
 
-import { CSSProperties, useEffect, useState, use } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 import { useMember } from '@/lib/contexts/MemberContext';
+import { BackButton } from '@/components/nav/BackButton';
 import type { ChallengeDetail } from '@nexera/types';
 
 const RANK_MEDALS: Record<number, string> = {
@@ -34,11 +35,11 @@ const joinBtnStyle: CSSProperties = {
 };
 
 interface PageProps {
-  params: Promise<{ challengeId: string }>;
+  params: { challengeId: string };
 }
 
 export default function ChallengeDetailPage({ params }: PageProps) {
-  const { challengeId } = use(params);
+  const { challengeId } = params;
   const { member, gym } = useMember();
   const [data, setData] = useState<ChallengeDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,22 +51,27 @@ export default function ChallengeDetailPage({ params }: PageProps) {
     if (!member) return;
     setLoading(true);
     setLoadError(null);
+    let cancelled = false;
     (async () => {
       try {
         const res = await fetch(`/api/member/challenges/${challengeId}?member_id=${member.id}`);
+        if (cancelled) return;
         if (res.status === 404) {
           setData(null);
         } else if (!res.ok) {
           setLoadError('Failed to load challenge. Please try again.');
         } else {
-          setData(await res.json());
+          const json = await res.json();
+          if (!cancelled) setData(json);
         }
       } catch {
-        setLoadError('Network error. Check your connection and try again.');
+        if (!cancelled) setLoadError('Network error. Check your connection and try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [member, challengeId]);
 
   async function handleJoin() {
@@ -95,15 +101,26 @@ export default function ChallengeDetailPage({ params }: PageProps) {
   }
 
   if (loadError) {
-    return <div style={{ padding: 16, textAlign: 'center', color: 'var(--color-red)', paddingTop: 60 }}>{loadError}</div>;
+    return (
+      <div style={{ padding: 16, paddingTop: 24 }}>
+        <BackButton fallbackHref="/gym/challenges" />
+        <div style={{ textAlign: 'center', color: 'var(--color-red)', paddingTop: 36 }}>{loadError}</div>
+      </div>
+    );
   }
 
   if (!data) {
-    return <div style={{ padding: 16, textAlign: 'center', color: 'var(--color-text-secondary)', paddingTop: 60 }}>Challenge not found</div>;
+    return (
+      <div style={{ padding: 16, paddingTop: 24 }}>
+        <BackButton fallbackHref="/gym/challenges" />
+        <div style={{ textAlign: 'center', color: 'var(--color-text-secondary)', paddingTop: 36 }}>Challenge not found</div>
+      </div>
+    );
   }
 
   return (
     <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)', paddingBottom: 100 }}>
+      <BackButton fallbackHref="/gym/challenges" style={{ marginBottom: 8 }} />
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <div style={{ fontSize: 48, marginBottom: 8 }}>

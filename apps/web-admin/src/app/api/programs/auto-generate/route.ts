@@ -29,7 +29,7 @@ function getAdminClient() {
  * - 3+ total sessions
  * - 2+ distinct machines used
  * - No active program
- * - Feature flag ai_program_gen enabled
+ * - Feature flag ai_program_generation enabled
  */
 export async function POST(request: NextRequest) {
   try {
@@ -69,11 +69,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
     }
 
-    // Check feature flag
+    // Check feature flag (canonical seeded key — 'ai_program_gen' was key
+    // drift that never existed in feature_flags, so this path was always
+    // reported disabled). Fail-closed: missing row = disabled.
     const { data: flag } = await admin
       .from('feature_flags')
       .select('is_enabled')
-      .eq('flag_key', 'ai_program_gen')
+      .eq('flag_key', 'ai_program_generation')
       .maybeSingle();
 
     if (!flag || flag.is_enabled === false) {
@@ -169,6 +171,24 @@ export async function POST(request: NextRequest) {
 
     if (!programData?.name || !programData?.days?.length) {
       return NextResponse.json({ eligible: true, reason: 'empty_program' });
+    }
+
+    // Validate AI-returned machine_ids against the gym's real machines —
+    // hallucinated ids are nulled out instead of being persisted (AI-M: the
+    // model can invent plausible-looking UUIDs that break downstream FK-less
+    // reads of program_data).
+    const validMachineIds = new Set(gymMachines.map((m) => m.id));
+    for (const day of programData.days as Array<{
+      exercises?: Array<{ machine_id?: unknown }>;
+    }>) {
+      for (const exercise of day.exercises ?? []) {
+        if (
+          exercise.machine_id != null &&
+          (typeof exercise.machine_id !== 'string' || !validMachineIds.has(exercise.machine_id))
+        ) {
+          exercise.machine_id = null;
+        }
+      }
     }
 
     // Save to ai_programs

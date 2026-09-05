@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, CSSProperties } from 'react';
+import { Fragment, useEffect, useState, useCallback, useRef, CSSProperties } from 'react';
 import { MetricCard } from '@/components/owner/MetricCard';
 
 const spinnerStyle: CSSProperties = {
@@ -91,24 +91,34 @@ export default function AdminErrorsPage() {
   const [statusFilter, setStatusFilter] = useState('unresolved');
   const [envFilter, setEnvFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [resolving, setResolving] = useState<string | null>(null);
   const [resolveErrorMsg, setResolveErrorMsg] = useState<string | null>(null);
+  // Guards against slow responses for stale filters overwriting newer results.
+  const fetchSeqRef = useRef(0);
+
+  // Debounce keystrokes — fetch 300 ms after the user stops typing.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchData = useCallback(() => {
+    const seq = ++fetchSeqRef.current;
     const params = new URLSearchParams({
       status: statusFilter,
       env: envFilter,
-      ...(search ? { search } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
     });
     fetch(`/api/admin/errors?${params}`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load');
         return res.json();
       })
-      .then(setData)
-      .catch(() => setError('Failed to load error data.'));
-  }, [statusFilter, envFilter, search]);
+      .then((d) => { if (seq === fetchSeqRef.current) setData(d); })
+      .catch(() => { if (seq === fetchSeqRef.current) setError('Failed to load error data.'); });
+  }, [statusFilter, envFilter, debouncedSearch]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -196,10 +206,18 @@ export default function AdminErrorsPage() {
           </thead>
           <tbody>
             {data.errors.map((err) => (
-              <>
+              <Fragment key={err.id}>
                 <tr
-                  key={err.id}
                   onClick={() => setExpandedId(expandedId === err.id ? null : err.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedId(expandedId === err.id ? null : err.id);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-expanded={expandedId === err.id}
                   style={{ cursor: 'pointer' }}
                 >
                   <td style={{ ...tdStyle, color: 'var(--color-gold)', fontFamily: 'monospace', fontSize: 12 }}>
@@ -240,7 +258,7 @@ export default function AdminErrorsPage() {
                   </td>
                 </tr>
                 {expandedId === err.id && (
-                  <tr key={`${err.id}-detail`}>
+                  <tr>
                     <td colSpan={6} style={{ padding: '12px 16px', backgroundColor: 'var(--color-bg-base)', borderBottom: '1px solid var(--color-bg-raised)' }}>
                       <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
                         <strong style={{ color: 'var(--color-text-primary)' }}>Environment:</strong> {err.environment ?? 'unknown'}
@@ -253,7 +271,7 @@ export default function AdminErrorsPage() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
             {data.errors.length === 0 && (
               <tr>

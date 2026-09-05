@@ -17,6 +17,7 @@
  *    filtered by member_id + is_active = true is the ground-truth pattern
  *    (confirmed in home screen TodayZone and web-admin program route).
  */
+import { extractAiProgramDays } from '@nexera/utils';
 import { supabase } from './supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -71,8 +72,8 @@ export function PROGRAM_CACHE_KEY(memberId: string): string {
  * Trainer name is resolved via a second query to users.display_name only when
  * trainer_approved_by is set (AI-only programs skip this lookup entirely).
  *
- * program_data jsonb is parsed as { days?: ProgramDay[] } with ?? [] fallback
- * to handle null or malformed data without throwing.
+ * program_data jsonb is normalized via extractAiProgramDays (handles both
+ * { days } and { weeks: [{ days }] } shapes, [] for null/malformed data).
  */
 export async function fetchProgram(memberId: string): Promise<ActiveProgram | null> {
   const { data: program, error: programError } = await supabase
@@ -102,9 +103,9 @@ export async function fetchProgram(memberId: string): Promise<ActiveProgram | nu
     trainerName = trainer?.display_name ?? null;
   }
 
-  // Parse program_data jsonb — guard against null or missing days key
-  const programData = program.program_data as { days?: ProgramDay[] } | null;
-  const days: ProgramDay[] = programData?.days ?? [];
+  // Parse program_data jsonb — handles null plus both { days } and
+  // { weeks: [{ days }] } shaped rows (shared @nexera/utils normalizer)
+  const days = extractAiProgramDays<ProgramDay>(program.program_data);
 
   return {
     id: program.id,

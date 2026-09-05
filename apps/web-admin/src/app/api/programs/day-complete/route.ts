@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAiProgramDays } from '@nexera/utils';
 import { verifyMember } from '@/lib/auth/verifyMember';
 import { checkRateLimit } from '@/lib/rateLimit';
 
@@ -60,13 +61,15 @@ export async function GET(req: NextRequest) {
     }
 
     const { program_data, sessions_per_week, duration_weeks } = program;
-    if (!Array.isArray(program_data?.days) || !sessions_per_week || sessions_per_week < 1) {
+    // Handles both { days } and { weeks: [{ days }] } shaped program_data.
+    const programDays = extractAiProgramDays(program_data);
+    if (programDays.length === 0 || !sessions_per_week || sessions_per_week < 1) {
       return NextResponse.json({ complete: false });
     }
 
     // 2. Compute day index
     const dayIndex = (day_number - 1) % sessions_per_week;
-    const todayDay = program_data.days[dayIndex];
+    const todayDay = programDays[dayIndex];
     if (!todayDay || !Array.isArray(todayDay.exercises)) {
       return NextResponse.json({ complete: false });
     }

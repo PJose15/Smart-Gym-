@@ -3,6 +3,7 @@
 import { useEffect, useState, CSSProperties } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import type { Program, ProgramDay, ProgramExercise } from '@nexera/types';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
@@ -14,11 +15,13 @@ type ProgramWithDays = Program & {
 };
 
 export default function ProgramsPage() {
+  const { authed } = useStaffAuth();
   const [programs, setPrograms] = useState<ProgramWithDays[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     async function fetchPrograms() {
       setLoading(true);
       const { data, error: fetchError } = await supabase
@@ -36,7 +39,7 @@ export default function ProgramsPage() {
       setLoading(false);
     }
     fetchPrograms();
-  }, []);
+  }, [authed]);
 
   const totalExercises = (program: ProgramWithDays): number =>
     program.program_days.reduce(

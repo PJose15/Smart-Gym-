@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { WeightUnit } from '@/lib/weight';
 
@@ -30,6 +30,11 @@ interface MemberContextValue {
   gym: GymInfo | null;
   weightUnit: WeightUnit;
   loading: boolean;
+  /**
+   * Push a freshly-saved weight unit into the context so every consumer
+   * re-renders immediately (no reload needed after changing it in settings).
+   */
+  updateWeightUnit: (unit: WeightUnit) => void;
 }
 
 const MemberCtx = createContext<MemberContextValue>({
@@ -37,6 +42,7 @@ const MemberCtx = createContext<MemberContextValue>({
   gym: null,
   weightUnit: 'lbs',
   loading: true,
+  updateWeightUnit: () => {},
 });
 
 export function useMember() {
@@ -114,8 +120,17 @@ export function MemberProvider({ children }: MemberProviderProps) {
     return () => { stale = true; };
   }, []);
 
+  const updateWeightUnit = useCallback((unit: WeightUnit) => {
+    if (unit === 'kg' || unit === 'lbs') setWeightUnit(unit);
+  }, []);
+
+  const value = useMemo(
+    () => ({ member, gym, weightUnit, loading, updateWeightUnit }),
+    [member, gym, weightUnit, loading, updateWeightUnit]
+  );
+
   return (
-    <MemberCtx.Provider value={{ member, gym, weightUnit, loading }}>
+    <MemberCtx.Provider value={value}>
       {children}
     </MemberCtx.Provider>
   );

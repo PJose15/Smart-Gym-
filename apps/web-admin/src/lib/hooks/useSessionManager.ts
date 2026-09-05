@@ -73,11 +73,9 @@ export function useSessionManager() {
       .catch(() => { /* non-critical — suggestion still works without history */ });
   }, [machine, member]);
 
-  // Get PR timezone session date
+  // Device-local session date (YYYY-MM-DD)
   const sessionDate = useMemo(() => {
-    return new Date().toLocaleDateString('en-CA', {
-      timeZone: 'America/Puerto_Rico',
-    });
+    return new Date().toLocaleDateString('en-CA');
   }, []);
 
   // Determine weight increment based on machine category
@@ -188,19 +186,23 @@ export function useSessionManager() {
               rpe: set.rpe ?? null,
             },
           });
-          // Update UI optimistically so user sees the set was captured
-          const newSetEntry: SetEntry = {
-            set_number: state.sets.length + 1,
-            weight_lbs: set.weight_lbs,
-            reps: set.reps,
-            rpe: set.rpe ?? null,
-            notes: set.notes || null,
-            logged_at: new Date().toISOString(),
-          };
+          // Update UI optimistically so user sees the set was captured.
+          // set_number is derived inside the updater to avoid stale-closure
+          // duplicates when multiple sets are logged offline in a row.
           const volume = set.weight_lbs * set.reps;
           setState((s) => ({
             ...s,
-            sets: [...s.sets, newSetEntry],
+            sets: [
+              ...s.sets,
+              {
+                set_number: s.sets.length + 1,
+                weight_lbs: set.weight_lbs,
+                reps: set.reps,
+                rpe: set.rpe ?? null,
+                notes: set.notes || null,
+                logged_at: new Date().toISOString(),
+              },
+            ],
             setsCount: s.setsCount + 1,
             totalVolumeLbs: s.totalVolumeLbs + volume,
             bestWeightLbs: Math.max(s.bestWeightLbs, set.weight_lbs),

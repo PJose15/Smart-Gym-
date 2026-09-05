@@ -2,6 +2,7 @@
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { AnimatedPage } from '../components/AnimatedPage';
 
 interface FeatureFlagRow {
@@ -34,12 +35,14 @@ const FLAG_INFO: Record<string, { label: string; description: string }> = {
 };
 
 export default function SettingsPage() {
+  const { authed } = useStaffAuth();
   const [flags, setFlags] = useState<FeatureFlagRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     async function fetchData() {
       setLoading(true);
       setError(null);
@@ -58,7 +61,7 @@ export default function SettingsPage() {
       }
     }
     fetchData();
-  }, []);
+  }, [authed]);
 
   const handleToggle = async (flag: FeatureFlagRow) => {
     setSaving(flag.id);

@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
 
@@ -82,6 +83,7 @@ const statsChipStyle: CSSProperties = {
 };
 
 export default function MemberDetailPage() {
+  const { authed } = useStaffAuth();
   const params = useParams();
   const memberId = params.id as string;
   const [profile, setProfile] = useState<MemberProfile | null>(null);
@@ -90,8 +92,9 @@ export default function MemberDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     fetchMember();
-  }, [memberId]);
+  }, [authed, memberId]);
 
   async function fetchMember() {
     try {
@@ -104,7 +107,7 @@ export default function MemberDetailPage() {
       setProfile(profileData);
 
       // [id] is a users.id (members list links via m.user_id); workout_sessions
-      // keys on members.id — map through the members table first.
+      // keys on members.id â€” map through the members table first.
       const { data: memberRows } = await supabase
         .from('members')
         .select('id')
@@ -112,7 +115,7 @@ export default function MemberDetailPage() {
 
       const memberRowIds = (memberRows ?? []).map((m) => m.id);
 
-      // Completed sessions: one row per (machine, day) — a "workout" is a
+      // Completed sessions: one row per (machine, day) â€” a "workout" is a
       // distinct session_date; the last workout is the max completed day.
       const { data: sessionRows } = await supabase
         .from('workout_sessions')

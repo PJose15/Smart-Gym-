@@ -1,11 +1,12 @@
-'use client';
+﻿'use client';
 
 import { Fragment, useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
 
-// ─── Types ──────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface BadgeRow {
   id: string;
@@ -27,7 +28,7 @@ interface MemberUnlock {
   earned_at: string;
 }
 
-// ─── Styles ─────────────────────────────────────────────
+// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const cardStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
@@ -55,11 +56,11 @@ const tdStyle: CSSProperties = {
 };
 
 const CATEGORY_EMOJI: Record<string, string> = {
-  milestone: '🏆',
-  performance: '💪',
-  consistency: '🔥',
-  explorer: '🧭',
-  community: '🤝',
+  milestone: 'ðŸ†',
+  performance: 'ðŸ’ª',
+  consistency: 'ðŸ”¥',
+  explorer: 'ðŸ§­',
+  community: 'ðŸ¤',
 };
 
 const CATEGORY_COLORS: Record<string, { bg: string; fg: string }> = {
@@ -108,17 +109,18 @@ const statsChipStyle: CSSProperties = {
   color: 'var(--color-text-muted)',
 };
 
-// ─── Helpers ────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function criteriaLabel(badge: BadgeRow): string {
-  if (badge.required_value == null) return '—';
+  if (badge.required_value == null) return 'â€”';
   const unit = badge.required_unit ? ` ${badge.required_unit.replace(/_/g, ' ')}` : '';
   return `${badge.required_value.toLocaleString()}${unit}`;
 }
 
-// ─── Component ──────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function BadgesPage() {
+  const { authed } = useStaffAuth();
   const [badges, setBadges] = useState<BadgeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,8 +130,9 @@ export default function BadgesPage() {
   const [membersError, setMembersError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     fetchBadges();
-  }, []);
+  }, [authed]);
 
   async function fetchBadges() {
     setLoading(true);
@@ -213,7 +216,7 @@ export default function BadgesPage() {
 
         {error && (
           <div style={{
-            backgroundColor: 'var(--color-red-light)',
+            backgroundColor: 'var(--color-red-subtle)',
             color: 'var(--color-red)',
             padding: '14px 18px',
             borderRadius: 8,
@@ -270,10 +273,17 @@ export default function BadgesPage() {
                     <tr
                       className={`row-stagger stagger-${Math.min(i, 19)}`}
                       onClick={() => handleExpand(badge.code)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleExpand(badge.code); }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-expanded={expandedCode === badge.code}
+                      aria-label={`${badge.title} â€” show members who earned this badge`}
                       style={{ cursor: 'pointer' }}
                     >
                       <td style={{ ...tdStyle, fontSize: 24, textAlign: 'center' }} aria-hidden="true">
-                        {CATEGORY_EMOJI[badge.category] ?? '🎖️'}
+                        {CATEGORY_EMOJI[badge.category] ?? 'ðŸŽ–ï¸'}
                       </td>
                       <td style={{ ...tdStyle, fontWeight: 600 }}>
                         {badge.title}

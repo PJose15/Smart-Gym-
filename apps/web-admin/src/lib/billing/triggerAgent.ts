@@ -5,7 +5,7 @@
 export async function triggerUptimizeAIAgent(
   agentName: string,
   payload: Record<string, unknown>
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; skipped?: boolean; error?: string }> {
   const key = process.env.INTERNAL_WEBHOOK_KEY;
   if (!key) {
     console.warn('[triggerAgent] INTERNAL_WEBHOOK_KEY not set, skipping agent trigger');
@@ -30,7 +30,10 @@ export async function triggerUptimizeAIAgent(
       return { success: false, error: body.error || `HTTP ${res.status}` };
     }
 
-    return { success: true };
+    // Surface the trigger route's cooldown dedup so callers can gate their
+    // own side effects (e.g. dormant-member pushes) on it.
+    const body = (await res.json().catch(() => ({}))) as { skipped?: boolean };
+    return { success: true, skipped: body.skipped === true };
   } catch (err) {
     console.error('[triggerAgent] Error:', err);
     return { success: false, error: String(err) };

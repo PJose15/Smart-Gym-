@@ -36,6 +36,7 @@ export function FeedList({ memberId, gymId }: FeedListProps) {
   // Real-time feed subscription
   useRealtimeFeed({
     gymId,
+    memberId,
     onNewEvent: (event) => {
       // Check if user is scrolled to top
       const isAtTop = (containerRef.current?.scrollTop ?? 0) < 50;
@@ -109,9 +110,29 @@ export function FeedList({ memberId, gymId }: FeedListProps) {
         </button>
       )}
 
+      {/* Empty / failed-load state — useFeed leaves events empty on network
+          failure, so a refresh affordance covers both cases */}
       {events.length === 0 && !loading && (
         <div style={emptyStyle}>
-          No activity yet. Complete a workout to get started!
+          <p style={{ margin: 0, marginBottom: 12 }}>
+            No activity yet. Complete a workout to get started!
+          </p>
+          <button
+            type="button"
+            onClick={loadInitial}
+            style={{
+              padding: '8px 20px',
+              borderRadius: 'var(--radius-md, 12px)',
+              border: 'none',
+              backgroundColor: 'var(--accent, #E0142F)',
+              color: 'var(--text-on-accent, #FFFFFF)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Refresh
+          </button>
         </div>
       )}
 

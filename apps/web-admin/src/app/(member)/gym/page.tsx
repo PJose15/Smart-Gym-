@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useMember } from '@/lib/contexts/MemberContext';
 import { Skeleton, FeedSkeleton } from '@/components/skeletons';
+import { BackButton } from '@/components/nav/BackButton';
 import { GymHeader } from './components/GymHeader';
 import { LeaderboardPreview } from './components/LeaderboardPreview';
 import { ChallengePreview } from './components/ChallengePreview';
@@ -33,6 +34,7 @@ export default function GymPage() {
 
   return (
     <div style={{ padding: 'var(--page-padding-x, 16px)', paddingTop: 'var(--space-6, 24px)', paddingBottom: 100 }}>
+      <BackButton style={{ marginBottom: 8 }} />
       <GymHeader
         gymName={gym.name}
         logoUrl={gym.logo_url}

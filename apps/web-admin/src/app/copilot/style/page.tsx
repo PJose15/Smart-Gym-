@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
 import {
@@ -11,7 +12,7 @@ import {
 } from '@nexera/ai-assist';
 import type { TrainerTone, TrainerVerbosity } from '@nexera/types';
 
-// ─── Styles ─────────────────────────────────────────────
+// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const formContainerStyle: CSSProperties = {
   display: 'grid',
@@ -81,7 +82,7 @@ const previewLabelStyle: CSSProperties = {
 };
 
 const errorStyle: CSSProperties = {
-  backgroundColor: 'var(--color-red-light)',
+  backgroundColor: 'var(--color-red-subtle)',
   color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
@@ -90,7 +91,7 @@ const errorStyle: CSSProperties = {
 };
 
 const successStyle: CSSProperties = {
-  backgroundColor: 'var(--color-green-light)',
+  backgroundColor: 'var(--color-green-subtle)',
   color: 'var(--color-green)',
   padding: '14px 18px',
   borderRadius: 8,
@@ -115,9 +116,10 @@ const statsChipStyle: CSSProperties = {
   color: 'var(--color-text-muted)',
 };
 
-// ─── Component ──────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function StyleSettingsPage() {
+  const { authed } = useStaffAuth();
   const [tone, setTone] = useState<TrainerTone>('supportive');
   const [verbosity, setVerbosity] = useState<TrainerVerbosity>('standard');
   const [saving, setSaving] = useState(false);
@@ -126,8 +128,9 @@ export default function StyleSettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     loadSettings();
-  }, []);
+  }, [authed]);
 
   async function loadSettings() {
     try {
@@ -146,7 +149,7 @@ export default function StyleSettingsPage() {
         setVerbosity(data.verbosity as TrainerVerbosity);
       }
     } catch {
-      // No existing settings — use defaults
+      // No existing settings â€” use defaults
     } finally {
       setLoading(false);
     }
@@ -248,10 +251,10 @@ export default function StyleSettingsPage() {
 
         {/* Settings summary strip */}
         <div style={statsStripStyle}>
-          <span style={{ ...statsChipStyle, backgroundColor: tone === 'supportive' ? 'var(--color-green-light)' : tone === 'strict' ? 'var(--color-red-light)' : 'var(--color-bg-highest)', color: tone === 'supportive' ? 'var(--color-green)' : tone === 'strict' ? 'var(--color-red)' : 'var(--color-text-muted)' }}>
+          <span style={{ ...statsChipStyle, backgroundColor: tone === 'supportive' ? 'var(--color-green-subtle)' : tone === 'strict' ? 'var(--color-red-subtle)' : 'var(--color-bg-highest)', color: tone === 'supportive' ? 'var(--color-green)' : tone === 'strict' ? 'var(--color-red)' : 'var(--color-text-muted)' }}>
             Tone: {tone}
           </span>
-          <span style={{ ...statsChipStyle, backgroundColor: verbosity === 'detailed' ? 'var(--color-blue-subtle)' : verbosity === 'short' ? 'rgba(255, 215, 0,0.15)' : 'var(--color-bg-highest)', color: verbosity === 'detailed' ? 'var(--color-blue)' : verbosity === 'short' ? 'var(--color-gold)' : 'var(--color-text-muted)' }}>
+          <span style={{ ...statsChipStyle, backgroundColor: verbosity === 'detailed' ? 'var(--color-blue-subtle)' : verbosity === 'short' ? 'var(--color-gold-subtle)' : 'var(--color-bg-highest)', color: verbosity === 'detailed' ? 'var(--color-blue)' : verbosity === 'short' ? 'var(--color-gold)' : 'var(--color-text-muted)' }}>
             Verbosity: {verbosity}
           </span>
           <span style={statsChipStyle}>
@@ -269,9 +272,9 @@ export default function StyleSettingsPage() {
                 value={tone}
                 onChange={(e) => setTone(e.target.value as TrainerTone)}
               >
-                <option value="supportive">Supportive — encouraging, warm</option>
-                <option value="neutral">Neutral — factual, concise</option>
-                <option value="strict">Strict — direct, action-oriented</option>
+                <option value="supportive">Supportive â€” encouraging, warm</option>
+                <option value="neutral">Neutral â€” factual, concise</option>
+                <option value="strict">Strict â€” direct, action-oriented</option>
               </select>
 
               <label style={labelStyle}>Verbosity</label>
@@ -280,9 +283,9 @@ export default function StyleSettingsPage() {
                 value={verbosity}
                 onChange={(e) => setVerbosity(e.target.value as TrainerVerbosity)}
               >
-                <option value="short">Short — first sentence only</option>
-                <option value="standard">Standard — full details</option>
-                <option value="detailed">Detailed — comprehensive</option>
+                <option value="short">Short â€” first sentence only</option>
+                <option value="standard">Standard â€” full details</option>
+                <option value="detailed">Detailed â€” comprehensive</option>
               </select>
             </div>
 

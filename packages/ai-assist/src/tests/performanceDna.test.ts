@@ -30,17 +30,30 @@ describe('calculatePowerScore', () => {
     expect(result.is_building).toBe(true);
   });
 
-  it('gives PR score proportional to PR rate', () => {
-    // 3/6 = 50% PR rate => 30 pts (max)
+  it('gives PR score proportional to is_personal_best rate', () => {
+    // 3/6 sessions actually set a PR = 50% PR rate => 30 pts (max)
     const recent = Array.from({ length: 6 }, (_, i) => ({
       machine_id: `m${i}`,
-      best_weight_lbs: i < 3 ? 100 : 0,
+      best_weight_lbs: 100,
       total_volume_lbs: 500,
+      is_personal_best: i < 3,
     }));
     const result = calculatePowerScore({ recentSessions: recent, olderSessions: [] });
     // prScore = 30, progressionScore = 20 (no older data), volumeScore based on 500 avg
     expect(result.score).toBeGreaterThanOrEqual(50);
     expect(result.signals.pr_rate).toBe(50);
+  });
+
+  it('does NOT count every weighted session as a PR (regression: fake PR frequency)', () => {
+    // All sessions have weight but none set a personal best → pr_rate 0
+    const recent = Array.from({ length: 6 }, (_, i) => ({
+      machine_id: `m${i}`,
+      best_weight_lbs: 100,
+      total_volume_lbs: 500,
+      is_personal_best: false,
+    }));
+    const result = calculatePowerScore({ recentSessions: recent, olderSessions: [] });
+    expect(result.signals.pr_rate).toBe(0);
   });
 
   it('gives full progression score for +5% weight increase', () => {
@@ -77,6 +90,7 @@ describe('calculatePowerScore', () => {
       machine_id: `m${i % 3}`,
       best_weight_lbs: 200,
       total_volume_lbs: 5000,
+      is_personal_best: true,
     }));
     const older = [
       { machine_id: 'm0', best_weight_lbs: 180 },

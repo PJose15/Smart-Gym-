@@ -85,10 +85,15 @@ export function useFeed({ memberId, gymId }: UseFeedOptions): UseFeedResult {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ member_id: memberId, event_id: eventId, reaction_type: type }),
-    }).catch(() => {
-      // Revert to captured state on failure — ref always has the correct pre-optimistic snapshot
-      setEvents(rollbackRef.current);
-    });
+    })
+      .then((res) => {
+        // 4xx/5xx resolves (no throw) — roll the optimistic update back too
+        if (!res.ok) setEvents(rollbackRef.current);
+      })
+      .catch(() => {
+        // Revert to captured state on failure — ref always has the correct pre-optimistic snapshot
+        setEvents(rollbackRef.current);
+      });
   }, [memberId]);
 
   const prependEvent = useCallback((event: FeedEventFull) => {

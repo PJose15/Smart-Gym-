@@ -15,6 +15,10 @@ export interface StaffVerifyResult {
 /**
  * Verifies the current session user has a staff role (trainer or owner)
  * in at least one gym. Returns user_id, gym_id, role, and admin client.
+ *
+ * Multi-gym staff: memberships are ordered by `joined_at` ascending so the
+ * EARLIEST-joined active gym is always selected deterministically (previously
+ * `.limit(1)` with no ordering returned an arbitrary gym per request).
  */
 export async function verifyStaff(
   requiredRole?: StaffRole
@@ -39,7 +43,11 @@ export async function verifyStaff(
     query.in('role', ['trainer', 'owner']);
   }
 
-  const { data: membership } = await query.limit(1).maybeSingle();
+  // Deterministic gym selection for multi-gym staff: earliest joined wins.
+  const { data: membership } = await query
+    .order('joined_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
   if (!membership) {
     return NextResponse.json({ error: 'Forbidden — staff role required' }, { status: 403 });

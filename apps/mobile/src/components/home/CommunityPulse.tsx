@@ -35,6 +35,8 @@ export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNo
             style={styles.item}
             onPress={() => router.push('/leaderboard')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Leaderboard: ranked ${rank.rank} of ${rank.total} this week`}
           >
             <View style={styles.iconCircle}>
               <Text style={styles.itemIcon}>{'🏆'}</Text>
@@ -51,6 +53,8 @@ export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNo
             style={styles.item}
             onPress={() => router.push('/leaderboard')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Open leaderboard"
           >
             <View style={styles.iconCircle}>
               <Text style={styles.itemIcon}>{'🏆'}</Text>
@@ -67,6 +71,8 @@ export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNo
             style={[styles.item, (rank || leaderboardEnabled) && styles.itemBordered]}
             onPress={() => router.push('/(tabs)/profile')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Badge unlocked: ${recentBadgeName}. View profile`}
           >
             <View style={[styles.iconCircle, styles.iconCircleGold]}>
               <Text style={styles.itemIcon}>{recentBadgeIcon || '🏅'}</Text>
@@ -86,6 +92,8 @@ export function CommunityPulse({ rank, recentBadgeIcon, recentBadgeName, coachNo
             ]}
             onPress={() => router.push('/coach-notes')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Open coach notes"
           >
             <View style={styles.iconCircle}>
               <Text style={styles.itemIcon}>{'📝'}</Text>

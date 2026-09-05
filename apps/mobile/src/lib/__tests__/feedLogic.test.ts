@@ -84,6 +84,33 @@ describe('formatFeedEventText', () => {
     expect(formatFeedEventText(event, 'kg')).toBe('hit a new personal best — 225 lbs!');
   });
 
+  it('includes machine_name in pr_weight when present (pr-check enriched context)', () => {
+    const event = makeEvent({
+      context_data: { best_weight_lbs: 225, machine_name: 'Chest Press', pr_type: 'weight' },
+    });
+    expect(formatFeedEventText(event, 'lbs')).toBe(
+      'hit a new personal best on Chest Press — 225 lbs!',
+    );
+  });
+
+  it('rebuilds pr_volume from context_data with machine name', () => {
+    const event = makeEvent({
+      event_type: 'pr_volume',
+      context_data: { volume_lbs: 12_500, machine_name: 'Leg Press', pr_type: 'volume' },
+    });
+    expect(formatFeedEventText(event, 'lbs')).toBe('hit a volume PR on Leg Press — 12.5k lbs!');
+    expect(formatFeedEventText(event, 'kg')).toBe('hit a volume PR on Leg Press — 5.7k kg!');
+  });
+
+  it('falls back for pr_volume when volume_lbs missing', () => {
+    const event = makeEvent({
+      event_type: 'pr_volume',
+      description: 'New volume PR!',
+      context_data: { pr_type: 'volume' },
+    });
+    expect(formatFeedEventText(event, 'kg')).toBe('New volume PR!');
+  });
+
   it('strips a legacy baked-in name prefix on fallback', () => {
     const event = makeEvent({
       context_data: {},

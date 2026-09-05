@@ -96,9 +96,18 @@ export async function POST(request: Request) {
         );
         dormant_triggered += results.filter(r => r.status === 'fulfilled').length;
 
-        // Push: re-engagement alert per dormant member — fire-and-forget
+        // Push: re-engagement alert — gated on the trigger result so a member
+        // is pushed at most once per cooldown window (7d for
+        // member-inactive-14d), not every daily cron run. A trigger that was
+        // skipped (cooldown) or failed (tier gate / error) sends NO push.
+        const pushTargets = batch.filter((m, idx) => {
+          const r = results[idx];
+          return (
+            r.status === 'fulfilled' && r.value.success === true && r.value.skipped !== true
+          );
+        });
         const pushResults = await Promise.allSettled(
-          batch.map(m =>
+          pushTargets.map(m =>
             sendNotification({
               gym_id: m.gym_id,
               member_id: m.id,

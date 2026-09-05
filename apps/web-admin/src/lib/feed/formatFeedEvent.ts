@@ -9,8 +9,8 @@
  *
  * This helper:
  *   1. Rebuilds the description from `context_data` in the viewer's
- *      preferred weight unit when possible (pr_weight, goal_reached,
- *      workout_share).
+ *      preferred weight unit when possible (pr_weight, pr_volume,
+ *      goal_reached, workout_share).
  *   2. Always returns a string WITHOUT a leading `${member_name} ` so the
  *      UI span provides the single bold name.
  *   3. Strips a legacy leading name prefix from `event.description` when
@@ -54,19 +54,28 @@ export function formatFeedEvent(event: FeedEventLike, unit: WeightUnit): string 
   const ctx = (event.context_data ?? {}) as Record<string, unknown>;
   const fallback = () => stripNamePrefix(event.description, event.member_name);
 
+  const machinePart = () => {
+    const machineName = typeof ctx.machine_name === 'string' ? ctx.machine_name : null;
+    return machineName ? ` on ${machineName}` : '';
+  };
+
   switch (event.event_type) {
     case 'pr_weight': {
       const lbs = numberOrNull(ctx.best_weight_lbs);
       if (lbs == null) return fallback();
-      return `hit a new personal best — ${formatWeight(lbs, unit)}!`;
+      return `hit a new personal best${machinePart()} — ${formatWeight(lbs, unit)}!`;
+    }
+
+    case 'pr_volume': {
+      const lbs = numberOrNull(ctx.volume_lbs);
+      if (lbs == null) return fallback();
+      return `hit a volume PR${machinePart()} — ${formatVolume(lbs, unit)}!`;
     }
 
     case 'goal_reached': {
       const target = numberOrNull(ctx.target_weight);
       if (target == null) return fallback();
-      const machineName = typeof ctx.machine_name === 'string' ? ctx.machine_name : null;
-      const machinePart = machineName ? ` on ${machineName}` : '';
-      return `hit their goal${machinePart} — ${formatWeight(target, unit)}!`;
+      return `hit their goal${machinePart()} — ${formatWeight(target, unit)}!`;
     }
 
     case 'workout_share': {

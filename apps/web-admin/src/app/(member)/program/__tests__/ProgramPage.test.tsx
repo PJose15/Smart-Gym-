@@ -119,7 +119,7 @@ const mockProgramData = {
   },
 };
 
-function mockFetchProgram(data = mockProgramData) {
+function mockFetchProgram(data: unknown = mockProgramData) {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
     ok: true,
     json: async () => data,
@@ -291,6 +291,43 @@ test('T10: shows "No exercises assigned" for empty day', async () => {
   });
 
   expect(result!.container.textContent).toContain('No exercises assigned');
+});
+
+// T13: Weeks-shaped program_data renders day cards
+test('T13: renders day cards for weeks-shaped program_data', async () => {
+  mockUseMember.mockReturnValue({ member: mockMember, gym: null, loading: false });
+  const weeksProgram = {
+    program: {
+      ...mockProgramData.program,
+      program_data: {
+        weeks: [
+          {
+            days: [
+              {
+                day_number: 1,
+                name: 'Full Body A',
+                exercises: [
+                  { exercise_name: 'Squat', default_sets: 5, default_reps: 5 },
+                ],
+              },
+              { day_number: 2, name: 'Full Body B', exercises: [] },
+            ],
+          },
+        ],
+      },
+    },
+  };
+  mockFetchProgram(weeksProgram);
+
+  let result: ReturnType<typeof render>;
+  await act(async () => {
+    result = render(<ProgramPage />);
+  });
+
+  const text = result!.container.textContent!;
+  expect(text).toContain('Full Body A');
+  expect(text).toContain('Squat — 5 × 5');
+  expect(text).toContain('Full Body B');
 });
 
 // T11: Error state + retry button

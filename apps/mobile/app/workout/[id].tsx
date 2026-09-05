@@ -1019,7 +1019,11 @@ export default function TodayWorkoutScreen() {
       restIntervalRef.current = setInterval(() => {
         setRestSecondsLeft((prev) => {
           if (prev <= 1) {
-            Vibration.vibrate(500);
+            // Vibrate exactly once, on the 1 → 0 transition. The interval
+            // keeps ticking at 0 (deps exclude secondsLeft), so an
+            // unconditional vibrate here would buzz every second until
+            // the timer is dismissed.
+            if (prev === 1) Vibration.vibrate(500);
             return 0;
           }
           return prev - 1;

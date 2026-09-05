@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { generateQrSlug } from '@nexera/utils';
 import { generateMachineMistakes } from '@nexera/ai-assist';
 import { fetchMachineMistakes } from '@/lib/aiService';
@@ -31,7 +32,7 @@ interface GymOption {
   slug: string;
 }
 
-// ─── Styles ─────────────────────────────────────────────
+// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const addButtonStyle: CSSProperties = {
   padding: '10px 20px',
@@ -133,8 +134,8 @@ const tagStyle: CSSProperties = {
 
 const metaTagStyle: CSSProperties = {
   ...tagStyle,
-  backgroundColor: 'rgba(167,100,229,0.15)',
-  color: '#a764e5',
+  backgroundColor: 'var(--color-purple-subtle)',
+  color: 'var(--color-purple)',
 };
 
 const slugStyle: CSSProperties = {
@@ -151,14 +152,14 @@ const deleteButtonStyle: CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
   color: 'var(--color-red)',
-  backgroundColor: 'var(--color-red-light)',
+  backgroundColor: 'var(--color-red-subtle)',
   border: 'none',
   borderRadius: 4,
   cursor: 'pointer',
 };
 
 const errorBoxStyle: CSSProperties = {
-  backgroundColor: 'var(--color-red-light)',
+  backgroundColor: 'var(--color-red-subtle)',
   color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
@@ -205,9 +206,10 @@ const machineStatsChipStyle: CSSProperties = {
   color: 'var(--color-text-muted)',
 };
 
-// ─── Main Component ─────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function MachinesPage() {
+  const { authed } = useStaffAuth();
   const [machines, setMachines] = useState<MachineRow[]>([]);
   const [gyms, setGyms] = useState<GymOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,7 +217,7 @@ export default function MachinesPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Gym selector state (admin page only — wizard has no selector)
+  // Gym selector state (admin page only â€” wizard has no selector)
   const [formGymId, setFormGymId] = useState('');
 
   async function fetchMachines() {
@@ -246,13 +248,14 @@ export default function MachinesPage() {
   }
 
   useEffect(() => {
+    if (!authed) return;
     async function init() {
       setLoading(true);
       await Promise.all([fetchMachines(), fetchGyms()]);
       setLoading(false);
     }
     init();
-  }, []);
+  }, [authed]);
 
   function resetForm() {
     setFormGymId('');
@@ -386,7 +389,7 @@ export default function MachinesPage() {
 
         {error && <div style={errorBoxStyle} className="error-shake">{error}</div>}
 
-        {/* ── Stats strip ── */}
+        {/* â”€â”€ Stats strip â”€â”€ */}
         {machines.length > 0 && (() => {
           const byType = new Map<string, number>();
           const byDiff = new Map<string, number>();
@@ -402,10 +405,10 @@ export default function MachinesPage() {
           return (
             <div style={machineStatsStripStyle}>
               <span style={machineStatsChipStyle}>{machines.length} machines</span>
-              {topType && <span style={{ ...machineStatsChipStyle, backgroundColor: 'rgba(167,100,229,0.15)', color: '#a764e5' }}>{topType[1]} {topType[0]}</span>}
-              {byDiff.get('beginner') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{byDiff.get('beginner')} beginner</span>}
-              {byDiff.get('intermediate') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'rgba(255, 215, 0,0.15)', color: 'var(--color-gold)' }}>{byDiff.get('intermediate')} intermediate</span>}
-              {byDiff.get('advanced') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-red-light)', color: 'var(--color-red)' }}>{byDiff.get('advanced')} advanced</span>}
+              {topType && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-purple-subtle)', color: 'var(--color-purple)' }}>{topType[1]} {topType[0]}</span>}
+              {byDiff.get('beginner') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green)' }}>{byDiff.get('beginner')} beginner</span>}
+              {byDiff.get('intermediate') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold)' }}>{byDiff.get('intermediate')} intermediate</span>}
+              {byDiff.get('advanced') && <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-red-subtle)', color: 'var(--color-red)' }}>{byDiff.get('advanced')} advanced</span>}
               <span style={{ ...machineStatsChipStyle, backgroundColor: 'var(--color-blue-subtle)', color: 'var(--color-blue)' }}>{new Set(machines.map(m => m.gym_id)).size} gym{new Set(machines.map(m => m.gym_id)).size !== 1 ? 's' : ''}</span>
             </div>
           );
@@ -476,10 +479,10 @@ export default function MachinesPage() {
                         <span style={metaTagStyle}>{m.movement_pattern}</span>
                       )}
                       {m.equipment_type && m.equipment_type !== 'unknown' && (
-                        <span style={{ ...metaTagStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{m.equipment_type}</span>
+                        <span style={{ ...metaTagStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green)' }}>{m.equipment_type}</span>
                       )}
                       {m.difficulty && m.difficulty !== 'beginner' && (
-                        <span style={{ ...metaTagStyle, backgroundColor: 'rgba(255, 215, 0,0.15)', color: 'var(--color-gold)' }}>{m.difficulty}</span>
+                        <span style={{ ...metaTagStyle, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold)' }}>{m.difficulty}</span>
                       )}
                     </td>
                     <td style={tdStyle}>

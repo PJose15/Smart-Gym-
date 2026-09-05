@@ -59,6 +59,8 @@ export interface DNASignals {
     machine_id: string | null;
     best_weight_lbs: number;
     total_volume_lbs: number;
+    /** True only when the session actually set a personal best */
+    is_personal_best?: boolean;
   }>;
   olderSessions: Array<{
     machine_id: string | null;

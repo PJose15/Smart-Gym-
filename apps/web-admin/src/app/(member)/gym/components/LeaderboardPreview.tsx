@@ -34,23 +34,35 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [myRank, setMyRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
     (async () => {
       try {
         const res = await fetch(`/api/member/leaderboard?member_id=${memberId}&gym_id=${gymId}&period=weekly&limit=5`);
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
-          setEntries(data.entries || []);
-          setMyRank(data.my_rank);
+          if (!cancelled) {
+            setEntries(data.entries || []);
+            setMyRank(data.my_rank);
+          }
+        } else {
+          setError(true);
         }
       } catch {
-        // silent
+        if (!cancelled) setError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [memberId, gymId]);
+
+    return () => { cancelled = true; };
+  }, [memberId, gymId, retryCount]);
 
   if (loading) {
     return (
@@ -73,7 +85,29 @@ export function LeaderboardPreview({ memberId, gymId }: LeaderboardPreviewProps)
         </Link>
       </div>
 
-      {entries.length === 0 ? (
+      {error ? (
+        <div style={{ textAlign: 'center', padding: 16 }}>
+          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '0 0 10px' }}>
+            Couldn&apos;t load the leaderboard.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRetryCount((c) => c + 1)}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 'var(--radius-full, 9999px)',
+              border: '1px solid var(--color-border-subtle)',
+              backgroundColor: 'var(--color-bg-elevated)',
+              color: 'var(--color-text-secondary)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      ) : entries.length === 0 ? (
         <div style={{ fontSize: 13, color: 'var(--color-text-muted)', textAlign: 'center', padding: 16 }}>
           No activity this week yet
         </div>

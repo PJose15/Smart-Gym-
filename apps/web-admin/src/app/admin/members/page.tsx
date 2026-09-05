@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, CSSProperties } from 'react';
+import { useEffect, useState, useCallback, useRef, CSSProperties } from 'react';
 
 const spinnerStyle: CSSProperties = {
   display: 'flex',
@@ -77,9 +77,9 @@ interface MemberEntry {
 }
 
 const statusColors: Record<string, { color: string; bg: string }> = {
-  active: { color: 'var(--color-green)', bg: 'var(--color-green-light)' },
-  suspended: { color: 'var(--color-gold)', bg: 'rgba(255, 215, 0,0.15)' },
-  cancelled: { color: 'var(--color-red)', bg: 'var(--color-red-light)' },
+  active: { color: 'var(--color-green)', bg: 'var(--color-green-subtle)' },
+  suspended: { color: 'var(--color-gold)', bg: 'var(--color-gold-subtle)' },
+  cancelled: { color: 'var(--color-red)', bg: 'var(--color-red-subtle)' },
 };
 
 const defaultBadge = { color: 'var(--color-text-muted)', bg: 'var(--color-bg-elevated)' };
@@ -89,13 +89,23 @@ export default function AdminMembersPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  // Guards against slow responses for stale filters overwriting newer results.
+  const fetchSeqRef = useRef(0);
+
+  // Debounce keystrokes — fetch 300 ms after the user stops typing.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchData = useCallback(() => {
+    const seq = ++fetchSeqRef.current;
     setLoading(true);
     const params = new URLSearchParams({
       status: statusFilter,
-      ...(search ? { search } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
     });
     fetch(`/api/admin/members?${params}`)
       .then((res) => {
@@ -103,14 +113,16 @@ export default function AdminMembersPage() {
         return res.json();
       })
       .then((data) => {
+        if (seq !== fetchSeqRef.current) return; // stale response
         setMembers(data.members);
         setLoading(false);
       })
       .catch(() => {
+        if (seq !== fetchSeqRef.current) return;
         setError('Failed to load member data.');
         setLoading(false);
       });
-  }, [search, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

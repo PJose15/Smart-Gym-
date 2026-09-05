@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { generateProgram } from '@nexera/ai-assist';
 import type { GeneratedProgram, GeneratedProgramDay, ProgramGenerationInput } from '@nexera/ai-assist';
 import { fetchGeneratedProgram } from '@/lib/aiService';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../../components/PageHeader';
 import { AnimatedPage } from '../../components/AnimatedPage';
 
@@ -138,6 +139,7 @@ const previewStatsChipStyle: CSSProperties = {
 // ─── Component ──────────────────────────────────────────
 
 export default function GenerateProgramPage() {
+  const { authed } = useStaffAuth();
   const router = useRouter();
 
   // Step
@@ -162,6 +164,7 @@ export default function GenerateProgramPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     async function init() {
       const { data: gymData } = await supabase.from('gyms').select('id, name').order('name');
       const gymList = gymData ?? [];
@@ -169,7 +172,7 @@ export default function GenerateProgramPage() {
       if (gymList.length > 0) setGymId(gymList[0].id);
     }
     init();
-  }, []);
+  }, [authed]);
 
   // Fetch machines when gym changes
   useEffect(() => {

@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
 
     // Merge pinned + chronological, dedup by id
     const seenIds = new Set<string>();
-    const allEvents = (chronoEvents ?? []) as unknown as FeedEventRow[];
-    const events = [...pinnedEvents, ...allEvents].filter(e => {
+    const chronoRows = (chronoEvents ?? []) as unknown as FeedEventRow[];
+    const events = [...pinnedEvents, ...chronoRows].filter(e => {
       if (seenIds.has(e.id)) return false;
       seenIds.add(e.id);
       return true;
@@ -152,8 +152,13 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const lastEvent = events[events.length - 1];
-    const next_cursor = events.length === limit ? lastEvent.created_at : null;
+    // The cursor is derived from the CHRONOLOGICAL rows only. Computing it
+    // from the combined pinned+chrono list made page 1 exceed `limit`
+    // whenever pinned events existed (next_cursor came back null and
+    // pagination halted after one page).
+    const lastChrono = chronoRows[chronoRows.length - 1];
+    const next_cursor =
+      chronoRows.length === limit && lastChrono ? lastChrono.created_at : null;
 
     return NextResponse.json({ events: result, next_cursor });
   } catch {

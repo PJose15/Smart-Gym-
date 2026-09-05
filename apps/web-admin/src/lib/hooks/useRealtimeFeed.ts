@@ -4,16 +4,19 @@ import type { FeedEventFull } from '@nexera/types';
 
 interface UseRealtimeFeedOptions {
   gymId: string;
+  /** Viewer's member id — used to fetch the enriched event (author name/avatar). */
+  memberId: string;
   onNewEvent: (event: FeedEventFull) => void;
 }
 
-export function useRealtimeFeed({ gymId, onNewEvent }: UseRealtimeFeedOptions) {
+export function useRealtimeFeed({ gymId, memberId, onNewEvent }: UseRealtimeFeedOptions) {
   const callbackRef = useRef(onNewEvent);
   callbackRef.current = onNewEvent;
 
   useEffect(() => {
     const supabase = createClient();
     const channelName = `gym-feed:${gymId}`;
+    let disposed = false;
 
     const channel = supabase
       .channel(channelName)
@@ -27,7 +30,9 @@ export function useRealtimeFeed({ gymId, onNewEvent }: UseRealtimeFeedOptions) {
         },
         (payload) => {
           const row = payload.new as Record<string, unknown>;
-          const event: FeedEventFull = {
+          // Fallback event built straight from the realtime row (the row has no
+          // author name — only member_id).
+          const fallbackEvent: FeedEventFull = {
             id: row.id as string,
             event_type: row.event_type as string,
             member_name: 'Member',
@@ -43,13 +48,34 @@ export function useRealtimeFeed({ gymId, onNewEvent }: UseRealtimeFeedOptions) {
             reactions: { strength: 0, fire: 0, champion: 0, letsgo: 0 },
             my_reactions: [],
           };
-          callbackRef.current(event);
+
+          // Enrich via the feed API so the card shows the author's real name
+          // instead of the literal "Member". Falls back gracefully.
+          void (async () => {
+            let event = fallbackEvent;
+            try {
+              const res = await fetch(
+                `/api/member/feed?member_id=${memberId}&gym_id=${gymId}&limit=10`
+              );
+              if (res.ok) {
+                const data = await res.json();
+                const match = (data.events as FeedEventFull[] | undefined)?.find(
+                  (e) => e.id === fallbackEvent.id
+                );
+                if (match) event = match;
+              }
+            } catch {
+              // keep fallback
+            }
+            if (!disposed) callbackRef.current(event);
+          })();
         }
       )
       .subscribe();
 
     return () => {
+      disposed = true;
       supabase.removeChannel(channel);
     };
-  }, [gymId]);
+  }, [gymId, memberId]);
 }

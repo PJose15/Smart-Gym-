@@ -64,14 +64,14 @@ export function MomentumZone({ streak, weekSessions, level }: MomentumZoneProps)
       <div style={{ display: 'flex', gap: 8 }}>
         {/* Streak tile */}
         <div style={tileStyle}>
-          {/* Animated tier flame — streak is measured in weeks here */}
+          {/* Animated tier flame — current_streak is measured in days */}
           <div style={{ display: 'flex', justifyContent: 'center', height: 22, alignItems: 'center', marginBottom: 4 }}>
-            <StreakFlame streakDays={streak * 7} size={16} />
+            <StreakFlame streakDays={streak} size={16} />
           </div>
           <div style={{ ...tileValueStyle, color: 'var(--color-streak, #FF6B35)' }}>
             {streak}
           </div>
-          <div style={tileLabelStyle}>Week Streak</div>
+          <div style={tileLabelStyle}>Day Streak</div>
         </div>
 
         {/* Week dots tile */}

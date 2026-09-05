@@ -139,4 +139,54 @@ describe('computeStreak', () => {
     expect(result.currentStreak).toBe(3);
     expect(result.currentWeekActive).toBe(false);
   });
+
+  // ── UTC / date-string consistency (regression: server-local bucketing) ──
+
+  it('buckets date-only session_date strings the same as full timestamps of the same UTC day', () => {
+    const full = daysAgo(0);
+    const dateOnly = full.slice(0, 10);
+    const a = computeStreak({ completedWorkoutDates: [full] });
+    const b = computeStreak({ completedWorkoutDates: [dateOnly] });
+    expect(b.currentStreak).toBe(a.currentStreak);
+    expect(b.currentWeekActive).toBe(a.currentWeekActive);
+    expect(b.currentWeekKey).toBe(a.currentWeekKey);
+  });
+
+  describe('with a pinned clock', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('produces a real ISO-8601 week key (2026-01-01 is a Thursday in ISO week 1)', () => {
+      vi.setSystemTime(new Date('2026-01-01T12:00:00Z'));
+      const result = computeStreak({ completedWorkoutDates: ['2026-01-01'] });
+      // Week starts Monday 2025-12-29; its Thursday is 2026-01-01 → ISO 2026-W01
+      expect(result.currentWeekKey).toBe('2026-W01');
+      expect(result.currentWeekActive).toBe(true);
+      expect(result.currentStreak).toBe(1);
+    });
+
+    it('counts consecutive weeks across a year boundary using UTC weeks', () => {
+      vi.setSystemTime(new Date('2026-01-07T08:00:00Z')); // Wednesday, ISO week 2
+      const result = computeStreak({
+        completedWorkoutDates: ['2026-01-06', '2025-12-30', '2025-12-22'],
+      });
+      // Weeks of Jan 5, Dec 29, Dec 22 — three consecutive Mondays
+      expect(result.currentStreak).toBe(3);
+      expect(result.currentWeekKey).toBe('2026-W02');
+    });
+
+    it('a Sunday session lands in the Monday-started week that precedes it (UTC)', () => {
+      vi.setSystemTime(new Date('2026-09-06T23:30:00Z')); // Sunday late UTC
+      const result = computeStreak({
+        completedWorkoutDates: ['2026-09-06', '2026-08-31'], // Sunday + the Monday of the same week
+      });
+      // Both dates are in the week starting Monday 2026-08-31 → one active week
+      expect(result.currentStreak).toBe(1);
+      expect(result.currentWeekActive).toBe(true);
+    });
+  });
 });

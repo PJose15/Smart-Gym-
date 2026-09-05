@@ -1,12 +1,12 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState, CSSProperties } from 'react';
+import { useEffect, useRef, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 
-// ─── Types ───────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface DraftRow {
   id: string;
@@ -26,7 +26,7 @@ interface DraftRow {
   member_profile?: { display_name: string } | null;
 }
 
-// ─── Styles ─────────────────────────────────────────────
+// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const filterBarStyle: CSSProperties = {
   display: 'flex',
@@ -193,7 +193,7 @@ const signalsPanelStyle: CSSProperties = {
 
 const confidenceBadgeStyle = (confidence: number): CSSProperties => ({
   ...chipStyle,
-  backgroundColor: confidence >= 0.7 ? 'var(--color-green-light)' : confidence >= 0.5 ? 'rgba(255, 215, 0,0.15)' : 'var(--color-red-light)',
+  backgroundColor: confidence >= 0.7 ? 'var(--color-green-subtle)' : confidence >= 0.5 ? 'var(--color-gold-subtle)' : 'var(--color-red-subtle)',
   color: confidence >= 0.7 ? 'var(--color-green)' : confidence >= 0.5 ? 'var(--color-gold)' : 'var(--color-red)',
 });
 
@@ -211,7 +211,7 @@ const loadingStyle: CSSProperties = {
 };
 
 const errorStyle: CSSProperties = {
-  backgroundColor: 'var(--color-red-light)',
+  backgroundColor: 'var(--color-red-subtle)',
   color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,
@@ -236,7 +236,7 @@ const statsChipStyle: CSSProperties = {
   color: 'var(--color-text-muted)',
 };
 
-// ─── Component ────────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function CopilotInboxPage() {
   const { authed } = useStaffAuth();
@@ -254,6 +254,10 @@ export default function CopilotInboxPage() {
     if (authed) checkFeatureFlag();
   }, [authed]);
 
+  // Monotonic fetch id â€” guards against a slow earlier response for a
+  // previous filter overwriting the results of a newer one.
+  const fetchSeqRef = useRef(0);
+
   useEffect(() => {
     if (featureEnabled) fetchDrafts();
   }, [featureEnabled, filterStatus]);
@@ -269,6 +273,7 @@ export default function CopilotInboxPage() {
   }
 
   async function fetchDrafts() {
+    const seq = ++fetchSeqRef.current;
     setLoading(true);
     try {
       let query = supabase
@@ -281,12 +286,14 @@ export default function CopilotInboxPage() {
       }
 
       const { data, error: fetchError } = await query;
+      if (seq !== fetchSeqRef.current) return; // stale response â€” a newer fetch is in flight
       if (fetchError) { setError(fetchError.message); return; }
       setDrafts((data as unknown as DraftRow[]) ?? []);
     } catch (err: unknown) {
+      if (seq !== fetchSeqRef.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load drafts');
     } finally {
-      setLoading(false);
+      if (seq === fetchSeqRef.current) setLoading(false);
     }
   }
 
@@ -304,20 +311,31 @@ export default function CopilotInboxPage() {
 
   async function handleApproveAndSend() {
     if (!selectedDraft) return;
+
+    // Validation â€” never send an empty note
+    const title = editTitle.trim();
+    const body = editBody.trim();
+    if (!title || !body) {
+      setError('Title and body are required before sending.');
+      return;
+    }
+
+    if (!window.confirm(`Send this coach note to ${selectedDraft.member_profile?.display_name ?? 'the member'}?`)) {
+      return;
+    }
+
     setSending(true);
     setError(null);
 
     try {
       const wasEdited =
-        editTitle !== selectedDraft.draft_title || editBody !== selectedDraft.draft_body;
+        title !== selectedDraft.draft_title || body !== selectedDraft.draft_body;
 
       const { data: { session } } = await supabase.auth.getSession();
 
-      // Call edge function if available, otherwise do client-side operations
-      // For now, do client-side since edge functions may not be deployed
       const source = selectedDraft.workout_id ? 'workout' : (selectedDraft.period_start ? 'weekly' : 'manual');
 
-      // Create coach_notes row
+      // Step 1 â€” create the coach_notes row
       const { data: note, error: noteErr } = await supabase
         .from('coach_notes')
         .insert({
@@ -326,82 +344,85 @@ export default function CopilotInboxPage() {
           member_profile_id: selectedDraft.member_profile_id,
           source,
           status: 'sent',
-          title: editTitle,
-          body: editBody,
+          title,
+          body,
           meta: selectedDraft.signals,
           sent_at: new Date().toISOString(),
         })
         .select('id')
         .single();
 
-      if (noteErr) { setError(noteErr.message); setSending(false); return; }
+      if (noteErr) { setError(noteErr.message); return; }
 
-      // Update draft status
-      await supabase
+      // Step 2 â€” mark the draft sent. If this fails, roll back the note so we
+      // never leave a sent note behind a still-pending draft (double sends).
+      const { error: draftErr } = await supabase
         .from('coach_note_drafts')
         .update({
           status: 'sent',
-          draft_title: editTitle,
-          draft_body: editBody,
+          draft_title: title,
+          draft_body: body,
         })
         .eq('id', selectedDraft.id);
 
-      // Log actions
+      if (draftErr) {
+        await supabase.from('coach_notes').delete().eq('id', note.id);
+        setError(`Failed to update draft â€” note was not sent (${draftErr.message})`);
+        return;
+      }
+
+      // Step 3 â€” audit log (best-effort; failure is surfaced but non-fatal)
       const userId = session?.user?.id;
       if (userId && note) {
-        const actions: any[] = [];
-        if (wasEdited) {
-          actions.push({
-            gym_id: selectedDraft.gym_id,
-            draft_id: selectedDraft.id,
-            note_id: note.id,
-            actor_profile_id: userId,
-            action: 'edited',
-          });
-        }
-        actions.push({
+        const baseAction = {
           gym_id: selectedDraft.gym_id,
           draft_id: selectedDraft.id,
           note_id: note.id,
           actor_profile_id: userId,
-          action: 'approved',
-        });
-        actions.push({
-          gym_id: selectedDraft.gym_id,
-          draft_id: selectedDraft.id,
-          note_id: note.id,
-          actor_profile_id: userId,
-          action: 'sent',
-        });
-        await supabase.from('coach_note_actions').insert(actions);
+        };
+        const actions = [
+          ...(wasEdited ? [{ ...baseAction, action: 'edited' }] : []),
+          { ...baseAction, action: 'approved' },
+          { ...baseAction, action: 'sent' },
+        ];
+        const { error: logErr } = await supabase.from('coach_note_actions').insert(actions);
+        if (logErr) console.error('[copilot] action log failed:', logErr.message);
       }
 
       closeDraft();
       fetchDrafts();
-    } catch {
-      setError('Failed to send note');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send note');
     } finally {
       setSending(false);
     }
   }
 
   async function handleDiscard(draftId: string) {
+    if (!window.confirm('Discard this draft? It will not be sent to the member.')) return;
     setError(null);
+
     const { data: { session } } = await supabase.auth.getSession();
 
-    await supabase
+    const { error: discardErr } = await supabase
       .from('coach_note_drafts')
       .update({ status: 'discarded' })
       .eq('id', draftId);
 
+    if (discardErr) {
+      setError(`Failed to discard draft: ${discardErr.message}`);
+      return;
+    }
+
     if (session?.user?.id) {
       const draft = drafts.find((d) => d.id === draftId);
-      await supabase.from('coach_note_actions').insert({
+      const { error: logErr } = await supabase.from('coach_note_actions').insert({
         gym_id: draft?.gym_id,
         draft_id: draftId,
         actor_profile_id: session.user.id,
         action: 'discarded',
       });
+      if (logErr) console.error('[copilot] action log failed:', logErr.message);
     }
 
     closeDraft();
@@ -458,8 +479,8 @@ export default function CopilotInboxPage() {
           return (
             <div style={statsStripStyle}>
               <span style={statsChipStyle}>{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</span>
-              {pendingCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'rgba(255, 215, 0,0.15)', color: 'var(--color-gold)' }}>{pendingCount} pending</span>}
-              {sentCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-light)', color: 'var(--color-green)' }}>{sentCount} sent</span>}
+              {pendingCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-gold-subtle)', color: 'var(--color-gold)' }}>{pendingCount} pending</span>}
+              {sentCount > 0 && <span style={{ ...statsChipStyle, backgroundColor: 'var(--color-green-subtle)', color: 'var(--color-green)' }}>{sentCount} sent</span>}
               {discardedCount > 0 && <span style={statsChipStyle}>{discardedCount} discarded</span>}
               <span style={statsChipStyle}>{avgConfidence}% avg confidence</span>
               <span style={statsChipStyle}>{uniqueMembers} member{uniqueMembers !== 1 ? 's' : ''}</span>
@@ -494,12 +515,18 @@ export default function CopilotInboxPage() {
                   key={draft.id}
                   style={cardStyle}
                   className="section-glow"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open draft: ${draft.draft_title}`}
                   onClick={() => openDraft(draft)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDraft(draft); }
+                  }}
                 >
                   <div style={cardTitleStyle}>{draft.draft_title}</div>
                   <div style={memberNameStyle}>
                     {draft.member_profile?.display_name ?? 'Member'}
-                    {' · '}
+                    {' Â· '}
                     {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>
                   <div style={bodyPreviewStyle}>{draft.draft_body}</div>
@@ -532,7 +559,7 @@ export default function CopilotInboxPage() {
                   {draft.status !== 'pending' && (
                     <span style={{
                       ...chipStyle,
-                      backgroundColor: draft.status === 'sent' ? 'var(--color-green-light)' : 'var(--color-bg-highest)',
+                      backgroundColor: draft.status === 'sent' ? 'var(--color-green-subtle)' : 'var(--color-bg-highest)',
                       color: draft.status === 'sent' ? 'var(--color-green)' : 'var(--color-text-muted)',
                     }}>
                       {draft.status}
@@ -544,11 +571,21 @@ export default function CopilotInboxPage() {
           </div>
         )}
 
-        {/* ── Draft Editor Modal ── */}
+        {/* â”€â”€ Draft Editor Modal â”€â”€ */}
         {selectedDraft && (
-          <div style={modalOverlayStyle} onClick={closeDraft}>
-            <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 16, color: 'var(--color-text-primary)' }}>
+          <div
+            style={modalOverlayStyle}
+            onClick={closeDraft}
+            onKeyDown={(e) => { if (e.key === 'Escape') closeDraft(); }}
+          >
+            <div
+              style={modalStyle}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="copilot-draft-modal-title"
+            >
+              <h2 id="copilot-draft-modal-title" style={{ fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 16, color: 'var(--color-text-primary)' }}>
                 Edit Draft
               </h2>
 
@@ -568,15 +605,18 @@ export default function CopilotInboxPage() {
                 </div>
               </div>
 
-              <label style={labelStyle}>Title</label>
+              <label style={labelStyle} htmlFor="copilot-draft-title">Title</label>
               <input
+                id="copilot-draft-title"
                 style={inputStyle}
                 value={editTitle}
+                autoFocus
                 onChange={(e) => setEditTitle(e.target.value)}
               />
 
-              <label style={labelStyle}>Body</label>
+              <label style={labelStyle} htmlFor="copilot-draft-body">Body</label>
               <textarea
+                id="copilot-draft-body"
                 style={textareaStyle}
                 value={editBody}
                 onChange={(e) => setEditBody(e.target.value)}

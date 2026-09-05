@@ -1,11 +1,12 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState, CSSProperties } from 'react';
+import { useEffect, useRef, useState, CSSProperties } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import { PageHeader } from '../components/PageHeader';
 import { AnimatedPage } from '../components/AnimatedPage';
 
-// ─── Types ──────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface LeaderboardRow {
   rank: number;
@@ -16,7 +17,7 @@ interface LeaderboardRow {
 
 type Period = 'weekly' | 'all_time';
 
-// ─── Styles ─────────────────────────────────────────────
+// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const cardStyle: CSSProperties = {
   backgroundColor: 'var(--color-bg-raised)',
@@ -93,34 +94,34 @@ const statsChipStyle: CSSProperties = {
   color: 'var(--color-text-secondary)',
 };
 
-// ─── Component ──────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function LeaderboardPage() {
+  const { authed } = useStaffAuth();
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [period, setPeriod] = useState<Period>('weekly');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Guards against a slow response for a previous period overwriting a newer one.
+  const fetchSeqRef = useRef(0);
 
   useEffect(() => {
+    if (!authed) return;
     fetchLeaderboard(period);
-  }, [period]);
+  }, [authed, period]);
 
   async function fetchLeaderboard(selectedPeriod: Period) {
+    const seq = ++fetchSeqRef.current;
     setLoading(true);
     setError(null);
     try {
-      // Get gym ID (first gym for this admin)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data: memberData } = await supabase
-        .from('members')
-        .select('gym_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (!memberData?.gym_id) throw new Error('No gym found');
+      // Deterministic staff gym (earliest joined) from the staff session â€”
+      // staff accounts don't necessarily have a `members` row.
+      const meRes = await fetch('/api/auth/staff/me');
+      if (!meRes.ok) throw new Error('Not authenticated');
+      const me = await meRes.json();
+      const gymId: string | undefined = me?.gym_id;
+      if (!gymId) throw new Error('No gym found');
 
       let since: string | null = null;
       if (selectedPeriod === 'weekly') {
@@ -134,12 +135,13 @@ export default function LeaderboardPage() {
       }
 
       const { data: rankings, error: rpcErr } = await supabase.rpc('get_leaderboard', {
-        p_gym_id: memberData.gym_id,
+        p_gym_id: gymId,
         p_since: since,
         p_limit: 100,
       });
 
       if (rpcErr) throw rpcErr;
+      if (seq !== fetchSeqRef.current) return; // stale â€” a newer period fetch started
       if (!rankings || rankings.length === 0) {
         setRows([]);
         return;
@@ -149,9 +151,10 @@ export default function LeaderboardPage() {
       const { data: members, error: membersErr } = await supabase
         .from('members')
         .select('user_id, display_name, avatar_url')
-        .eq('gym_id', memberData.gym_id)
+        .eq('gym_id', gymId)
         .in('user_id', profileIds);
       if (membersErr) throw membersErr;
+      if (seq !== fetchSeqRef.current) return;
 
       const profileMap = new Map<string, { full_name: string }>();
       for (const m of members ?? []) {
@@ -171,9 +174,10 @@ export default function LeaderboardPage() {
 
       setRows(result);
     } catch (err: unknown) {
+      if (seq !== fetchSeqRef.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
     } finally {
-      setLoading(false);
+      if (seq === fetchSeqRef.current) setLoading(false);
     }
   }
 

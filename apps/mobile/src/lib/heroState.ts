@@ -3,7 +3,7 @@
  * Based on DOC_07: Priority-ordered variant selection.
  */
 import type { WeightUnit } from '@nexera/types';
-import { formatVolumeLbs } from './feedLogic';
+import { convertToLbs, formatVolumeLbs } from './feedLogic';
 
 export type HeroVariant =
   | 'today-fresh'
@@ -46,7 +46,9 @@ export interface HeroInput {
   lastSessionDate?: string | null;
   lastSessionIsPR?: boolean;
   lastSessionPRMachine?: string;
+  /** PR weight in kg (PRDetection values from ai-assist are kg-canonical). */
   lastSessionPRWeight?: number;
+  /** PR improvement in kg (same source as lastSessionPRWeight). */
   lastSessionPRImprovement?: number;
   /** Weekly volume in canonical lbs (converted for display via weightUnit). */
   weeklyVolume: number;
@@ -112,6 +114,15 @@ function daysSince(dateStr: string | null | undefined): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * Format a kg-canonical PR value in the member's display unit.
+ * kg: 1 decimal (trailing .0 stripped); lbs: integer.
+ */
+function formatPrKg(kg: number, unit: WeightUnit): string {
+  if (unit === 'kg') return `${Math.round(kg * 10) / 10} kg`;
+  return `${Math.round(convertToLbs(kg, 'kg'))} lbs`;
+}
+
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good morning,';
@@ -158,13 +169,14 @@ export function computeHeroState(input: HeroInput): HeroState {
 
   // Priority 3: PR in last session (within 24 hours)
   if (input.lastSessionIsPR && daysSinceLastSession < 1) {
+    const unit = input.weightUnit ?? 'lbs';
     return makeHero('pr-recent', greeting,
       `New PR: ${input.lastSessionPRMachine ?? 'Personal Record'}`,
       input.lastSessionPRWeight
-        ? `${input.lastSessionPRWeight} lbs${input.lastSessionPRImprovement ? ` · +${input.lastSessionPRImprovement} lbs from your previous best` : ''}`
+        ? `${formatPrKg(input.lastSessionPRWeight, unit)}${input.lastSessionPRImprovement ? ` · +${formatPrKg(input.lastSessionPRImprovement, unit)} from your previous best` : ''}`
         : 'You pushed through a new ceiling.',
       input.lastSessionPRImprovement
-        ? { value: `+${input.lastSessionPRImprovement}`, label: 'lbs improvement' }
+        ? { value: `+${formatPrKg(input.lastSessionPRImprovement, unit).split(' ')[0]}`, label: `${unit} improvement` }
         : undefined
     );
   }

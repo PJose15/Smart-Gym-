@@ -46,23 +46,35 @@ const joinedBadgeStyle: CSSProperties = {
 export function ChallengePreview({ memberId, gymId }: ChallengePreviewProps) {
   const [challenges, setChallenges] = useState<ChallengeListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [joining, setJoining] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
     (async () => {
       try {
         const res = await fetch(`/api/member/challenges?member_id=${memberId}&gym_id=${gymId}`);
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
-          setChallenges((data.challenges || []).filter((c: ChallengeListItem) => c.is_active).slice(0, 3));
+          if (!cancelled) {
+            setChallenges((data.challenges || []).filter((c: ChallengeListItem) => c.is_active).slice(0, 3));
+          }
+        } else {
+          setError(true);
         }
       } catch {
-        // silent
+        if (!cancelled) setError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [memberId, gymId]);
+
+    return () => { cancelled = true; };
+  }, [memberId, gymId, retryCount]);
 
   async function handleJoin(challengeId: string) {
     setJoining(challengeId);
@@ -89,6 +101,39 @@ export function ChallengePreview({ memberId, gymId }: ChallengePreviewProps) {
       <div style={cardStyle}>
         <div style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Loading challenges...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Distinguish a failed load from a genuinely empty list — a silent error
+  // here used to hide the card entirely with no way to recover.
+  if (error) {
+    return (
+      <div style={cardStyle}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+          Active Challenges
+        </div>
+        <div style={{ textAlign: 'center', padding: 8 }}>
+          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '0 0 10px' }}>
+            Couldn&apos;t load challenges.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRetryCount((c) => c + 1)}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 'var(--radius-full, 9999px)',
+              border: '1px solid var(--color-border-subtle)',
+              backgroundColor: 'var(--color-bg-elevated)',
+              color: 'var(--color-text-secondary)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

@@ -46,6 +46,7 @@ export function MuscleMapSVG({
         const isSelected = selectedMuscle === path.key;
         const opacity = isSelected ? 0.9 : 0.6;
         const strokeWidth = isSelected ? 2 : 0.5;
+        const interactive = !!onMusclePress;
 
         return (
           <path
@@ -56,7 +57,18 @@ export function MuscleMapSVG({
             stroke={isSelected ? '#fff' : 'rgba(255,255,255,0.2)'}
             strokeWidth={strokeWidth}
             className="cursor-pointer transition-all duration-200"
+            role={interactive ? 'button' : undefined}
+            tabIndex={interactive ? 0 : undefined}
+            aria-label={`${state.label} — ${state.state}`}
+            aria-pressed={interactive ? isSelected : undefined}
             onClick={() => onMusclePress?.(path.key)}
+            onKeyDown={(e) => {
+              if (!interactive) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onMusclePress?.(path.key);
+              }
+            }}
           />
         );
       })}

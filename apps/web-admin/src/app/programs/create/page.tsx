@@ -4,10 +4,12 @@ import { useEffect, useState, FormEvent, CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useStaffAuth } from '@/lib/useStaffAuth';
 import type { Gym } from '@nexera/types';
 import { AnimatedPage } from '../../components/AnimatedPage';
 
 export default function CreateProgramPage() {
+  const { authed } = useStaffAuth();
   const router = useRouter();
 
   // Form state
@@ -24,6 +26,7 @@ export default function CreateProgramPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authed) return;
     async function fetchGyms() {
       setLoadingGyms(true);
       const { data, error: fetchError } = await supabase
@@ -44,7 +47,7 @@ export default function CreateProgramPage() {
       setLoadingGyms(false);
     }
     fetchGyms();
-  }, []);
+  }, [authed]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

@@ -124,7 +124,7 @@ const cancelButtonStyle: CSSProperties = {
 };
 
 const errorBoxStyle: CSSProperties = {
-  backgroundColor: 'var(--color-red-light)',
+  backgroundColor: 'var(--color-red-subtle)',
   color: 'var(--color-red)',
   padding: '14px 18px',
   borderRadius: 8,

@@ -60,7 +60,7 @@ export function MemberSessionsTab({ memberId }: { memberId: string }) {
 
       {error && (
         <div style={{
-          backgroundColor: 'var(--color-red-light)',
+          backgroundColor: 'var(--color-red-subtle)',
           color: 'var(--color-red)',
           padding: '10px 14px',
           borderRadius: 8,

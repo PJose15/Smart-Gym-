@@ -12,7 +12,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 
-const LAST_VIEWED_KEY = 'nexera_feed_last_viewed_at';
+export const FEED_LAST_VIEWED_KEY = 'nexera_feed_last_viewed_at';
+const LAST_VIEWED_KEY = FEED_LAST_VIEWED_KEY;
 
 type Listener = () => void;
 const listeners = new Set<Listener>();

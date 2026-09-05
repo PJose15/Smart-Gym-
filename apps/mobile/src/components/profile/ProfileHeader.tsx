@@ -44,6 +44,7 @@ export function ProfileHeader({
         <TouchableOpacity
           style={styles.gearButton}
           onPress={() => router.push('/settings' as any)}
+          accessibilityRole="button"
           accessibilityLabel="Settings"
         >
           <Text style={styles.gearIcon}>{'⚙'}</Text>

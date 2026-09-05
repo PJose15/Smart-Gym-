@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAiProgramDays } from '@nexera/utils';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -61,11 +62,13 @@ export async function GET(
 
     let todays_target = null;
     let workout_mode = 'free';
-    if (program?.program_data?.days) {
+    // Handles both { days } and { weeks: [{ days }] } shaped program_data.
+    const programDays = extractAiProgramDays(program?.program_data);
+    if (programDays.length > 0) {
       workout_mode = 'ai_program';
-      for (const day of program.program_data.days) {
+      for (const day of programDays) {
         const match = day.exercises?.find(
-          (ex: { machine_id?: string }) => ex.machine_id === machine.id
+          (ex: { machine_id?: string | null }) => ex.machine_id === machine.id
         );
         if (match) {
           todays_target = match;

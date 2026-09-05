@@ -24,23 +24,42 @@ export interface StreakResult {
 }
 
 // ─── Helpers ────────────────────────────────────────────
+// All date math runs in UTC on the DATE PART of the input strings. Session
+// dates are date-only strings (session_date), so parsing/deriving anything in
+// server-local time shifted dates by a day in non-UTC deployments and made
+// week arithmetic drift across DST boundaries.
 
-/** Returns the Monday (or configured weekStartDay) of the ISO week containing the given date */
-function getWeekStart(date: Date, weekStartDay: number): Date {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = d.getDay();
-  const diff = (day - weekStartDay + 7) % 7;
-  d.setDate(d.getDate() - diff);
-  return d;
+const ONE_DAY_MS = 86_400_000;
+
+/**
+ * Parses the date part (YYYY-MM-DD) of an ISO string as UTC midnight.
+ * Accepts both date-only strings (session_date) and full ISO timestamps.
+ */
+function parseUTCDate(dateStr: string): Date {
+  return new Date(`${dateStr.slice(0, 10)}T00:00:00Z`);
 }
 
-/** Formats a Date as YYYY-WXX key for idempotency */
+/** Returns UTC midnight of the week start (weekStartDay: 0=Sun, 1=Mon) containing the given UTC date */
+function getWeekStart(date: Date, weekStartDay: number): Date {
+  const day = date.getUTCDay();
+  const diff = (day - weekStartDay + 7) % 7;
+  return new Date(date.getTime() - diff * ONE_DAY_MS);
+}
+
+/**
+ * Formats a Date as a real ISO-8601 YYYY-WXX week key (UTC) for idempotency.
+ * (The previous implementation used ceil(dayOfYear / 7) — a fake week number
+ * that disagreed with ISO weeks and could collide/skip around year boundaries.)
+ */
 function toWeekKey(date: Date): string {
-  const year = date.getFullYear();
-  const janFirst = new Date(year, 0, 1);
-  const dayOfYear = Math.floor((date.getTime() - janFirst.getTime()) / (86400000)) + 1;
-  const weekNum = Math.ceil(dayOfYear / 7);
-  return `${year}-W${String(weekNum).padStart(2, '0')}`;
+  // ISO week: Thursday of the current week determines the week-numbering year
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNum = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // Mon=1..Sun=7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // move to Thursday
+  const isoYear = d.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+  const weekNum = Math.ceil(((d.getTime() - yearStart.getTime()) / ONE_DAY_MS + 1) / 7);
+  return `${isoYear}-W${String(weekNum).padStart(2, '0')}`;
 }
 
 /** Returns bonus points for a given streak length */
@@ -57,7 +76,8 @@ function getBonusPoints(streakWeeks: number): number {
 export function computeStreak(input: StreakInput): StreakResult {
   const { completedWorkoutDates, weekStartDay = 1 } = input;
 
-  const now = new Date();
+  // "Today" as a UTC date — consistent with session_date date-only strings
+  const now = parseUTCDate(new Date().toISOString());
   const currentWeekStart = getWeekStart(now, weekStartDay);
   const currentWeekKey = toWeekKey(currentWeekStart);
 
@@ -77,7 +97,7 @@ export function computeStreak(input: StreakInput): StreakResult {
   let currentWeekActive = false;
 
   for (const dateStr of completedWorkoutDates) {
-    const date = new Date(dateStr);
+    const date = parseUTCDate(dateStr);
     const ws = getWeekStart(date, weekStartDay);
     const key = ws.getTime();
     weekSet.add(key.toString());

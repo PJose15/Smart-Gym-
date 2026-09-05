@@ -191,9 +191,16 @@ export default function DashboardPage() {
     if (!authed) return;
     async function fetchDashboard() {
       try {
-        const todayDate = new Date().toISOString().slice(0, 10);
+        // Local calendar day (toISOString() would give the UTC day, shifting
+        // "today" for any staff west/east of UTC).
+        const now = new Date();
+        const todayDate = [
+          now.getFullYear(),
+          String(now.getMonth() + 1).padStart(2, '0'),
+          String(now.getDate()).padStart(2, '0'),
+        ].join('-');
 
-        const [machinesRes, programsRes, membersRes, sessionsRes, workoutsRes] =
+        const [machinesRes, programsRes, membersRes, sessionsRes, workoutsRes, activeRes] =
           await Promise.all([
             supabase
               .from('machines')
@@ -214,6 +221,12 @@ export default function DashboardPage() {
               .select('id, session_date, completed_at, member_id, members(display_name)')
               .order('session_date', { ascending: false })
               .limit(5),
+            // Real in-progress count (previously sampled from the 5 recent rows)
+            supabase
+              .from('workout_sessions')
+              .select('id', { count: 'exact', head: true })
+              .is('completed_at', null)
+              .gte('session_date', todayDate),
           ]);
 
         const firstError =
@@ -221,7 +234,8 @@ export default function DashboardPage() {
           programsRes.error ||
           membersRes.error ||
           sessionsRes.error ||
-          workoutsRes.error;
+          workoutsRes.error ||
+          activeRes.error;
 
         if (firstError) {
           setError(firstError.message);
@@ -240,10 +254,7 @@ export default function DashboardPage() {
           (workoutsRes.data as unknown as RecentWorkout[]) ?? []
         );
 
-        // Count active (not yet completed) workouts
-        const activeCount = ((workoutsRes.data ?? []) as unknown as RecentWorkout[])
-          .filter(w => w.completed_at === null).length;
-        setActiveWorkouts(activeCount);
+        setActiveWorkouts(activeRes.count ?? 0);
 
         setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
       } catch (err: unknown) {

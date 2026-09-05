@@ -4,6 +4,10 @@ interface FeedGeneratorInput {
   member_id: string;
   gym_id: string;
   display_name: string;
+  /**
+   * PR fields are retained for call-site compatibility but are no longer
+   * used — PR feed events are owned by /api/sessions/pr-check.
+   */
   is_personal_best: boolean;
   best_weight_lbs: number | null;
   streak: number;
@@ -34,28 +38,12 @@ export async function generateSessionFeedEvents(admin: SupabaseClient<any, 'publ
     // display_text is rendered after a bold member-name span by the UI,
     // so producers must NOT prefix the member name here.
 
-    // PR event (max 1 per member per day — dedup check)
-    if (input.is_personal_best) {
-      const today = new Date().toISOString().split('T')[0];
-      const { data: existing } = await admin
-        .from('gym_feed_events')
-        .select('id')
-        .eq('member_id', input.member_id)
-        .eq('event_type', 'pr_weight')
-        .gte('created_at', `${today}T00:00:00Z`)
-        .limit(1);
-
-      if (!existing || existing.length === 0) {
-        events.push({
-          gym_id: input.gym_id,
-          member_id: input.member_id,
-          event_type: 'pr_weight',
-          display_text: `hit a new personal best${input.best_weight_lbs ? ` — ${input.best_weight_lbs} lbs` : ''}!`,
-          context_data: { best_weight_lbs: input.best_weight_lbs },
-          priority: 'medium',
-        });
-      }
-    }
+    // NOTE: PR events (pr_weight / pr_volume) are intentionally NOT created
+    // here. /api/sessions/pr-check is the single owner — it detects PRs at
+    // set-log time with full context (machine, previous best, improvement)
+    // and enforces the one-PR-event-per-member-per-day dedupe. The PR block
+    // that used to live here was always shadowed by pr-check's earlier,
+    // info-poorer insert.
 
     // Streak milestone
     if (STREAK_MILESTONES.includes(input.streak)) {
