@@ -15,13 +15,15 @@ export async function POST(
   try {
     const uuidError = validateUUIDs({ memberId: params.memberId });
     if (uuidError) return uuidError;
-    const rl = checkRateLimit(`trainer-approve:${params.memberId}`, 10, 60_000);
-    if (rl) return rl;
 
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
 
     const { admin, user_id, gym_id } = result;
+
+    // Rate limit AFTER auth, keyed on the authenticated trainer (M-9).
+    const rl = checkRateLimit(`trainer-approve:${user_id}`, 10, 60_000);
+    if (rl) return rl;
     const { memberId } = params;
 
     const body = await request.json();

@@ -28,14 +28,15 @@ export async function POST(
     const uuidError = validateUUIDs({ gymId });
     if (uuidError) return uuidError;
 
-    const rl = checkRateLimit(`create-machine:${gymId}`, 10, 60_000);
-    if (rl) return rl;
-
     const result = await verifyStaff('owner');
     if (result instanceof NextResponse) return result;
-    const { admin, gym_id } = result;
+    const { admin, gym_id, user_id } = result;
 
     if (gym_id !== gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    // Rate limit AFTER auth, keyed on the authenticated user (M-9).
+    const rl = checkRateLimit(`create-machine:${user_id}`, 10, 60_000);
+    if (rl) return rl;
 
     const parsed = machineSchema.safeParse(await req.json());
     if (!parsed.success) {

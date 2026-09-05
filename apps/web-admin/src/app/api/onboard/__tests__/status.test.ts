@@ -9,11 +9,11 @@
  */
 
 // ─── Mock @/lib/supabase/server (anon/cookie client) ─────
-const mockGetSession = jest.fn();
+const mockGetUser = jest.fn();
 jest.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: jest.fn(() => ({
     auth: {
-      getSession: () => mockGetSession(),
+      getUser: () => mockGetUser(),
     },
   })),
 }));
@@ -87,9 +87,9 @@ beforeEach(() => {
   mockCreateClient.mockReturnValue(buildAdminMock({}));
 });
 
-// Test 6a: no session → 401
+// Test 6a: no authenticated user → 401
 test('T6a: no session returns 401', async () => {
-  mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
+  mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
   const res = await GET();
   expect(res.status).toBe(401);
@@ -97,14 +97,12 @@ test('T6a: no session returns 401', async () => {
 
 // Test 6b: with session + owner membership → 200 with full status object
 test('T6b: session with owner membership returns 200 with gym_id, gym_name, tier, email_confirmed, billing', async () => {
-  mockGetSession.mockResolvedValue({
+  mockGetUser.mockResolvedValue({
     data: {
-      session: {
-        user: {
-          id: 'user-123',
-          email: 'alice@example.com',
-          email_confirmed_at: '2026-01-01T00:00:00Z',
-        },
+      user: {
+        id: 'user-123',
+        email: 'alice@example.com',
+        email_confirmed_at: '2026-01-01T00:00:00Z',
       },
     },
     error: null,

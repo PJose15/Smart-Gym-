@@ -9,8 +9,8 @@ const prCheckSchema = z.object({
   session_id: uuidString,
   member_id: uuidString,
   machine_id: uuidString,
-  weight_lbs: z.number().min(0),
-  reps: z.number().int().min(1),
+  weight_lbs: z.number().min(0).max(2000),
+  reps: z.number().int().min(1).max(100),
 });
 
 /**
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { session_id, member_id, machine_id, weight_lbs, reps } = parsed.data;
+    const { session_id, member_id, machine_id, weight_lbs } = parsed.data;
 
     // Verify the authenticated user owns this member_id (cookie or Bearer JWT)
     const authResult = await verifyMember(member_id, request);
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     // otherwise a caller could mark arbitrary sessions as PRs.
     const { data: ownedSession } = await admin
       .from('workout_sessions')
-      .select('id')
+      .select('id, best_weight_lbs, total_volume_lbs')
       .eq('id', session_id)
       .eq('member_id', member_id)
       .eq('machine_id', machine_id)
@@ -52,6 +52,11 @@ export async function POST(request: NextRequest) {
     if (!ownedSession) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
+
+    // The session's server-computed best is the ceiling of what was actually
+    // logged via /api/sessions — clamp the body weight to it so a caller
+    // can't record a PR heavier than any set they logged.
+    const effectiveWeight = Math.min(weight_lbs, ownedSession.best_weight_lbs || 0);
 
     // Get all previous sessions for this member on this machine (excluding current)
     const { data: history } = await admin
@@ -65,13 +70,13 @@ export async function POST(request: NextRequest) {
 
     // First session on this machine = always a PR
     if (!history || history.length === 0) {
-      await markPR(admin, session_id, member_id, 'first_session', weight_lbs, null);
+      await markPR(admin, session_id, member_id, 'first_session', effectiveWeight, null);
       await insertFeedEvent(admin, session_id, member_id, machine_id, 'first_session');
 
       return NextResponse.json({
         pr: {
           type: 'first_session',
-          value: weight_lbs,
+          value: effectiveWeight,
           previousValue: null,
           improvementPct: null,
         },
@@ -83,37 +88,30 @@ export async function POST(request: NextRequest) {
       ...history.map((h) => h.best_weight_lbs || 0)
     );
 
-    if (weight_lbs > historicalBestWeight && historicalBestWeight > 0) {
+    if (effectiveWeight > historicalBestWeight && historicalBestWeight > 0) {
       const improvementPct =
-        Math.round(((weight_lbs - historicalBestWeight) / historicalBestWeight) * 1000) / 10;
+        Math.round(((effectiveWeight - historicalBestWeight) / historicalBestWeight) * 1000) / 10;
 
-      await markPR(admin, session_id, member_id, 'weight', weight_lbs, historicalBestWeight);
+      await markPR(admin, session_id, member_id, 'weight', effectiveWeight, historicalBestWeight);
       await insertFeedEvent(admin, session_id, member_id, machine_id, 'weight');
 
       return NextResponse.json({
         pr: {
           type: 'weight',
-          value: weight_lbs,
+          value: effectiveWeight,
           previousValue: historicalBestWeight,
           improvementPct,
         },
       });
     }
 
-    // Check volume PR (current set volume vs historical best single-set volume)
-    const currentVolume = weight_lbs * reps;
+    // Check volume PR — server-stored session total only (no body-derived
+    // fallback: a zero/absent stored volume means no volume PR).
     const historicalBestVolume = Math.max(
       ...history.map((h) => h.total_volume_lbs || 0)
     );
 
-    // Get current session's total volume
-    const { data: currentSession } = await admin
-      .from('workout_sessions')
-      .select('total_volume_lbs')
-      .eq('id', session_id)
-      .single();
-
-    const currentTotalVolume = currentSession?.total_volume_lbs || currentVolume;
+    const currentTotalVolume = ownedSession.total_volume_lbs || 0;
 
     if (currentTotalVolume > historicalBestVolume && historicalBestVolume > 0) {
       const improvementPct =

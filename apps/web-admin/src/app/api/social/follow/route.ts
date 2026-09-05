@@ -18,15 +18,16 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
 
-    const rl = checkRateLimit(`follow:${follower_id}`, 30, 60_000);
-    if (rl) return rl;
-
     const supabase = await createServerSupabaseClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user)
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Rate limit AFTER auth, keyed on the authenticated user (M-9).
+    const rl = checkRateLimit(`follow:${user.id}`, 30, 60_000);
+    if (rl) return rl;
 
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       .from('members')
       .select('id, gym_id')
       .eq('id', follower_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
     if (!member)
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

@@ -11,12 +11,14 @@ export async function POST(
   try {
     const uuidError = validateUUIDs({ memberId: params.memberId });
     if (uuidError) return uuidError;
-    const rl = checkRateLimit(`readiness-log:${params.memberId}`, 5, 60_000);
-    if (rl) return rl;
 
     const auth = await verifyMember(params.memberId);
     if (auth instanceof NextResponse) return auth;
-    const { admin } = auth;
+    const { admin, member_id } = auth;
+
+    // Rate limit AFTER auth, keyed on the verified member (M-9).
+    const rl = checkRateLimit(`readiness-log:${member_id}`, 5, 60_000);
+    if (rl) return rl;
 
     const body = await req.json();
     const { sleep, soreness, mood, stress, energy } = body;

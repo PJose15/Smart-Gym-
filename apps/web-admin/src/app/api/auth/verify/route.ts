@@ -66,7 +66,11 @@ export async function POST(request: NextRequest) {
       name = parsed.data.name;
     }
 
-    const limited = checkRateLimit(`auth-verify:${phone}`, 10, 900_000);
+    // Pre-auth: per-IP overall cap + per-IP+phone cap (see auth/lookup BE-H6).
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ipLimited = checkRateLimit(`auth-verify-ip:${ip}`, 30, 900_000);
+    if (ipLimited) return ipLimited;
+    const limited = checkRateLimit(`auth-verify:${ip}:${phone}`, 10, 900_000);
     if (limited) return limited;
 
     const admin = getAdminClient();

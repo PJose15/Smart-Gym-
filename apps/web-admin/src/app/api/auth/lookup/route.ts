@@ -34,10 +34,14 @@ export async function POST(request: NextRequest) {
 
     const { phone, gym_id } = parsed.data;
 
-    // BE-H6: pre-auth endpoint — key the rate limit on IP+phone (first hop of
-    // x-forwarded-for) so one caller can't enumerate many phones nor hammer
-    // one phone from many sessions.
+    // BE-H6: pre-auth endpoint — two limits: an overall per-IP cap (stops one
+    // caller enumerating many distinct phones) plus a per-IP+phone cap (stops
+    // hammering a single phone). First hop of x-forwarded-for = client on
+    // Vercel; behind other proxies this header is client-controlled, which is
+    // why the per-IP cap is a hardening layer, not the only defense.
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ipLimited = checkRateLimit(`lookup-ip:${ip}`, 30, 300_000);
+    if (ipLimited) return ipLimited;
     const limited = checkRateLimit(`lookup:${ip}:${phone}`, 20, 300_000);
     if (limited) return limited;
 

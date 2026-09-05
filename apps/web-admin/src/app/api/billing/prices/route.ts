@@ -56,8 +56,8 @@ export async function GET(request: Request) {
   try {
     // Light session check — read-only harmless data, don't use verifyStaff
     const supabase = await createServerSupabaseClient();
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

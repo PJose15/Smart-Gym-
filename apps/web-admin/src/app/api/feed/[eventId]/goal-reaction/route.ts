@@ -25,8 +25,8 @@ export async function POST(
     const uuidError = validateUUIDs({ eventId });
     if (uuidError) return uuidError;
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -42,7 +42,7 @@ export async function POST(
     const { data: memberCheck } = await admin
       .from('members')
       .select('id, gym_id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('id', memberId)
       .maybeSingle();
 

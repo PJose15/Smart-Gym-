@@ -29,8 +29,8 @@ const onboardSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
     const parsed = onboardSchema.safeParse(body);
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const { member_id, gym_id, primary_goal, experience_level } = parsed.data;
 
-    const rl = checkRateLimit(`onboard:${session.user.id}`, 5, 60_000);
+    const rl = checkRateLimit(`onboard:${user.id}`, 5, 60_000);
     if (rl) return rl;
 
     const admin = getAdminClient();
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       .from('members')
       .select('id')
       .eq('id', member_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
     if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 

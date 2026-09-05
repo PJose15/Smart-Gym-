@@ -22,8 +22,8 @@ function getAdminClient() {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
     const parsed = scanEventSchema.safeParse(body);
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       .from('members')
       .select('id, gym_id')
       .eq('id', member_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (!member) {
@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
     const { scan_event_id, led_to_log } = body;
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest) {
     const uuidError = validateUUIDs({ scan_event_id });
     if (uuidError) return uuidError;
 
-    const rl = checkRateLimit(`scan-event-patch:${session.user.id}`, 60, 60_000);
+    const rl = checkRateLimit(`scan-event-patch:${user.id}`, 60, 60_000);
     if (rl) return rl;
 
     const admin = getAdminClient();
@@ -124,7 +124,7 @@ export async function PATCH(request: NextRequest) {
     const { data: memberRows } = await admin
       .from('members')
       .select('id')
-      .eq('user_id', session.user.id);
+      .eq('user_id', user.id);
 
     const memberIds = (memberRows ?? []).map((m) => m.id);
     if (memberIds.length === 0) {

@@ -6,9 +6,9 @@ import { checkRateLimit } from '@/lib/rateLimit';
 
 async function getAuthMember() {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (!user) {
     return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
 
@@ -22,7 +22,7 @@ async function getAuthMember() {
   const { data: member } = await admin
     .from('members')
     .select('id')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .limit(1)
     .maybeSingle();
 

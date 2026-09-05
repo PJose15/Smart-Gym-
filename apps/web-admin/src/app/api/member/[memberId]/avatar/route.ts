@@ -44,12 +44,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const uuidError = validateUUIDs({ memberId });
     if (uuidError) return uuidError;
 
-    const rl = checkRateLimit(`avatar:${memberId}`, 10, 60_000);
-    if (rl) return rl;
-
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
-    const { admin } = authResult;
+    const { admin, member_id } = authResult;
+
+    // Rate limit AFTER auth, keyed on the verified member (M-9).
+    const rl = checkRateLimit(`avatar:${member_id}`, 10, 60_000);
+    if (rl) return rl;
 
     const formData = await request.formData();
     const file = formData.get('file');

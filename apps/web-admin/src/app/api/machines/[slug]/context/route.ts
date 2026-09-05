@@ -14,8 +14,8 @@ export async function GET(
     const { slug } = await params;
 
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +36,7 @@ export async function GET(
     const { data: member } = await admin
       .from('members')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('gym_id', machine.gym_id)
       .maybeSingle();
 

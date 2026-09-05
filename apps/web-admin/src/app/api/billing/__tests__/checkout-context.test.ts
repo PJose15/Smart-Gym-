@@ -50,8 +50,9 @@ jest.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: jest.fn().mockImplementation(function () {
     return Promise.resolve({
       auth: {
-        getSession: jest.fn().mockResolvedValue({
-          data: { session: { user: { id: 'user-123' } } },
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: 'user-123' } },
+          error: null,
         }),
       },
     });

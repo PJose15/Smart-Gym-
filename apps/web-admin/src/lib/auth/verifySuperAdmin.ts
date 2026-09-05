@@ -17,9 +17,9 @@ interface SuperAdminVerifyResult {
 export async function verifySuperAdmin(): Promise<SuperAdminVerifyResult | NextResponse> {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
 
-    if (!session?.user) {
+    if (!authUser) {
       return NextResponse.json({ error: 'Not Found' }, { status: 404 });
     }
 
@@ -32,7 +32,7 @@ export async function verifySuperAdmin(): Promise<SuperAdminVerifyResult | NextR
     const { data: user } = await admin
       .from('users')
       .select('id, email, display_name, platform_role')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .eq('platform_role', 'super_admin')
       .maybeSingle();
 

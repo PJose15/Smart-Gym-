@@ -17,12 +17,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const uuidError = validateUUIDs({ memberId });
     if (uuidError) return uuidError;
 
-    const rl = checkRateLimit(`program:${memberId}`, 30, 60_000);
-    if (rl) return rl;
-
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
-    const { admin } = authResult;
+    const { admin, member_id } = authResult;
+
+    // Rate limit AFTER auth, keyed on the verified member (M-9).
+    const rl = checkRateLimit(`program:${member_id}`, 30, 60_000);
+    if (rl) return rl;
 
     // Fetch active program
     const { data: program, error } = await admin

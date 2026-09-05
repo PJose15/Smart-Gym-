@@ -6,9 +6,9 @@ export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user)
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const admin = createClient(
@@ -20,7 +20,7 @@ export async function GET() {
     const { data: member } = await admin
       .from('members')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .limit(1)
       .maybeSingle();
     if (!member) return NextResponse.json({ is_subscribed: false });

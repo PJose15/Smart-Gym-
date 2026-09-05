@@ -17,12 +17,14 @@ export async function POST(
     if (uuidError) return uuidError;
 
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rl = checkRateLimit(`program-complete:${programId}`, 5, 60_000);
+    // Rate limit keyed on the authenticated user, not the caller-chosen
+    // programId (M-9: prevents exhausting another member's bucket).
+    const rl = checkRateLimit(`program-complete:${user.id}`, 5, 60_000);
     if (rl) return rl;
 
     const admin = createClient(
@@ -47,7 +49,7 @@ export async function POST(
       .from('members')
       .select('id')
       .eq('id', program.member_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (!member) {

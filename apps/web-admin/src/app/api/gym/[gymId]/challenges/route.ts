@@ -23,13 +23,16 @@ export async function POST(
   try {
     const uuidError = validateUUIDs({ gymId: params.gymId });
     if (uuidError) return uuidError;
-    const rl = checkRateLimit(`create-challenge:${params.gymId}`, 5, 60_000);
-    if (rl) return rl;
 
     const result = await verifyStaff('owner');
     if (result instanceof NextResponse) return result;
     const { admin, gym_id, user_id } = result;
     if (gym_id !== params.gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    // Rate limit AFTER auth, keyed on the authenticated user (M-9: prevents
+    // unauthenticated bucket-exhaustion griefing via victim-supplied ids).
+    const rl = checkRateLimit(`create-challenge:${user_id}`, 5, 60_000);
+    if (rl) return rl;
 
     // Tier gate: creating challenges requires the challenges feature.
     const access = await checkFeatureAccess(gym_id, 'challenges');

@@ -213,7 +213,17 @@ async function seedGymData(admin: SupabaseClient, gymId: string, ownerId: string
           const reps = 5 + Math.floor(Math.random() * 12)
           totalVolume += weight * reps
           if (weight > bestWeight) bestWeight = weight
-          sets.push({ weight, reps, rpe: 6 + Math.floor(Math.random() * 4) })
+          // Canonical set shape (matches append_session_set / useSessionManager
+          // / member analytics consumers): {set_number, weight_lbs, reps, rpe,
+          // notes, logged_at}
+          sets.push({
+            set_number: i + 1,
+            weight_lbs: weight,
+            reps,
+            rpe: 6 + Math.floor(Math.random() * 4),
+            notes: null,
+            logged_at: day.toISOString(),
+          })
         }
 
         sessions.push({
@@ -233,11 +243,26 @@ async function seedGymData(admin: SupabaseClient, gymId: string, ownerId: string
       }
     }
 
-    const { error: sessErr } = await admin.from('workout_sessions').insert(sessions)
-    if (sessErr && sessErr.code !== '23505') {
-      results.push(`workout_sessions: error - ${sessErr.message}`)
+    // Migration 042 added UNIQUE(member_id, machine_id, session_date) — the
+    // random generator above can collide on that key, and a wholesale insert
+    // fails atomically (0 rows inserted) on the first duplicate. Dedupe the
+    // batch (keep first) before inserting.
+    const seenSessionKeys = new Set<string>()
+    const dedupedSessions = sessions.filter((s) => {
+      const key = `${s.member_id}|${s.machine_id}|${s.session_date}`
+      if (seenSessionKeys.has(key)) return false
+      seenSessionKeys.add(key)
+      return true
+    })
+
+    const { error: sessErr } = await admin.from('workout_sessions').insert(dedupedSessions)
+    if (sessErr) {
+      // 23505 here means rows from a previous seed run already exist: the
+      // whole batch was rejected, so report the real count (0) as an error —
+      // never mask it as "N inserted".
+      results.push(`workout_sessions: error - ${sessErr.message} (0 inserted)`)
     } else {
-      results.push(`workout_sessions: ${sessions.length}`)
+      results.push(`workout_sessions: ${dedupedSessions.length}`)
     }
   }
 

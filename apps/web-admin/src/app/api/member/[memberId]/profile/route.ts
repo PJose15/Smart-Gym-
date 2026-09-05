@@ -183,12 +183,13 @@ export async function PATCH(
     const uuidError = validateUUIDs({ memberId });
     if (uuidError) return uuidError;
 
-    const rl = checkRateLimit(`profile-update:${memberId}`, 10, 60_000);
-    if (rl) return rl;
-
     const auth = await verifyMember(memberId);
     if (auth instanceof NextResponse) return auth;
-    const { admin } = auth;
+    const { admin, member_id } = auth;
+
+    // Rate limit AFTER auth, keyed on the verified member (M-9).
+    const rl = checkRateLimit(`profile-update:${member_id}`, 10, 60_000);
+    if (rl) return rl;
 
     const parsed = profilePatchSchema.safeParse(await req.json());
     if (!parsed.success) {

@@ -31,8 +31,8 @@ export async function GET(
     }
     if (!userId) {
       const supabase = await createServerSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) userId = session.user.id;
+      const { data: { user: cookieUser } } = await supabase.auth.getUser();
+      if (cookieUser) userId = cookieUser.id;
     }
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

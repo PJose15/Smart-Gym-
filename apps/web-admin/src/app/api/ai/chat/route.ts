@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
     if (rl) return rl;
 
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       .from('members')
       .select('id, user_id, gym_id, display_name, primary_goal, experience_level')
       .eq('id', member_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (!member) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

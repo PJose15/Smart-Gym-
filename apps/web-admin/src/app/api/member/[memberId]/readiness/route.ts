@@ -18,14 +18,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const uuidError = validateUUIDs({ memberId });
     if (uuidError) return uuidError;
 
-    // Rate limit: 30 requests per minute per member
-    const rl = checkRateLimit(`readiness:${memberId}`, 30, 60_000);
-    if (rl) return rl;
-
     // Auth: verify the caller owns this member_id
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
-    const { admin } = authResult;
+    const { admin, member_id } = authResult;
+
+    // Rate limit AFTER auth, keyed on the verified member (M-9):
+    // 30 requests per minute per member
+    const rl = checkRateLimit(`readiness:${member_id}`, 30, 60_000);
+    if (rl) return rl;
 
     // Fetch member's gym_id
     const { data: member } = await admin

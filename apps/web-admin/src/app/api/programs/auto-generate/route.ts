@@ -34,8 +34,8 @@ function getAdminClient() {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const parsed = autoGenerateSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       .from('members')
       .select('id, gym_id')
       .eq('id', member_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
     if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 

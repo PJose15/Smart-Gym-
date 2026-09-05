@@ -11,16 +11,16 @@ function getAdminClient() {
 }
 
 export async function GET() {
-  // Step 1: Verify session
+  // Step 1: Verify authenticated user (server-validated via GoTrue)
   const supabase = await createServerSupabaseClient();
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (sessionError || !sessionData.session) {
+  if (userError || !userData.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const session = sessionData.session;
-  const userId = session.user.id;
+  const user = userData.user;
+  const userId = user.id;
   const admin = getAdminClient();
 
   // Step 2: Find owner gym membership
@@ -56,7 +56,7 @@ export async function GET() {
     gym_id: gymId,
     gym_name: gym?.name ?? null,
     tier: gym?.subscription_tier ?? null,
-    email_confirmed: !!session.user.email_confirmed_at,
+    email_confirmed: !!user.email_confirmed_at,
     billing: {
       has_customer: !!billing?.stripe_customer_id,
       has_subscription: !!billing?.stripe_subscription_id,

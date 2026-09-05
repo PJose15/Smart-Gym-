@@ -50,7 +50,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Atomically claim the completion (M-6): the conditional update only
     // succeeds for the first caller, so concurrent requests can't double-
     // award points/achievements/pushes.
-    const { data: session } = await admin
+    const { data: session, error: claimError } = await admin
       .from('workout_sessions')
       .update({ completed_at: new Date().toISOString() })
       .eq('id', sessionId)
@@ -58,6 +58,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .is('completed_at', null)
       .select('id, gym_id, member_id, sets_count, total_volume_lbs, best_weight_lbs, is_personal_best, session_date')
       .maybeSingle();
+
+    if (claimError) {
+      console.error('Session completion claim error:', claimError);
+      return NextResponse.json({ error: 'Failed to complete session' }, { status: 500 });
+    }
 
     if (!session) {
       // Either the session doesn't exist / isn't this member's, or it was
@@ -71,6 +76,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
       if (!existing) {
         return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+      }
+      if (!existing.completed_at) {
+        // The row exists and is still open, yet the claim didn't take it —
+        // a transient failure, NOT idempotent success. Tell the client to
+        // retry rather than silently dropping the completion.
+        return NextResponse.json({ error: 'Failed to complete session' }, { status: 500 });
       }
       return NextResponse.json({
         success: true,

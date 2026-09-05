@@ -11,9 +11,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // ─── Mock createServerSupabaseClient (cookie path) ───────
-const mockGetSession = jest.fn();
+const mockCookieGetUser = jest.fn();
 const mockCookieClient = {
-  auth: { getSession: mockGetSession },
+  auth: { getUser: mockCookieGetUser },
 };
 jest.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: jest.fn().mockResolvedValue(mockCookieClient),
@@ -67,8 +67,8 @@ function makeRequest(authHeader?: string): NextRequest {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // Default: no cookie session
-  mockGetSession.mockResolvedValue({ data: { session: null } });
+  // Default: no cookie user
+  mockCookieGetUser.mockResolvedValue({ data: { user: null }, error: null });
   // Default: no Bearer user
   mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
   // Default: member found
@@ -77,8 +77,9 @@ beforeEach(() => {
 
 // ─── T1: Cookie path (unchanged behavior) ────────────────
 test('T1: valid cookie session returns { member_id, admin }', async () => {
-  mockGetSession.mockResolvedValue({
-    data: { session: { user: { id: USER_ID } } },
+  mockCookieGetUser.mockResolvedValue({
+    data: { user: { id: USER_ID } },
+    error: null,
   });
   mockMaybeSingle.mockResolvedValue({ data: { id: MEMBER_ID }, error: null });
 
@@ -104,7 +105,7 @@ test('T2: Bearer JWT resolves user and returns { member_id, admin }', async () =
 // ─── T3: Invalid Bearer (getUser error, no cookie session) ─
 test('T3: invalid Bearer token with no cookie session returns 401', async () => {
   mockGetUser.mockResolvedValue({ data: { user: null }, error: { message: 'invalid token' } });
-  mockGetSession.mockResolvedValue({ data: { session: null } });
+  mockCookieGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
   const req = makeRequest(`Bearer ${VALID_TOKEN}`);
   const result = await verifyMember(MEMBER_ID, req);
@@ -128,7 +129,7 @@ test('T4: Bearer user found but member ownership fails returns 403', async () =>
 
 // ─── T5: No auth at all ──────────────────────────────────
 test('T5: no header and no cookie session returns 401', async () => {
-  mockGetSession.mockResolvedValue({ data: { session: null } });
+  mockCookieGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
   const req = makeRequest(); // no Authorization header
   const result = await verifyMember(MEMBER_ID, req);

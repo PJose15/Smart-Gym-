@@ -15,13 +15,14 @@ export async function GET(
     const { memberId } = params;
     const uuidError = validateUUIDs({ memberId });
     if (uuidError) return uuidError;
-    const rl = checkRateLimit(`trainer-prog:${memberId}`, 30, 60_000);
-    if (rl) return rl;
-
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
 
-    const { admin, gym_id } = result;
+    const { admin, gym_id, user_id } = result;
+
+    // Rate limit AFTER auth, keyed on the authenticated trainer (M-9).
+    const rl = checkRateLimit(`trainer-prog:${user_id}`, 30, 60_000);
+    if (rl) return rl;
 
     // Verify member belongs to this gym
     const { data: member } = await admin

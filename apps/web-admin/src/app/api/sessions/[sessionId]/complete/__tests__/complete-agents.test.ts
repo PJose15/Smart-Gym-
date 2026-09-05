@@ -15,6 +15,9 @@ jest.mock('@/lib/feedGenerator');
 jest.mock('@/lib/challengeScoring');
 jest.mock('@/lib/readiness/readinessCache');
 jest.mock('@/lib/muscleMap/muscleMapCache');
+// Mock the push dispatcher — the real one opens network/db handles and leaks
+// jest workers when fired via runAfterResponse.
+jest.mock('@/lib/notifications/sessionPush');
 jest.mock('@/lib/validation/uuid', () => {
   const { z } = jest.requireActual('zod');
   return {
@@ -36,6 +39,7 @@ import { updateChallengeScores } from '@/lib/challengeScoring';
 import { invalidateAndRefreshReadiness } from '@/lib/readiness/readinessCache';
 import { invalidateAndRefreshMuscleMap } from '@/lib/muscleMap/muscleMapCache';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { sendSessionCompletePush } from '@/lib/notifications/sessionPush';
 
 // ── Typed mock refs ───────────────────────────────────────────────────────────
 const mockTrigger = triggerUptimizeAIAgent as jest.MockedFunction<typeof triggerUptimizeAIAgent>;
@@ -47,6 +51,7 @@ const mockChallengeScores = updateChallengeScores as jest.MockedFunction<typeof 
 const mockRefreshReadiness = invalidateAndRefreshReadiness as jest.MockedFunction<typeof invalidateAndRefreshReadiness>;
 const mockRefreshMuscleMap = invalidateAndRefreshMuscleMap as jest.MockedFunction<typeof invalidateAndRefreshMuscleMap>;
 const mockValidateUUIDs = validateUUIDs as jest.MockedFunction<typeof validateUUIDs>;
+const mockSendPush = sendSessionCompletePush as jest.MockedFunction<typeof sendSessionCompletePush>;
 
 // ── Test constants (must be valid UUIDs for completeSchema.safeParse) ────────
 const SESSION_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
@@ -70,7 +75,14 @@ function makeStreakContinuingDates(count: number): string[] {
 }
 
 /** Build a chainable Supabase admin mock for this route's query pattern */
-function buildAdmin(opts: { currentStreak: number; recentDates: string[]; completedAt?: string | null }) {
+function buildAdmin(opts: {
+  currentStreak: number;
+  recentDates: string[];
+  completedAt?: string | null;
+  /** Claim returns no row AND no error while the fallback row is still open
+   *  (completed_at null) — the route's transient-failure → 500 path. */
+  claimFails?: boolean;
+}) {
   // The route calls admin.from() in this order (M-6 atomic claim):
   //   1. workout_sessions UPDATE … .is('completed_at', null).select().maybeSingle()
   //      — the claim; returns null when already completed, then the route
@@ -83,6 +95,7 @@ function buildAdmin(opts: { currentStreak: number; recentDates: string[]; comple
   //   then members UPDATE
 
   const alreadyCompleted = !!opts.completedAt;
+  const claimReturnsNull = alreadyCompleted || !!opts.claimFails;
   const sessionRow = {
     id: SESSION_ID,
     gym_id: GYM_ID,
@@ -129,7 +142,7 @@ function buildAdmin(opts: { currentStreak: number; recentDates: string[]; comple
                 is: jest.fn().mockReturnValue({
                   select: jest.fn().mockReturnValue({
                     maybeSingle: jest.fn().mockResolvedValue({
-                      data: alreadyCompleted ? null : sessionRow,
+                      data: claimReturnsNull ? null : sessionRow,
                       error: null,
                     }),
                   }),
@@ -140,14 +153,15 @@ function buildAdmin(opts: { currentStreak: number; recentDates: string[]; comple
           select: jest.fn(),
         };
       }
-      if (alreadyCompleted && wsCallNum === 2) {
-        // Fallback fetch for the already-completed summary
+      if (claimReturnsNull && wsCallNum === 2) {
+        // Fallback fetch: already-completed summary (completed_at set) or the
+        // still-open row after a failed claim (completed_at null → route 500s)
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
                 maybeSingle: jest.fn().mockResolvedValue({
-                  data: { ...sessionRow, completed_at: opts.completedAt },
+                  data: { ...sessionRow, completed_at: opts.completedAt ?? null },
                   error: null,
                 }),
               }),
@@ -225,6 +239,7 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
     mockChallengeScores.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof updateChallengeScores>>);
     mockRefreshReadiness.mockResolvedValue(undefined);
     mockRefreshMuscleMap.mockResolvedValue(undefined);
+    mockSendPush.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof sendSessionCompletePush>>);
 
     // Default achievements: no level-up
     mockAchievements.mockResolvedValue({ leveledUp: false, newLevel: null, newAchievements: [] });
@@ -257,6 +272,32 @@ describe('POST /api/sessions/[sessionId]/complete — agent triggers', () => {
     expect(mockTrigger).not.toHaveBeenCalled();
     expect(mockFeedEvents).not.toHaveBeenCalled();
     expect(mockChallengeScores).not.toHaveBeenCalled();
+    // No member read/update (points+streak path never entered), no push
+    expect(admin.from).not.toHaveBeenCalledWith('members');
+    expect(mockSendPush).not.toHaveBeenCalled();
+  });
+
+  it('claim returns no row while the session is still open → 500, no side effects', async () => {
+    // {data: null, error: null} from the claim + fallback row with
+    // completed_at null = transient failure, NOT idempotent success.
+    const admin = buildAdmin({
+      currentStreak: 3,
+      recentDates: makeStreakContinuingDates(3),
+      claimFails: true,
+    });
+    mockVerifyMember.mockResolvedValue({ admin, member_id: MEMBER_ID } as unknown as Awaited<ReturnType<typeof verifyMember>>);
+
+    const res = await POST(makeRequest(), makeParams());
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe('Failed to complete session');
+
+    // Nothing awarded or dispatched on the failure path
+    expect(mockAchievements).not.toHaveBeenCalled();
+    expect(mockTrigger).not.toHaveBeenCalled();
+    expect(mockFeedEvents).not.toHaveBeenCalled();
+    expect(mockChallengeScores).not.toHaveBeenCalled();
+    expect(mockSendPush).not.toHaveBeenCalled();
+    expect(admin.from).not.toHaveBeenCalledWith('members');
   });
 
   it('fires engagement-agent level-up when achievements.leveledUp is true', async () => {

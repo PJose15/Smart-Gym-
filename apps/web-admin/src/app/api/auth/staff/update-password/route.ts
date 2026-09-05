@@ -10,13 +10,13 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rl = checkRateLimit(`staff-update-pw:${session.user.id}`, 3, 300_000);
+    const rl = checkRateLimit(`staff-update-pw:${user.id}`, 3, 300_000);
     if (rl) return rl;
 
     const { error } = await supabase.auth.updateUser({ password });

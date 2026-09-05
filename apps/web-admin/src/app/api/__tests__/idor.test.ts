@@ -78,6 +78,9 @@ interface Op {
   table: string;
   method: string;
   args: unknown[];
+  /** Index of the from() call that opened this chain — lets tests bind
+   *  assertions to a SPECIFIC query instead of any query on the table. */
+  chain: number;
 }
 
 function makeAdmin(
@@ -89,6 +92,7 @@ function makeAdmin(
     queues[table] = [...results];
   }
   const ops: Op[] = [];
+  let chainCounter = 0;
 
   const CHAIN_METHODS = [
     'select', 'insert', 'update', 'delete', 'upsert',
@@ -97,13 +101,14 @@ function makeAdmin(
   ];
 
   const from = jest.fn((table: string) => {
+    const chainIndex = chainCounter++;
     const queue = queues[table];
     const result = queue && queue.length > 0 ? queue.shift()! : { data: null, error: null };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const chain: any = {};
     for (const method of CHAIN_METHODS) {
       chain[method] = jest.fn((...args: unknown[]) => {
-        ops.push({ table, method, args });
+        ops.push({ table, method, args, chain: chainIndex });
         return chain;
       });
     }
@@ -128,6 +133,15 @@ const opsHas = (ops: Op[], table: string, method: string, ...args: unknown[]) =>
       o.method === method &&
       args.every((a, i) => o.args[i] === a)
   );
+
+/** Ops belonging to the nth from(table) chain (0-based, in call order). */
+const nthChainOps = (ops: Op[], table: string, nth: number) => {
+  const chainIds = [...new Set(ops.filter((o) => o.table === table).map((o) => o.chain))];
+  return ops.filter((o) => o.chain === chainIds[nth]);
+};
+
+const chainHas = (chainOps: Op[], method: string, ...args: unknown[]) =>
+  chainOps.some((o) => o.method === method && args.every((a, i) => o.args[i] === a));
 
 /** No recorded arg anywhere mentions the attacker-supplied gym. */
 const noArgMentions = (ops: Op[], value: unknown) =>
@@ -251,12 +265,20 @@ describe('POST /api/sessions/pr-check — session ownership', () => {
     // No PR write, no feed event
     expect(ops.some((o) => o.method === 'update')).toBe(false);
     expect(ops.some((o) => o.table === 'gym_feed_events')).toBe(false);
+
+    // The ownership check itself (first workout_sessions chain) carried all
+    // three filters — the miss was a real scoped miss, not an unfiltered read.
+    const ownership = nthChainOps(ops, 'workout_sessions', 0);
+    expect(chainHas(ownership, 'eq', 'id', SESSION_ID)).toBe(true);
+    expect(chainHas(ownership, 'eq', 'member_id', MEMBER_ID)).toBe(true);
+    expect(chainHas(ownership, 'eq', 'machine_id', MACHINE_ID)).toBe(true);
   });
 
   it('ALLOW: owned session with no history → 200 first_session PR', async () => {
     const { admin, ops } = makeAdmin({
       workout_sessions: [
-        { data: { id: SESSION_ID } }, // ownership check (member+machine scoped)
+        // ownership check — route selects 'id, best_weight_lbs, total_volume_lbs'
+        { data: { id: SESSION_ID, best_weight_lbs: 100, total_volume_lbs: 500 } },
         { data: [] }, // history → first session
         { error: null }, // markPR update
         { data: { gym_id: REAL_GYM } }, // insertFeedEvent gym lookup
@@ -269,10 +291,18 @@ describe('POST /api/sessions/pr-check — session ownership', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.pr.type).toBe('first_session');
+    // effectiveWeight = min(body weight, session best_weight_lbs)
+    expect(json.pr.value).toBe(100);
 
-    // Ownership check was member- AND machine-scoped
-    expect(opsHas(ops, 'workout_sessions', 'eq', 'member_id', MEMBER_ID)).toBe(true);
-    expect(opsHas(ops, 'workout_sessions', 'eq', 'machine_id', MACHINE_ID)).toBe(true);
+    // Ownership check: the FIRST workout_sessions chain must itself carry
+    // eq(id) + eq(member_id) + eq(machine_id). (A table-wide opsHas would be
+    // vacuously satisfied by the history query's member/machine filters.)
+    const ownership = nthChainOps(ops, 'workout_sessions', 0);
+    expect(chainHas(ownership, 'select', 'id, best_weight_lbs, total_volume_lbs')).toBe(true);
+    expect(chainHas(ownership, 'eq', 'id', SESSION_ID)).toBe(true);
+    expect(chainHas(ownership, 'eq', 'member_id', MEMBER_ID)).toBe(true);
+    expect(chainHas(ownership, 'eq', 'machine_id', MACHINE_ID)).toBe(true);
+
     // Feed event bound to the session's gym
     const insert = ops.find((o) => o.table === 'gym_feed_events' && o.method === 'insert');
     expect((insert?.args[0] as Record<string, unknown>).gym_id).toBe(REAL_GYM);
@@ -424,6 +454,9 @@ describe('POST /api/member/challenges/[id]/join — cross-gym challenges', () =>
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ success: true, rank: 4 });
 
+    // Tier gate consulted with the DERIVED gym id, not the body's EVIL_GYM
+    expect(mockFeatureAccess).toHaveBeenCalledWith(REAL_GYM, 'challenges');
+
     const insert = ops.find(
       (o) => o.table === 'challenge_participants' && o.method === 'insert'
     );
@@ -476,12 +509,12 @@ describe('GET /api/tips — member ownership gates the AI path', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock as unknown as typeof fetch;
-    // Session exists (route-level auth) — ownership enforced by verifyMember
+    // Authenticated user exists (route-level auth) — ownership enforced by verifyMember
     mockServerClient.mockResolvedValue({
       auth: {
-        getSession: jest
+        getUser: jest
           .fn()
-          .mockResolvedValue({ data: { session: { user: { id: USER_ID } } } }),
+          .mockResolvedValue({ data: { user: { id: USER_ID } }, error: null }),
       },
     } as unknown as Awaited<ReturnType<typeof createServerSupabaseClient>>);
   });
@@ -526,6 +559,39 @@ describe('GET /api/tips — member ownership gates the AI path', () => {
     expect(from).toHaveBeenCalledWith('machines');
     expect(opsHas(ops, 'machines', 'eq', 'gym_id', REAL_GYM)).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('ALLOW: owned member + own-gym machine → AI path; edge-fn payload carries the DERIVED gym', async () => {
+    const { admin, ops } = makeAdmin({
+      machines: [
+        { data: { name: 'Bench Press Station', category: 'strength', muscle_groups: ['chest'] } },
+      ],
+    });
+    mockCreateClient.mockReturnValue(admin);
+    mockVerifyMember.mockResolvedValue(asAuth(admin));
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { tip_text: 'Retract your shoulder blades.', cached: false } }),
+    });
+
+    const res = await tipsGET(makeReq());
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      tip: 'Retract your shoulder blades.',
+      source: 'ai_generated',
+    });
+
+    // Machine lookup gym-scoped to the member's REAL gym
+    expect(opsHas(ops, 'machines', 'eq', 'gym_id', REAL_GYM)).toBe(true);
+
+    // The edge-function request BODY is bound to the derived gym — a caller
+    // can never steer paid AI generation into another tenant.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(payload.action).toBe('coaching_tip');
+    expect(payload.payload.gym_id).toBe(REAL_GYM);
+    expect(payload.payload.member_id).toBe(MEMBER_ID);
+    expect(payload.payload.machine_id).toBe(MACHINE_ID);
   });
 });
 

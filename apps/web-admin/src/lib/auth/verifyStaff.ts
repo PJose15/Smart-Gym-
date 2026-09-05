@@ -20,9 +20,9 @@ export async function verifyStaff(
   requiredRole?: StaffRole
 ): Promise<StaffVerifyResult | NextResponse> {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -30,7 +30,7 @@ export async function verifyStaff(
   const query = supabase
     .from('gym_memberships')
     .select('gym_id, role, permissions')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('status', 'active');
 
   if (requiredRole) {
@@ -52,7 +52,7 @@ export async function verifyStaff(
   );
 
   return {
-    user_id: session.user.id,
+    user_id: user.id,
     gym_id: membership.gym_id,
     role: membership.role as StaffRole,
     permissions: (membership.permissions as Record<string, boolean>) ?? {},

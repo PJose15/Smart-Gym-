@@ -23,12 +23,13 @@ export async function PATCH(
     const uuidError = validateUUIDs({ sessionId });
     if (uuidError) return uuidError;
 
-    const rl = checkRateLimit(`trainer-note:${sessionId}`, 10, 60_000);
-    if (rl) return rl;
-
     const result = await verifyStaff();
     if (result instanceof NextResponse) return result;
     const { admin, user_id, gym_id } = result;
+
+    // Rate limit AFTER auth, keyed on the authenticated trainer (M-9).
+    const rl = checkRateLimit(`trainer-note:${user_id}`, 10, 60_000);
+    if (rl) return rl;
 
     // Tier gate: creating coach notes requires the coach_notes feature.
     const access = await checkFeatureAccess(gym_id, 'coach_notes');

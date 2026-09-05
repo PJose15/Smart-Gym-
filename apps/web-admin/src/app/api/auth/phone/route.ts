@@ -50,7 +50,11 @@ export async function POST(request: NextRequest) {
       gym_id = parsed.data.gym_id;
     }
 
-    const limited = checkRateLimit(`auth-phone:${phone}`, 5, 900_000);
+    // Pre-auth: per-IP overall cap + per-IP+phone cap (see auth/lookup BE-H6).
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ipLimited = checkRateLimit(`auth-phone-ip:${ip}`, 15, 900_000);
+    if (ipLimited) return ipLimited;
+    const limited = checkRateLimit(`auth-phone:${ip}:${phone}`, 5, 900_000);
     if (limited) return limited;
 
     const isDev = process.env.NEXT_PUBLIC_DEV_OTP === 'true';

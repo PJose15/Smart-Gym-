@@ -21,14 +21,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid params' }, { status: 400 });
     }
 
-    // Rate limit: 30 requests per minute per member
-    const rl = checkRateLimit(`day-complete:${member_id}`, 30, 60_000);
-    if (rl) return rl;
-
     const auth = await verifyMember(member_id);
     if (auth instanceof NextResponse) return auth;
 
-    const { admin } = auth;
+    const { admin, member_id: verifiedMemberId } = auth;
+
+    // Rate limit AFTER auth, keyed on the verified member (M-9):
+    // 30 requests per minute per member
+    const rl = checkRateLimit(`day-complete:${verifiedMemberId}`, 30, 60_000);
+    if (rl) return rl;
 
     // Verify member belongs to this gym
     const { data: membership } = await admin
