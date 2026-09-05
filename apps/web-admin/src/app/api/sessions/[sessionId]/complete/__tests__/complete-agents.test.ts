@@ -71,15 +71,28 @@ function makeStreakContinuingDates(count: number): string[] {
 
 /** Build a chainable Supabase admin mock for this route's query pattern */
 function buildAdmin(opts: { currentStreak: number; recentDates: string[]; completedAt?: string | null }) {
-  // The route calls admin.from() in this order:
-  //   1. workout_sessions SELECT (single) — fetch session
-  //   2. workout_sessions UPDATE — mark completed
-  //   3. Promise.all([
+  // The route calls admin.from() in this order (M-6 atomic claim):
+  //   1. workout_sessions UPDATE … .is('completed_at', null).select().maybeSingle()
+  //      — the claim; returns null when already completed, then the route
+  //        re-fetches via SELECT … maybeSingle for the summary (call 2)
+  //   2/3. Promise.all([
   //        members SELECT single,
   //        workout_sessions SELECT recent (streak),
   //        workout_sessions SELECT count,
   //      ])
-  //   4. members UPDATE
+  //   then members UPDATE
+
+  const alreadyCompleted = !!opts.completedAt;
+  const sessionRow = {
+    id: SESSION_ID,
+    gym_id: GYM_ID,
+    member_id: MEMBER_ID,
+    sets_count: 3,
+    total_volume_lbs: 300,
+    best_weight_lbs: 100,
+    is_personal_best: false,
+    session_date: '2024-01-15',
+  };
 
   let wsCallNum = 0;
 
@@ -108,23 +121,33 @@ function buildAdmin(opts: { currentStreak: number; recentDates: string[]; comple
     if (table === 'workout_sessions') {
       wsCallNum++;
       if (wsCallNum === 1) {
-        // Initial session SELECT (eq.eq.single chain)
+        // Atomic completion claim (update → eq → eq → is → select → maybeSingle)
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                is: jest.fn().mockReturnValue({
+                  select: jest.fn().mockReturnValue({
+                    maybeSingle: jest.fn().mockResolvedValue({
+                      data: alreadyCompleted ? null : sessionRow,
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }),
+          select: jest.fn(),
+        };
+      }
+      if (alreadyCompleted && wsCallNum === 2) {
+        // Fallback fetch for the already-completed summary
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: {
-                    id: SESSION_ID,
-                    gym_id: GYM_ID,
-                    member_id: MEMBER_ID,
-                    sets_count: 3,
-                    total_volume_lbs: 300,
-                    best_weight_lbs: 100,
-                    is_personal_best: false,
-                    session_date: '2024-01-15',
-                    completed_at: opts.completedAt ?? null,
-                  },
+                maybeSingle: jest.fn().mockResolvedValue({
+                  data: { ...sessionRow, completed_at: opts.completedAt },
                   error: null,
                 }),
               }),
@@ -134,15 +157,6 @@ function buildAdmin(opts: { currentStreak: number; recentDates: string[]; comple
         };
       }
       if (wsCallNum === 2) {
-        // UPDATE completed_at
-        return {
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ error: null }),
-          }),
-          select: jest.fn(),
-        };
-      }
-      if (wsCallNum === 3) {
         // Promise.all slot 1: recent sessions (streak calc)
         return {
           select: jest.fn().mockReturnValue({
@@ -159,7 +173,7 @@ function buildAdmin(opts: { currentStreak: number; recentDates: string[]; comple
           }),
         };
       }
-      if (wsCallNum === 4) {
+      if (wsCallNum === 3) {
         // Promise.all slot 2: session count (head: true) — resolve as object
         return {
           select: jest.fn().mockReturnValue({

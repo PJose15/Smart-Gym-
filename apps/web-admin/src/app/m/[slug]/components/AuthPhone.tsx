@@ -10,9 +10,10 @@ export function AuthPhone() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [lookupDone, setLookupDone] = useState(false);
+  // BE-H6: the lookup endpoint deliberately returns only { path, firstName? }
   const [lookupResult, setLookupResult] = useState<{
     path: 'cold' | 'preloaded' | 'returning';
-    member?: { display_name: string; first_name?: string | null };
+    firstName?: string | null;
   } | null>(null);
 
   const nameRef = useRef<HTMLInputElement>(null);
@@ -63,11 +64,14 @@ export function AuthPhone() {
     setLoading(true);
 
     try {
-      // Determine auth path
+      // Determine auth path. For known members (preloaded/returning) the
+      // server ignores the name for existing rows, so fall back to the
+      // looked-up first name (or 'Member') — the lookup response no longer
+      // carries display_name (BE-H6).
       const path = lookupResult?.path || 'cold';
       const displayName =
         path === 'preloaded' || path === 'returning'
-          ? lookupResult?.member?.display_name || name
+          ? name || lookupResult?.firstName || 'Member'
           : name;
 
       if (!displayName.trim()) {
@@ -137,7 +141,7 @@ export function AuthPhone() {
         }}
       >
         {isReturning
-          ? `Welcome back${lookupResult?.member?.first_name ? `, ${lookupResult.member.first_name}` : ''}!`
+          ? `Welcome back${lookupResult?.firstName ? `, ${lookupResult.firstName}` : ''}!`
           : 'Start Tracking'}
       </h2>
       <p
@@ -178,7 +182,7 @@ export function AuthPhone() {
               id="auth-name"
               type="text"
               autoComplete="name"
-              value={isPreloaded ? (lookupResult?.member?.display_name || name) : name}
+              value={isPreloaded ? (lookupResult?.firstName || name) : name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading || isPreloaded}
               placeholder="e.g. Alex Rivera"
@@ -269,8 +273,8 @@ export function AuthPhone() {
             }}
           >
             {isReturning
-              ? `Welcome back, ${lookupResult.member?.first_name || lookupResult.member?.display_name}!`
-              : `Account found for ${lookupResult.member?.display_name}. Verify to continue.`}
+              ? `Welcome back${lookupResult.firstName ? `, ${lookupResult.firstName}` : ''}!`
+              : `Account found${lookupResult.firstName ? ` for ${lookupResult.firstName}` : ''}. Verify to continue.`}
           </div>
         )}
 

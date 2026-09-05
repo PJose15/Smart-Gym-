@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
 import { leaderboardQuerySchema } from '@/lib/validation/leaderboard';
 import type { LeaderboardEntry, LeaderboardResponse } from '@nexera/types';
 
@@ -17,12 +18,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
-    const { member_id, gym_id, period, limit } = parsed.data;
+    const { member_id, period, limit } = parsed.data;
 
     const auth = await verifyMember(member_id);
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;
+
+    // Tenant binding (BE-H4): gym derived from the member row — the
+    // caller-supplied gym_id query param is ignored.
+    const gym_id = await resolveMemberGym(admin, member_id);
+    if (!gym_id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // Calculate since date for weekly
     let since: string | null = null;

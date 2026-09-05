@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
 import { challengeDetailSchema } from '@/lib/validation/challenge';
 import type { ChallengeDetail, ChallengeParticipant } from '@nexera/types';
 import { validateUUIDs } from '@/lib/validation/uuid';
@@ -29,14 +30,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { admin } = auth;
 
-    // Look up member's gym_id for scoping
-    const { data: memberInfo } = await admin
-      .from('members')
-      .select('gym_id')
-      .eq('id', member_id)
-      .single();
-
-    if (!memberInfo) {
+    // Tenant binding (BE-H4): gym derived from the member row
+    const memberGymId = await resolveMemberGym(admin, member_id);
+    if (!memberGymId) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
@@ -47,7 +43,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         'id, title, description, challenge_type, start_date, end_date, is_active, top_score, entry_mode, prize_type, prize_description'
       )
       .eq('id', challengeId)
-      .eq('gym_id', memberInfo.gym_id)
+      .eq('gym_id', memberGymId)
       .single();
 
     if (challengeErr || !challenge) {

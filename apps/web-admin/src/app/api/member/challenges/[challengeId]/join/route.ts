@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
 import { challengeJoinSchema } from '@/lib/validation/challenge';
 import { validateUUIDs } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
-    const { member_id, gym_id } = parsed.data;
+    const { member_id } = parsed.data;
 
     const auth = await verifyMember(member_id, request);
     if (auth instanceof NextResponse) return auth;
@@ -31,20 +32,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`challenge-join:${member_id}`, 10, 60_000);
     if (rl) return rl;
 
-    // Verify member belongs to the specified gym
-    const { data: memberRecord } = await admin
-      .from('members')
-      .select('gym_id')
-      .eq('id', member_id)
-      .single();
-
-    if (!memberRecord || memberRecord.gym_id !== gym_id) {
+    // Tenant binding (BE-H4): gym derived from the member row — the
+    // caller-supplied body gym_id is ignored.
+    const gym_id = await resolveMemberGym(admin, member_id);
+    if (!gym_id) {
       return NextResponse.json({ error: 'Member does not belong to this gym' }, { status: 403 });
     }
 
     // Tier gate: joining challenges requires the challenges feature.
     // gym_id derived from the member's own record (verified above).
-    const access = await checkFeatureAccess(memberRecord.gym_id, 'challenges');
+    const access = await checkFeatureAccess(gym_id, 'challenges');
     if (!access.hasAccess) {
       return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
     }

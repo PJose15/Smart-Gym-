@@ -103,38 +103,35 @@ function buildAdmin(opts: {
     if (table === 'workout_sessions') {
       wsCallNum++;
       if (wsCallNum === 1) {
+        // Atomic completion claim (update → eq → eq → is → select → maybeSingle)
         return {
-          select: jest.fn().mockReturnValue({
+          update: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: {
-                    id: SESSION_ID,
-                    gym_id: GYM_ID,
-                    member_id: MEMBER_ID,
-                    sets_count: 3,
-                    total_volume_lbs: 300,
-                    best_weight_lbs: 100,
-                    is_personal_best: isPersonalBest,
-                    session_date: '2024-01-15',
-                  },
-                  error: null,
+                is: jest.fn().mockReturnValue({
+                  select: jest.fn().mockReturnValue({
+                    maybeSingle: jest.fn().mockResolvedValue({
+                      data: {
+                        id: SESSION_ID,
+                        gym_id: GYM_ID,
+                        member_id: MEMBER_ID,
+                        sets_count: 3,
+                        total_volume_lbs: 300,
+                        best_weight_lbs: 100,
+                        is_personal_best: isPersonalBest,
+                        session_date: '2024-01-15',
+                      },
+                      error: null,
+                    }),
+                  }),
                 }),
               }),
             }),
           }),
-          update: jest.fn(),
-        };
-      }
-      if (wsCallNum === 2) {
-        return {
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ error: null }),
-          }),
           select: jest.fn(),
         };
       }
-      if (wsCallNum === 3) {
+      if (wsCallNum === 2) {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -150,7 +147,7 @@ function buildAdmin(opts: {
           }),
         };
       }
-      if (wsCallNum === 4) {
+      if (wsCallNum === 3) {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({

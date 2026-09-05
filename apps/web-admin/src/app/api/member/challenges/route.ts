@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
 import { challengeListSchema } from '@/lib/validation/challenge';
 import type { ChallengeListItem } from '@nexera/types';
 
@@ -15,12 +16,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
-    const { member_id, gym_id } = parsed.data;
+    const { member_id } = parsed.data;
 
     const auth = await verifyMember(member_id);
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;
+
+    // Tenant binding (BE-H4): gym derived from the member row — the
+    // caller-supplied gym_id query param is ignored.
+    const gym_id = await resolveMemberGym(admin, member_id);
+    if (!gym_id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // Get active + recently completed challenges
     const { data: challenges, error: challengesErr } = await admin

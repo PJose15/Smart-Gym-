@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
 import { feedReactSchema } from '@/lib/validation/feed';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { sendNotification } from '@/lib/notifications/dispatcher';
@@ -15,14 +16,29 @@ export async function POST(request: NextRequest) {
 
     const { member_id, event_id, reaction_type } = parsed.data;
 
-    // Rate limit: 30 reactions per minute per member
-    const rl = checkRateLimit(`feed-react:${member_id}`, 30, 60_000);
-    if (rl) return rl;
-
     const auth = await verifyMember(member_id);
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;
+
+    // Rate limit AFTER auth (M-9) — keyed on the verified member_id so an
+    // attacker can't grief another member's limit with a spoofed id
+    const rl = checkRateLimit(`feed-react:${member_id}`, 30, 60_000);
+    if (rl) return rl;
+
+    // Tenant binding (BE-H4): the feed event must belong to the member's gym
+    const gymId = await resolveMemberGym(admin, member_id);
+    if (!gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const { data: feedEvent } = await admin
+      .from('gym_feed_events')
+      .select('id, member_id, gym_id')
+      .eq('id', event_id)
+      .eq('gym_id', gymId)
+      .maybeSingle();
+    if (!feedEvent) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
 
     // Check if reaction already exists (toggle behavior)
     const { data: existing, error: lookupErr } = await admin
@@ -59,14 +75,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to add reaction' }, { status: 500 });
       }
 
-      // Notify event owner of new reaction (skip self-reactions)
-      const { data: feedEvent } = await admin
-        .from('gym_feed_events')
-        .select('member_id, gym_id')
-        .eq('id', event_id)
-        .maybeSingle();
-
-      if (feedEvent && feedEvent.member_id !== member_id) {
+      // Notify event owner of new reaction (skip self-reactions) — event row
+      // already fetched (gym-scoped) above
+      if (feedEvent.member_id && feedEvent.member_id !== member_id) {
         sendNotification({
           gym_id: feedEvent.gym_id,
           member_id: feedEvent.member_id,

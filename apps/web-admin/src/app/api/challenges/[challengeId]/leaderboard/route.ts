@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { assertInGym } from '@/lib/auth/tenant';
 
 export async function GET(
   req: NextRequest,
@@ -19,6 +20,20 @@ export async function GET(
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
+
+    // Tenant binding (BE-H4): resolve the caller's member row → gym, and
+    // require the challenge to belong to that gym (404 — don't leak existence).
+    const { data: callerMember } = await admin
+      .from('members')
+      .select('id, gym_id')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (!callerMember?.gym_id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (!(await assertInGym(admin, 'gym_challenges', params.challengeId, callerMember.gym_id))) {
+      return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
+    }
 
     const url = new URL(req.url);
     const offset = Math.max(0, parseInt(url.searchParams.get('offset') ?? '0', 10) || 0);

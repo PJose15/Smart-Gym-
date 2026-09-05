@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { scanEventSchema } from '@/lib/validation/session';
+import { validateUUIDs } from '@/lib/validation/uuid';
+import { assertInGym } from '@/lib/auth/tenant';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
@@ -33,19 +35,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { machine_id, member_id, gym_id, workout_mode, was_in_program } = parsed.data;
+    const { machine_id, member_id, workout_mode, was_in_program } = parsed.data;
 
-    const rl = checkRateLimit(`scan-event:${member_id}`, 30, 60_000);
-    if (rl) return rl;
+    // M-4: the scan flow only fires this once the member is authenticated, so
+    // a null member_id is never legitimate here.
+    if (!member_id) {
+      return NextResponse.json({ error: 'member_id is required' }, { status: 400 });
+    }
 
     const admin = getAdminClient();
+
+    // M-4: bind the event to the caller — member must be owned by the session
+    // user; gym is derived from the member row (body gym_id is ignored).
+    const { data: member } = await admin
+      .from('members')
+      .select('id, gym_id')
+      .eq('id', member_id)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+
+    if (!member) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // M-9: rate limit after auth, keyed on the verified member
+    const rl = checkRateLimit(`scan-event:${member.id}`, 30, 60_000);
+    if (rl) return rl;
+
+    // Machine must belong to the member's gym
+    const machineOk = await assertInGym(admin, 'machines', machine_id, member.gym_id);
+    if (!machineOk) {
+      return NextResponse.json({ error: 'Machine not found' }, { status: 404 });
+    }
 
     const { data, error } = await admin
       .from('machine_scan_events')
       .insert({
         machine_id,
-        member_id,
-        gym_id,
+        member_id: member.id,
+        gym_id: member.gym_id,
         scanned_at: new Date().toISOString(),
         workout_mode,
         was_in_program,
@@ -84,20 +112,40 @@ export async function PATCH(request: NextRequest) {
     if (!scan_event_id || typeof led_to_log !== 'boolean') {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+    const uuidError = validateUUIDs({ scan_event_id });
+    if (uuidError) return uuidError;
 
     const rl = checkRateLimit(`scan-event-patch:${session.user.id}`, 60, 60_000);
     if (rl) return rl;
 
     const admin = getAdminClient();
 
-    const { error } = await admin
+    // M-4: only update scan events belonging to a member owned by this user.
+    const { data: memberRows } = await admin
+      .from('members')
+      .select('id')
+      .eq('user_id', session.user.id);
+
+    const memberIds = (memberRows ?? []).map((m) => m.id);
+    if (memberIds.length === 0) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { data: updated, error } = await admin
       .from('machine_scan_events')
       .update({ led_to_log })
-      .eq('id', scan_event_id);
+      .eq('id', scan_event_id)
+      .in('member_id', memberIds)
+      .select('id');
 
     if (error) {
       console.error('Scan event update error:', error);
       return NextResponse.json({ error: 'Failed to update scan event' }, { status: 500 });
+    }
+
+    if (!updated || updated.length === 0) {
+      // Missing or cross-tenant event — same response either way
+      return NextResponse.json({ error: 'Scan event not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true });

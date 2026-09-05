@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyStaff } from '@/lib/auth/verifyStaff';
 import { trainerMessageSchema } from '@/lib/validation/staff';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { assertInGym } from '@/lib/auth/tenant';
 import type { ConversationPreview } from '@nexera/types';
 
 export async function GET() {
@@ -97,6 +98,13 @@ export async function POST(req: NextRequest) {
 
     const rl = checkRateLimit(`trainer-message:${user_id}`, 30, 60_000);
     if (rl) return rl;
+
+    // M-10: the target member must belong to the trainer's gym — a trainer
+    // must not be able to message members of other gyms.
+    const memberOk = await assertInGym(admin, 'members', member_id, gym_id);
+    if (!memberOk) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+    }
 
     const { data: msg, error } = await admin
       .from('trainer_member_messages')

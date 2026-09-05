@@ -40,6 +40,19 @@ export async function POST(request: NextRequest) {
     const rl = checkRateLimit(`pr-check:${member_id}`, 120, 60_000);
     if (rl) return rl;
 
+    // BE-H1: the session must belong to this member AND this machine —
+    // otherwise a caller could mark arbitrary sessions as PRs.
+    const { data: ownedSession } = await admin
+      .from('workout_sessions')
+      .select('id')
+      .eq('id', session_id)
+      .eq('member_id', member_id)
+      .eq('machine_id', machine_id)
+      .maybeSingle();
+    if (!ownedSession) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
     // Get all previous sessions for this member on this machine (excluding current)
     const { data: history } = await admin
       .from('workout_sessions')
@@ -52,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // First session on this machine = always a PR
     if (!history || history.length === 0) {
-      await markPR(admin, session_id, 'first_session', weight_lbs, null);
+      await markPR(admin, session_id, member_id, 'first_session', weight_lbs, null);
       await insertFeedEvent(admin, session_id, member_id, machine_id, 'first_session');
 
       return NextResponse.json({
@@ -74,7 +87,7 @@ export async function POST(request: NextRequest) {
       const improvementPct =
         Math.round(((weight_lbs - historicalBestWeight) / historicalBestWeight) * 1000) / 10;
 
-      await markPR(admin, session_id, 'weight', weight_lbs, historicalBestWeight);
+      await markPR(admin, session_id, member_id, 'weight', weight_lbs, historicalBestWeight);
       await insertFeedEvent(admin, session_id, member_id, machine_id, 'weight');
 
       return NextResponse.json({
@@ -106,7 +119,7 @@ export async function POST(request: NextRequest) {
       const improvementPct =
         Math.round(((currentTotalVolume - historicalBestVolume) / historicalBestVolume) * 1000) / 10;
 
-      await markPR(admin, session_id, 'volume', currentTotalVolume, historicalBestVolume);
+      await markPR(admin, session_id, member_id, 'volume', currentTotalVolume, historicalBestVolume);
       await insertFeedEvent(admin, session_id, member_id, machine_id, 'volume');
 
       return NextResponse.json({
@@ -129,7 +142,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function markPR(admin: SupabaseClient, sessionId: string, type: string, value: number, previousBest: number | null) {
+async function markPR(admin: SupabaseClient, sessionId: string, memberId: string, type: string, value: number, previousBest: number | null) {
   await admin
     .from('workout_sessions')
     .update({
@@ -141,7 +154,8 @@ async function markPR(admin: SupabaseClient, sessionId: string, type: string, va
         : null,
       previous_best_lbs: previousBest,
     })
-    .eq('id', sessionId);
+    .eq('id', sessionId)
+    .eq('member_id', memberId);
 }
 
 async function insertFeedEvent(admin: SupabaseClient, sessionId: string, memberId: string, machineId: string, prType: string) {

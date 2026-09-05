@@ -36,30 +36,33 @@ export async function POST(
       return NextResponse.json({ error: 'member_id required' }, { status: 400 });
     }
 
-    // Rate limit: 10 goal reactions per minute per member
-    const rl = checkRateLimit(`goal-reaction:${memberId}`, 10, 60_000);
-    if (rl) return rl;
+    const admin = getAdminClient();
 
     // Verify the authenticated user owns this member_id (prevent IDOR)
-    const { data: memberCheck } = await supabase
+    const { data: memberCheck } = await admin
       .from('members')
-      .select('id')
+      .select('id, gym_id')
       .eq('user_id', session.user.id)
       .eq('id', memberId)
       .maybeSingle();
 
-    if (!memberCheck) {
+    if (!memberCheck?.gym_id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const admin = getAdminClient();
+    // Rate limit AFTER auth (M-9) — keyed on the verified member_id so an
+    // attacker can't grief another member's limit with a spoofed id
+    const rl = checkRateLimit(`goal-reaction:${memberId}`, 10, 60_000);
+    if (rl) return rl;
 
-    // Verify the event is a PR type
+    // Tenant binding (BE-H4): the event must belong to the member's gym
+    // (404 — don't leak existence). Also verify it's a PR-type event.
     const { data: event } = await admin
       .from('gym_feed_events')
       .select('id, event_type, member_id, gym_id, context_data')
       .eq('id', eventId)
-      .single();
+      .eq('gym_id', memberCheck.gym_id)
+      .maybeSingle();
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });

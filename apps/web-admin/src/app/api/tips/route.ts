@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
+import { validateUUIDs } from '@/lib/validation/uuid';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 function getAdminClient() {
   return createClient(
@@ -42,13 +46,34 @@ export async function GET(request: NextRequest) {
 
   // Level 1: AI-generated tip via edge function (needs member_id + machine_id)
   if (memberId && machineId) {
+    // AI-C2: validate id shape, then verify the session user OWNS member_id —
+    // the ai_tip_cache key is (member_id, machine_id, cache_date), so an
+    // unverified member_id lets a caller read or poison another member's
+    // cached tip and burn paid Gemini quota under their identity.
+    const uuidError = validateUUIDs({ member_id: memberId, machine_id: machineId });
+    if (uuidError) return uuidError;
+
+    const authResult = await verifyMember(memberId);
+    if (authResult instanceof NextResponse) return authResult;
+
+    // Rate limit AFTER auth, keyed on the verified member (paid Gemini spend)
+    const rl = checkRateLimit(`tips-ai:${memberId}`, 10, 60_000);
+    if (rl) return rl;
+
+    // Tenant binding: the machine must belong to the member's gym. If it
+    // doesn't, skip the AI levels (no generation, no cache read) and fall
+    // through to the generic library/static tips.
+    const gymId = await resolveMemberGym(admin, memberId);
+    if (!gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
     try {
-      // Fetch machine details for the prompt
+      // Fetch machine details for the prompt — scoped to the member's gym
       const { data: machine } = await admin
         .from('machines')
         .select('name, category, muscle_groups')
         .eq('id', machineId)
-        .single();
+        .eq('gym_id', gymId)
+        .maybeSingle();
 
       if (machine) {
         const edgeFnUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-generate`;
@@ -62,7 +87,7 @@ export async function GET(request: NextRequest) {
             action: 'coaching_tip',
             payload: {
               member_id: memberId,
-              gym_id: '', // not strictly needed for tip gen
+              gym_id: gymId,
               machine_id: machineId,
               machine_name: machine.name,
               muscle_groups: machine.muscle_groups ?? [],

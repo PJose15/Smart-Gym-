@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym, assertInGym } from '@/lib/auth/tenant';
 import { z } from 'zod';
 import { validateUUIDs, uuidString } from '@/lib/validation/uuid';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -47,6 +48,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (comment.member_id !== member_id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Tenant binding (BE-H4): the comment's feed event must belong to the
+    // member's gym (404 — don't leak existence)
+    const gymId = await resolveMemberGym(admin, member_id);
+    if (!gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!(await assertInGym(admin, 'gym_feed_events', comment.event_id, gymId))) {
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
     // Delete comment

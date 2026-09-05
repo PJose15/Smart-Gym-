@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { computeHeroState, computeLevelProgress } from '@nexera/ai-assist';
 import { memberHomeQuerySchema } from '@/lib/validation/member';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
 import { getReadinessScore } from '@/lib/readiness/readinessCache';
 import { getMuscleMap } from '@/lib/muscleMap/muscleMapCache';
 import type { HomeScreenData, ProgramContextData } from '@nexera/types';
@@ -51,12 +52,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
-    const { member_id, gym_id } = parsed.data;
+    const { member_id } = parsed.data;
 
     // Verify the caller owns this member_id
     const authResult = await verifyMember(member_id);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
+
+    // Tenant binding (BE-H4): gym derived from the member row — the
+    // caller-supplied gym_id query param is ignored.
+    const gym_id = await resolveMemberGym(admin, member_id);
+    if (!gym_id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
     const today = new Date().toISOString().split('T')[0];
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
     const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];

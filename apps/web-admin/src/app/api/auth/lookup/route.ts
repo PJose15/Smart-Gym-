@@ -14,6 +14,10 @@ function getAdminClient() {
 /**
  * POST /api/auth/lookup
  * Detects if a phone number belongs to an existing member.
+ *
+ * BE-H6: this endpoint is pre-auth, so the payload is deliberately minimal —
+ * `{ path, firstName? }` only. Never return ids, phone, full display_name,
+ * goals, or any other member PII from here.
  * Returns auth path: 'cold' | 'preloaded' | 'returning'
  */
 export async function POST(request: NextRequest) {
@@ -30,7 +34,11 @@ export async function POST(request: NextRequest) {
 
     const { phone, gym_id } = parsed.data;
 
-    const limited = checkRateLimit(`auth-lookup:${phone}`, 20, 300_000);
+    // BE-H6: pre-auth endpoint — key the rate limit on IP+phone (first hop of
+    // x-forwarded-for) so one caller can't enumerate many phones nor hammer
+    // one phone from many sessions.
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const limited = checkRateLimit(`lookup:${ip}:${phone}`, 20, 300_000);
     if (limited) return limited;
 
     const admin = getAdminClient();
@@ -38,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Look up member by phone in this gym
     const { data: member, error } = await admin
       .from('members')
-      .select('id, user_id, display_name, first_name, onboarding_status, primary_goal, experience_level')
+      .select('user_id, display_name, first_name')
       .eq('gym_id', gym_id)
       .eq('phone', phone)
       .eq('is_active', true)
@@ -54,49 +62,21 @@ export async function POST(request: NextRequest) {
 
     if (!member) {
       // No match — cold path (new user)
-      return NextResponse.json({
-        path: 'cold' as const,
-        member: null,
-      });
+      return NextResponse.json({ path: 'cold' as const });
     }
+
+    // First name only, for the greeting — fall back to the first word of
+    // display_name when first_name is unset.
+    const firstName =
+      member.first_name || member.display_name?.split(' ')[0] || null;
 
     if (member.user_id === null) {
       // Member exists but no auth user linked — preloaded by gym owner
-      return NextResponse.json({
-        path: 'preloaded' as const,
-        member: {
-          id: member.id,
-          display_name: member.display_name,
-          first_name: member.first_name,
-        },
-      });
+      return NextResponse.json({ path: 'preloaded' as const, firstName });
     }
 
-    if (member.onboarding_status === 'active' || member.onboarding_status === 'program_active') {
-      // Fully onboarded returning member
-      return NextResponse.json({
-        path: 'returning' as const,
-        member: {
-          id: member.id,
-          display_name: member.display_name,
-          first_name: member.first_name,
-          primary_goal: member.primary_goal,
-          experience_level: member.experience_level,
-        },
-      });
-    }
-
-    // Member exists with user_id but onboarding not complete — treat as returning
-    return NextResponse.json({
-      path: 'returning' as const,
-      member: {
-        id: member.id,
-        display_name: member.display_name,
-        first_name: member.first_name,
-        primary_goal: member.primary_goal,
-        experience_level: member.experience_level,
-      },
-    });
+    // Member has an auth user — returning (whether or not onboarding finished)
+    return NextResponse.json({ path: 'returning' as const, firstName });
   } catch {
     return NextResponse.json(
       { error: 'Internal server error' },

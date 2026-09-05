@@ -8,7 +8,9 @@ import { checkFeatureAccess } from '@/lib/billing/featureGate';
 
 const autoGenerateSchema = z.object({
   member_id: uuidString,
-  gym_id: uuidString,
+  // Accepted for backward compatibility but IGNORED — the gym is derived
+  // from the verified member row (AI-M6 / Stage 5 tenant binding).
+  gym_id: uuidString.optional(),
 });
 
 function getAdminClient() {
@@ -39,10 +41,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ eligible: false, reason: 'missing_params' }, { status: 400 });
     }
-    const { member_id, gym_id } = parsed.data;
-
-    const rl = checkRateLimit(`auto-generate:${member_id}`, 3, 300_000);
-    if (rl) return rl;
+    const { member_id } = parsed.data;
 
     const admin = getAdminClient();
 
@@ -55,9 +54,17 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
     if (!memberCheck) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    // Tenant binding: all gym-scoped reads/writes below use the gym derived
+    // from the verified member row — never the request body (AI-M6).
+    const gym_id = memberCheck.gym_id;
+
+    // Rate limit AFTER auth, keyed on the authenticated member (M-9)
+    const rl = checkRateLimit(`auto-generate:${member_id}`, 3, 300_000);
+    if (rl) return rl;
+
     // Tier gate: AI program generation requires ai_programs. Resolve gym_id from
     // the member record (server-derived), not client input.
-    const access = await checkFeatureAccess(memberCheck.gym_id, 'ai_programs');
+    const access = await checkFeatureAccess(gym_id, 'ai_programs');
     if (!access.hasAccess) {
       return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
     }

@@ -44,8 +44,22 @@ export async function PATCH(
       return NextResponse.json({ error: access.upgradeMessage }, { status: 403 });
     }
 
-    const rl = checkRateLimit(`ai-program-edit:${programId}`, 10, 60_000);
+    // Rate limit keyed on the authenticated staff user, not the caller-chosen
+    // programId (M-9: never key limits on victim-controlled ids).
+    const rl = checkRateLimit(`ai-program-edit:${user_id}`, 10, 60_000);
     if (rl) return rl;
+
+    // Tenant binding (BE-H3): the program must belong to the caller's gym.
+    // 404 for missing and cross-gym rows alike to avoid leaking existence.
+    const { data: program } = await admin
+      .from('ai_programs')
+      .select('id')
+      .eq('id', programId)
+      .eq('gym_id', gym_id)
+      .maybeSingle();
+    if (!program) {
+      return NextResponse.json({ error: 'Program not found' }, { status: 404 });
+    }
 
     const body = await req.json();
     if (JSON.stringify(body).length > 50_000) {
@@ -66,7 +80,8 @@ export async function PATCH(
         trainer_approved_by: user_id,
         trainer_approved_at: new Date().toISOString(),
       })
-      .eq('id', programId);
+      .eq('id', programId)
+      .eq('gym_id', gym_id);
 
     if (error) {
       return NextResponse.json({ error: 'Failed to update program' }, { status: 500 });

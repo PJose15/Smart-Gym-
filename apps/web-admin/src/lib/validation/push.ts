@@ -3,7 +3,9 @@ import { uuidString } from './uuid';
 
 export const pushSubscribeSchema = z.object({
   member_id: uuidString,
-  gym_id: uuidString,
+  // Accepted for backward compatibility but IGNORED by the subscribe route —
+  // the gym is derived from the verified member row (Stage 5 tenant binding).
+  gym_id: uuidString.optional(),
   subscription: z.object({
     endpoint: z.string().url(),
     keys: z.object({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym, assertInGym } from '@/lib/auth/tenant';
 import { feedCommentsQuerySchema, feedCommentSchema } from '@/lib/validation/feed';
 import { checkRateLimit } from '@/lib/rateLimit';
 import type { FeedComment } from '@nexera/types';
@@ -25,6 +26,13 @@ export async function GET(request: NextRequest) {
     if (auth instanceof NextResponse) return auth;
 
     const { admin } = auth;
+
+    // Tenant binding (BE-H4): the feed event must belong to the member's gym
+    const gymId = await resolveMemberGym(admin, member_id);
+    if (!gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!(await assertInGym(admin, 'gym_feed_events', event_id, gymId))) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
 
     let query = admin
       .from('feed_comments')
@@ -99,6 +107,20 @@ export async function POST(request: NextRequest) {
     const rl = checkRateLimit(`feed-comment:${member_id}`, 20, 60_000);
     if (rl) return rl;
 
+    // Tenant binding (BE-H4): the feed event must belong to the member's gym
+    const gymId = await resolveMemberGym(admin, member_id);
+    if (!gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const { data: feedEvent } = await admin
+      .from('gym_feed_events')
+      .select('id, member_id, gym_id')
+      .eq('id', event_id)
+      .eq('gym_id', gymId)
+      .maybeSingle();
+    if (!feedEvent) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
     // Insert comment
     const { data: comment, error: insertErr } = await admin
       .from('feed_comments')
@@ -120,14 +142,9 @@ export async function POST(request: NextRequest) {
       if (rpcErr) console.error('[comments] increment_comment_count failed:', rpcErr.message);
     });
 
-    // Notify event owner of new comment (skip self-comments)
-    const { data: feedEvent } = await admin
-      .from('gym_feed_events')
-      .select('member_id, gym_id')
-      .eq('id', event_id)
-      .maybeSingle();
-
-    if (feedEvent && feedEvent.member_id !== member_id) {
+    // Notify event owner of new comment (skip self-comments) — event row
+    // already fetched (gym-scoped) above
+    if (feedEvent.member_id && feedEvent.member_id !== member_id) {
       sendNotification({
         gym_id: feedEvent.gym_id,
         member_id: feedEvent.member_id,

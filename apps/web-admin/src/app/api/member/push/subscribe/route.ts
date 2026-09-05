@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pushSubscribeSchema } from '@/lib/validation/push';
 import { verifyMember } from '@/lib/auth/verifyMember';
+import { resolveMemberGym } from '@/lib/auth/tenant';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 /**
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
-    const { member_id, gym_id, subscription, user_agent, platform } = parsed.data;
+    const { member_id, subscription, user_agent, platform } = parsed.data;
 
     const authResult = await verifyMember(member_id);
     if (authResult instanceof NextResponse) return authResult;
@@ -25,13 +26,17 @@ export async function POST(request: NextRequest) {
     const rl = checkRateLimit(`push-subscribe:${member_id}`, 5, 60_000);
     if (rl) return rl;
 
+    // Tenant binding: gym comes from the member row, never the body
+    const gymId = await resolveMemberGym(admin, member_id);
+    if (!gymId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
     // Upsert by (member_id, endpoint) — matches UNIQUE constraint in schema
     const { error } = await admin
       .from('push_subscriptions')
       .upsert(
         {
           member_id,
-          gym_id,
+          gym_id: gymId,
           endpoint: subscription.endpoint,
           p256dh: subscription.keys.p256dh,
           auth: subscription.keys.auth,

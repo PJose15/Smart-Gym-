@@ -3,6 +3,7 @@ import { verifyMember } from '@/lib/auth/verifyMember';
 import { createWorkoutSharePost } from '@/lib/social/workoutShare';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateUUIDs } from '@/lib/validation/uuid';
+import { workoutShareBodySchema } from '@/lib/validation/feed';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,21 +16,26 @@ export async function POST(
     const { memberId } = await params;
     const uuidError = validateUUIDs({ memberId });
     if (uuidError) return uuidError;
-    // Rate limit: 5 shares per minute per member
-    const rl = checkRateLimit(`workout-share:${memberId}`, 5, 60_000);
-    if (rl) return rl;
 
     const authResult = await verifyMember(memberId);
     if (authResult instanceof NextResponse) return authResult;
     const { admin } = authResult;
 
-    const body = await request.json();
-    const shareText = (body.share_text as string) || '';
-    const programContext = body.program_context ?? null;
+    // M-9: rate limit after auth, keyed on the verified member.
+    // 5 shares per minute per member.
+    const rl = checkRateLimit(`workout-share:${memberId}`, 5, 60_000);
+    if (rl) return rl;
 
-    if (shareText.length > 500) {
-      return NextResponse.json({ error: 'share_text must be 500 characters or fewer' }, { status: 400 });
+    // M-5: bounded strings/numbers only — this lands in the gym feed.
+    const body = await request.json();
+    const parsed = workoutShareBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || 'Invalid input' },
+        { status: 400 }
+      );
     }
+    const { share_text: shareText, program_context: programContext } = parsed.data;
 
     const { data: member } = await admin
       .from('members')

@@ -47,41 +47,45 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`session-complete:${member_id}`, 10, 60_000);
     if (rl) return rl;
 
-    // Get the session
-    const { data: session, error: sessionError } = await admin
+    // Atomically claim the completion (M-6): the conditional update only
+    // succeeds for the first caller, so concurrent requests can't double-
+    // award points/achievements/pushes.
+    const { data: session } = await admin
       .from('workout_sessions')
-      .select('id, gym_id, member_id, sets_count, total_volume_lbs, best_weight_lbs, is_personal_best, session_date, completed_at')
+      .update({ completed_at: new Date().toISOString() })
       .eq('id', sessionId)
       .eq('member_id', member_id)
-      .single();
+      .is('completed_at', null)
+      .select('id, gym_id, member_id, sets_count, total_volume_lbs, best_weight_lbs, is_personal_best, session_date')
+      .maybeSingle();
 
-    if (sessionError || !session) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
-    }
+    if (!session) {
+      // Either the session doesn't exist / isn't this member's, or it was
+      // already completed — distinguish for the response.
+      const { data: existing } = await admin
+        .from('workout_sessions')
+        .select('id, sets_count, total_volume_lbs, best_weight_lbs, is_personal_best, completed_at')
+        .eq('id', sessionId)
+        .eq('member_id', member_id)
+        .maybeSingle();
 
-    // Idempotency guard: if the session is already completed, return the
-    // existing summary WITHOUT re-awarding points/achievements/pushes.
-    if (session.completed_at) {
+      if (!existing) {
+        return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+      }
       return NextResponse.json({
         success: true,
         already_completed: true,
         summary: {
           session_id: sessionId,
-          sets_count: session.sets_count,
-          total_volume_lbs: session.total_volume_lbs,
-          best_weight_lbs: session.best_weight_lbs,
-          is_personal_best: session.is_personal_best,
+          sets_count: existing.sets_count,
+          total_volume_lbs: existing.total_volume_lbs,
+          best_weight_lbs: existing.best_weight_lbs,
+          is_personal_best: existing.is_personal_best,
           points_awarded: 0,
           streak: null,
         },
       });
     }
-
-    // Mark session as completed
-    await admin
-      .from('workout_sessions')
-      .update({ completed_at: new Date().toISOString() })
-      .eq('id', sessionId);
 
     // Fetch member data + recent sessions + total session count in parallel
     const points = 50;
